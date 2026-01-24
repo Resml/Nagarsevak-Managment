@@ -1,0 +1,93 @@
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config({ path: '../.env' });
+
+// Initialize Supabase
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function broadcastEvent(client, eventId) {
+    try {
+        console.log(`Starting broadcast for Event ID: ${eventId}`);
+
+        // 1. Fetch Event Details
+        const { data: event, error: eventError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', eventId)
+            .single();
+
+        if (eventError || !event) {
+            console.error('Event not found:', eventError);
+            return { success: false, message: 'Event not found' };
+        }
+
+        // 2. Fetch Recipients (Voters + Non-Voters with mobile numbers)
+        // Note: For large datasets, pagination is needed. Here assuming < 1000 for verified numbers.
+        const { data: voters } = await supabase
+            .from('voters')
+            .select('mobile, name_english')
+            .not('mobile', 'is', null);
+
+        const { data: nonVoters } = await supabase
+            .from('non_voters')
+            .select('mobile, name');
+
+        // Combine and Deduplicate
+        const recipients = new Map();
+
+        voters?.forEach(v => {
+            if (v.mobile && v.mobile.length >= 10) recipients.set(v.mobile, v.name_english);
+        });
+
+        nonVoters?.forEach(v => {
+            if (v.mobile && v.mobile.length >= 10) recipients.set(v.mobile, v.name);
+        });
+
+        console.log(`Found ${recipients.size} unique recipients.`);
+
+        // 3. Prepare Message
+        const message = `📢 *New Event Announcement!* 📢\n\n` +
+            `*${event.title}*\n\n` +
+            `📅 *Date:* ${event.event_date}\n` +
+            `⏰ *Time:* ${event.event_time}\n` +
+            `📍 *Location:* ${event.location}\n\n` +
+            `${event.description}\n\n` +
+            `_You are receiving this update from your Nagar Sevak Office._`;
+
+        // 4. Send with Delay (Broadcasting)
+        let count = 0;
+        for (const [mobile, name] of recipients) {
+            try {
+                // Format Number (Assume IN +91 if missing)
+                let number = mobile.replace(/\D/g, '');
+                if (number.length === 10) number = '91' + number;
+                const chatId = number + "@c.us";
+
+                console.log(`Sending to ${name} (${number})...`);
+                await client.sendMessage(chatId, message);
+
+                count++;
+
+                // SAFETY DELAY: 2 to 5 seconds random delay
+                const delay = Math.floor(Math.random() * 3000) + 2000;
+                await sleep(delay);
+
+            } catch (sendError) {
+                console.error(`Failed to send to ${mobile}:`, sendError.message);
+            }
+        }
+
+        return { success: true, count: count };
+
+    } catch (err) {
+        console.error('Broadcast failed:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+module.exports = {
+    broadcastEvent
+};
