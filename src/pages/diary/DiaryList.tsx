@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { DiaryService } from '../../services/diaryService';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
 
 const DiaryList = () => {
+    const { t } = useLanguage();
     const [entries, setEntries] = useState<DiaryEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -106,15 +108,15 @@ const DiaryList = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Sabhasad Diary (GB)</h1>
-                    <p className="text-gray-600">Track questions and issues raised in meetings</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('diary.title')}</h1>
+                    <p className="text-gray-600">{t('diary.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => handleOpenModal()}
                     className="flex items-center space-x-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
                 >
                     <Plus className="w-5 h-5" />
-                    <span>Add Entry</span>
+                    <span>{t('diary.add_entry')}</span>
                 </button>
             </div>
 
@@ -124,7 +126,7 @@ const DiaryList = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="Search by subject or description..."
+                        placeholder={t('diary.search_placeholder')}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -137,7 +139,7 @@ const DiaryList = () => {
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value as any)}
                     >
-                        <option value="All">All Meetings</option>
+                        <option value="All">{t('diary.all_types')}</option>
                         <option value="GB">General Body (GB)</option>
                         <option value="Standing Committee">Standing Committee</option>
                         <option value="Ward Committee">Ward Committee</option>
@@ -204,8 +206,7 @@ const DiaryList = () => {
                 ) : (
                     <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                         <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-gray-900">No Entries Found</h3>
-                        <p className="text-gray-500">Add a new entry to get started.</p>
+                        <h3 className="text-lg font-medium text-gray-900">{t('diary.no_entries')}</h3>
                     </div>
                 )}
             </div>
@@ -216,7 +217,7 @@ const DiaryList = () => {
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
                             <h2 className="text-xl font-bold text-gray-900">
-                                {editingEntry ? 'Edit Diary Entry' : 'Add New Diary Entry'}
+                                {editingEntry ? 'Edit Diary Entry' : t('diary.new_entry_title')}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
@@ -226,7 +227,7 @@ const DiaryList = () => {
                         <form onSubmit={handleSubmit} className="p-6 space-y-6">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Meeting Date</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('diary.meeting_date')}</label>
                                     <input
                                         type="date" required
                                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500"
@@ -235,7 +236,7 @@ const DiaryList = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Meeting Type</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('diary.meeting_type')}</label>
                                     <select
                                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 bg-white"
                                         value={formData.meetingType}
@@ -251,7 +252,7 @@ const DiaryList = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Subject / Question</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('diary.subject')}</label>
                                 <input
                                     type="text" required
                                     placeholder="e.g. Water shortage in Ward 12"
@@ -262,10 +263,10 @@ const DiaryList = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Description</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('diary.description')}</label>
                                 <textarea
                                     rows={4}
-                                    placeholder="Detailed description of the issue raised..."
+                                    placeholder={t('diary.desc_placeholder')}
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500"
                                     value={formData.description}
                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -274,7 +275,7 @@ const DiaryList = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Department</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('diary.department')}</label>
                                     <input
                                         type="text"
                                         placeholder="e.g. Water Supply"
@@ -284,7 +285,7 @@ const DiaryList = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('diary.status')}</label>
                                     <select
                                         className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 bg-white"
                                         value={formData.status}
@@ -299,10 +300,10 @@ const DiaryList = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Official Response (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('diary.response')}</label>
                                 <textarea
                                     rows={3}
-                                    placeholder="Response received from administration..."
+                                    placeholder={t('diary.resp_placeholder')}
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500"
                                     value={formData.response}
                                     onChange={e => setFormData({ ...formData, response: e.target.value })}
@@ -322,7 +323,7 @@ const DiaryList = () => {
                                     className="flex items-center space-x-2 bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 transition-colors font-medium shadow-sm"
                                 >
                                     <Save className="w-4 h-4" />
-                                    <span>Save Entry</span>
+                                    <span>{t('diary.save_entry')}</span>
                                 </button>
                             </div>
                         </form>

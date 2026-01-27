@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { type ElectionResult } from '../types';
+import electionData from '../data/election_data.json';
 
 const RESULT_STORAGE_KEY = 'ns_election_results';
 
@@ -74,9 +75,16 @@ export const ResultService = {
             if (error) throw error;
 
             if (!data || data.length === 0) {
+                // Use imported real data
+                if (electionData && electionData.length > 0) {
+                    // Cast to any first to avoid type mismatch on 'candidateVotes' if strict
+                    return filterResults(electionData as any[], ward);
+                }
+
                 const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
                 if (stored.length > 0) return filterResults(stored, ward);
-                // Fallback to our generated dummy data
+
+                // Fallback to dummy results (if needed, but we should have real data now)
                 return filterResults(DUMMY_RESULTS, ward);
             }
 
@@ -96,6 +104,11 @@ export const ResultService = {
         } catch (e) {
             const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
             if (stored.length > 0) return filterResults(stored, ward);
+
+            if (electionData && electionData.length > 0) {
+                return filterResults(electionData as any[], ward);
+            }
+
             return filterResults(DUMMY_RESULTS, ward);
         }
     },

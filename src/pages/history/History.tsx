@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { MockService } from '../../services/mockData';
+import { useLanguage } from '../../context/LanguageContext';
 import { type Complaint } from '../../types';
 import { Download, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 
 const History = () => {
+    const { t } = useLanguage();
     const [history, setHistory] = useState<Complaint[]>([]);
     const [filterWard, setFilterWard] = useState<string>('All');
 
@@ -23,12 +25,12 @@ const History = () => {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Work History</h1>
-                    <p className="text-sm text-gray-500">Archive of all completed works</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('work_history.title')}</h1>
+                    <p className="text-sm text-gray-500">{t('work_history.subtitle')}</p>
                 </div>
                 <button className="flex items-center space-x-2 border border-gray-300 px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50 bg-white">
                     <Download className="w-4 h-4" />
-                    <span>Export Report</span>
+                    <span>{t('work_history.export_report')}</span>
                 </button>
             </div>
 
@@ -37,17 +39,17 @@ const History = () => {
                 <div className="p-4 border-b border-gray-200 flex items-center space-x-4 bg-gray-50">
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                         <Filter className="w-4 h-4" />
-                        <span>Filter by Ward:</span>
+                        <span>{t('work_history.filter_ward')}</span>
                     </div>
                     <select
                         value={filterWard}
                         onChange={(e) => setFilterWard(e.target.value)}
                         className="border-gray-300 rounded-md text-sm py-1.5 focus:ring-brand-500 focus:border-brand-500"
                     >
-                        <option value="All">All Wards</option>
-                        <option value="12">Ward 12</option>
-                        <option value="13">Ward 13</option>
-                        <option value="14">Ward 14</option>
+                        <option value="All">{t('work_history.all_wards')}</option>
+                        <option value="12">{t('work_history.ward_12')}</option>
+                        <option value="13">{t('work_history.ward_13')}</option>
+                        <option value="14">{t('work_history.ward_14')}</option>
                     </select>
                 </div>
 
@@ -56,11 +58,11 @@ const History = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Resolved</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title / Issue</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ward</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Beneficiary</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('work_history.col_date')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('work_history.col_title')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('work_history.col_ward')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('work_history.col_type')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('work_history.col_beneficiary')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">

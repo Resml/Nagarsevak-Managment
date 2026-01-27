@@ -22,9 +22,13 @@ const SEED_VOTERS: Voter[] = [
     {
         id: 'v1',
         name: 'Ramesh Powar',
+        name_marathi: 'रमेश पवार',
+        name_english: 'Ramesh Powar',
         age: 45,
         gender: 'M',
         address: 'Flat 101, Ganesh Apts, Ward 12',
+        address_marathi: 'फ्लॅट 101, गणेश अपार्टमेंट्स, प्रभाग 12',
+        address_english: 'Flat 101, Ganesh Apts, Ward 12',
         ward: '12',
         booth: '45A',
         epicNo: 'MH12345678',
@@ -34,9 +38,13 @@ const SEED_VOTERS: Voter[] = [
     {
         id: 'v2',
         name: 'Suhasini Deshmukh',
+        name_marathi: 'सुहासिनी देशमुख',
+        name_english: 'Suhasini Deshmukh',
         age: 38,
         gender: 'F',
         address: 'House 22, Lane 4, Ward 12',
+        address_marathi: 'घर 22, लेन 4, प्रभाग 12',
+        address_english: 'House 22, Lane 4, Ward 12',
         ward: '12',
         booth: '45B',
         epicNo: 'MH87654321',
@@ -155,6 +163,12 @@ export const MockService = {
         sadasyas.unshift(newSadasya);
         localStorage.setItem(STORAGE_KEYS.SADASYA, JSON.stringify(sadasyas));
         return newSadasya;
+    },
+
+    deleteSadasya: (id: string) => {
+        const sadasyas = MockService.getSadasyas();
+        const filtered = sadasyas.filter(s => s.id !== id);
+        localStorage.setItem(STORAGE_KEYS.SADASYA, JSON.stringify(filtered));
     },
 
     // Surveys

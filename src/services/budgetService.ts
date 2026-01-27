@@ -85,6 +85,7 @@ export const BudgetService = {
                 category: row.category,
                 totalAllocation: row.total_allocation,
                 utilizedAmount: row.utilized_amount,
+                area: row.area,
                 status: row.status,
                 createdAt: row.created_at,
                 updatedAt: row.updated_at
@@ -106,6 +107,7 @@ export const BudgetService = {
                     category: record.category,
                     total_allocation: record.totalAllocation,
                     utilized_amount: record.utilizedAmount,
+                    area: record.area,
                     status: record.status
                 })
                 .select()
@@ -119,6 +121,7 @@ export const BudgetService = {
                 category: data.category,
                 totalAllocation: data.total_allocation,
                 utilizedAmount: data.utilized_amount,
+                area: data.area,
                 status: data.status,
                 createdAt: data.created_at,
                 updatedAt: data.updated_at

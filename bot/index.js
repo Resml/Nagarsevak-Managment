@@ -182,10 +182,14 @@ const STATES = {
     IDLE: 'IDLE',
     REPORTING_NAME: 'REPORTING_NAME',
     REPORTING_PROBLEM: 'REPORTING_PROBLEM',
+    REPORTING_AREA: 'REPORTING_AREA',
     REPORTING_LOCATION: 'REPORTING_LOCATION',
     REQUESTING_LETTER_TYPE: 'REQUESTING_LETTER_TYPE',
     REQUESTING_LETTER_DETAILS: 'REQUESTING_LETTER_DETAILS',
     REPORTING_PERSONAL_HELP: 'REPORTING_PERSONAL_HELP',
+    FIND_SCHEME_GENDER: 'FIND_SCHEME_GENDER',
+    FIND_SCHEME_AGE: 'FIND_SCHEME_AGE',
+    FIND_SCHEME_INCOME: 'FIND_SCHEME_INCOME',
 };
 
 client.on('message', async msg => {
@@ -237,6 +241,7 @@ client.on('message', async msg => {
                     userName: contact.pushname || 'WhatsApp User',
                     problem: 'Voice Message',
                     location: 'Not Provided',
+                    area: 'Not Provided',
                     audioUrl: publicUrl,
                     timestamp: new Date().toISOString()
                 };
@@ -284,148 +289,250 @@ client.on('message', async msg => {
                     `C. No Objection Certificate (NOC)\n\n` +
                     `_Reply with A, B, or C_`;
                 await chat.sendMessage(types);
-            } else if (text === '6') {
-                userStates[userId] = { step: STATES.REPORTING_PERSONAL_HELP, data: {} };
-                await chat.sendMessage(`🆘 *Need Help with Personal Problems?*\n\nWe are here to support you. Please tell us your problem briefly (e.g., "Need financial help for education", "Medical emergency support").\n\n_Type your message below:_`);
-            } else {
-                // AI Human Touch Fallback
-                // If it's not a command, treat it as a conversation
-                await chat.sendStateTyping(); // Simulate typing
-                const aiResponse = await aiService.getChatResponse(text);
-                await chat.sendMessage(aiResponse);
+             else if (text === '6') {
+                    userStates[userId] = { step: STATES.REPORTING_PERSONAL_HELP, data: {} };
+                    await chat.sendMessage(`🆘 *Need Help with Personal Problems?*\n\nWe are here to support you. Please tell us your problem briefly (e.g., "Need financial help for education", "Medical emergency support").\n\n_Type your message below:_`);
+                } else if (text === '7') {
+                    userStates[userId] = { step: STATES.FIND_SCHEME_GENDER, data: {} };
+                    await chat.sendMessage(`🔍 *Find Scheme for Me*\n\nTo find the best schemes for you, please answer a few questions.\n\n1. What is your *Gender*? (M / F / Other)`);
+                } else {
+                    // AI Human Touch Fallback
+                    // If it's not a command, treat it as a conversation
+                    await chat.sendStateTyping(); // Simulate typing
+                    const aiResponse = await aiService.getChatResponse(text);
+                    await chat.sendMessage(aiResponse);
+                }
             }
-        }
-        // Reporting Flow
-        else if (userState.step === STATES.REPORTING_NAME) {
-            userStates[userId].data.name = text;
-            userStates[userId].step = STATES.REPORTING_PROBLEM;
-            await chat.sendMessage('Please describe the *Problem* you are facing:');
-        }
-        else if (userState.step === STATES.REPORTING_PROBLEM) {
-            userStates[userId].data.problem = text;
-            userStates[userId].step = STATES.REPORTING_LOCATION;
-            await chat.sendMessage('Please enter the *Location/Ward* (or send 0 to skip):');
-        }
-        else if (userState.step === STATES.REPORTING_LOCATION) {
-            userStates[userId].data.location = text === '0' ? 'Not Provided' : text;
-
-            // Save Complaint
-            const complaint = {
-                // id: Date.now().toString(), // No, we insert to supabase and let it generate ID
-                userId: userId,
-                userName: userStates[userId].data.name,
-                problem: userStates[userId].data.problem,
-                location: userStates[userId].data.location,
-                timestamp: new Date().toISOString()
-            };
-
-            // DB Insert
-            const { data: insertedData, error } = await supabase
-                .from('complaints')
-                .insert([{
-                    user_id: complaint.userId,
-                    user_name: complaint.userName,
-                    problem: complaint.problem,
-                    location: complaint.location,
-                    status: 'Pending',
-                    source: 'WhatsApp'
-                }])
-                .select()
-                .single();
-
-            if (error) {
-                console.error('Error saving complaint:', error);
-                await chat.sendMessage('❌ Error saving complaint. Please try again.');
-            } else {
-                await chat.sendMessage('✅ *Complaint Registered Successfully!*');
-                await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
-
-                await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
-
-                // --- Auto-Assign Logic ---
-                // Removed explicit call here as Realtime listener handles it now.
-                // await checkAndAssignStaff(insertedData);
+            // Reporting Flow
+            else if (userState.step === STATES.REPORTING_NAME) {
+                userStates[userId].data.name = text;
+                userStates[userId].step = STATES.REPORTING_PROBLEM;
+                await chat.sendMessage('Please describe the *Problem* you are facing:');
             }
-
-            // Reset state
-            userStates[userId] = { step: STATES.IDLE, data: {} };
-            await sendMainMenu(chat);
-        }
-        // Letter Request Flow
-        else if (userState.step === STATES.REQUESTING_LETTER_TYPE) {
-            const map = { 'a': 'Residential', 'b': 'Character', 'c': 'NOC' };
-            const selected = map[text.toLowerCase()];
-
-            if (selected) {
-                userStates[userId].data.type = selected;
-                userStates[userId].step = STATES.REQUESTING_LETTER_DETAILS;
-                await chat.sendMessage(`You selected: *${selected}*\n\nPlease enter your *Full Name* for the certificate:`);
-            } else {
-                await chat.sendMessage('❌ Invalid Option. Please reply with A, B, or C.');
+            else if (userState.step === STATES.REPORTING_PROBLEM) {
+                userStates[userId].data.problem = text;
+                userStates[userId].step = STATES.REPORTING_AREA;
+                await chat.sendMessage('Please enter the *Area / Colony Name*:');
             }
-        }
-        else if (userState.step === STATES.REQUESTING_LETTER_DETAILS) {
-            const name = text;
-            const type = userStates[userId].data.type;
-
-            // DB Insert
-            const { data, error } = await supabase
-                .from('letter_requests')
-                .insert([{
-                    user_id: userId,
-                    type: type,
-                    details: { name: name },
-                    status: 'Pending'
-                }]);
-
-            if (error) {
-                console.error('Error saving letter request:', error);
-                await chat.sendMessage('❌ Error submitting request. Please try again.');
-            } else {
-                await chat.sendMessage('✅ *Request Submitted!*');
-                await chat.sendMessage(`Your request for a *${type}* has been received.\nWe will notify you once it is approved.`);
+            else if (userState.step === STATES.REPORTING_AREA) {
+                userStates[userId].data.area = text;
+                userStates[userId].step = STATES.REPORTING_LOCATION;
+                await chat.sendMessage('Please enter the *Ward Number/Location* (or send 0 to skip):');
             }
+            else if (userState.step === STATES.REPORTING_LOCATION) {
+                userStates[userId].data.location = text === '0' ? 'Not Provided' : text;
 
-            // Reset state
-            userStates[userId] = { step: STATES.IDLE, data: {} };
-            await sendMainMenu(chat);
-        }
+                // Save Complaint
+                const complaint = {
+                    // id: Date.now().toString(), // No, we insert to supabase and let it generate ID
+                    userId: userId,
+                    userName: userStates[userId].data.name,
+                    problem: userStates[userId].data.problem,
+                    area: userStates[userId].data.area,
+                    location: userStates[userId].data.location,
+                    timestamp: new Date().toISOString()
+                };
 
-        // Personal Help Flow
-        else if (userState.step === STATES.REPORTING_PERSONAL_HELP) {
-            const problem = text;
+                // DB Insert
+                const { data: insertedData, error } = await supabase
+                    .from('complaints')
+                    .insert([{
+                        user_id: complaint.userId,
+                        user_name: complaint.userName,
+                        problem: complaint.problem,
+                        area: complaint.area,
+                        location: complaint.location,
+                        status: 'Pending',
+                        source: 'WhatsApp'
+                    }])
+                    .select()
+                    .single();
 
-            // Save to Complaints with 'Personal Help' category
-            const { data: insertedData, error } = await supabase
-                .from('complaints')
-                .insert([{
-                    user_id: userId,
-                    user_name: contact.pushname || 'WhatsApp User',
-                    problem: problem,
-                    location: 'Not Provided',
-                    status: 'Pending',
-                    category: 'Personal Help',
-                    source: 'WhatsApp'
-                }])
-                .select()
-                .single();
+                if (error) {
+                    console.error('Error saving complaint:', error);
+                    await chat.sendMessage('❌ Error saving complaint. Please try again.');
+                } else {
+                    await chat.sendMessage('✅ *Complaint Registered Successfully!*');
+                    await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
 
-            if (error) {
-                console.error('Error saving help request:', error);
-                await chat.sendMessage('❌ Error submitting request. Please try again.');
-            } else {
-                await chat.sendMessage('✅ *Request Received!*');
-                await chat.sendMessage(`We have noted your problem: "${problem}".\n\nOur team will contact you personally to assist provided we can help. Ticket ID: #${insertedData.id}`);
+                    await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
+
+                    // --- Auto-Assign Logic ---
+                    // Removed explicit call here as Realtime listener handles it now.
+                    // await checkAndAssignStaff(insertedData);
+                }
+
+                // Reset state
+                userStates[userId] = { step: STATES.IDLE, data: {} };
+                await sendMainMenu(chat);
+            }
+            // Letter Request Flow
+            else if (userState.step === STATES.REQUESTING_LETTER_TYPE) {
+                const map = { 'a': 'Residential', 'b': 'Character', 'c': 'NOC' };
+                const selected = map[text.toLowerCase()];
+
+                if (selected) {
+                    userStates[userId].data.type = selected;
+                    userStates[userId].step = STATES.REQUESTING_LETTER_DETAILS;
+                    await chat.sendMessage(`You selected: *${selected}*\n\nPlease enter your *Full Name* for the certificate:`);
+                } else {
+                    await chat.sendMessage('❌ Invalid Option. Please reply with A, B, or C.');
+                }
+            }
+            else if (userState.step === STATES.REQUESTING_LETTER_DETAILS) {
+                const name = text;
+                const type = userStates[userId].data.type;
+
+                // DB Insert
+                const { data, error } = await supabase
+                    .from('letter_requests')
+                    .insert([{
+                        user_id: userId,
+                        type: type,
+                        details: { name: name },
+                        status: 'Pending'
+                    }]);
+
+                if (error) {
+                    console.error('Error saving letter request:', error);
+                    await chat.sendMessage('❌ Error submitting request. Please try again.');
+                } else {
+                    await chat.sendMessage('✅ *Request Submitted!*');
+                    await chat.sendMessage(`Your request for a *${type}* has been received.\nWe will notify you once it is approved.`);
+                }
+
+                // Reset state
+                userStates[userId] = { step: STATES.IDLE, data: {} };
+                await sendMainMenu(chat);
             }
 
-            // Reset state
-            userStates[userId] = { step: STATES.IDLE, data: {} };
-            await sendMainMenu(chat);
+            // Personal Help Flow
+            else if (userState.step === STATES.REPORTING_PERSONAL_HELP) {
+                const problem = text;
+
+                // Save to Complaints with 'Personal Help' category
+                const { data: insertedData, error } = await supabase
+                    .from('complaints')
+                    .insert([{
+                        user_id: userId,
+                        user_name: contact.pushname || 'WhatsApp User',
+                        problem: problem,
+                        location: 'Not Provided',
+                        status: 'Pending',
+                        category: 'Personal Help',
+                        source: 'WhatsApp'
+                    }])
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Error saving help request:', error);
+                    await chat.sendMessage('❌ Error submitting request. Please try again.');
+                } else {
+                    await chat.sendMessage('✅ *Request Received!*');
+                    await chat.sendMessage(`We have noted your problem: "${problem}".\n\nOur team will contact you personally to assist provided we can help. Ticket ID: #${insertedData.id}`);
+                }
+
+                // Reset state
+                userStates[userId] = { step: STATES.IDLE, data: {} };
+                await sendMainMenu(chat);
+            }
+
+            // Scheme Finder Flow
+            else if (userState.step === STATES.FIND_SCHEME_GENDER) {
+                let gender = text.toUpperCase();
+                if (['M', 'MALE', 'MAN'].includes(gender)) gender = 'Male';
+                else if (['F', 'FEMALE', 'WOMAN', 'WOMEN'].includes(gender)) gender = 'Female';
+                else gender = 'Other';
+
+                userStates[userId].data.gender = gender;
+                userStates[userId].step = STATES.FIND_SCHEME_AGE;
+                await chat.sendMessage('2. What is your *Age*? (e.g. 25)');
+            }
+            else if (userState.step === STATES.FIND_SCHEME_AGE) {
+                const age = parseInt(text);
+                if (isNaN(age)) {
+                    await chat.sendMessage('Please enter a valid number for Age.');
+                    return;
+                }
+                userStates[userId].data.age = age;
+                userStates[userId].step = STATES.FIND_SCHEME_INCOME;
+                await chat.sendMessage('3. What is your *Annual Family Income*?\n\nA. Less than 1 Lakh\nB. 1 Lakh - 2.5 Lakh\nC. More than 2.5 Lakh\n\n_Reply with A, B, or C_');
+            }
+            else if (userState.step === STATES.FIND_SCHEME_INCOME) {
+                const incomeMap = { 'a': 100000, 'b': 250000, 'c': 500000 };
+                const incomeLimit = incomeMap[text.toLowerCase()] || 1000000;
+
+                userStates[userId].data.incomeLimit = incomeLimit;
+
+                await chat.sendMessage('🔄 Finding best schemes for you...');
+
+                try {
+                    // Fetch all schemes
+                    const { data: schemes, error } = await supabase
+                        .from('schemes')
+                        .select('*');
+
+                    if (error || !schemes) {
+                        throw error;
+                    }
+
+                    const gender = userStates[userId].data.gender;
+                    const age = userStates[userId].data.age;
+
+                    // Simple Scoring/Filtering Logic
+                    const recommended = schemes.filter(scheme => {
+                        const name = scheme.name.toLowerCase();
+                        const elig = (scheme.eligibility || '').toLowerCase();
+                        const desc = (scheme.description || '').toLowerCase();
+                        const combined = name + ' ' + elig + ' ' + desc;
+
+                        // Gender Filter
+                        if (gender === 'Male') {
+                            // Exclude specific female schemes
+                            if (combined.includes('women') || combined.includes('female') || combined.includes('girl') || combined.includes('ladki') || combined.includes('mahila')) {
+                                return false;
+                            }
+                        }
+                        if (gender === 'Female') {
+                            // Keep mostly everything, women are usually eligible for general + women schemes
+                        }
+
+                        // Age Filter (Very basic keyword check)
+                        if (age > 60) {
+                            // prioritize senior citizen?
+                        }
+                        if (age < 18) {
+                            // student/child schemes
+                        }
+
+                        return true;
+                    }).slice(0, 3); // Take top 3
+
+                    if (recommended.length > 0) {
+                        let msg = `🎉 *Recommended Schemes For You* 🎉\n\n`;
+                        recommended.forEach((s, i) => {
+                            msg += `*${i + 1}. ${s.name}*\n_${s.description}_\nBenefits: ${s.benefits}\n\n`;
+                        });
+                        msg += `_Reply with scheme name to know required documents._`; // Placeholder for future detail flow
+                        await chat.sendMessage(msg);
+                    } else {
+                        await chat.sendMessage('⚠️ No specific schemes found matching your criteria exactly. Please check the "Schemes" menu for a full list.');
+                    }
+
+                } catch (err) {
+                    console.error('Scheme fetch error:', err);
+                    await chat.sendMessage('❌ Error fetching schemes. Please try again later.');
+                }
+
+                // Reset state
+                userStates[userId] = { step: STATES.IDLE, data: {} };
+                await sendMainMenu(chat);
+            }
+        } catch (error) {
+            console.error('Error handling message:', error);
         }
-    } catch (error) {
-        console.error('Error handling message:', error);
-    }
-});
+    });
 
 // --- Auto Assignment ---
 async function checkAndAssignStaff(complaint) {
@@ -487,7 +594,8 @@ async function sendMainMenu(chat) {
         `3️⃣ *Schemes* 📜\n` +
         `4️⃣ *Upcoming Events* 🗓\n` +
         `5️⃣ *Request Letter* 📄\n` +
-        `6️⃣ *Need Help* 🆘\n\n` +
+        `6️⃣ *Need Help* 🆘\n` +
+        `7️⃣ *Find Scheme for Me* 🔍\n\n` +
         `_Reply with the number to select an option._`;
     await chat.sendMessage(menu);
 }

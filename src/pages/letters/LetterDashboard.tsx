@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
-import { FileText, CheckCircle, XCircle, Printer, Send } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 
@@ -8,15 +10,18 @@ interface LetterRequest {
     id: string;
     user_id: string;
     type: string;
+    area?: string;
     details: any;
     status: 'Pending' | 'Approved' | 'Rejected';
     created_at: string;
 }
 
 const LetterDashboard = () => {
+    const { t } = useLanguage();
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         fetchRequests();
@@ -31,6 +36,17 @@ const LetterDashboard = () => {
         if (data) setRequests(data);
         setLoading(false);
     };
+
+    const filteredRequests = requests.filter(req => {
+        if (!searchQuery) return true;
+        const term = searchQuery.toLowerCase();
+        return (
+            req.user_id.toLowerCase().includes(term) ||
+            req.type.toLowerCase().includes(term) ||
+            (req.area && req.area.toLowerCase().includes(term)) ||
+            (req.details?.name && req.details.name.toLowerCase().includes(term))
+        );
+    });
 
     const generatePDF = (req: LetterRequest, returnBlob: boolean = false) => {
         const doc = new jsPDF();
@@ -129,14 +145,42 @@ I wish them all the best for their future endeavors.
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-8 h-8 text-brand-600" /> Letter Requests
-            </h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <FileText className="w-8 h-8 text-brand-600" /> {t('letters.title')}
+                </h1>
+                <div className="flex gap-2">
+                    <Link
+                        to="/letters/types"
+                        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm"
+                    >
+                        <Settings className="w-4 h-4" /> {t('letters.manage_types')}
+                    </Link>
+                    <Link
+                        to="/letters/new"
+                        className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-700 transition shadow-sm"
+                    >
+                        <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                    </Link>
+                </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                    type="text"
+                    placeholder={t('letters.search_placeholder')}
+                    className="w-full pl-10 pr-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
 
             <div className="grid md:grid-cols-3 gap-6">
                 {/* List */}
                 <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
-                    {loading ? <div className="p-4">Loading...</div> : requests.map(req => (
+                    {loading ? <div className="p-4">{t('letters.loading')}</div> : filteredRequests.map(req => (
                         <div
                             key={req.id}
                             onClick={() => setSelectedRequest(req)}
@@ -149,10 +193,15 @@ I wish them all the best for their future endeavors.
                                 </span>
                             </div>
                             <p className="text-sm text-gray-600 mt-1">{req.details?.name || req.user_id}</p>
-                            <p className="text-xs text-gray-400 mt-2">{format(new Date(req.created_at), 'PP p')}</p>
+                            {req.area && <p className="text-xs text-brand-600 mt-1">{req.area}</p>}
+                            <p className="text-xs text-gray-400 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
                         </div>
                     ))}
-                    {requests.length === 0 && !loading && <div className="p-8 text-center text-gray-500">No requests yet.</div>}
+                    {filteredRequests.length === 0 && !loading && (
+                        <div className="p-8 text-center text-gray-500">
+                            {t('letters.no_requests')}
+                        </div>
+                    )}
                 </div>
 
                 {/* Preview */}
@@ -162,23 +211,23 @@ I wish them all the best for their future endeavors.
                             <div className="flex justify-between items-start pb-4 border-b border-gray-100">
                                 <div>
                                     <h2 className="text-xl font-bold text-gray-900">{selectedRequest.type}</h2>
-                                    <p className="text-sm text-gray-500">Request from: {selectedRequest.user_id}</p>
+                                    <p className="text-sm text-gray-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => generatePDF(selectedRequest)}
                                         className="bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brand-700"
                                     >
-                                        <Printer className="w-4 h-4" /> Generate PDF
+                                        <Printer className="w-4 h-4" /> {t('letters.generate_pdf')}
                                     </button>
                                 </div>
                             </div>
 
                             <div className="flex-1 py-6 space-y-4">
                                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                    <h4 className="text-xs font-bold uppercase text-gray-400 mb-2">Request Details</h4>
-                                    <p className="text-gray-800"><span className="font-semibold">Name:</span> {selectedRequest.details?.name}</p>
-                                    <p className="text-gray-800 mt-2"><span className="font-semibold">Address/Details:</span></p>
+                                    <h4 className="text-xs font-bold uppercase text-gray-400 mb-2">{t('letters.request_details')}</h4>
+                                    <p className="text-gray-800"><span className="font-semibold">{t('letters.name')}:</span> {selectedRequest.details?.name}</p>
+                                    <p className="text-gray-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
                                     <p className="bg-white p-2 rounded border border-gray-200 mt-1 text-sm">{selectedRequest.details?.text}</p>
                                 </div>
                             </div>
@@ -190,13 +239,13 @@ I wish them all the best for their future endeavors.
                                             onClick={() => updateStatus(selectedRequest.id, 'Rejected')}
                                             className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-2"
                                         >
-                                            <XCircle className="w-4 h-4" /> Reject
+                                            <XCircle className="w-4 h-4" /> {t('letters.reject')}
                                         </button>
                                         <button
                                             onClick={() => updateStatus(selectedRequest.id, 'Approved', selectedRequest)}
                                             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                                         >
-                                            <CheckCircle className="w-4 h-4" /> Approve & Send
+                                            <CheckCircle className="w-4 h-4" /> {t('letters.approve')}
                                         </button>
                                     </>
                                 )}
@@ -211,7 +260,7 @@ I wish them all the best for their future endeavors.
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                             <FileText className="w-16 h-16 mb-4 opacity-20" />
-                            <p>Select a request to view details</p>
+                            <p>{t('letters.select_request')}</p>
                         </div>
                     )}
                 </div>

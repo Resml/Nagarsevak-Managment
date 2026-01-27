@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { IndianRupee, PieChart, TrendingUp, Plus, Edit2, Save, X, Calendar } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { BudgetService } from '../../services/budgetService';
 import { type BudgetRecord } from '../../types';
 
 const BudgetDashboard = () => {
+    const { t } = useLanguage();
     const [year, setYear] = useState('2024-2025');
     const [budgets, setBudgets] = useState<BudgetRecord[]>([]);
     const [loading, setLoading] = useState(true);
@@ -44,6 +46,7 @@ const BudgetDashboard = () => {
             category: '',
             totalAllocation: 0,
             utilizedAmount: 0,
+            area: '',
             status: 'Active'
         });
         loadBudgets();
@@ -84,8 +87,8 @@ const BudgetDashboard = () => {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Ward Budget Management</h1>
-                    <p className="text-gray-600">Track fund allocation and utilization</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('budget.title')}</h1>
+                    <p className="text-gray-600">{t('budget.subtitle')}</p>
                 </div>
 
                 <div className="flex items-center gap-3 bg-white p-1 rounded-lg border border-gray-200">
@@ -106,7 +109,7 @@ const BudgetDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-medium text-gray-500">Total Allocated</h3>
+                        <h3 className="text-sm font-medium text-gray-500">{t('budget.allocated')}</h3>
                         <div className="p-2 bg-blue-50 rounded-lg">
                             <IndianRupee className="w-5 h-5 text-blue-600" />
                         </div>
@@ -120,7 +123,7 @@ const BudgetDashboard = () => {
 
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-medium text-gray-500">Total Utilized</h3>
+                        <h3 className="text-sm font-medium text-gray-500">{t('budget.utilized')}</h3>
                         <div className="p-2 bg-purple-50 rounded-lg">
                             <PieChart className="w-5 h-5 text-purple-600" />
                         </div>
@@ -137,26 +140,26 @@ const BudgetDashboard = () => {
 
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-medium text-gray-500">Remaining Funds</h3>
+                        <h3 className="text-sm font-medium text-gray-500">{t('budget.remaining')}</h3>
                         <div className="p-2 bg-green-50 rounded-lg">
                             <IndianRupee className="w-5 h-5 text-green-600" />
                         </div>
                     </div>
                     <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAllocated - totalUtilized)}</p>
-                    <p className="text-xs text-gray-500 mt-1">Available for use</p>
+                    <p className="text-xs text-gray-500 mt-1">{t('budget.available')}</p>
                 </div>
             </div>
 
             {/* Budget Heads */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-900">Budget Heads</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">{t('budget.budget_heads')}</h2>
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center space-x-2 text-brand-600 hover:text-brand-700 font-medium text-sm"
                     >
                         <Plus className="w-4 h-4" />
-                        <span>Add Allocation</span>
+                        <span>{t('budget.add_allocation')}</span>
                     </button>
                 </div>
 
@@ -164,22 +167,25 @@ const BudgetDashboard = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allocated</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilized</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('budget.col_category')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('budget.col_allocated')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('budget.col_utilized')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('budget.col_progress')}</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('budget.col_actions')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">Loading...</td></tr>
+                                <tr><td colSpan={5} className="px-6 py-4 text-center text-gray-500">{t('budget.loading')}</td></tr>
                             ) : budgets.length > 0 ? (
                                 budgets.map((budget) => {
                                     const percent = (budget.utilizedAmount / budget.totalAllocation) * 100;
                                     return (
                                         <tr key={budget.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{budget.category}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {budget.category}
+                                                {budget.area && <span className="block text-xs text-gray-400 font-normal">{budget.area}</span>}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(budget.totalAllocation)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(budget.utilizedAmount)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap align-middle">
@@ -216,7 +222,7 @@ const BudgetDashboard = () => {
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                         <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-900">New Budget Allocation</h2>
+                            <h2 className="text-xl font-bold text-gray-900">{t('budget.new_allocation_title')}</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
                             </button>
@@ -224,7 +230,7 @@ const BudgetDashboard = () => {
 
                         <form onSubmit={handleAdd} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Financial Year</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('budget.financial_year')}</label>
                                 <select
                                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 bg-white"
                                     value={formData.financialYear}
@@ -237,7 +243,7 @@ const BudgetDashboard = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Category / Head</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('budget.category_head')}</label>
                                 <input
                                     type="text" required
                                     placeholder="e.g. Road Maintenance"
@@ -248,7 +254,18 @@ const BudgetDashboard = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Total Allocation amount (₹)</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('budget.area')}</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Shivaji Nagar"
+                                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500"
+                                    value={formData.area || ''}
+                                    onChange={e => setFormData({ ...formData, area: e.target.value })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">{t('budget.amount')}</label>
                                 <input
                                     type="number" required
                                     placeholder="0"

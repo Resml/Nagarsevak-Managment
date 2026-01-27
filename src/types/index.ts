@@ -9,7 +9,7 @@ export interface User {
   assignedWard?: string; // For staff restricted to specific wards
 }
 
-export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint';
+export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified';
 export type ComplaintStatus = 'Pending' | 'Assigned' | 'InProgress' | 'Resolved' | 'Closed';
 
 export interface Complaint {
@@ -19,6 +19,7 @@ export interface Complaint {
   type: ComplaintType;
   status: ComplaintStatus;
   ward: string;
+  area?: string;
   location?: string;
   voterId?: string; // Optional link to a specific voter
   voter?: {
@@ -49,9 +50,13 @@ export interface Task {
 export interface Voter {
   id: string;
   name: string;
+  name_marathi?: string;
+  name_english?: string;
   age: number;
   gender: 'M' | 'F' | 'O';
   address: string;
+  address_marathi?: string;
+  address_english?: string;
   ward: string;
   booth: string;
   epicNo: string; // Voter ID Card Number
@@ -77,11 +82,16 @@ export interface Staff {
 export interface Sadasya {
   id: string;
   name: string;
+  name_marathi?: string;
+  name_english?: string;
   mobile: string;
   age: number;
   gender?: 'M' | 'F' | 'O';
   ward?: string;
+  area?: string;
   address: string;
+  address_marathi?: string;
+  address_english?: string;
   isVoter: boolean;
   voterId?: string; // Optional, only if isVoter is true
   registeredAt: string;
@@ -122,6 +132,7 @@ export interface BudgetRecord {
   category: string;
   totalAllocation: number;
   utilizedAmount: number;
+  area?: string;
   status: 'Active' | 'Closed';
   createdAt: string;
   updatedAt: string;

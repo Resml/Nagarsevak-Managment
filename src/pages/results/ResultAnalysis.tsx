@@ -9,10 +9,62 @@ const ResultAnalysis = () => {
     const [ward, setWard] = useState('Prabhag 5 A');
     const [results, setResults] = useState<ElectionResult[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedCandidate, setSelectedCandidate] = useState(CANDIDATE_NAME);
+    const [availableCandidates, setAvailableCandidates] = useState<string[]>([]);
 
     useEffect(() => {
         loadResults();
     }, [ward]);
+
+    // Update available candidates and default selection when results change
+    useEffect(() => {
+        if (results.length > 0) {
+            const candidates = Object.keys(results[0].candidateVotes);
+            setAvailableCandidates(candidates);
+
+            // Try to find Mamit first, else default to winner or first candidate
+            const mamit = candidates.find(k => k.includes('ममित') || k.includes('Mamit') || k.includes('Chougale'));
+
+            // If the currently selected candidate is NOT in the new list, switch.
+            if (!candidates.includes(selectedCandidate)) {
+                if (mamit) {
+                    setSelectedCandidate(mamit);
+                } else {
+                    // Default to the candidate with max total votes to show winning party stats
+                    let maxVotes = -1;
+                    let bestCand = candidates[0];
+                    candidates.forEach(c => {
+                        const total = results.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0);
+                        if (total > maxVotes) {
+                            maxVotes = total;
+                            bestCand = c;
+                        }
+                    });
+                    setSelectedCandidate(bestCand);
+                }
+            } else {
+                // If current selection is still valid, do nothing (keep selection)
+                // UNLESS we just switched wards and Mamit exists here, we might want to prefer Mamit?
+                // Actually sticking to user choice is usually better, but if we switch wards, maybe reset?
+                // Let's reset to "Smart Default" on ward change.
+                if (mamit) {
+                    setSelectedCandidate(mamit);
+                } else {
+                    // Default to max votes
+                    let maxVotes = -1;
+                    let bestCand = candidates[0];
+                    candidates.forEach(c => {
+                        const total = results.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0);
+                        if (total > maxVotes) {
+                            maxVotes = total;
+                            bestCand = c;
+                        }
+                    });
+                    setSelectedCandidate(bestCand);
+                }
+            }
+        }
+    }, [results]);
 
     const loadResults = async () => {
         setLoading(true);
@@ -21,12 +73,12 @@ const ResultAnalysis = () => {
         setLoading(false);
     };
 
-    // Calculations
+    // Calculations based on SELECTED Candidate
     const totalVotes = results.reduce((sum, r) => sum + r.totalVotesCasted, 0);
-    const ourVotes = results.reduce((sum, r) => sum + (r.candidateVotes[CANDIDATE_NAME] || 0), 0);
+    const ourVotes = results.reduce((sum, r) => sum + (r.candidateVotes[selectedCandidate] || 0), 0);
     const voteShare = totalVotes > 0 ? (ourVotes / totalVotes) * 100 : 0;
 
-    const winningBooths = results.filter(r => r.winner === CANDIDATE_NAME).length;
+    const winningBooths = results.filter(r => r.winner === selectedCandidate).length;
     const losingBooths = results.length - winningBooths;
 
     // Sort booths by margin (Losses first to analyze weak points, or Wins to celebrate?)
@@ -40,24 +92,39 @@ const ResultAnalysis = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Election Result Analysis</h1>
-                    <p className="text-gray-600">Performance report for {CANDIDATE_NAME}</p>
+                    <p className="text-gray-600">Performance report for <span className="font-semibold text-brand-600">{selectedCandidate}</span></p>
                 </div>
 
-                <div className="flex items-center gap-3 bg-white p-1 rounded-lg border border-gray-200">
-                    <span className="text-sm font-medium text-gray-500 ml-2">Select Ward:</span>
-                    <select
-                        className="bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-600"
-                        value={ward}
-                        onChange={(e) => setWard(e.target.value)}
-                    >
-                        <option value="Prabhag 5 A">Prabhag 5 A</option>
-                        <option value="Prabhag 5 B">Prabhag 5 B</option>
-                        <option value="Prabhag 5 C">Prabhag 5 C</option>
-                        <option value="Prabhag 5 D">Prabhag 5 D</option>
-                    </select>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200">
+                        <span className="text-sm font-medium text-gray-500 ml-2">Ward:</span>
+                        <select
+                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 max-w-[120px]"
+                            value={ward}
+                            onChange={(e) => setWard(e.target.value)}
+                        >
+                            <option value="Prabhag 5 A">Prabhag 5 A</option>
+                            <option value="Prabhag 5 B">Prabhag 5 B</option>
+                            <option value="Prabhag 5 C">Prabhag 5 C</option>
+                            <option value="Prabhag 5 D">Prabhag 5 D</option>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200">
+                        <span className="text-sm font-medium text-gray-500 ml-2">Analyze For:</span>
+                        <select
+                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-600 max-w-[200px]"
+                            value={selectedCandidate}
+                            onChange={(e) => setSelectedCandidate(e.target.value)}
+                        >
+                            {availableCandidates.map(c => (
+                                <option key={c} value={c}>{c}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -109,51 +176,65 @@ const ResultAnalysis = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Booth No</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Casted</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Our Votes</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visual</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead/Trail</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">Booth No</th>
+                                {sortedResults.length > 0 && Object.keys(sortedResults[0].candidateVotes).map(candidate => (
+                                    <th key={candidate} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                        <span className="line-clamp-2" title={candidate}>{candidate}</span>
+                                    </th>
+                                ))}
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
-                                <tr><td colSpan={6} className="px-6 py-4 text-center">Loading...</td></tr>
+                                <tr><td colSpan={10} className="px-6 py-4 text-center">Loading...</td></tr>
                             ) : sortedResults.map((r) => {
-                                const ourV = r.candidateVotes[CANDIDATE_NAME] || 0;
-                                const isWin = r.winner === CANDIDATE_NAME;
+                                const candidates = Object.keys(r.candidateVotes);
+                                const ourV = r.candidateVotes[selectedCandidate] || 0;
                                 return (
                                     <tr key={r.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
                                             {r.boothNumber}
-                                            <span className="block text-xs text-gray-500 font-normal">{r.boothName}</span>
+                                            {/* <span className="block text-xs text-gray-500 font-normal">{r.boothName}</span> */}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.totalVotesCasted}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{ourV}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap align-middle w-48">
-                                            <div className="flex h-2.5 w-full bg-gray-200 rounded-full overflow-hidden">
-                                                <div
-                                                    className="bg-brand-500 h-full"
-                                                    style={{ width: getBarWidth(ourV, r.totalVotesCasted) }}
-                                                ></div>
-                                            </div>
-                                            <span className="text-xs text-gray-500 mt-1">{((ourV / r.totalVotesCasted) * 100).toFixed(1)}%</span>
+                                        {candidates.map(c => {
+                                            const votes = r.candidateVotes[c];
+                                            const isWin = r.winner === c;
+                                            const isSelected = c === selectedCandidate;
+                                            return (
+                                                <td key={c} className={`px-6 py-4 whitespace-nowrap text-sm ${isWin ? 'font-bold text-green-700 bg-green-50' : isSelected ? 'font-medium text-brand-700 bg-brand-50' : 'text-gray-500'}`}>
+                                                    {votes}
+                                                </td>
+                                            );
+                                        })}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{r.totalVotesCasted}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-600 font-medium truncate max-w-[150px]" title={r.winner}>
+                                            {r.winner}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span className={isWin ? "text-green-600 font-medium" : "text-red-600 font-medium"}>
-                                                {isWin ? '+' : '-'}{r.margin}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${isWin ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                }`}>
-                                                {isWin ? 'Won' : 'Lost'}
-                                            </span>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {r.margin}
                                         </td>
                                     </tr>
                                 );
                             })}
+
+                            {/* Totals Row */}
+                            {!loading && sortedResults.length > 0 && (
+                                <tr className="bg-gray-100 font-bold">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-0 bg-gray-100">TOTAL</td>
+                                    {Object.keys(sortedResults[0].candidateVotes).map(c => (
+                                        <td key={c} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {sortedResults.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0).toLocaleString()}
+                                        </td>
+                                    ))}
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {sortedResults.reduce((sum, r) => sum + r.totalVotesCasted, 0).toLocaleString()}
+                                    </td>
+                                    <td colSpan={2}></td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

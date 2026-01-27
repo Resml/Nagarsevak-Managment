@@ -1,0 +1,3442 @@
+[
+  {
+    "id": "res_1",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/1",
+    "boothName": "Booth 5/1",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 91,
+      "रेश्मा राजेश मढवी": 212,
+      "अॅड. प्रियांका अरविंद माने": 118,
+      "औरादे जयश्री शंकरराव": 54,
+      "नोटा": 17
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 94,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_2",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/2",
+    "boothName": "Booth 5/2",
+    "totalVoters": 0,
+    "totalVotesCasted": 454,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 70,
+      "रेश्मा राजेश मढवी": 220,
+      "अॅड. प्रियांका अरविंद माने": 81,
+      "औरादे जयश्री शंकरराव": 69,
+      "नोटा": 14
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 139,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_3",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/3",
+    "boothName": "Booth 5/3",
+    "totalVoters": 0,
+    "totalVotesCasted": 495,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 90,
+      "रेश्मा राजेश मढवी": 277,
+      "अॅड. प्रियांका अरविंद माने": 81,
+      "औरादे जयश्री शंकरराव": 37,
+      "नोटा": 10
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 187,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_4",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/4",
+    "boothName": "Booth 5/4",
+    "totalVoters": 0,
+    "totalVotesCasted": 578,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 173,
+      "रेश्मा राजेश मढवी": 248,
+      "अॅड. प्रियांका अरविंद माने": 117,
+      "औरादे जयश्री शंकरराव": 16,
+      "नोटा": 24
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 75,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_5",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/5",
+    "boothName": "Booth 5/5",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 146,
+      "रेश्मा राजेश मढवी": 198,
+      "अॅड. प्रियांका अरविंद माने": 180,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 16
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 18,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_6",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/6",
+    "boothName": "Booth 5/6",
+    "totalVoters": 0,
+    "totalVotesCasted": 497,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 97,
+      "रेश्मा राजेश मढवी": 158,
+      "अॅड. प्रियांका अरविंद माने": 230,
+      "औरादे जयश्री शंकरराव": 8,
+      "नोटा": 4
+    },
+    "winner": "अॅड. प्रियांका अरविंद माने",
+    "margin": 72,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_7",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/7",
+    "boothName": "Booth 5/7",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 89,
+      "रेश्मा राजेश मढवी": 177,
+      "अॅड. प्रियांका अरविंद माने": 205,
+      "औरादे जयश्री शंकरराव": 5,
+      "नोटा": 17
+    },
+    "winner": "अॅड. प्रियांका अरविंद माने",
+    "margin": 28,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_8",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/8",
+    "boothName": "Booth 5/8",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 172,
+      "रेश्मा राजेश मढवी": 227,
+      "अॅड. प्रियांका अरविंद माने": 138,
+      "औरादे जयश्री शंकरराव": 7,
+      "नोटा": 7
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 55,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_9",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/9",
+    "boothName": "Booth 5/9",
+    "totalVoters": 0,
+    "totalVotesCasted": 400,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 88,
+      "रेश्मा राजेश मढवी": 211,
+      "अॅड. प्रियांका अरविंद माने": 84,
+      "औरादे जयश्री शंकरराव": 6,
+      "नोटा": 11
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 123,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_10",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/10",
+    "boothName": "Booth 5/10",
+    "totalVoters": 0,
+    "totalVotesCasted": 415,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 114,
+      "रेश्मा राजेश मढवी": 208,
+      "अॅड. प्रियांका अरविंद माने": 72,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 18
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 94,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_11",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/11",
+    "boothName": "Booth 5/11",
+    "totalVoters": 0,
+    "totalVotesCasted": 378,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 119,
+      "रेश्मा राजेश मढवी": 142,
+      "अॅड. प्रियांका अरविंद माने": 98,
+      "औरादे जयश्री शंकरराव": 5,
+      "नोटा": 14
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 23,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_12",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/12",
+    "boothName": "Booth 5/12",
+    "totalVoters": 0,
+    "totalVotesCasted": 358,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 60,
+      "रेश्मा राजेश मढवी": 189,
+      "अॅड. प्रियांका अरविंद माने": 90,
+      "औरादे जयश्री शंकरराव": 7,
+      "नोटा": 12
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 99,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_13",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/13",
+    "boothName": "Booth 5/13",
+    "totalVoters": 0,
+    "totalVotesCasted": 500,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 207,
+      "रेश्मा राजेश मढवी": 193,
+      "अॅड. प्रियांका अरविंद माने": 83,
+      "औरादे जयश्री शंकरराव": 5,
+      "नोटा": 12
+    },
+    "winner": "अॅड. भक्ती भाई केणी",
+    "margin": 14,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_14",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/14",
+    "boothName": "Booth 5/14",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 190,
+      "रेश्मा राजेश मढवी": 195,
+      "अॅड. प्रियांका अरविंद माने": 100,
+      "औरादे जयश्री शंकरराव": 7,
+      "नोटा": 18
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 5,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_15",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/15",
+    "boothName": "Booth 5/15",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 209,
+      "रेश्मा राजेश मढवी": 162,
+      "अॅड. प्रियांका अरविंद माने": 92,
+      "औरादे जयश्री शंकरराव": 11,
+      "नोटा": 18
+    },
+    "winner": "अॅड. भक्ती भाई केणी",
+    "margin": 47,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_16",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/16",
+    "boothName": "Booth 5/16",
+    "totalVoters": 0,
+    "totalVotesCasted": 442,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 195,
+      "रेश्मा राजेश मढवी": 156,
+      "अॅड. प्रियांका अरविंद माने": 75,
+      "औरादे जयश्री शंकरराव": 6,
+      "नोटा": 10
+    },
+    "winner": "अॅड. भक्ती भाई केणी",
+    "margin": 39,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_17",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/17",
+    "boothName": "Booth 5/17",
+    "totalVoters": 0,
+    "totalVotesCasted": 467,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 234,
+      "रेश्मा राजेश मढवी": 137,
+      "अॅड. प्रियांका अरविंद माने": 72,
+      "औरादे जयश्री शंकरराव": 6,
+      "नोटा": 18
+    },
+    "winner": "अॅड. भक्ती भाई केणी",
+    "margin": 97,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_18",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/18",
+    "boothName": "Booth 5/18",
+    "totalVoters": 0,
+    "totalVotesCasted": 513,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 132,
+      "रेश्मा राजेश मढवी": 288,
+      "अॅड. प्रियांका अरविंद माने": 83,
+      "औरादे जयश्री शंकरराव": 1,
+      "नोटा": 9
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 156,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_19",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/19",
+    "boothName": "Booth 5/19",
+    "totalVoters": 0,
+    "totalVotesCasted": 554,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 118,
+      "रेश्मा राजेश मढवी": 353,
+      "अॅड. प्रियांका अरविंद माने": 73,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 8
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 235,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_20",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/20",
+    "boothName": "Booth 5/20",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 101,
+      "रेश्मा राजेश मढवी": 304,
+      "अॅड. प्रियांका अरविंद माने": 92,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 14
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 203,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_21",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/21",
+    "boothName": "Booth 5/21",
+    "totalVoters": 0,
+    "totalVotesCasted": 464,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 116,
+      "रेश्मा राजेश मढवी": 252,
+      "अॅड. प्रियांका अरविंद माने": 85,
+      "औरादे जयश्री शंकरराव": 0,
+      "नोटा": 11
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 136,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_22",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/22",
+    "boothName": "Booth 5/22",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 103,
+      "रेश्मा राजेश मढवी": 302,
+      "अॅड. प्रियांका अरविंद माने": 93,
+      "औरादे जयश्री शंकरराव": 4,
+      "नोटा": 8
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 199,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_23",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/23",
+    "boothName": "Booth 5/23",
+    "totalVoters": 0,
+    "totalVotesCasted": 479,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 147,
+      "रेश्मा राजेश मढवी": 240,
+      "अॅड. प्रियांका अरविंद माने": 82,
+      "औरादे जयश्री शंकरराव": 0,
+      "नोटा": 10
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 93,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_24",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/24",
+    "boothName": "Booth 5/24",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 140,
+      "रेश्मा राजेश मढवी": 260,
+      "अॅड. प्रियांका अरविंद माने": 134,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 15
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 120,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_25",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/25",
+    "boothName": "Booth 5/25",
+    "totalVoters": 0,
+    "totalVotesCasted": 518,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 168,
+      "रेश्मा राजेश मढवी": 226,
+      "अॅड. प्रियांका अरविंद माने": 111,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 11
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 58,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_26",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/26",
+    "boothName": "Booth 5/26",
+    "totalVoters": 0,
+    "totalVotesCasted": 501,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 169,
+      "रेश्मा राजेश मढवी": 190,
+      "अॅड. प्रियांका अरविंद माने": 121,
+      "औरादे जयश्री शंकरराव": 1,
+      "नोटा": 20
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 21,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_27",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/27",
+    "boothName": "Booth 5/27",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 180,
+      "रेश्मा राजेश मढवी": 189,
+      "अॅड. प्रियांका अरविंद माने": 107,
+      "औरादे जयश्री शंकरराव": 0,
+      "नोटा": 17
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 9,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_28",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/28",
+    "boothName": "Booth 5/28",
+    "totalVoters": 0,
+    "totalVotesCasted": 571,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 178,
+      "रेश्मा राजेश मढवी": 234,
+      "अॅड. प्रियांका अरविंद माने": 136,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 20
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 56,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_29",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/29",
+    "boothName": "Booth 5/29",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 204,
+      "रेश्मा राजेश मढवी": 228,
+      "अॅड. प्रियांका अरविंद माने": 90,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 17
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 24,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_30",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/30",
+    "boothName": "Booth 5/30",
+    "totalVoters": 0,
+    "totalVotesCasted": 477,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 119,
+      "रेश्मा राजेश मढवी": 231,
+      "अॅड. प्रियांका अरविंद माने": 108,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 17
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 112,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_31",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/31",
+    "boothName": "Booth 5/31",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 128,
+      "रेश्मा राजेश मढवी": 270,
+      "अॅड. प्रियांका अरविंद माने": 97,
+      "औरादे जयश्री शंकरराव": 4,
+      "नोटा": 15
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 142,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_32",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/32",
+    "boothName": "Booth 5/32",
+    "totalVoters": 0,
+    "totalVotesCasted": 560,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 117,
+      "रेश्मा राजेश मढवी": 346,
+      "अॅड. प्रियांका अरविंद माने": 85,
+      "औरादे जयश्री शंकरराव": 0,
+      "नोटा": 12
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 229,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_33",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/33",
+    "boothName": "Booth 5/33",
+    "totalVoters": 0,
+    "totalVotesCasted": 506,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 192,
+      "रेश्मा राजेश मढवी": 187,
+      "अॅड. प्रियांका अरविंद माने": 107,
+      "औरादे जयश्री शंकरराव": 4,
+      "नोटा": 16
+    },
+    "winner": "अॅड. भक्ती भाई केणी",
+    "margin": 5,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_34",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/34",
+    "boothName": "Booth 5/34",
+    "totalVoters": 0,
+    "totalVotesCasted": 463,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 100,
+      "रेश्मा राजेश मढवी": 285,
+      "अॅड. प्रियांका अरविंद माने": 68,
+      "औरादे जयश्री शंकरराव": 5,
+      "नोटा": 5
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 185,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_35",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/35",
+    "boothName": "Booth 5/35",
+    "totalVoters": 0,
+    "totalVotesCasted": 354,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 72,
+      "रेश्मा राजेश मढवी": 199,
+      "अॅड. प्रियांका अरविंद माने": 67,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 13
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 127,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_36",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/36",
+    "boothName": "Booth 5/36",
+    "totalVoters": 0,
+    "totalVotesCasted": 426,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 103,
+      "रेश्मा राजेश मढवी": 210,
+      "अॅड. प्रियांका अरविंद माने": 103,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 7
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 107,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_37",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/37",
+    "boothName": "Booth 5/37",
+    "totalVoters": 0,
+    "totalVotesCasted": 367,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 85,
+      "रेश्मा राजेश मढवी": 208,
+      "अॅड. प्रियांका अरविंद माने": 55,
+      "औरादे जयश्री शंकरराव": 2,
+      "नोटा": 17
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 123,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_38",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/38",
+    "boothName": "Booth 5/38",
+    "totalVoters": 0,
+    "totalVotesCasted": 416,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 92,
+      "रेश्मा राजेश मढवी": 204,
+      "अॅड. प्रियांका अरविंद माने": 95,
+      "औरादे जयश्री शंकरराव": 3,
+      "नोटा": 22
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 109,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_39",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/39",
+    "boothName": "Booth 5/39",
+    "totalVoters": 0,
+    "totalVotesCasted": 453,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 116,
+      "रेश्मा राजेश मढवी": 231,
+      "अॅड. प्रियांका अरविंद माने": 82,
+      "औरादे जयश्री शंकरराव": 5,
+      "नोटा": 19
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 115,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_40",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "5/40",
+    "boothName": "Booth 5/40",
+    "totalVoters": 0,
+    "totalVotesCasted": 437,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 87,
+      "रेश्मा राजेश मढवी": 236,
+      "अॅड. प्रियांका अरविंद माने": 97,
+      "औरादे जयश्री शंकरराव": 4,
+      "नोटा": 13
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 139,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_41",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "boothName": "Booth सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "totalVoters": 0,
+    "totalVotesCasted": 19247,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 5311,
+      "रेश्मा राजेश मढवी": 8983,
+      "अॅड. प्रियांका अरविंद माने": 4087,
+      "औरादे जयश्री शंकरराव": 310,
+      "नोटा": 556
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 3672,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_42",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "टपाल मतदान",
+    "boothName": "Booth टपाल मतदान",
+    "totalVoters": 0,
+    "totalVotesCasted": 106,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 20,
+      "रेश्मा राजेश मढवी": 58,
+      "अॅड. प्रियांका अरविंद माने": 25,
+      "औरादे जयश्री शंकरराव": 0,
+      "नोटा": 3
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 33,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_43",
+    "wardName": "Prabhag 5 A",
+    "boothNumber": "एकूण मत",
+    "boothName": "Booth एकूण मत",
+    "totalVoters": 0,
+    "totalVotesCasted": 19353,
+    "candidateVotes": {
+      "अॅड. भक्ती भाई केणी": 5331,
+      "रेश्मा राजेश मढवी": 9041,
+      "अॅड. प्रियांका अरविंद माने": 4112,
+      "औरादे जयश्री शंकरराव": 310,
+      "नोटा": 559
+    },
+    "winner": "रेश्मा राजेश मढवी",
+    "margin": 3710,
+    "createdAt": "2026-01-26T14:49:59.742Z"
+  },
+  {
+    "id": "res_44",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/1",
+    "boothName": "Booth 5/1",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 120,
+      "जिरगे श्रेया सुदर्शन": 223,
+      "फडतरे स्वाती विशाल": 9,
+      "सौ. तेजश्री करण मढवी": 114,
+      "शिंदेकर प्रिती प्रभाकर": 8,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 17
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 103,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_45",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/2",
+    "boothName": "Booth 5/2",
+    "totalVoters": 0,
+    "totalVotesCasted": 454,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 99,
+      "जिरगे श्रेया सुदर्शन": 233,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 93,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 3,
+      "नोटा": 15
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 134,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_46",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/3",
+    "boothName": "Booth 5/3",
+    "totalVoters": 0,
+    "totalVotesCasted": 495,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 70,
+      "जिरगे श्रेया सुदर्शन": 285,
+      "फडतरे स्वाती विशाल": 9,
+      "सौ. तेजश्री करण मढवी": 113,
+      "शिंदेकर प्रिती प्रभाकर": 1,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 15
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 172,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_47",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/4",
+    "boothName": "Booth 5/4",
+    "totalVoters": 0,
+    "totalVotesCasted": 578,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 108,
+      "जिरगे श्रेया सुदर्शन": 240,
+      "फडतरे स्वाती विशाल": 6,
+      "सौ. तेजश्री करण मढवी": 195,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 22
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 45,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_48",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/5",
+    "boothName": "Booth 5/5",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 149,
+      "जिरगे श्रेया सुदर्शन": 203,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 167,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 13
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 36,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_49",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/6",
+    "boothName": "Booth 5/6",
+    "totalVoters": 0,
+    "totalVotesCasted": 497,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 199,
+      "जिरगे श्रेया सुदर्शन": 160,
+      "फडतरे स्वाती विशाल": 3,
+      "सौ. तेजश्री करण मढवी": 116,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 13
+    },
+    "winner": "पूनम अमित आगवणे",
+    "margin": 39,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_50",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/7",
+    "boothName": "Booth 5/7",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 160,
+      "जिरगे श्रेया सुदर्शन": 174,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 119,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 25
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 14,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_51",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/8",
+    "boothName": "Booth 5/8",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 129,
+      "जिरगे श्रेया सुदर्शन": 217,
+      "फडतरे स्वाती विशाल": 3,
+      "सौ. तेजश्री करण मढवी": 188,
+      "शिंदेकर प्रिती प्रभाकर": 0,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 12
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 29,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_52",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/9",
+    "boothName": "Booth 5/9",
+    "totalVoters": 0,
+    "totalVotesCasted": 400,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 86,
+      "जिरगे श्रेया सुदर्शन": 197,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 91,
+      "शिंदेकर प्रिती प्रभाकर": 6,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 13
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 106,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_53",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/10",
+    "boothName": "Booth 5/10",
+    "totalVoters": 0,
+    "totalVotesCasted": 415,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 78,
+      "जिरगे श्रेया सुदर्शन": 196,
+      "फडतरे स्वाती विशाल": 3,
+      "सौ. तेजश्री करण मढवी": 115,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 20
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 81,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_54",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/11",
+    "boothName": "Booth 5/11",
+    "totalVoters": 0,
+    "totalVotesCasted": 378,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 83,
+      "जिरगे श्रेया सुदर्शन": 151,
+      "फडतरे स्वाती विशाल": 5,
+      "सौ. तेजश्री करण मढवी": 124,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 12
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 27,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_55",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/12",
+    "boothName": "Booth 5/12",
+    "totalVoters": 0,
+    "totalVotesCasted": 358,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 80,
+      "जिरगे श्रेया सुदर्शन": 191,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 63,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 11
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 111,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_56",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/13",
+    "boothName": "Booth 5/13",
+    "totalVoters": 0,
+    "totalVotesCasted": 500,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 161,
+      "जिरगे श्रेया सुदर्शन": 150,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 166,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 12
+    },
+    "winner": "सौ. तेजश्री करण मढवी",
+    "margin": 5,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_57",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/14",
+    "boothName": "Booth 5/14",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 167,
+      "जिरगे श्रेया सुदर्शन": 153,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 157,
+      "शिंदेकर प्रिती प्रभाकर": 9,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 15
+    },
+    "winner": "पूनम अमित आगवणे",
+    "margin": 10,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_58",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/15",
+    "boothName": "Booth 5/15",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 211,
+      "जिरगे श्रेया सुदर्शन": 106,
+      "फडतरे स्वाती विशाल": 0,
+      "सौ. तेजश्री करण मढवी": 161,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 10
+    },
+    "winner": "पूनम अमित आगवणे",
+    "margin": 50,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_59",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/16",
+    "boothName": "Booth 5/16",
+    "totalVoters": 0,
+    "totalVotesCasted": 442,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 149,
+      "जिरगे श्रेया सुदर्शन": 115,
+      "फडतरे स्वाती विशाल": 6,
+      "सौ. तेजश्री करण मढवी": 163,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 4
+    },
+    "winner": "सौ. तेजश्री करण मढवी",
+    "margin": 14,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_60",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/17",
+    "boothName": "Booth 5/17",
+    "totalVoters": 0,
+    "totalVotesCasted": 467,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 180,
+      "जिरगे श्रेया सुदर्शन": 79,
+      "फडतरे स्वाती विशाल": 0,
+      "सौ. तेजश्री करण मढवी": 193,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 13
+    },
+    "winner": "सौ. तेजश्री करण मढवी",
+    "margin": 13,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_61",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/18",
+    "boothName": "Booth 5/18",
+    "totalVoters": 0,
+    "totalVotesCasted": 513,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 123,
+      "जिरगे श्रेया सुदर्शन": 237,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 134,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 9
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 103,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_62",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/19",
+    "boothName": "Booth 5/19",
+    "totalVoters": 0,
+    "totalVotesCasted": 554,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 147,
+      "जिरगे श्रेया सुदर्शन": 276,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 106,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 14
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 129,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_63",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/20",
+    "boothName": "Booth 5/20",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 136,
+      "जिरगे श्रेया सुदर्शन": 251,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 91,
+      "शिंदेकर प्रिती प्रभाकर": 6,
+      "सोमवंशी सरिता मोहन": 3,
+      "नोटा": 23
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 115,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_64",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/21",
+    "boothName": "Booth 5/21",
+    "totalVoters": 0,
+    "totalVotesCasted": 464,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 128,
+      "जिरगे श्रेया सुदर्शन": 209,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 108,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 12
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 81,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_65",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/22",
+    "boothName": "Booth 5/22",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 112,
+      "जिरगे श्रेया सुदर्शन": 262,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 99,
+      "शिंदेकर प्रिती प्रभाकर": 8,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 18
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 150,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_66",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/23",
+    "boothName": "Booth 5/23",
+    "totalVoters": 0,
+    "totalVotesCasted": 479,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 118,
+      "जिरगे श्रेया सुदर्शन": 221,
+      "फडतरे स्वाती विशाल": 9,
+      "सौ. तेजश्री करण मढवी": 119,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 8
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 102,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_67",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/24",
+    "boothName": "Booth 5/24",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 169,
+      "जिरगे श्रेया सुदर्शन": 218,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 130,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 18
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 49,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_68",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/25",
+    "boothName": "Booth 5/25",
+    "totalVoters": 0,
+    "totalVotesCasted": 518,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 135,
+      "जिरगे श्रेया सुदर्शन": 194,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 155,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 17
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 39,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_69",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/26",
+    "boothName": "Booth 5/26",
+    "totalVoters": 0,
+    "totalVotesCasted": 501,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 119,
+      "जिरगे श्रेया सुदर्शन": 171,
+      "फडतरे स्वाती विशाल": 5,
+      "सौ. तेजश्री करण मढवी": 174,
+      "शिंदेकर प्रिती प्रभाकर": 7,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 23
+    },
+    "winner": "सौ. तेजश्री करण मढवी",
+    "margin": 3,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_70",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/27",
+    "boothName": "Booth 5/27",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 113,
+      "जिरगे श्रेया सुदर्शन": 186,
+      "फडतरे स्वाती विशाल": 7,
+      "सौ. तेजश्री करण मढवी": 167,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 16
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 19,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_71",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/28",
+    "boothName": "Booth 5/28",
+    "totalVoters": 0,
+    "totalVotesCasted": 571,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 146,
+      "जिरगे श्रेया सुदर्शन": 212,
+      "फडतरे स्वाती विशाल": 11,
+      "सौ. तेजश्री करण मढवी": 175,
+      "शिंदेकर प्रिती प्रभाकर": 8,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 19
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 37,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_72",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/29",
+    "boothName": "Booth 5/29",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 104,
+      "जिरगे श्रेया सुदर्शन": 212,
+      "फडतरे स्वाती विशाल": 8,
+      "सौ. तेजश्री करण मढवी": 195,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 19
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 17,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_73",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/30",
+    "boothName": "Booth 5/30",
+    "totalVoters": 0,
+    "totalVotesCasted": 477,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 143,
+      "जिरगे श्रेया सुदर्शन": 191,
+      "फडतरे स्वाती विशाल": 3,
+      "सौ. तेजश्री करण मढवी": 114,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 2,
+      "नोटा": 20
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 48,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_74",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/31",
+    "boothName": "Booth 5/31",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 127,
+      "जिरगे श्रेया सुदर्शन": 243,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 116,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 20
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 116,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_75",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/32",
+    "boothName": "Booth 5/32",
+    "totalVoters": 0,
+    "totalVotesCasted": 560,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 145,
+      "जिरगे श्रेया सुदर्शन": 295,
+      "फडतरे स्वाती विशाल": 4,
+      "सौ. तेजश्री करण मढवी": 98,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 14
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 150,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_76",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/33",
+    "boothName": "Booth 5/33",
+    "totalVoters": 0,
+    "totalVotesCasted": 506,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 150,
+      "जिरगे श्रेया सुदर्शन": 164,
+      "फडतरे स्वाती विशाल": 10,
+      "सौ. तेजश्री करण मढवी": 159,
+      "शिंदेकर प्रिती प्रभाकर": 5,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 17
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 5,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_77",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/34",
+    "boothName": "Booth 5/34",
+    "totalVoters": 0,
+    "totalVotesCasted": 463,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 118,
+      "जिरगे श्रेया सुदर्शन": 242,
+      "फडतरे स्वाती विशाल": 11,
+      "सौ. तेजश्री करण मढवी": 75,
+      "शिंदेकर प्रिती प्रभाकर": 4,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 12
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 124,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_78",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/35",
+    "boothName": "Booth 5/35",
+    "totalVoters": 0,
+    "totalVotesCasted": 354,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 59,
+      "जिरगे श्रेया सुदर्शन": 194,
+      "फडतरे स्वाती विशाल": 8,
+      "सौ. तेजश्री करण मढवी": 79,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 11
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 115,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_79",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/36",
+    "boothName": "Booth 5/36",
+    "totalVoters": 0,
+    "totalVotesCasted": 426,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 95,
+      "जिरगे श्रेया सुदर्शन": 218,
+      "फडतरे स्वाती विशाल": 3,
+      "सौ. तेजश्री करण मढवी": 100,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 8
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 118,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_80",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/37",
+    "boothName": "Booth 5/37",
+    "totalVoters": 0,
+    "totalVotesCasted": 367,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 51,
+      "जिरगे श्रेया सुदर्शन": 203,
+      "फडतरे स्वाती विशाल": 15,
+      "सौ. तेजश्री करण मढवी": 85,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 3,
+      "नोटा": 8
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 118,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_81",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/38",
+    "boothName": "Booth 5/38",
+    "totalVoters": 0,
+    "totalVotesCasted": 416,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 82,
+      "जिरगे श्रेया सुदर्शन": 222,
+      "फडतरे स्वाती विशाल": 8,
+      "सौ. तेजश्री करण मढवी": 87,
+      "शिंदेकर प्रिती प्रभाकर": 7,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 10
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 135,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_82",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/39",
+    "boothName": "Booth 5/39",
+    "totalVoters": 0,
+    "totalVotesCasted": 453,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 75,
+      "जिरगे श्रेया सुदर्शन": 221,
+      "फडतरे स्वाती विशाल": 15,
+      "सौ. तेजश्री करण मढवी": 126,
+      "शिंदेकर प्रिती प्रभाकर": 2,
+      "सोमवंशी सरिता मोहन": 0,
+      "नोटा": 14
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 95,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_83",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "5/40",
+    "boothName": "Booth 5/40",
+    "totalVoters": 0,
+    "totalVotesCasted": 437,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 87,
+      "जिरगे श्रेया सुदर्शन": 258,
+      "फडतरे स्वाती विशाल": 1,
+      "सौ. तेजश्री करण मढवी": 76,
+      "शिंदेकर प्रिती प्रभाकर": 3,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 11
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 171,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_84",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "boothName": "Booth सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "totalVoters": 0,
+    "totalVotesCasted": 19247,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 4911,
+      "जिरगे श्रेया सुदर्शन": 8173,
+      "फडतरे स्वाती विशाल": 267,
+      "सौ. तेजश्री करण मढवी": 5106,
+      "शिंदेकर प्रिती प्रभाकर": 163,
+      "सोमवंशी सरिता मोहन": 44,
+      "नोटा": 583
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 3067,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_85",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "टपाल मतदान",
+    "boothName": "Booth टपाल मतदान",
+    "totalVoters": 0,
+    "totalVotesCasted": 104,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 30,
+      "जिरगे श्रेया सुदर्शन": 41,
+      "फडतरे स्वाती विशाल": 0,
+      "सौ. तेजश्री करण मढवी": 28,
+      "शिंदेकर प्रिती प्रभाकर": 1,
+      "सोमवंशी सरिता मोहन": 1,
+      "नोटा": 3
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 11,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_86",
+    "wardName": "Prabhag 5 C",
+    "boothNumber": "एकूण मत",
+    "boothName": "Booth एकूण मत",
+    "totalVoters": 0,
+    "totalVotesCasted": 19351,
+    "candidateVotes": {
+      "पूनम अमित आगवणे": 4941,
+      "जिरगे श्रेया सुदर्शन": 8214,
+      "फडतरे स्वाती विशाल": 267,
+      "सौ. तेजश्री करण मढवी": 5134,
+      "शिंदेकर प्रिती प्रभाकर": 164,
+      "सोमवंशी सरिता मोहन": 45,
+      "नोटा": 586
+    },
+    "winner": "जिरगे श्रेया सुदर्शन",
+    "margin": 3080,
+    "createdAt": "2026-01-26T14:49:59.745Z"
+  },
+  {
+    "id": "res_87",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/1",
+    "boothName": "Booth 5/1",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 111,
+      "अशोक भाऊसो पाटील": 257,
+      "बोबडे महादेव आनंदराव": 23,
+      "सौ. विनया मनोहर मढवी": 71,
+      "सुर्यवंशी देवराम सिताराम": 5,
+      "चौगुले तुकाराम नामदेव": 6,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 11
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 146,
+    "createdAt": "2026-01-26T14:49:59.747Z"
+  },
+  {
+    "id": "res_88",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/2",
+    "boothName": "Booth 5/2",
+    "totalVoters": 0,
+    "totalVotesCasted": 454,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 87,
+      "अशोक भाऊसो पाटील": 251,
+      "बोबडे महादेव आनंदराव": 19,
+      "सौ. विनया मनोहर मढवी": 78,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 4,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 5,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 8
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 164,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_89",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/3",
+    "boothName": "Booth 5/3",
+    "totalVoters": 0,
+    "totalVotesCasted": 495,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 58,
+      "अशोक भाऊसो पाटील": 320,
+      "बोबडे महादेव आनंदराव": 15,
+      "सौ. विनया मनोहर मढवी": 82,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 5,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 3,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 9
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 238,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_90",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/4",
+    "boothName": "Booth 5/4",
+    "totalVoters": 0,
+    "totalVotesCasted": 578,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 104,
+      "अशोक भाऊसो पाटील": 301,
+      "बोबडे महादेव आनंदराव": 9,
+      "सौ. विनया मनोहर मढवी": 136,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 10,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 6,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 10
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 165,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_91",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/5",
+    "boothName": "Booth 5/5",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 168,
+      "अशोक भाऊसो पाटील": 249,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 104,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 4,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 1,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 8
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 81,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_92",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/6",
+    "boothName": "Booth 5/6",
+    "totalVoters": 0,
+    "totalVotesCasted": 497,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 161,
+      "अशोक भाऊसो पाटील": 236,
+      "बोबडे महादेव आनंदराव": 2,
+      "सौ. विनया मनोहर मढवी": 78,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 2,
+      "पागिरे दिनकर खंडू": 6,
+      "माने अरविंद बापू ": 3,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 7
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 75,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_93",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/7",
+    "boothName": "Booth 5/7",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 145,
+      "अशोक भाऊसो पाटील": 249,
+      "बोबडे महादेव आनंदराव": 7,
+      "सौ. विनया मनोहर मढवी": 60,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 6,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 7,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 13
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 104,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_94",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/8",
+    "boothName": "Booth 5/8",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 129,
+      "अशोक भाऊसो पाटील": 279,
+      "बोबडे महादेव आनंदराव": 2,
+      "सौ. विनया मनोहर मढवी": 129,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 2,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 8
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 150,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_95",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/9",
+    "boothName": "Booth 5/9",
+    "totalVoters": 0,
+    "totalVotesCasted": 400,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 99,
+      "अशोक भाऊसो पाटील": 188,
+      "बोबडे महादेव आनंदराव": 7,
+      "सौ. विनया मनोहर मढवी": 88,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 8
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 89,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_96",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/10",
+    "boothName": "Booth 5/10",
+    "totalVoters": 0,
+    "totalVotesCasted": 415,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 92,
+      "अशोक भाऊसो पाटील": 174,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 115,
+      "सुर्यवंशी देवराम सिताराम": 6,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 16
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 59,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_97",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/11",
+    "boothName": "Booth 5/11",
+    "totalVoters": 0,
+    "totalVotesCasted": 378,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 103,
+      "अशोक भाऊसो पाटील": 133,
+      "बोबडे महादेव आनंदराव": 4,
+      "सौ. विनया मनोहर मढवी": 124,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 3,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 5,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 6
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 9,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_98",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/12",
+    "boothName": "Booth 5/12",
+    "totalVoters": 0,
+    "totalVotesCasted": 358,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 96,
+      "अशोक भाऊसो पाटील": 176,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 63,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 2,
+      "नोटा": 11
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 80,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_99",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/13",
+    "boothName": "Booth 5/13",
+    "totalVoters": 0,
+    "totalVotesCasted": 500,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 151,
+      "अशोक भाऊसो पाटील": 144,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 164,
+      "सुर्यवंशी देवराम सिताराम": 6,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 14,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 11
+    },
+    "winner": "सौ. विनया मनोहर मढवी",
+    "margin": 13,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_100",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/14",
+    "boothName": "Booth 5/14",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 159,
+      "अशोक भाऊसो पाटील": 139,
+      "बोबडे महादेव आनंदराव": 6,
+      "सौ. विनया मनोहर मढवी": 156,
+      "सुर्यवंशी देवराम सिताराम": 7,
+      "चौगुले तुकाराम नामदेव": 3,
+      "ननावरे महेश": 2,
+      "पागिरे दिनकर खंडू": 22,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 12
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 3,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_101",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/15",
+    "boothName": "Booth 5/15",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 155,
+      "अशोक भाऊसो पाटील": 111,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 181,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 16,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 14
+    },
+    "winner": "सौ. विनया मनोहर मढवी",
+    "margin": 26,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_102",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/16",
+    "boothName": "Booth 5/16",
+    "totalVoters": 0,
+    "totalVotesCasted": 442,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 125,
+      "अशोक भाऊसो पाटील": 125,
+      "बोबडे महादेव आनंदराव": 6,
+      "सौ. विनया मनोहर मढवी": 163,
+      "सुर्यवंशी देवराम सिताराम": 5,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 9,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 7
+    },
+    "winner": "सौ. विनया मनोहर मढवी",
+    "margin": 38,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_103",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/17",
+    "boothName": "Booth 5/17",
+    "totalVoters": 0,
+    "totalVotesCasted": 467,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 133,
+      "अशोक भाऊसो पाटील": 109,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 198,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 7,
+      "माने अरविंद बापू ": 3,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 14
+    },
+    "winner": "सौ. विनया मनोहर मढवी",
+    "margin": 65,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_104",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/18",
+    "boothName": "Booth 5/18",
+    "totalVoters": 0,
+    "totalVotesCasted": 513,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 191,
+      "अशोक भाऊसो पाटील": 184,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 111,
+      "सुर्यवंशी देवराम सिताराम": 7,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 7,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 8
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 7,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_105",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/19",
+    "boothName": "Booth 5/19",
+    "totalVoters": 0,
+    "totalVotesCasted": 554,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 264,
+      "अशोक भाऊसो पाटील": 212,
+      "बोबडे महादेव आनंदराव": 4,
+      "सौ. विनया मनोहर मढवी": 62,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 6
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 52,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_106",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/20",
+    "boothName": "Booth 5/20",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 230,
+      "अशोक भाऊसो पाटील": 187,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 68,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 12
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 43,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_107",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/21",
+    "boothName": "Booth 5/21",
+    "totalVoters": 0,
+    "totalVotesCasted": 464,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 220,
+      "अशोक भाऊसो पाटील": 161,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 71,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 6
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 59,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_108",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/22",
+    "boothName": "Booth 5/22",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 207,
+      "अशोक भाऊसो पाटील": 201,
+      "बोबडे महादेव आनंदराव": 4,
+      "सौ. विनया मनोहर मढवी": 70,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 4,
+      "पागिरे दिनकर खंडू": 3,
+      "माने अरविंद बापू ": 12,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 5
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 6,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_109",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/23",
+    "boothName": "Booth 5/23",
+    "totalVoters": 0,
+    "totalVotesCasted": 479,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 189,
+      "अशोक भाऊसो पाटील": 159,
+      "बोबडे महादेव आनंदराव": 6,
+      "सौ. विनया मनोहर मढवी": 105,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 2,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 3,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 7
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 30,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_110",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/24",
+    "boothName": "Booth 5/24",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 270,
+      "अशोक भाऊसो पाटील": 165,
+      "बोबडे महादेव आनंदराव": 9,
+      "सौ. विनया मनोहर मढवी": 89,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 2,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 6
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 105,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_111",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/25",
+    "boothName": "Booth 5/25",
+    "totalVoters": 0,
+    "totalVotesCasted": 518,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 206,
+      "अशोक भाऊसो पाटील": 153,
+      "बोबडे महादेव आनंदराव": 7,
+      "सौ. विनया मनोहर मढवी": 125,
+      "सुर्यवंशी देवराम सिताराम": 4,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 4,
+      "पागिरे दिनकर खंडू": 5,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 12
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 53,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_112",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/26",
+    "boothName": "Booth 5/26",
+    "totalVoters": 0,
+    "totalVotesCasted": 501,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 196,
+      "अशोक भाऊसो पाटील": 125,
+      "बोबडे महादेव आनंदराव": 6,
+      "सौ. विनया मनोहर मढवी": 149,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 4,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 1,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 17
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 47,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_113",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/27",
+    "boothName": "Booth 5/27",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 187,
+      "अशोक भाऊसो पाटील": 121,
+      "बोबडे महादेव आनंदराव": 8,
+      "सौ. विनया मनोहर मढवी": 151,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 9,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 10
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 36,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_114",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/28",
+    "boothName": "Booth 5/28",
+    "totalVoters": 0,
+    "totalVotesCasted": 571,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 240,
+      "अशोक भाऊसो पाटील": 140,
+      "बोबडे महादेव आनंदराव": 9,
+      "सौ. विनया मनोहर मढवी": 150,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 4,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 19
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 90,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_115",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/29",
+    "boothName": "Booth 5/29",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 198,
+      "अशोक भाऊसो पाटील": 148,
+      "बोबडे महादेव आनंदराव": 7,
+      "सौ. विनया मनोहर मढवी": 165,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 3,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 3,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 16
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 33,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_116",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/30",
+    "boothName": "Booth 5/30",
+    "totalVoters": 0,
+    "totalVotesCasted": 477,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 225,
+      "अशोक भाऊसो पाटील": 125,
+      "बोबडे महादेव आनंदराव": 2,
+      "सौ. विनया मनोहर मढवी": 98,
+      "सुर्यवंशी देवराम सिताराम": 0,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 4,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 15
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 100,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_117",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/31",
+    "boothName": "Booth 5/31",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 226,
+      "अशोक भाऊसो पाटील": 171,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 91,
+      "सुर्यवंशी देवराम सिताराम": 4,
+      "चौगुले तुकाराम नामदेव": 3,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 3,
+      "माने अरविंद बापू ": 1,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 9
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 55,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_118",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/32",
+    "boothName": "Booth 5/32",
+    "totalVoters": 0,
+    "totalVotesCasted": 560,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 254,
+      "अशोक भाऊसो पाटील": 216,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 71,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 0,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 5,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 6
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 38,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_119",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/33",
+    "boothName": "Booth 5/33",
+    "totalVoters": 0,
+    "totalVotesCasted": 506,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 211,
+      "अशोक भाऊसो पाटील": 129,
+      "बोबडे महादेव आनंदराव": 5,
+      "सौ. विनया मनोहर मढवी": 138,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 3,
+      "माने अरविंद बापू ": 6,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 10
+    },
+    "winner": "चेतन प्रकाश नाईक",
+    "margin": 73,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_120",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/34",
+    "boothName": "Booth 5/34",
+    "totalVoters": 0,
+    "totalVotesCasted": 463,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 178,
+      "अशोक भाऊसो पाटील": 203,
+      "बोबडे महादेव आनंदराव": 7,
+      "सौ. विनया मनोहर मढवी": 58,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 6,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 3,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 2
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 25,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_121",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/35",
+    "boothName": "Booth 5/35",
+    "totalVoters": 0,
+    "totalVotesCasted": 354,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 75,
+      "अशोक भाऊसो पाटील": 162,
+      "बोबडे महादेव आनंदराव": 10,
+      "सौ. विनया मनोहर मढवी": 93,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 3,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 9
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 69,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_122",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/36",
+    "boothName": "Booth 5/36",
+    "totalVoters": 0,
+    "totalVotesCasted": 426,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 119,
+      "अशोक भाऊसो पाटील": 156,
+      "बोबडे महादेव आनंदराव": 2,
+      "सौ. विनया मनोहर मढवी": 131,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 3,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 9
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 25,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_123",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/37",
+    "boothName": "Booth 5/37",
+    "totalVoters": 0,
+    "totalVotesCasted": 367,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 76,
+      "अशोक भाऊसो पाटील": 167,
+      "बोबडे महादेव आनंदराव": 23,
+      "सौ. विनया मनोहर मढवी": 81,
+      "सुर्यवंशी देवराम सिताराम": 3,
+      "चौगुले तुकाराम नामदेव": 5,
+      "ननावरे महेश": 3,
+      "पागिरे दिनकर खंडू": 0,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 3,
+      "नोटा": 4
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 86,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_124",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/38",
+    "boothName": "Booth 5/38",
+    "totalVoters": 0,
+    "totalVotesCasted": 416,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 112,
+      "अशोक भाऊसो पाटील": 174,
+      "बोबडे महादेव आनंदराव": 9,
+      "सौ. विनया मनोहर मढवी": 87,
+      "सुर्यवंशी देवराम सिताराम": 9,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 5,
+      "पागिरे दिनकर खंडू": 4,
+      "माने अरविंद बापू ": 2,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 12
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 62,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_125",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/39",
+    "boothName": "Booth 5/39",
+    "totalVoters": 0,
+    "totalVotesCasted": 453,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 110,
+      "अशोक भाऊसो पाटील": 167,
+      "बोबडे महादेव आनंदराव": 23,
+      "सौ. विनया मनोहर मढवी": 118,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 2,
+      "ननावरे महेश": 19,
+      "पागिरे दिनकर खंडू": 1,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 1,
+      "नोटा": 11
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 49,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_126",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "5/40",
+    "boothName": "Booth 5/40",
+    "totalVoters": 0,
+    "totalVotesCasted": 437,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 120,
+      "अशोक भाऊसो पाटील": 195,
+      "बोबडे महादेव आनंदराव": 9,
+      "सौ. विनया मनोहर मढवी": 82,
+      "सुर्यवंशी देवराम सिताराम": 2,
+      "चौगुले तुकाराम नामदेव": 1,
+      "ननावरे महेश": 8,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 4,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 14
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 75,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_127",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "boothName": "Booth सर्व मतदान केंद्र नोंदवण्यात आलेली मते",
+    "totalVoters": 0,
+    "totalVotesCasted": 19247,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 6380,
+      "अशोक भाऊसो पाटील": 7262,
+      "बोबडे महादेव आनंदराव": 295,
+      "सौ. विनया मनोहर मढवी": 4354,
+      "सुर्यवंशी देवराम सिताराम": 95,
+      "चौगुले तुकाराम नामदेव": 81,
+      "ननावरे महेश": 96,
+      "पागिरे दिनकर खंडू": 145,
+      "माने अरविंद बापू ": 122,
+      "सोमवंशी मोहन ज्ञानदेव": 19,
+      "नोटा": 398
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 882,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_128",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "टपाल मतदान",
+    "boothName": "Booth टपाल मतदान",
+    "totalVoters": 0,
+    "totalVotesCasted": 105,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 40,
+      "अशोक भाऊसो पाटील": 41,
+      "बोबडे महादेव आनंदराव": 3,
+      "सौ. विनया मनोहर मढवी": 15,
+      "सुर्यवंशी देवराम सिताराम": 1,
+      "चौगुले तुकाराम नामदेव": 0,
+      "ननावरे महेश": 1,
+      "पागिरे दिनकर खंडू": 2,
+      "माने अरविंद बापू ": 0,
+      "सोमवंशी मोहन ज्ञानदेव": 0,
+      "नोटा": 2
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 1,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_129",
+    "wardName": "Prabhag 5 D",
+    "boothNumber": "एकूण मत",
+    "boothName": "Booth एकूण मत",
+    "totalVoters": 0,
+    "totalVotesCasted": 19352,
+    "candidateVotes": {
+      "चेतन प्रकाश नाईक": 6420,
+      "अशोक भाऊसो पाटील": 7303,
+      "बोबडे महादेव आनंदराव": 298,
+      "सौ. विनया मनोहर मढवी": 4369,
+      "सुर्यवंशी देवराम सिताराम": 96,
+      "चौगुले तुकाराम नामदेव": 81,
+      "ननावरे महेश": 97,
+      "पागिरे दिनकर खंडू": 147,
+      "माने अरविंद बापू ": 122,
+      "सोमवंशी मोहन ज्ञानदेव": 19,
+      "नोटा": 400
+    },
+    "winner": "अशोक भाऊसो पाटील",
+    "margin": 883,
+    "createdAt": "2026-01-26T14:49:59.748Z"
+  },
+  {
+    "id": "res_130",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/1",
+    "boothName": "Booth 5/1",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 195,
+      "चौगुले ममित विजय": 187,
+      "समीर दिनानाथ पाटील": 4,
+      "म्हात्रे दिलीप नारायण": 90,
+      "नोटा": 16
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 8,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_131",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/2",
+    "boothName": "Booth 5/2",
+    "totalVoters": 0,
+    "totalVotesCasted": 454,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 199,
+      "चौगुले ममित विजय": 177,
+      "समीर दिनानाथ पाटील": 9,
+      "म्हात्रे दिलीप नारायण": 58,
+      "नोटा": 11
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 22,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_132",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/3",
+    "boothName": "Booth 5/3",
+    "totalVoters": 0,
+    "totalVotesCasted": 495,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 256,
+      "चौगुले ममित विजय": 171,
+      "समीर दिनानाथ पाटील": 4,
+      "म्हात्रे दिलीप नारायण": 51,
+      "नोटा": 13
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 85,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_133",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/4",
+    "boothName": "Booth 5/4",
+    "totalVoters": 0,
+    "totalVotesCasted": 578,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 218,
+      "चौगुले ममित विजय": 279,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 58,
+      "नोटा": 17
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 61,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_134",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/5",
+    "boothName": "Booth 5/5",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 198,
+      "चौगुले ममित विजय": 241,
+      "समीर दिनानाथ पाटील": 2,
+      "म्हात्रे दिलीप नारायण": 90,
+      "नोटा": 11
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 43,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_135",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/6",
+    "boothName": "Booth 5/6",
+    "totalVoters": 0,
+    "totalVotesCasted": 497,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 136,
+      "चौगुले ममित विजय": 256,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 93,
+      "नोटा": 6
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 120,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_136",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/7",
+    "boothName": "Booth 5/7",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 171,
+      "चौगुले ममित विजय": 208,
+      "समीर दिनानाथ पाटील": 3,
+      "म्हात्रे दिलीप नारायण": 95,
+      "नोटा": 16
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 37,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_137",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/8",
+    "boothName": "Booth 5/8",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 203,
+      "चौगुले ममित विजय": 281,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 57,
+      "नोटा": 9
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 78,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_138",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/9",
+    "boothName": "Booth 5/9",
+    "totalVoters": 0,
+    "totalVotesCasted": 400,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 181,
+      "चौगुले ममित विजय": 119,
+      "समीर दिनानाथ पाटील": 7,
+      "म्हात्रे दिलीप नारायण": 84,
+      "नोटा": 9
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 62,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_139",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/10",
+    "boothName": "Booth 5/10",
+    "totalVoters": 0,
+    "totalVotesCasted": 415,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 174,
+      "चौगुले ममित विजय": 157,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 60,
+      "नोटा": 18
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 17,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_140",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/11",
+    "boothName": "Booth 5/11",
+    "totalVoters": 0,
+    "totalVotesCasted": 378,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 147,
+      "चौगुले ममित विजय": 133,
+      "समीर दिनानाथ पाटील": 3,
+      "म्हात्रे दिलीप नारायण": 82,
+      "नोटा": 13
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 14,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_141",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/12",
+    "boothName": "Booth 5/12",
+    "totalVoters": 0,
+    "totalVotesCasted": 358,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 137,
+      "चौगुले ममित विजय": 119,
+      "समीर दिनानाथ पाटील": 2,
+      "म्हात्रे दिलीप नारायण": 92,
+      "नोटा": 8
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 18,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_142",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/13",
+    "boothName": "Booth 5/13",
+    "totalVoters": 0,
+    "totalVotesCasted": 500,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 124,
+      "चौगुले ममित विजय": 311,
+      "समीर दिनानाथ पाटील": 5,
+      "म्हात्रे दिलीप नारायण": 50,
+      "नोटा": 10
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 187,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_143",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/14",
+    "boothName": "Booth 5/14",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 138,
+      "चौगुले ममित विजय": 288,
+      "समीर दिनानाथ पाटील": 4,
+      "म्हात्रे दिलीप नारायण": 69,
+      "नोटा": 11
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 150,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_144",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/15",
+    "boothName": "Booth 5/15",
+    "totalVoters": 0,
+    "totalVotesCasted": 492,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 112,
+      "चौगुले ममित विजय": 295,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 71,
+      "नोटा": 13
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 183,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_145",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/16",
+    "boothName": "Booth 5/16",
+    "totalVoters": 0,
+    "totalVotesCasted": 442,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 100,
+      "चौगुले ममित विजय": 290,
+      "समीर दिनानाथ पाटील": 3,
+      "म्हात्रे दिलीप नारायण": 42,
+      "नोटा": 7
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 190,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_146",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/17",
+    "boothName": "Booth 5/17",
+    "totalVoters": 0,
+    "totalVotesCasted": 467,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 106,
+      "चौगुले ममित विजय": 296,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 52,
+      "नोटा": 12
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 190,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_147",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/18",
+    "boothName": "Booth 5/18",
+    "totalVoters": 0,
+    "totalVotesCasted": 513,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 254,
+      "चौगुले ममित विजय": 188,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 62,
+      "नोटा": 3
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 66,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_148",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/19",
+    "boothName": "Booth 5/19",
+    "totalVoters": 0,
+    "totalVotesCasted": 554,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 338,
+      "चौगुले ममित विजय": 131,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 71,
+      "नोटा": 8
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 207,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_149",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/20",
+    "boothName": "Booth 5/20",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 295,
+      "चौगुले ममित विजय": 132,
+      "समीर दिनानाथ पाटील": 3,
+      "म्हात्रे दिलीप नारायण": 66,
+      "नोटा": 18
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 163,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_150",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/21",
+    "boothName": "Booth 5/21",
+    "totalVoters": 0,
+    "totalVotesCasted": 464,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 251,
+      "चौगुले ममित विजय": 131,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 74,
+      "नोटा": 7
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 120,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_151",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/22",
+    "boothName": "Booth 5/22",
+    "totalVoters": 0,
+    "totalVotesCasted": 510,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 245,
+      "चौगुले ममित विजय": 188,
+      "समीर दिनानाथ पाटील": 7,
+      "म्हात्रे दिलीप नारायण": 63,
+      "नोटा": 7
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 57,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_152",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/23",
+    "boothName": "Booth 5/23",
+    "totalVoters": 0,
+    "totalVotesCasted": 479,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 181,
+      "चौगुले ममित विजय": 216,
+      "समीर दिनानाथ पाटील": 6,
+      "म्हात्रे दिलीप नारायण": 65,
+      "नोटा": 11
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 35,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_153",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/24",
+    "boothName": "Booth 5/24",
+    "totalVoters": 0,
+    "totalVotesCasted": 551,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 227,
+      "चौगुले ममित विजय": 184,
+      "समीर दिनानाथ पाटील": 5,
+      "म्हात्रे दिलीप नारायण": 125,
+      "नोटा": 10
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 43,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_154",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/25",
+    "boothName": "Booth 5/25",
+    "totalVoters": 0,
+    "totalVotesCasted": 518,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 180,
+      "चौगुले ममित विजय": 232,
+      "समीर दिनानाथ पाटील": 2,
+      "म्हात्रे दिलीप नारायण": 93,
+      "नोटा": 11
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 52,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_155",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/26",
+    "boothName": "Booth 5/26",
+    "totalVoters": 0,
+    "totalVotesCasted": 501,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 144,
+      "चौगुले ममित विजय": 250,
+      "समीर दिनानाथ पाटील": 9,
+      "म्हात्रे दिलीप नारायण": 82,
+      "नोटा": 16
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 106,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_156",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/27",
+    "boothName": "Booth 5/27",
+    "totalVoters": 0,
+    "totalVotesCasted": 493,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 134,
+      "चौगुले ममित विजय": 281,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 71,
+      "नोटा": 6
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 147,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_157",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/28",
+    "boothName": "Booth 5/28",
+    "totalVoters": 0,
+    "totalVotesCasted": 571,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 176,
+      "चौगुले ममित विजय": 276,
+      "समीर दिनानाथ पाटील": 8,
+      "म्हात्रे दिलीप नारायण": 95,
+      "नोटा": 16
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 100,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_158",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/29",
+    "boothName": "Booth 5/29",
+    "totalVoters": 0,
+    "totalVotesCasted": 542,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 165,
+      "चौगुले ममित विजय": 286,
+      "समीर दिनानाथ पाटील": 3,
+      "म्हात्रे दिलीप नारायण": 73,
+      "नोटा": 15
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 121,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_159",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/30",
+    "boothName": "Booth 5/30",
+    "totalVoters": 0,
+    "totalVotesCasted": 477,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 171,
+      "चौगुले ममित विजय": 203,
+      "समीर दिनानाथ पाटील": 5,
+      "म्हात्रे दिलीप नारायण": 80,
+      "नोटा": 18
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 32,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_160",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/31",
+    "boothName": "Booth 5/31",
+    "totalVoters": 0,
+    "totalVotesCasted": 514,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 239,
+      "चौगुले ममित विजय": 179,
+      "समीर दिनानाथ पाटील": 4,
+      "म्हात्रे दिलीप नारायण": 77,
+      "नोटा": 15
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 60,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_161",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/32",
+    "boothName": "Booth 5/32",
+    "totalVoters": 0,
+    "totalVotesCasted": 560,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 354,
+      "चौगुले ममित विजय": 121,
+      "समीर दिनानाथ पाटील": 5,
+      "म्हात्रे दिलीप नारायण": 71,
+      "नोटा": 9
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 233,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_162",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/33",
+    "boothName": "Booth 5/33",
+    "totalVoters": 0,
+    "totalVotesCasted": 506,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 159,
+      "चौगुले ममित विजय": 241,
+      "समीर दिनानाथ पाटील": 5,
+      "म्हात्रे दिलीप नारायण": 91,
+      "नोटा": 10
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 82,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_163",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/34",
+    "boothName": "Booth 5/34",
+    "totalVoters": 0,
+    "totalVotesCasted": 463,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 295,
+      "चौगुले ममित विजय": 84,
+      "समीर दिनानाथ पाटील": 7,
+      "म्हात्रे दिलीप नारायण": 68,
+      "नोटा": 9
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 211,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_164",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/35",
+    "boothName": "Booth 5/35",
+    "totalVoters": 0,
+    "totalVotesCasted": 354,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 181,
+      "चौगुले ममित विजय": 94,
+      "समीर दिनानाथ पाटील": 10,
+      "म्हात्रे दिलीप नारायण": 56,
+      "नोटा": 13
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 87,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_165",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/36",
+    "boothName": "Booth 5/36",
+    "totalVoters": 0,
+    "totalVotesCasted": 426,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 167,
+      "चौगुले ममित विजय": 149,
+      "समीर दिनानाथ पाटील": 9,
+      "म्हात्रे दिलीप नारायण": 92,
+      "नोटा": 9
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 18,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_166",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/37",
+    "boothName": "Booth 5/37",
+    "totalVoters": 0,
+    "totalVotesCasted": 367,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 165,
+      "चौगुले ममित विजय": 118,
+      "समीर दिनानाथ पाटील": 29,
+      "म्हात्रे दिलीप नारायण": 44,
+      "नोटा": 11
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 47,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_167",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/38",
+    "boothName": "Booth 5/38",
+    "totalVoters": 0,
+    "totalVotesCasted": 416,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 181,
+      "चौगुले ममित विजय": 118,
+      "समीर दिनानाथ पाटील": 24,
+      "म्हात्रे दिलीप नारायण": 75,
+      "नोटा": 18
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 63,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_168",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/39",
+    "boothName": "Booth 5/39",
+    "totalVoters": 0,
+    "totalVotesCasted": 453,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 178,
+      "चौगुले ममित विजय": 166,
+      "समीर दिनानाथ पाटील": 20,
+      "म्हात्रे दिलीप नारायण": 74,
+      "नोटा": 15
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 12,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_169",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "5/40",
+    "boothName": "Booth 5/40",
+    "totalVoters": 0,
+    "totalVotesCasted": 437,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 207,
+      "चौगुले ममित विजय": 128,
+      "समीर दिनानाथ पाटील": 12,
+      "म्हात्रे दिलीप नारायण": 74,
+      "नोटा": 16
+    },
+    "winner": "केणी राजश्री जगजिवन (बंडू)",
+    "margin": 79,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_170",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "एकूण",
+    "boothName": "Booth एकूण",
+    "totalVoters": 0,
+    "totalVotesCasted": 19247,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 7682,
+      "चौगुले ममित विजय": 7904,
+      "समीर दिनानाथ पाटील": 254,
+      "म्हात्रे दिलीप नारायण": 2936,
+      "नोटा": 471
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 222,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_171",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "टपाल मतदान",
+    "boothName": "Booth टपाल मतदान",
+    "totalVoters": 0,
+    "totalVotesCasted": 107,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 42,
+      "चौगुले ममित विजय": 48,
+      "समीर दिनानाथ पाटील": 1,
+      "म्हात्रे दिलीप नारायण": 15,
+      "नोटा": 1
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 6,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  },
+  {
+    "id": "res_172",
+    "wardName": "Prabhag 5 B",
+    "boothNumber": "एकूण मत",
+    "boothName": "Booth एकूण मत",
+    "totalVoters": 0,
+    "totalVotesCasted": 19354,
+    "candidateVotes": {
+      "केणी राजश्री जगजिवन (बंडू)": 7724,
+      "चौगुले ममित विजय": 7952,
+      "समीर दिनानाथ पाटील": 255,
+      "म्हात्रे दिलीप नारायण": 2951,
+      "नोटा": 472
+    },
+    "winner": "चौगुले ममित विजय",
+    "margin": 228,
+    "createdAt": "2026-01-26T14:49:59.749Z"
+  }
+]

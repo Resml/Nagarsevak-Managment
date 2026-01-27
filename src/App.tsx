@@ -16,10 +16,13 @@ import BotDashboard from './pages/admin/BotDashboard';
 
 import SocialDashboard from './pages/social/SocialDashboard';
 import SchemeList from './pages/schemes/SchemeList';
+import SchemeForm from './pages/schemes/SchemeForm';
 import WorkHistory from './pages/works/WorkHistory';
 import EventManagement from './pages/events/EventManagement';
 import StaffList from './pages/staff/StaffList';
 import LetterDashboard from './pages/letters/LetterDashboard';
+import LetterForm from './pages/letters/LetterForm';
+import LetterTypeManager from './pages/letters/LetterTypeManager';
 import VisitorLog from './pages/office/VisitorLog';
 import JoinParty from './pages/sadasya/JoinParty';
 import SadasyaList from './pages/sadasya/SadasyaList';
@@ -61,10 +64,13 @@ function App() {
             <Route path="complaints/new" element={<ComplaintForm />} />
             <Route path="complaints/:id" element={<ComplaintDetail />} />
             <Route path="schemes" element={<SchemeList />} />
+            <Route path="schemes/new" element={<SchemeForm />} />
             <Route path="events" element={<EventManagement />} />
             <Route path="tasks" element={<Tasks />} />
             <Route path="staff" element={<StaffList />} />
             <Route path="letters" element={<LetterDashboard />} />
+            <Route path="letters/new" element={<LetterForm />} />
+            <Route path="letters/types" element={<LetterTypeManager />} />
             <Route path="visitors" element={<VisitorLog />} />
             <Route path="bot-dashboard" element={<BotDashboard />} />
             <Route path="sadasya" element={<SadasyaList />} />

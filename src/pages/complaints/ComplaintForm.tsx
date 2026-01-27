@@ -18,6 +18,7 @@ const ComplaintForm = () => {
     const [description, setDescription] = useState('');
     const [type, setType] = useState<ComplaintType>('Other');
     const [ward, setWard] = useState('12'); // Default to 12 for MVP
+    const [area, setArea] = useState('');
     const [photos, setPhotos] = useState<string[]>([]);
 
     // AI States
@@ -56,6 +57,7 @@ const ComplaintForm = () => {
                 status: 'Pending',
                 priority: urgency, // Add priority/urgency to DB insert if schema supports it, strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly strictly
                 location: 'Ward ' + ward,
+                area: area,
                 source: 'Website',
                 // For MVP, we don't have logged in voter ID linkage easily unless auth context is fully used.
                 // leaving user_id null or anonymous.
@@ -134,6 +136,7 @@ const ComplaintForm = () => {
                                 <option value="Road">Road / Potholes</option>
                                 <option value="Drainage">Drainage</option>
                                 <option value="StreetLight">Street Light</option>
+                                <option value="SelfIdentified">Self-Identified (Observed)</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
@@ -148,6 +151,16 @@ const ComplaintForm = () => {
                                 <option value="13">Ward 13</option>
                                 <option value="14">Ward 14</option>
                             </select>
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Area / Colony Name</label>
+                            <input
+                                type="text"
+                                value={area}
+                                onChange={(e) => setArea(e.target.value)}
+                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                                placeholder="e.g. Ganesh Nagar, Lane 3"
+                            />
                         </div>
                     </div>
 

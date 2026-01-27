@@ -3,5 +3,7 @@ export interface Staff {
     name: string;
     mobile: string;
     role: string;
+    area?: string;
+    category: 'Office' | 'Party' | 'Cooperative';
     keywords: string[];
 }

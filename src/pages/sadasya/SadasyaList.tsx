@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, X } from 'lucide-react';
+import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, X, Trash2 } from 'lucide-react';
 import { MockService } from '../../services/mockData';
 import { VoterService } from '../../services/voterService';
 import { type Voter } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
 
 const SadasyaList = () => {
+    const { t, language } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [filterVoter, setFilterVoter] = useState<'all' | 'voter' | 'non-voter'>('all');
 
@@ -33,6 +35,7 @@ const SadasyaList = () => {
         age: '',
         gender: '' as 'M' | 'F' | 'O' | '',
         ward: '',
+        area: '',
         address: '',
     });
 
@@ -50,9 +53,24 @@ const SadasyaList = () => {
         return matchesSearch;
     });
 
+    const getDisplayName = (member: any) => {
+        if (language === 'mr' || language === 'hi') {
+            return member.name_marathi || member.name || member.name_english;
+        }
+        return member.name_english || member.name;
+    };
+
+    const getDisplayAddress = (member: any) => {
+        if (language === 'mr' || language === 'hi') {
+            return member.address_marathi || member.address || member.address_english;
+        }
+        return member.address_english || member.address;
+    };
+
     // Confirm Add Voter State
     const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
     const [confirmMobile, setConfirmMobile] = useState('');
+    const [confirmArea, setConfirmArea] = useState('');
 
     const handleSearchVoter = async (term: string) => {
         setVoterSearchTerm(term);
@@ -83,6 +101,7 @@ const SadasyaList = () => {
             mobile = '+91 ';
         }
         setConfirmMobile(mobile);
+        setConfirmArea('');
     };
 
     const confirmAddVoter = () => {
@@ -90,9 +109,14 @@ const SadasyaList = () => {
 
         MockService.addSadasya({
             name: selectedVoter.name,
+            name_marathi: selectedVoter.name_marathi,
+            name_english: selectedVoter.name_english,
             mobile: confirmMobile,
             age: selectedVoter.age,
             address: selectedVoter.address,
+            address_marathi: selectedVoter.address_marathi,
+            address_english: selectedVoter.address_english,
+            area: confirmArea,
             isVoter: true,
             voterId: selectedVoter.epicNo
         });
@@ -100,6 +124,7 @@ const SadasyaList = () => {
         // Reset and Close
         setSelectedVoter(null);
         setConfirmMobile('');
+        setConfirmArea('');
         setIsModalOpen(false);
         setRefreshTrigger(prev => prev + 1);
         setVoterSearchTerm('');
@@ -117,20 +142,28 @@ const SadasyaList = () => {
             gender: manualForm.gender || undefined,
             ward: manualForm.ward,
             address: manualForm.address,
+            area: manualForm.area,
             isVoter: false
         });
         setIsModalOpen(false);
         setRefreshTrigger(prev => prev + 1);
-        setManualForm({ name: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '' });
+        setManualForm({ name: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' });
         alert('Member added successfully!');
+    };
+
+    const handleDelete = (id: string, name: string) => {
+        if (confirm(`Are you sure you want to delete ${name}?`)) {
+            MockService.deleteSadasya(id);
+            setRefreshTrigger(prev => prev + 1);
+        }
     };
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Party Members (Sadasya)</h1>
-                    <p className="text-gray-600">Manage registered party members</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('sadasya.title')}</h1>
+                    <p className="text-gray-600">{t('sadasya.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => {
@@ -140,7 +173,7 @@ const SadasyaList = () => {
                     className="flex items-center space-x-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition-colors"
                 >
                     <Plus className="w-5 h-5" />
-                    <span>Add Member</span>
+                    <span>{t('sadasya.add_member')}</span>
                 </button>
             </div>
 
@@ -150,7 +183,7 @@ const SadasyaList = () => {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
-                        placeholder="Search by name or mobile..."
+                        placeholder={t('sadasya.search_placeholder')}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -163,9 +196,9 @@ const SadasyaList = () => {
                         value={filterVoter}
                         onChange={(e) => setFilterVoter(e.target.value as any)}
                     >
-                        <option value="all">All Members</option>
-                        <option value="voter">Voters</option>
-                        <option value="non-voter">Non-Voters</option>
+                        <option value="all">{t('sadasya.filter_all')}</option>
+                        <option value="voter">{t('sadasya.filter_voters')}</option>
+                        <option value="non-voter">{t('sadasya.filter_non_voters')}</option>
                     </select>
                 </div>
             </div>
@@ -176,11 +209,12 @@ const SadasyaList = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined Date</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('sadasya.member')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('sadasya.contact')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('sadasya.area_address')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('sadasya.status')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('sadasya.joined_date')}</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -193,8 +227,8 @@ const SadasyaList = () => {
                                                     <span className="font-medium text-lg">{member.name.charAt(0)}</span>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                                                    <div className="text-sm text-gray-500">Age: {member.age}</div>
+                                                    <div className="text-sm font-medium text-gray-900">{getDisplayName(member)}</div>
+                                                    <div className="text-sm text-gray-500">{t('sadasya.age')}: {member.age}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -207,25 +241,34 @@ const SadasyaList = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-start text-sm text-gray-500">
                                                 <MapPin className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                                                <span className="truncate max-w-xs" title={member.address}>
-                                                    {member.address}
+                                                <span className="truncate max-w-xs" title={getDisplayAddress(member)}>
+                                                    {member.area ? <span className="font-medium text-gray-900 block">{member.area}</span> : null}
+                                                    {getDisplayAddress(member)}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.isVoter ? (
                                                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                    <UserCheck className="w-3 h-3 mr-1" /> Voter
+                                                    <UserCheck className="w-3 h-3 mr-1" /> {t('sadasya.is_voter')}
                                                     {member.voterId && ` (${member.voterId})`}
                                                 </span>
                                             ) : (
                                                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    <User className="w-3 h-3 mr-1" /> Non-Voter
+                                                    <User className="w-3 h-3 mr-1" /> {t('sadasya.is_member')}
                                                 </span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {new Date(member.registeredAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button
+                                                onClick={() => handleDelete(member.id, member.name)}
+                                                className="text-red-600 hover:text-red-900"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -251,7 +294,7 @@ const SadasyaList = () => {
                                     {member.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-gray-900">{member.name}</h3>
+                                    <h3 className="font-semibold text-gray-900">{getDisplayName(member)}</h3>
                                     <p className="text-xs text-gray-500">Age: {member.age}</p>
                                 </div>
                             </div>
@@ -273,7 +316,10 @@ const SadasyaList = () => {
                             </div>
                             <div className="flex items-start gap-2">
                                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                                <span className="line-clamp-2">{member.address}</span>
+                                <div className="flex flex-col">
+                                    {member.area && <span className="font-medium text-gray-900">{member.area}</span>}
+                                    <span className="line-clamp-2">{getDisplayAddress(member)}</span>
+                                </div>
                             </div>
                             <div className="flex items-center gap-2 text-xs text-gray-400 mt-1">
                                 <span>Joined: {new Date(member.registeredAt).toLocaleDateString()}</span>
@@ -293,7 +339,7 @@ const SadasyaList = () => {
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
                         <div className="flex justify-between items-center p-6 border-b border-gray-100">
-                            <h2 className="text-xl font-bold text-gray-900">Add New Sadasya</h2>
+                            <h2 className="text-xl font-bold text-gray-900">{t('sadasya.add_modal_title')}</h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
                             </button>
@@ -304,13 +350,13 @@ const SadasyaList = () => {
                                 className={`flex-1 py-3 text-sm font-medium ${activeTab === 'search' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => setActiveTab('search')}
                             >
-                                Search Voter
+                                {t('sadasya.search_tab')}
                             </button>
                             <button
                                 className={`flex-1 py-3 text-sm font-medium ${activeTab === 'manual' ? 'text-brand-600 border-b-2 border-brand-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 onClick={() => setActiveTab('manual')}
                             >
-                                Manual Entry
+                                {t('sadasya.manual_tab')}
                             </button>
                         </div>
 
@@ -325,8 +371,8 @@ const SadasyaList = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Name</label>
-                                            <p className="mt-1 text-gray-900 p-2 bg-gray-50 rounded-md">{selectedVoter.name}</p>
+                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.name')}</label>
+                                            <p className="mt-1 text-gray-900 p-2 bg-gray-50 rounded-md">{getDisplayName(selectedVoter)}</p>
                                         </div>
 
                                         <div>
@@ -344,6 +390,17 @@ const SadasyaList = () => {
                                             )}
                                         </div>
 
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700">Area / Colony</label>
+                                            <input
+                                                type="text"
+                                                value={confirmArea}
+                                                onChange={(e) => setConfirmArea(e.target.value)}
+                                                placeholder="e.g. Ganesh Nagar"
+                                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500"
+                                            />
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
                                             <div>
                                                 <span className="font-medium">EPIC No:</span> {selectedVoter.epicNo}
@@ -352,7 +409,7 @@ const SadasyaList = () => {
                                                 <span className="font-medium">Age:</span> {selectedVoter.age || 'N/A'}
                                             </div>
                                             <div className="col-span-2">
-                                                <span className="font-medium">Address:</span> {selectedVoter.address}
+                                                <span className="font-medium">{t('sadasya.address')}:</span> {getDisplayAddress(selectedVoter)}
                                             </div>
                                         </div>
 
@@ -378,7 +435,7 @@ const SadasyaList = () => {
                                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                             <input
                                                 type="text"
-                                                placeholder="Search Voter by Name, EPIC No or Mobile..."
+                                                placeholder={t('sadasya.search_voter_label')}
                                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                                                 value={voterSearchTerm}
                                                 onChange={(e) => handleSearchVoter(e.target.value)}
@@ -393,22 +450,22 @@ const SadasyaList = () => {
                                                 voterResults.map(voter => (
                                                     <div key={voter.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                                         <div>
-                                                            <p className="font-medium text-gray-900">{voter.name}</p>
+                                                            <p className="font-medium text-gray-900">{getDisplayName(voter)}</p>
                                                             <p className="text-xs text-brand-600 font-medium mt-0.5">
                                                                 {voter.epicNo} • Ward {voter.ward}
                                                             </p>
                                                             <p className="text-xs text-gray-500 mt-0.5">
                                                                 {voter.age} Yrs • {voter.gender} • {voter.mobile || 'No Mobile'}
                                                             </p>
-                                                            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[250px]" title={voter.address}>
-                                                                {voter.address}
+                                                            <p className="text-xs text-gray-400 mt-0.5 truncate max-w-[250px]" title={getDisplayAddress(voter)}>
+                                                                {getDisplayAddress(voter)}
                                                             </p>
                                                         </div>
                                                         <button
                                                             onClick={() => onSelectVoter(voter)}
                                                             className="px-3 py-1 bg-brand-100 text-brand-700 text-sm font-medium rounded-md hover:bg-brand-200"
                                                         >
-                                                            Select
+                                                            {t('sadasya.select')}
                                                         </button>
                                                     </div>
                                                 ))
@@ -471,6 +528,16 @@ const SadasyaList = () => {
                                             value={manualForm.ward}
                                             onChange={(e) => setManualForm({ ...manualForm, ward: e.target.value })}
                                             placeholder="Enter Ward No"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Area / Colony</label>
+                                        <input
+                                            type="text"
+                                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                            value={manualForm.area || ''}
+                                            onChange={(e) => setManualForm({ ...manualForm, area: e.target.value })}
+                                            placeholder="Area Name"
                                         />
                                     </div>
                                     <div>

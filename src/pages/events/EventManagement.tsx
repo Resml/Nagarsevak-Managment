@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
+import { useLanguage } from '../../context/LanguageContext';
 import { Clock, MapPin, Send, Plus, Users, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -10,10 +11,12 @@ interface Event {
     event_date: string;
     event_time: string;
     location: string;
+    area?: string;
     target_audience: string;
 }
 
 const EventManagement = () => {
+    const { t } = useLanguage();
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [broadcastingId, setBroadcastingId] = useState<number | null>(null);
@@ -22,6 +25,7 @@ const EventManagement = () => {
         title: '',
         description: '',
         location: '',
+        area: '',
         event_date: '',
         event_time: '',
         target_audience: 'All'
@@ -86,7 +90,7 @@ const EventManagement = () => {
 
             if (error) throw error;
             setShowModal(false);
-            setNewEvent({ title: '', description: '', location: '', event_date: '', event_time: '', target_audience: 'All' });
+            setNewEvent({ title: '', description: '', location: '', area: '', event_date: '', event_time: '', target_audience: 'All' });
             fetchEvents();
             alert('Event created successfully!');
         } catch (err) {
@@ -108,8 +112,8 @@ const EventManagement = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Events & Broadcasts</h1>
-                    <p className="text-sm text-gray-500">Manage community events and send invites</p>
+                    <h1 className="text-2xl font-bold text-gray-900">{t('events.title')}</h1>
+                    <p className="text-sm text-gray-500">{t('events.subtitle')}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <select
@@ -117,7 +121,7 @@ const EventManagement = () => {
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500"
                     >
-                        <option value="All">All Categories</option>
+                        <option value="All">{t('events.all_categories')}</option>
                         <option value="OPEN">OPEN</option>
                         <option value="OBC">OBC</option>
                         <option value="SC">SC</option>
@@ -129,7 +133,7 @@ const EventManagement = () => {
                         onClick={() => setShowModal(true)}
                         className="bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brand-700 whitespace-nowrap"
                     >
-                        <Plus className="w-4 h-4" /> Create Event
+                        <Plus className="w-4 h-4" /> {t('events.create_event')}
                     </button>
                 </div>
             </div>
@@ -139,7 +143,7 @@ const EventManagement = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                     type="text"
-                    placeholder="Search by Title, Location, or Description..."
+                    placeholder={t('events.search_placeholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -150,10 +154,10 @@ const EventManagement = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
-                        <h2 className="text-xl font-bold mb-4">Create New Event</h2>
+                        <h2 className="text-xl font-bold mb-4">{t('events.create_modal_title')}</h2>
                         <form onSubmit={handleCreateEvent} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Event Title</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('events.event_title')}</label>
                                 <input
                                     type="text" required
                                     className="w-full border rounded-lg p-2 mt-1"
@@ -163,17 +167,17 @@ const EventManagement = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Description</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('events.description')}</label>
                                 <textarea
                                     className="w-full border rounded-lg p-2 mt-1"
                                     value={newEvent.description}
                                     onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    placeholder="Details about the event..."
+                                    placeholder={t('events.description')}
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Date</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('events.date')}</label>
                                     <input
                                         type="date" required
                                         className="w-full border rounded-lg p-2 mt-1"
@@ -182,7 +186,7 @@ const EventManagement = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Time</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('events.time')}</label>
                                     <input
                                         type="time" required
                                         className="w-full border rounded-lg p-2 mt-1"
@@ -192,23 +196,33 @@ const EventManagement = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Location</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('events.location')}</label>
                                 <input
                                     type="text" required
                                     className="w-full border rounded-lg p-2 mt-1"
                                     value={newEvent.location}
                                     onChange={e => setNewEvent({ ...newEvent, location: e.target.value })}
-                                    placeholder="e.g. Community Hall, Ward 10"
+                                    placeholder="e.g. Community Hall"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Target Audience (Caste/Category)</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('events.area')}</label>
+                                <input
+                                    type="text" required
+                                    className="w-full border rounded-lg p-2 mt-1"
+                                    value={newEvent.area}
+                                    onChange={e => setNewEvent({ ...newEvent, area: e.target.value })}
+                                    placeholder="e.g. Shivaji Nagar"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">{t('events.target_audience')}</label>
                                 <select
                                     className="w-full border rounded-lg p-2 mt-1"
                                     value={newEvent.target_audience}
                                     onChange={e => setNewEvent({ ...newEvent, target_audience: e.target.value })}
                                 >
-                                    <option value="All">All Citizens</option>
+                                    <option value="All">{t('events.all_citizens')}</option>
                                     <option value="OPEN">OPEN</option>
                                     <option value="OBC">OBC</option>
                                     <option value="SC">SC</option>
@@ -219,8 +233,8 @@ const EventManagement = () => {
                                 <p className="text-xs text-gray-500 mt-1">Select specific category if this event is targeted.</p>
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">Create Event</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">{t('events.cancel')}</button>
+                                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">{t('events.submit')}</button>
                             </div>
                         </form>
                     </div>
@@ -228,7 +242,7 @@ const EventManagement = () => {
             )}
 
             {loading ? (
-                <div className="flex justify-center py-10">Loading...</div>
+                <div className="flex justify-center py-10">{t('events.loading')}</div>
             ) : (
                 <div className="grid gap-4">
                     {filteredEvents.map((event) => (
@@ -244,6 +258,7 @@ const EventManagement = () => {
                                     <div className="flex items-center gap-4 text-sm text-gray-500">
                                         <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {event.event_time}</span>
                                         <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
+                                        {event.area && <span className="text-gray-500">({event.area})</span>}
                                         {event.target_audience && event.target_audience !== 'All' && (
                                             <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
                                                 For: {event.target_audience}
@@ -273,7 +288,7 @@ const EventManagement = () => {
                             </div>
                         </div>
                     ))}
-                    {filteredEvents.length === 0 && <div className="text-center py-10 text-gray-500">No upcoming events matching your criteria.</div>}
+                    {filteredEvents.length === 0 && <div className="text-center py-10 text-gray-500">{t('events.no_events')}</div>}
                 </div>
             )}
         </div>

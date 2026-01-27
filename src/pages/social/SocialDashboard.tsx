@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Facebook, Instagram, ThumbsUp, MessageCircle, Share2, TrendingUp, Users, Eye } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 
 // Mock Data for demonstration
@@ -47,6 +48,7 @@ const MOCK_POSTS = [
 ];
 
 const SocialDashboard = () => {
+    const { t } = useLanguage();
     const [posts, setPosts] = useState(MOCK_POSTS);
     const [searchTerm, setSearchTerm] = useState('');
     const [platformFilter, setPlatformFilter] = useState<'All' | 'Facebook' | 'Instagram'>('All');
@@ -91,14 +93,14 @@ const SocialDashboard = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <TrendingUp className="text-brand-600 w-8 h-8" />
-                    Social Media Analytics
+                    {t('social.title')}
                 </h1>
                 <div className="flex space-x-2">
                     <button className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition">
-                        <Facebook className="w-4 h-4" /> Connect FB
+                        <Facebook className="w-4 h-4" /> {t('social.connect_fb')}
                     </button>
                     <button className="px-4 py-2 bg-pink-600 text-white rounded-lg flex items-center gap-2 hover:bg-pink-700 transition">
-                        <Instagram className="w-4 h-4" /> Connect IG
+                        <Instagram className="w-4 h-4" /> {t('social.connect_ig')}
                     </button>
                 </div>
             </div>
@@ -108,7 +110,7 @@ const SocialDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Total Reach</p>
+                            <p className="text-sm font-medium text-gray-500">{t('social.total_reach')}</p>
                             <h3 className="text-2xl font-bold text-gray-900 mt-1">45.2K</h3>
                         </div>
                         <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
@@ -124,7 +126,7 @@ const SocialDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Total Likes</p>
+                            <p className="text-sm font-medium text-gray-500">{t('social.total_likes')}</p>
                             <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalLikes.toLocaleString()}</h3>
                         </div>
                         <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
@@ -140,7 +142,7 @@ const SocialDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Comments</p>
+                            <p className="text-sm font-medium text-gray-500">{t('social.comments')}</p>
                             <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalComments.toLocaleString()}</h3>
                         </div>
                         <div className="p-2 bg-green-50 rounded-lg text-green-600">
@@ -155,7 +157,7 @@ const SocialDashboard = () => {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">Shares</p>
+                            <p className="text-sm font-medium text-gray-500">{t('social.shares')}</p>
                             <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalShares.toLocaleString()}</h3>
                         </div>
                         <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
@@ -176,7 +178,7 @@ const SocialDashboard = () => {
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder="Search posts (e.g., 'Road', 'Festival', 'Health')..."
+                            placeholder={t('social.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
@@ -187,7 +189,7 @@ const SocialDashboard = () => {
                             onClick={() => setPlatformFilter('All')}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${platformFilter === 'All' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
-                            All
+                            {t('social.all_posts')}
                         </button>
                         <button
                             onClick={() => setPlatformFilter('Facebook')}
@@ -254,7 +256,7 @@ const SocialDashboard = () => {
             {filteredPosts.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                     <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                    <p>No posts found matching your search.</p>
+                    <p>{t('social.no_posts')}</p>
                 </div>
             )}
         </div>

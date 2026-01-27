@@ -12,6 +12,7 @@ interface WorkItem {
     title: string;
     description: string;
     location: string;
+    area?: string;
     status: string;
     date: string;
     citizenName?: string;
@@ -34,6 +35,7 @@ const WorkHistory = () => {
         title: '',
         description: '',
         location: '',
+        area: '',
         status: 'Planned',
         completion_date: '',
     });
@@ -103,6 +105,7 @@ const WorkHistory = () => {
                 title: w.title,
                 description: w.description,
                 location: w.location,
+                area: w.area,
                 status: w.status,
                 date: w.completion_date || w.created_at
             }));
@@ -162,7 +165,9 @@ const WorkHistory = () => {
 
             if (error) throw error;
             setShowModal(false);
-            setNewWork({ title: '', description: '', location: '', status: 'Planned', completion_date: '' });
+            if (error) throw error;
+            setShowModal(false);
+            setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '' });
             fetchData();
             alert('Work added successfully!');
         } catch (err) {
@@ -287,6 +292,15 @@ const WorkHistory = () => {
                                         className="w-full border rounded-lg p-2 mt-1"
                                         value={newWork.location}
                                         onChange={e => setNewWork({ ...newWork, location: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Area / Locality</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg p-2 mt-1"
+                                        value={newWork.area}
+                                        onChange={e => setNewWork({ ...newWork, area: e.target.value })}
                                     />
                                 </div>
                                 <div>
@@ -421,7 +435,7 @@ const WorkHistory = () => {
                                     </div>
                                     <div className="flex items-center text-xs text-gray-500 gap-1">
                                         <MapPin className="w-3 h-3" />
-                                        <span className="truncate">{item.location}</span>
+                                        <span className="truncate">{item.location} {item.area ? `(${item.area})` : ''}</span>
                                     </div>
                                     {item.citizenName && (
                                         <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">

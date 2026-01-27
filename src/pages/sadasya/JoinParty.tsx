@@ -10,6 +10,7 @@ const JoinParty = () => {
         mobile: '+91 ',
         age: '',
         address: '',
+        area: '',
         isVoter: false,
         voterId: ''
     });
@@ -38,6 +39,7 @@ const JoinParty = () => {
             mobile: formData.mobile,
             age: parseInt(formData.age) || 0,
             address: formData.address,
+            area: formData.area,
             isVoter: formData.isVoter,
             voterId: formData.isVoter ? formData.voterId : undefined
         });
@@ -70,6 +72,7 @@ const JoinParty = () => {
                                 mobile: '+91 ',
                                 age: '',
                                 address: '',
+                                area: '',
                                 isVoter: false,
                                 voterId: ''
                             });
@@ -165,8 +168,25 @@ const JoinParty = () => {
                         </div>
 
                         <div>
+                            <label htmlFor="area" className="block text-sm font-medium text-gray-700">
+                                Area / Colony
+                            </label>
+                            <div className="mt-1">
+                                <input
+                                    id="area"
+                                    name="area"
+                                    type="text"
+                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                    value={formData.area || ''}
+                                    onChange={handleChange}
+                                    placeholder="e.g. Ganesh Nagar"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
                             <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                                Address
+                                Full Address
                             </label>
                             <div className="mt-1">
                                 <textarea

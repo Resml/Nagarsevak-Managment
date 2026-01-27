@@ -4,10 +4,12 @@ import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
 import { supabase } from '../../services/supabaseClient';
 import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { useLanguage } from '../../context/LanguageContext';
 
 const VoterProfile = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { t, language } = useLanguage();
     const [voter, setVoter] = useState<Voter | undefined>(undefined);
     const [complaintHistory, setComplaintHistory] = useState<Complaint[]>([]);
 
@@ -31,10 +33,14 @@ const VoterProfile = () => {
                 if (voterData) {
                     const mappedVoter: Voter = {
                         id: voterData.id.toString(),
-                        name: voterData.name_english || voterData.name_marathi,
+                        name: voterData.name,
+                        name_marathi: voterData.name_marathi,
+                        name_english: voterData.name_english,
                         age: voterData.age,
                         gender: voterData.gender,
-                        address: voterData.address_english || voterData.address_marathi,
+                        address: voterData.address,
+                        address_marathi: voterData.address_marathi,
+                        address_english: voterData.address_english,
                         ward: voterData.ward_no,
                         booth: voterData.part_no?.toString(),
                         epicNo: voterData.epic_no,
@@ -91,13 +97,31 @@ const VoterProfile = () => {
         }
     };
 
+    const getDisplayName = (voter: Voter) => {
+        if (language === 'mr' || language === 'hi') {
+            return voter.name_marathi || voter.name || voter.name_english;
+        }
+        return voter.name_english || voter.name;
+    };
+
+    const getDisplayAddress = (voter: Voter) => {
+        if (language === 'mr' || language === 'hi') {
+            return voter.address_marathi || voter.address || voter.address_english;
+        }
+        return voter.address_english || voter.address;
+    };
+
+    const getGenderDisplay = (gender: string) => {
+        return gender === 'M' ? t('voter_profile.gender_male') : t('voter_profile.gender_female');
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <button
                 onClick={() => navigate(-1)}
                 className="flex items-center text-gray-600 hover:text-brand-600 mb-4"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" /> Back to Search
+                <ArrowLeft className="w-4 h-4 mr-1" /> {t('voter_profile.back_to_search')}
             </button>
 
             {/* Profile Header */}
@@ -108,51 +132,51 @@ const VoterProfile = () => {
                             {voter.gender === 'F' ? '👩' : '👨'}
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{voter.name}</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">{getDisplayName(voter)}</h1>
                             <div className="flex items-center space-x-3 text-sm text-gray-600 mt-1">
-                                <span className="bg-white px-2 py-0.5 rounded border">EPIC: {voter.epicNo}</span>
-                                <span>Age: {voter.age}</span>
-                                <span>{voter.gender === 'M' ? 'Male' : 'Female'}</span>
+                                <span className="bg-white px-2 py-0.5 rounded border">{t('voter_profile.epic_no')}: {voter.epicNo}</span>
+                                <span>{t('voter_profile.age')}: {voter.age}</span>
+                                <span>{getGenderDisplay(voter.gender)}</span>
                             </div>
                         </div>
                     </div>
                     <button
-                        onClick={() => navigate('/complaints/new', { state: { voterId: voter.id, voterName: voter.name } })}
+                        onClick={() => navigate('/complaints/new', { state: { voterId: voter.id, voterName: getDisplayName(voter) } })}
                         className="flex items-center space-x-2 bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm"
                     >
                         <PlusCircle className="w-4 h-4" />
-                        <span>Report Problem</span>
+                        <span>{t('voter_profile.report_problem')}</span>
                     </button>
                 </div>
 
                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Contact & Address</h3>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{t('voter_profile.contact_address')}</h3>
                         <div className="flex items-start space-x-3">
                             <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                             <div>
-                                <p className="text-gray-900">{voter.address}</p>
-                                <p className="text-sm text-gray-500 mt-1">Ward {voter.ward}, Booth {voter.booth}</p>
+                                <p className="text-gray-900">{getDisplayAddress(voter)}</p>
+                                <p className="text-sm text-gray-500 mt-1">{t('voter_profile.ward')} {voter.ward}, {t('voter_profile.booth')} {voter.booth}</p>
                             </div>
                         </div>
                         <div className="flex items-center space-x-3">
                             <Phone className="w-5 h-5 text-gray-400" />
-                            <p className="text-gray-900">{voter.mobile || 'No mobile number'}</p>
+                            <p className="text-gray-900">{voter.mobile || t('voter_profile.no_mobile')}</p>
                         </div>
                     </div>
 
                     <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Service History Stats</h3>
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{t('voter_profile.service_history_stats')}</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-gray-50 p-3 rounded text-center">
                                 <p className="text-2xl font-bold text-brand-600">{complaintHistory.length}</p>
-                                <p className="text-xs text-gray-500">Total Requests</p>
+                                <p className="text-xs text-gray-500">{t('voter_profile.total_requests')}</p>
                             </div>
                             <div className="bg-gray-50 p-3 rounded text-center">
                                 <p className="text-2xl font-bold text-green-600">
                                     {complaintHistory.filter(c => c.status === 'Resolved' || c.status === 'Closed').length}
                                 </p>
-                                <p className="text-xs text-gray-500">Solved</p>
+                                <p className="text-xs text-gray-500">{t('voter_profile.solved')}</p>
                             </div>
                         </div>
                     </div>
@@ -160,7 +184,7 @@ const VoterProfile = () => {
             </div>
 
             {/* Recent History */}
-            <h2 className="text-xl font-bold text-gray-900 pt-4">Service History</h2>
+            <h2 className="text-xl font-bold text-gray-900 pt-4">{t('voter_profile.service_history')}</h2>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
                 {complaintHistory.length > 0 ? (
                     complaintHistory.map((complaint) => (
@@ -169,7 +193,7 @@ const VoterProfile = () => {
                                 <div className="flex items-center space-x-2 mb-1">
                                     <h4 className="font-medium text-gray-900">{complaint.title}</h4>
                                     <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusColor(complaint.status)}`}>
-                                        {complaint.status}
+                                        {t(`status.${complaint.status}`)}
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-500 line-clamp-1">{complaint.description}</p>
@@ -184,7 +208,7 @@ const VoterProfile = () => {
                     ))
                 ) : (
                     <div className="p-8 text-center text-gray-500">
-                        No service history recorded for this voter yet.
+                        {t('voter_profile.no_history')}
                     </div>
                 )}
             </div>
