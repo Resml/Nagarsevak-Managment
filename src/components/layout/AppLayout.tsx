@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import {
     Menu, X, LayoutDashboard, Users, FileText, ChevronDown, ChevronRight,
-    CheckSquare, History, LogOut, Smartphone, TrendingUp, BookOpen, Newspaper, IndianRupee, BarChart2, Wand2, Building2, Megaphone, Briefcase
+    CheckSquare, History, LogOut, Smartphone, TrendingUp, BookOpen, Newspaper, IndianRupee, BarChart2, Wand2, Building2, Megaphone, Briefcase, Globe
 } from 'lucide-react';
 import clsx from 'clsx';
+import { type Language } from '../../utils/translations';
 
 const AppLayout = () => {
     const { user, logout } = useAuth();
+    const { language, setLanguage, t } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -103,49 +106,67 @@ const AppLayout = () => {
                 {/* Scrollable Nav */}
                 <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-gray-200">
                     {isAdminOrStaff && (
-                        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
+                        <NavItem to="/" icon={LayoutDashboard} label={t('common.dashboard')} />
                     )}
 
                     <div className="h-2"></div>
 
                     {/* Group: Office Management */}
-                    <NavGroup id="office" label="Office Management" icon={Building2}>
-                        {isAdminOrStaff && <NavItem to="/voters" icon={Users} label="Voter Search" />}
-                        {isAdminOrStaff && <NavItem to="/sadasya" icon={Users} label="Sadasya (Members)" />}
-                        {isAdminOrStaff && <NavItem to="/staff" icon={Users} label="My Team" />}
-                        <NavItem to="/visitors" icon={Users} label="Visitor Log" />
-                        {isAdminOrStaff && <NavItem to="/diary" icon={BookOpen} label="Sabhasad Diary" />}
+                    <NavGroup id="office" label={t('common.office_management')} icon={Building2}>
+                        {isAdminOrStaff && <NavItem to="/voters" icon={Users} label={t('nav.voter_search')} />}
+                        {isAdminOrStaff && <NavItem to="/sadasya" icon={Users} label={t('nav.sadasya')} />}
+                        {isAdminOrStaff && <NavItem to="/staff" icon={Users} label={t('nav.my_team')} />}
+                        <NavItem to="/visitors" icon={Users} label={t('nav.visitor_log')} />
+                        {isAdminOrStaff && <NavItem to="/diary" icon={BookOpen} label={t('nav.gb_register')} />}
                     </NavGroup>
 
                     {/* Group: Public Works */}
-                    <NavGroup id="works" label="Public Works" icon={Briefcase}>
-                        <NavItem to="/complaints" icon={FileText} label="Complaints" />
-                        <NavItem to="/schemes" icon={FileText} label="Govt Schemes" />
-                        <NavItem to="/letters" icon={FileText} label="Letters" />
-                        {isAdminOrStaff && <NavItem to="/tasks" icon={CheckSquare} label="Task Management" />}
-                        <NavItem to="/history" icon={History} label="Work History" />
+                    <NavGroup id="works" label={t('common.public_works')} icon={Briefcase}>
+                        <NavItem to="/complaints" icon={FileText} label={t('nav.complaints')} />
+                        <NavItem to="/schemes" icon={FileText} label={t('nav.govt_schemes')} />
+                        <NavItem to="/letters" icon={FileText} label={t('nav.letters')} />
+                        {isAdminOrStaff && <NavItem to="/tasks" icon={CheckSquare} label={t('nav.task_management')} />}
+                        <NavItem to="/history" icon={History} label={t('nav.work_history')} />
                     </NavGroup>
 
                     {/* Group: Digital & Media */}
-                    <NavGroup id="digital" label="Digital & Media" icon={Megaphone}>
-                        {user?.role === 'admin' && <NavItem to="/bot-dashboard" icon={Smartphone} label="WhatsApp Bot" />}
-                        <NavItem to="/social" icon={TrendingUp} label="Social Analytics" />
-                        <NavItem to="/events" icon={Smartphone} label="Events & Invites" />
-                        <NavItem to="/gallery" icon={Newspaper} label="Gallery & Media" />
-                        <NavItem to="/content" icon={Wand2} label="AI Content Studio" />
-                        <NavItem to="/surveys" icon={FileText} label="Sample Surveys" />
+                    <NavGroup id="digital" label={t('common.digital_media')} icon={Megaphone}>
+                        {user?.role === 'admin' && <NavItem to="/bot-dashboard" icon={Smartphone} label={t('nav.whatsapp_bot')} />}
+                        <NavItem to="/social" icon={TrendingUp} label={t('nav.social_analytics')} />
+                        <NavItem to="/events" icon={Smartphone} label={t('nav.events_invites')} />
+                        <NavItem to="/gallery" icon={Newspaper} label={t('nav.gallery_media')} />
+                        <NavItem to="/content" icon={Wand2} label={t('nav.ai_content')} />
+                        <NavItem to="/surveys" icon={FileText} label={t('nav.sample_surveys')} />
                     </NavGroup>
 
                     {/* Group: Finance & Reports */}
-                    <NavGroup id="finance" label="Finance & Reports" icon={BarChart2}>
-                        <NavItem to="/budget" icon={IndianRupee} label="Ward Budget" />
-                        <NavItem to="/results" icon={BarChart2} label="Result Analysis" />
+                    <NavGroup id="finance" label={t('common.finance_reports')} icon={BarChart2}>
+                        <NavItem to="/budget" icon={IndianRupee} label={t('nav.ward_budget')} />
+                        <NavItem to="/results" icon={BarChart2} label={t('nav.result_analysis')} />
                     </NavGroup>
 
                 </nav>
 
                 {/* Footer */}
                 <div className="p-4 border-t border-gray-100 bg-gray-50/50 shrink-0">
+                    <div className="flex items-center gap-2 mb-3">
+                        {/* Language Selector in Footer */}
+                        <div className="relative group w-full">
+                            <button className="flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:border-brand-300 transition-colors">
+                                <div className="flex items-center gap-2">
+                                    <Globe className="w-4 h-4 text-gray-500" />
+                                    <span>{language === 'en' ? 'English' : language === 'mr' ? 'मराठी' : 'हिंदी'}</span>
+                                </div>
+                                <ChevronDown className="w-3 h-3 text-gray-400" />
+                            </button>
+                            <div className="absolute bottom-full left-0 w-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg hidden group-hover:block z-50">
+                                <button onClick={() => setLanguage('en')} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded-t-lg ${language === 'en' ? 'font-bold text-brand-600' : 'text-gray-700'}`}>English</button>
+                                <button onClick={() => setLanguage('mr')} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${language === 'mr' ? 'font-bold text-brand-600' : 'text-gray-700'}`}>मराठी</button>
+                                <button onClick={() => setLanguage('hi')} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded-b-lg ${language === 'hi' ? 'font-bold text-brand-600' : 'text-gray-700'}`}>हिंदी</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex items-center mb-3">
                         <div className="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold mr-3 border border-brand-200">
                             {user?.name.charAt(0)}
@@ -163,7 +184,7 @@ const AppLayout = () => {
                         className="flex items-center justify-center space-x-2 text-gray-600 text-sm hover:text-red-600 w-full py-2 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100"
                     >
                         <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
+                        <span>{t('common.logout')}</span>
                     </button>
                 </div>
             </aside>
@@ -177,6 +198,19 @@ const AppLayout = () => {
                             <Menu className="w-6 h-6 text-gray-600" />
                         </button>
                         <span className="font-semibold text-gray-900 text-lg">Nagar Sevak</span>
+                    </div>
+
+                    {/* Language Selector Mobile */}
+                    <div className="relative">
+                        <select
+                            value={language}
+                            onChange={(e) => setLanguage(e.target.value as Language)}
+                            className="bg-gray-50 border-none text-sm font-medium rounded-lg focus:ring-0 p-1 pr-2"
+                        >
+                            <option value="en">Eng</option>
+                            <option value="mr">मराठी</option>
+                            <option value="hi">हिंदी</option>
+                        </select>
                     </div>
                 </header>
 
