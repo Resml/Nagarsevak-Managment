@@ -282,14 +282,14 @@ const SadasyaList = () => {
     });
 
     const getDisplayName = (member: any) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return member.name_marathi || member.name || member.name_english;
         }
         return member.name_english || member.name;
     };
 
     const getDisplayAddress = (member: any) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return member.address_marathi || member.address || member.address_english;
         }
         return member.address_english || member.address;

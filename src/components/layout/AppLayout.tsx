@@ -341,7 +341,6 @@ const AppLayout = () => {
                   >
                     <option value="en">English</option>
                     <option value="mr">मराठी</option>
-                    <option value="hi">हिंदी</option>
                   </select>
 
                   <div className="flex items-center gap-3 pt-2">

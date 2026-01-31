@@ -1,5 +1,5 @@
 
-export type Language = 'en' | 'mr' | 'hi';
+export type Language = 'en' | 'mr';
 
 export const translations = {
     en: {

@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, type Language } from '../utils/translations';
+import { translateWidget } from '../services/googleTranslateWidget';
 
 interface LanguageContextType {
     language: Language;
@@ -11,18 +12,60 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Determine initial language: LocalStorage -> Browser Preference -> 'en'
+    // Get initial language from localStorage or default to 'en'
     const getInitialLanguage = (): Language => {
         const saved = localStorage.getItem('ns_language') as Language;
-        if (saved && (saved === 'en' || saved === 'mr' || saved === 'hi')) return saved;
+        // Only support 'en' and 'mr' now
+        if (saved && (saved === 'en' || saved === 'mr')) return saved;
         return 'en';
     };
 
     const [language, setLanguageState] = useState<Language>(getInitialLanguage);
 
+    // Initialize Google Translate widget on mount
+    useEffect(() => {
+        translateWidget.initialize();
+
+        // If initial language is Marathi, trigger translation
+        const initialLang = getInitialLanguage();
+        if (initialLang === 'mr') {
+            // Small delay to ensure widget is ready
+            setTimeout(() => {
+                translateWidget.changeLanguage('mr');
+            }, 1000);
+        }
+    }, []);
+
     const setLanguage = (lang: Language) => {
+        // Only support English and Marathi
+        if (lang !== 'en' && lang !== 'mr') {
+            console.warn(`Language ${lang} not supported. Only 'en' and 'mr' are available.`);
+            return;
+        }
+
+        const previousLang = language;
+
         setLanguageState(lang);
         localStorage.setItem('ns_language', lang);
+
+        // If switching back to English from Marathi, clear Google Translate cookie and reload
+        if (lang === 'en' && previousLang === 'mr') {
+            // Clear Google Translate cookies
+            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname.split('.').slice(-2).join('.');
+
+            // Small delay to ensure cookies are cleared
+            setTimeout(() => {
+                window.location.reload();
+            }, 100);
+            return;
+        }
+
+        // If switching to Marathi, trigger Google Translate
+        if (lang === 'mr') {
+            translateWidget.changeLanguage('mr');
+        }
     };
 
     // Translation function: supports nested keys like 'common.welcome'

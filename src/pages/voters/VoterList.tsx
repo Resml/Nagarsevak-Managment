@@ -33,14 +33,14 @@ const VoterList = () => {
 
     // Helper to get display name based on language
     const getDisplayName = (voter: Voter) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return voter.name_marathi || voter.name || voter.name_english;
         }
         return voter.name_english || voter.name;
     };
 
     const getDisplayAddress = (voter: Voter) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return voter.address_marathi || voter.address || voter.address_english;
         }
         return voter.address_english || voter.address;

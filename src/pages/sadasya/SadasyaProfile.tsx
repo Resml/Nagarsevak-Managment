@@ -27,14 +27,14 @@ const SadasyaProfile: React.FC<SadasyaProfileProps> = ({ member, onBack, onEdit,
     }, [member]);
 
     const getDisplayName = (m: Sadasya) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return m.name_marathi || m.name || m.name_english;
         }
         return m.name_english || m.name;
     };
 
     const getDisplayAddress = (m: Sadasya) => {
-        if (language === 'mr' || language === 'hi') {
+        if (language === 'mr') {
             return m.address_marathi || m.address || m.address_english;
         }
         return m.address_english || m.address;
