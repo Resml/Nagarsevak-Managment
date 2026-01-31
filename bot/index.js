@@ -57,6 +57,15 @@ const PORT = 4000;
 // Middleware
 app.use(express.json());
 
+// --- Root Route for Health Check ---
+app.get('/', (req, res) => {
+    res.send(`
+        <h1>WhatsApp Bot Server is Running 🚀</h1>
+        <p>Status: <strong>${connectionStatus}</strong></p>
+        <p>Use the frontend to scan QR code.</p>
+    `);
+});
+
 // --- Supabase Setup ---
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
