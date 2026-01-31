@@ -3,7 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { io } from 'socket.io-client';
 import { CheckCircle, RefreshCw, Smartphone } from 'lucide-react';
 
-const SOCKET_URL = 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:4000';
 
 const BotDashboard = () => {
     const [status, setStatus] = useState<string>('disconnected');
