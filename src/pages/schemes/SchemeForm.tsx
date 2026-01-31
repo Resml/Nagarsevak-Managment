@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
 
 const SchemeForm = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -13,6 +15,36 @@ const SchemeForm = () => {
         benefits: '',
         documents: ''
     });
+
+    useEffect(() => {
+        if (id) {
+            fetchScheme();
+        }
+    }, [id]);
+
+    const fetchScheme = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('schemes')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                setFormData({
+                    name: data.name,
+                    description: data.description,
+                    eligibility: data.eligibility,
+                    benefits: data.benefits,
+                    documents: data.documents
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching scheme:', error);
+            toast.error('Failed to load scheme details');
+        }
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -24,15 +56,25 @@ const SchemeForm = () => {
         setLoading(true);
 
         try {
-            const { error } = await supabase
-                .from('schemes')
-                .insert([formData]);
+            if (id) {
+                const { error } = await supabase
+                    .from('schemes')
+                    .update(formData)
+                    .eq('id', id);
+                if (error) throw error;
+                toast.success('Scheme updated successfully!');
+            } else {
+                const { error } = await supabase
+                    .from('schemes')
+                    .insert([formData]);
+                if (error) throw error;
+                toast.success('Scheme added successfully!');
+            }
 
-            if (error) throw error;
             navigate('/schemes');
         } catch (err) {
             console.error('Error saving scheme:', err);
-            alert('Failed to save scheme. Please try again.');
+            toast.error('Failed to save scheme. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -42,76 +84,76 @@ const SchemeForm = () => {
         <div className="max-w-2xl mx-auto space-y-6">
             <button
                 onClick={() => navigate('/schemes')}
-                className="flex items-center text-gray-600 hover:text-brand-600 font-medium transition"
+                className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Schemes
             </button>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-brand-50 p-6 border-b border-brand-100">
-                    <h1 className="text-xl font-bold text-gray-900">Add New Government Scheme</h1>
-                    <p className="text-sm text-brand-700 mt-1">Enter details about the new welfare scheme.</p>
+            <div className="ns-card overflow-hidden">
+                <div className="p-6 border-b border-slate-200/70 bg-slate-50">
+                    <h1 className="text-xl font-bold text-slate-900">{id ? 'Edit Scheme' : 'Add new scheme'}</h1>
+                    <p className="text-sm text-slate-500 mt-1">{id ? 'Update scheme details, eligibility, and benefits.' : 'Add eligibility, benefits and required documents.'}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Scheme Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Scheme name</label>
                         <input
                             required
                             name="name"
                             type="text"
                             value={formData.name}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="e.g. Pradhan Mantri Awas Yojana"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                         <textarea
                             required
                             name="description"
                             rows={3}
                             value={formData.description}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="Brief summary of the scheme..."
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Eligibility Criteria</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Eligibility criteria</label>
                         <textarea
                             name="eligibility"
                             rows={3}
                             value={formData.eligibility}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="Who can apply? (e.g. Women aged 21-60, Income < 2.5L)"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Benefits</label>
                         <textarea
                             name="benefits"
                             rows={3}
                             value={formData.benefits}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="What do beneficiaries get? (e.g. ₹1500 per month)"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Documents Required</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Documents required</label>
                         <textarea
                             name="documents"
                             rows={2}
                             value={formData.documents}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="e.g. Aadhar Card, Ration Card, Bank Passbook"
                         />
                     </div>
@@ -120,10 +162,10 @@ const SchemeForm = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex items-center space-x-2 bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm font-medium disabled:opacity-50"
+                            className="ns-btn-primary disabled:opacity-50"
                         >
                             <Save className="w-4 h-4" />
-                            <span>{loading ? 'Saving...' : 'Save Scheme'}</span>
+                            <span>{loading ? 'Saving...' : (id ? 'Update Scheme' : 'Save Scheme')}</span>
                         </button>
                     </div>
                 </form>

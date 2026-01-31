@@ -62,5 +62,32 @@ export const VoterService = {
             mobile: row.mobile || undefined,
             history: []
         }));
+    },
+
+    getTotalCount: async (): Promise<number> => {
+        const { count, error } = await supabase
+            .from('voters')
+            .select('*', { count: 'exact', head: true });
+
+        if (error) {
+            console.error('Error getting total voter count:', error);
+            return 0;
+        }
+
+        return count || 0;
+    },
+
+    getAllVoterPhones: async (): Promise<string[]> => {
+        const { data, error } = await supabase
+            .from('voters')
+            .select('mobile')
+            .not('mobile', 'is', null);
+
+        if (error) {
+            console.error('Error fetching voter phones:', error);
+            return [];
+        }
+
+        return (data || []).map((row: any) => row.mobile).filter((m: any) => m);
     }
 };

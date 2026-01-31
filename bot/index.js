@@ -1,14 +1,44 @@
-const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
-const store = require('./store');
+const { makeWASocket, useMultiFileAuthState, DisconnectReason, getAggregateVotesInPollMessage } = require('@whiskeysockets/baileys');
+// const makeInMemoryStore = require('@whiskeysockets/baileys').makeInMemoryStore; // Removed as it is missing
+
+const pino = require('pino');
 const express = require('express');
 const http = require('http');
 const { Server } = require("socket.io");
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config({ path: '../.env' });
+const qrcode = require('qrcode-terminal');
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
+const store = require('./store');
+const broadcastService = require('./broadcast');
+const aiService = require('./aiService');
+const LOCALES = require('./locales'); // Import Locales
+
+// --- Custom Simple Store for Polls ---
+class SimpleStore {
+    constructor() {
+        this.messages = {}; // jid -> { id -> message }
+    }
+
+    bind(ev) {
+        ev.on('messages.upsert', (data) => {
+            for (const msg of data.messages) {
+                const jid = msg.key.remoteJid;
+                if (!this.messages[jid]) this.messages[jid] = {};
+                this.messages[jid][msg.key.id] = msg;
+            }
+        });
+    }
+
+    async loadMessage(jid, id) {
+        return this.messages[jid]?.[id];
+    }
+}
+
+// --- Baileys Store (For Polls) ---
+const msgRetryCounterCache = new Map();
+const baileysStore = new SimpleStore();
 
 // --- Server Setup ---
 const app = express();
@@ -17,17 +47,25 @@ app.use(cors());
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173", // Valid for Vite default port
+        origin: "http://localhost:5173",
         methods: ["GET", "POST"]
     }
 });
 
 const PORT = 4000;
-const broadcastService = require('./broadcast');
-const aiService = require('./aiService');
 
 // Middleware
-app.use(express.json()); // Enable JSON body parsing
+app.use(express.json());
+
+// --- Supabase Setup ---
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// --- Globals ---
+let sock;
+let connectionStatus = 'disconnected';
+let lastQR = '';
 
 // --- API Routes ---
 app.post('/api/broadcast', async (req, res) => {
@@ -37,36 +75,252 @@ app.post('/api/broadcast', async (req, res) => {
         return res.status(400).json({ error: 'Event ID required' });
     }
 
-    if (connectionStatus !== 'ready' && connectionStatus !== 'connected') {
+    if (connectionStatus !== 'connected') {
         return res.status(503).json({ error: 'Bot not ready yet. Please wait.' });
     }
 
     console.log('Received broadcast request for Event:', eventId);
-
-    // Run async (don't block response) - or block if we want to confirm start
-    // Let's return immediate success that it started
+    broadcastService.broadcastEvent(sock, eventId);
     res.json({ success: true, message: 'Broadcast started in background' });
-
-    // Start Broadcasting
-    broadcastService.broadcastEvent(client, eventId);
 });
 
-// --- Supabase Setup ---
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// --- Baileys Connection Logic ---
+async function connectToWhatsApp() {
+    console.log('Initializing Baileys connection...');
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
 
-// --- Bot Setup ---
-const client = new Client({
-    authStrategy: new LocalAuth(),
-    authTimeoutMs: 60000,
-    puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    sock = makeWASocket({
+        auth: state,
+        logger: pino({ level: 'silent' }),
+        msgRetryCounterCache,
+        getMessage: async (key) => {
+            if (baileysStore) {
+                const msg = await baileysStore.loadMessage(key.remoteJid, key.id);
+                return msg?.message || undefined;
+            }
+            return { conversation: 'hello' };
+        }
+    });
+
+    // Bind Store
+    baileysStore.bind(sock.ev);
+
+    sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+
+        if (qr) {
+            console.log('QR Received via Baileys');
+            qrcode.generate(qr, { small: true });
+            lastQR = qr;
+            connectionStatus = 'scanning';
+            io.emit('qr', qr);
+            io.emit('status', 'scanning');
+        }
+
+        if (connection === 'close') {
+            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connection closed due to:', lastDisconnect.error, ', Reconnecting:', shouldReconnect);
+            connectionStatus = 'disconnected';
+            io.emit('status', 'disconnected');
+            if (shouldReconnect) {
+                connectToWhatsApp();
+            }
+        } else if (connection === 'open') {
+            console.log('✅ Connection opened! Bot is ready.');
+            connectionStatus = 'connected';
+            io.emit('status', 'connected');
+            io.emit('qr', '');
+            lastQR = '';
+        }
+    });
+
+    sock.ev.on('messages.upsert', async (m) => {
+        try {
+            const msg = m.messages[0];
+            if (!msg.message || msg.key.fromMe) return;
+
+            const from = msg.key.remoteJid;
+            const contactName = msg.pushName || 'User';
+
+            // --- POLL HANDLING ---
+            // If it's a poll update (vote), we need to translate it to text
+            if (msg.message.pollUpdateMessage) {
+                console.log(`[DEBUG] Received Poll Update from ${from}`);
+                const pollCreation = await sock.getMessage(msg.message.pollUpdateMessage.pollCreationMessageKey);
+
+                if (pollCreation) {
+                    const pollMessage = {
+                        key: msg.message.pollUpdateMessage.pollCreationMessageKey,
+                        message: pollCreation
+                    };
+
+                    const votes = getAggregateVotesInPollMessage({
+                        message: pollMessage,
+                        pollUpdates: [msg],
+                    });
+
+                    // Find the voted option
+                    const selectedVote = votes.find(v => v.voters.length > 0);
+                    if (selectedVote) {
+                        const votedText = selectedVote.name;
+                        console.log(`[DEBUG] User voted: ${votedText}`);
+
+                        // Map Poll Options to Language Codes
+                        let langCode = null;
+                        if (votedText.includes('English')) langCode = 'lang_en';
+                        else if (votedText.includes('मराठी')) langCode = 'lang_mr';
+                        else if (votedText.includes('हिंदी')) langCode = 'lang_hi';
+
+                        if (langCode) {
+                            await handleMessage(from, contactName, langCode);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // --- NORMAL MESSAGE HANDLING ---
+            // Extract text from various message types
+            let text = '';
+            if (msg.message.conversation) text = msg.message.conversation;
+            else if (msg.message.extendedTextMessage) text = msg.message.extendedTextMessage.text;
+
+            // Allow text fallback for languages
+            if (!text && !msg.message.pollUpdateMessage) return; // Skip if empty and not a poll
+
+            if (text) {
+                text = text.trim();
+                console.log(`[DEBUG] Message from ${from}: ${text}`);
+                await handleMessage(from, contactName, text);
+            }
+
+        } catch (err) {
+            console.error('Error handling message upsert:', err);
+        }
+    });
+}
+
+// --- Bot Logic ---
+const userStates = {};
+
+const STATES = {
+    IDLE: 'IDLE',
+    REPORTING_NAME: 'REPORTING_NAME',
+    REPORTING_PROBLEM: 'REPORTING_PROBLEM',
+};
+
+// Helper: Send Language Selection (Text Fallback)
+async function sendLanguageSelection(jid) {
+    const text = `👋 *Welcome / स्वागत आहे / स्वागत है*\n\n` +
+        `Please select your language / कृपया तुमची भाषा निवडा:\n\n` +
+        `1️⃣ *English*\n` +
+        `2️⃣ *मराठी*\n` +
+        `3️⃣ *हिंदी*\n\n` +
+        `_Reply with 1, 2, or 3_`;
+
+    await sock.sendMessage(jid, { text: text });
+}
+
+// Helper: Send Main Menu (Text)
+async function sendMainMenu(jid, langCode) {
+    const locale = LOCALES[langCode] || LOCALES.en;
+
+    let menuText = `*${locale.menu_title}*\n${locale.menu_body}\n\n`;
+    menuText += `1️⃣ ${locale.menu_options.report}\n`;
+    menuText += `2️⃣ ${locale.menu_options.candidate}\n`;
+    menuText += `3️⃣ ${locale.menu_options.schemes}\n`;
+    menuText += `4️⃣ ${locale.menu_options.events}\n`;
+    menuText += `\n_Reply with 1-4 to select_`;
+
+    await sock.sendMessage(jid, { text: menuText });
+}
+
+// Handler
+async function handleMessage(userId, userName, text) {
+    // 1. Load User & Language Preference
+    let user = await store.getUser(userId);
+    let lang = user?.language;
+
+    // --- Onboarding Flow (Language Selection) ---
+    if (!lang) {
+        // Check input
+        if (text === 'lang_en' || text === '1' || text.toLowerCase().includes('english')) lang = 'en';
+        else if (text === 'lang_mr' || text === '2' || text.includes('मराठी')) lang = 'mr';
+        else if (text === 'lang_hi' || text === '3' || text.includes('हिंदी')) lang = 'hi';
+
+        if (lang) {
+            // Save Language
+            await store.saveUser(userId, { language: lang, name: userName });
+            const locale = LOCALES[lang];
+            await sock.sendMessage(userId, { text: locale.language_selected });
+
+            // Proceed to Menu
+            await sendMainMenu(userId, lang);
+            return;
+        } else {
+            // No Language Set -> Prompt with POLL
+            await sendLanguageSelection(userId);
+            return;
+        }
     }
-});
 
-let lastQR = '';
-let connectionStatus = 'disconnected';
+    // --- Main Flow (Language Set) ---
+    const locale = LOCALES[lang];
+    const userState = userStates[userId] || { step: STATES.IDLE, data: {} };
+
+    // Global Reset
+    if (['reset', 'menu', 'start', 'hi', 'hello'].includes(text.toLowerCase())) {
+        userStates[userId] = { step: STATES.IDLE, data: {} };
+        await sendMainMenu(userId, lang);
+        return;
+    }
+
+    if (userState.step === STATES.IDLE) {
+        // Handle Menu Selections (List IDs or Text IDs)
+        if (text === 'menu_report' || text === '1') {
+            userStates[userId] = { step: STATES.REPORTING_NAME, data: {} };
+            await sock.sendMessage(userId, { text: locale.prompts.name });
+        }
+        else if (text === 'menu_candidate' || text === '2') {
+            await sock.sendMessage(userId, { text: `👤 Candidate: Rajesh Sharma (Ward 12)` });
+            await sendMainMenu(userId, lang);
+        }
+        else if (text === 'menu_schemes' || text === '3') {
+            await sock.sendMessage(userId, { text: `📜 *Available Schemes*:\n\n1. PM Awas Yojana\n2. Ladki Bahin Yojana\n\nVisit Ward Office for forms.` });
+            await sendMainMenu(userId, lang);
+        }
+        // ... Handle other menu items
+        else {
+            // Unknown Input -> Show Menu Again
+            await sendMainMenu(userId, lang);
+        }
+    }
+    // Form Filling Flow
+    else if (userState.step === STATES.REPORTING_NAME) {
+        userStates[userId].data.name = text;
+        userStates[userId].step = STATES.REPORTING_PROBLEM;
+        await sock.sendMessage(userId, { text: locale.prompts.problem });
+    }
+    else if (userState.step === STATES.REPORTING_PROBLEM) {
+        userStates[userId].data.problem = text;
+
+        // Save
+        const complaint = {
+            userId: userId,
+            userName: userStates[userId].data.name,
+            problem: userStates[userId].data.problem,
+            timestamp: new Date().toISOString()
+        };
+        store.saveComplaint(complaint);
+
+        await sock.sendMessage(userId, { text: locale.prompts.registered });
+
+        userStates[userId] = { step: STATES.IDLE, data: {} };
+        await sendMainMenu(userId, lang);
+    }
+}
 
 io.on('connection', (socket) => {
     console.log('Frontend connected');
@@ -76,564 +330,9 @@ io.on('connection', (socket) => {
     }
 });
 
-// --- Realtime Listener for Letters ---
-supabase
-    .channel('letters-update')
-    .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'letter_requests' },
-        async (payload) => {
-            const newData = payload.new;
-            console.log('Letter Request Update:', newData.id, newData.status);
-
-            if (newData.status === 'Approved' && newData.pdf_url) {
-                console.log('Letter Approved! Sending PDF to', newData.user_id);
-
-                try {
-                    // Fetch PDF Data
-                    const response = await fetch(newData.pdf_url);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-
-                    // Create Media
-                    const media = new MessageMedia(
-                        'application/pdf',
-                        buffer.toString('base64'),
-                        `${newData.type}_Letter.pdf`
-                    );
-
-                    // Send to User
-                    const userNumber = newData.user_id.replace('+', '').replace(' ', '') + '@c.us';
-
-                    await client.sendMessage(userNumber, media, {
-                        caption: `✅ *Your ${newData.type} Letter is Approved!* \n\nPlease find the document attached.\n\n_Regards,_\n_Nagar Sevak Office_`
-                    });
-
-                    console.log('PDF Sent Successfully');
-
-                } catch (err) {
-                    console.error('Failed to send PDF:', err);
-                }
-            }
-        }
-    )
-    .subscribe();
-
-// --- Realtime Listener for Complaints (Auto-Assign) ---
-supabase
-    .channel('complaints-auto-assign')
-    .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'complaints' },
-        async (payload) => {
-            const newComplaint = payload.new;
-            console.log('New Complaint Received:', newComplaint.id);
-
-            // Trigger Auto-Assign
-            // We verify if it is already assigned to avoid overwriting (though unlikely on insert)
-            if (newComplaint.status === 'Pending' && !newComplaint.assigned_to) {
-                await checkAndAssignStaff(newComplaint);
-            }
-        }
-    )
-    .subscribe();
-
-client.on('qr', (qr) => {
-    // Terminal fallback
-    qrcode.generate(qr, { small: true });
-    console.log('QR RECEIVED', qr);
-
-    // Web update
-    lastQR = qr;
-    connectionStatus = 'scanning';
-    io.emit('qr', qr);
-    io.emit('status', 'scanning');
-});
-
-client.on('ready', () => {
-    console.log('Client is ready!');
-    connectionStatus = 'connected';
-    io.emit('status', 'connected');
-    io.emit('qr', '');
-});
-
-client.on('authenticated', () => {
-    console.log('Client is authenticated!');
-    connectionStatus = 'authenticated';
-    io.emit('status', 'authenticated');
-});
-
-client.on('auth_failure', msg => {
-    console.error('AUTHENTICATION FAILURE', msg);
-    connectionStatus = 'disconnected';
-    io.emit('status', 'disconnected');
-});
-
-client.on('disconnected', (reason) => {
-    console.log('Client was logged out', reason);
-    connectionStatus = 'disconnected';
-    io.emit('status', 'disconnected');
-});
-
-// --- Bot Logic ---
-const userStates = {};
-
-const STATES = {
-    IDLE: 'IDLE',
-    REPORTING_NAME: 'REPORTING_NAME',
-    REPORTING_PROBLEM: 'REPORTING_PROBLEM',
-    REPORTING_AREA: 'REPORTING_AREA',
-    REPORTING_LOCATION: 'REPORTING_LOCATION',
-    REQUESTING_LETTER_TYPE: 'REQUESTING_LETTER_TYPE',
-    REQUESTING_LETTER_DETAILS: 'REQUESTING_LETTER_DETAILS',
-    REPORTING_PERSONAL_HELP: 'REPORTING_PERSONAL_HELP',
-    FIND_SCHEME_GENDER: 'FIND_SCHEME_GENDER',
-    FIND_SCHEME_AGE: 'FIND_SCHEME_AGE',
-    FIND_SCHEME_INCOME: 'FIND_SCHEME_INCOME',
-};
-
-client.on('message', async msg => {
-    try {
-        const chat = await msg.getChat();
-        const contact = await msg.getContact();
-        const userId = contact.number;
-        const userState = userStates[userId] || { step: STATES.IDLE, data: {} };
-        const text = msg.body.trim();
-
-        // --- AUDIO HANDLING ---
-        if (msg.hasMedia && (msg.type === 'audio' || msg.type === 'ptt')) {
-            console.log(`Audio received from ${userId}`);
-            await chat.sendMessage('🎤 Received Audio. Processing...');
-
-            try {
-                const media = await msg.downloadMedia();
-                const fileName = `audio_${userId}_${Date.now()}.ogg`;
-
-                // Upload to Supabase Storage
-                // Buffer from base64
-                const buffer = Buffer.from(media.data, 'base64');
-
-                const { data, error } = await supabase
-                    .storage
-                    .from('audio')
-                    .upload(fileName, buffer, {
-                        contentType: media.mimetype
-                    });
-
-                if (error) {
-                    console.error('Supabase Upload Error:', error);
-                    await chat.sendMessage('❌ Failed to save audio. Please try again.');
-                    return;
-                }
-
-                // Get Public URL
-                const { data: { publicUrl } } = supabase
-                    .storage
-                    .from('audio')
-                    .getPublicUrl(fileName);
-
-                console.log('Audio Uploaded:', publicUrl);
-
-                // Save Complaint
-                const complaint = {
-                    id: Date.now().toString(),
-                    userId: userId,
-                    userName: contact.pushname || 'WhatsApp User',
-                    problem: 'Voice Message',
-                    location: 'Not Provided',
-                    area: 'Not Provided',
-                    audioUrl: publicUrl,
-                    timestamp: new Date().toISOString()
-                };
-
-                store.saveComplaint(complaint);
-                await chat.sendMessage('✅ Voice Complaint Registered!');
-                await chat.sendMessage(`Ticket ID: #${complaint.id}`);
-                return;
-
-            } catch (err) {
-                console.error('Audio processing failed:', err);
-                await chat.sendMessage('❌ Error processing audio.');
-                return;
-            }
-        }
-
-        console.log(`Message from ${userId}: ${text} (State: ${userState.step})`);
-
-        // Reset command
-        if (text.toLowerCase() === 'reset' || text.toLowerCase() === 'cancel') {
-            userStates[userId] = { step: STATES.IDLE, data: {} };
-            await chat.sendMessage('❌ Action cancelled. Send "Hi" to start again.');
-            return;
-        }
-
-        // Main Menu Handler
-        if (userState.step === STATES.IDLE) {
-            if (['hi', 'hello', 'start', 'menu'].includes(text.toLowerCase())) {
-                await sendMainMenu(chat);
-            } else if (text === '1') {
-                userStates[userId] = { step: STATES.REPORTING_NAME, data: {} };
-                await chat.sendMessage('Please enter your *Full Name*:');
-            } else if (text === '2') {
-                await sendCandidateInfo(chat);
-            } else if (text === '3') {
-                await sendSchemesInfo(chat);
-            } else if (text === '4') {
-                await sendEventsInfo(chat);
-
-            } else if (text === '5') {
-                userStates[userId] = { step: STATES.REQUESTING_LETTER_TYPE, data: {} };
-                const types = `📄 *Select Letter Type*\n\n` +
-                    `A. Residential Certificate\n` +
-                    `B. Character Certificate\n` +
-                    `C. No Objection Certificate (NOC)\n\n` +
-                    `_Reply with A, B, or C_`;
-                await chat.sendMessage(types);
-             else if (text === '6') {
-                    userStates[userId] = { step: STATES.REPORTING_PERSONAL_HELP, data: {} };
-                    await chat.sendMessage(`🆘 *Need Help with Personal Problems?*\n\nWe are here to support you. Please tell us your problem briefly (e.g., "Need financial help for education", "Medical emergency support").\n\n_Type your message below:_`);
-                } else if (text === '7') {
-                    userStates[userId] = { step: STATES.FIND_SCHEME_GENDER, data: {} };
-                    await chat.sendMessage(`🔍 *Find Scheme for Me*\n\nTo find the best schemes for you, please answer a few questions.\n\n1. What is your *Gender*? (M / F / Other)`);
-                } else {
-                    // AI Human Touch Fallback
-                    // If it's not a command, treat it as a conversation
-                    await chat.sendStateTyping(); // Simulate typing
-                    const aiResponse = await aiService.getChatResponse(text);
-                    await chat.sendMessage(aiResponse);
-                }
-            }
-            // Reporting Flow
-            else if (userState.step === STATES.REPORTING_NAME) {
-                userStates[userId].data.name = text;
-                userStates[userId].step = STATES.REPORTING_PROBLEM;
-                await chat.sendMessage('Please describe the *Problem* you are facing:');
-            }
-            else if (userState.step === STATES.REPORTING_PROBLEM) {
-                userStates[userId].data.problem = text;
-                userStates[userId].step = STATES.REPORTING_AREA;
-                await chat.sendMessage('Please enter the *Area / Colony Name*:');
-            }
-            else if (userState.step === STATES.REPORTING_AREA) {
-                userStates[userId].data.area = text;
-                userStates[userId].step = STATES.REPORTING_LOCATION;
-                await chat.sendMessage('Please enter the *Ward Number/Location* (or send 0 to skip):');
-            }
-            else if (userState.step === STATES.REPORTING_LOCATION) {
-                userStates[userId].data.location = text === '0' ? 'Not Provided' : text;
-
-                // Save Complaint
-                const complaint = {
-                    // id: Date.now().toString(), // No, we insert to supabase and let it generate ID
-                    userId: userId,
-                    userName: userStates[userId].data.name,
-                    problem: userStates[userId].data.problem,
-                    area: userStates[userId].data.area,
-                    location: userStates[userId].data.location,
-                    timestamp: new Date().toISOString()
-                };
-
-                // DB Insert
-                const { data: insertedData, error } = await supabase
-                    .from('complaints')
-                    .insert([{
-                        user_id: complaint.userId,
-                        user_name: complaint.userName,
-                        problem: complaint.problem,
-                        area: complaint.area,
-                        location: complaint.location,
-                        status: 'Pending',
-                        source: 'WhatsApp'
-                    }])
-                    .select()
-                    .single();
-
-                if (error) {
-                    console.error('Error saving complaint:', error);
-                    await chat.sendMessage('❌ Error saving complaint. Please try again.');
-                } else {
-                    await chat.sendMessage('✅ *Complaint Registered Successfully!*');
-                    await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
-
-                    await chat.sendMessage(`Ticket ID: #${insertedData.id}\nWe will contact you shortly.`);
-
-                    // --- Auto-Assign Logic ---
-                    // Removed explicit call here as Realtime listener handles it now.
-                    // await checkAndAssignStaff(insertedData);
-                }
-
-                // Reset state
-                userStates[userId] = { step: STATES.IDLE, data: {} };
-                await sendMainMenu(chat);
-            }
-            // Letter Request Flow
-            else if (userState.step === STATES.REQUESTING_LETTER_TYPE) {
-                const map = { 'a': 'Residential', 'b': 'Character', 'c': 'NOC' };
-                const selected = map[text.toLowerCase()];
-
-                if (selected) {
-                    userStates[userId].data.type = selected;
-                    userStates[userId].step = STATES.REQUESTING_LETTER_DETAILS;
-                    await chat.sendMessage(`You selected: *${selected}*\n\nPlease enter your *Full Name* for the certificate:`);
-                } else {
-                    await chat.sendMessage('❌ Invalid Option. Please reply with A, B, or C.');
-                }
-            }
-            else if (userState.step === STATES.REQUESTING_LETTER_DETAILS) {
-                const name = text;
-                const type = userStates[userId].data.type;
-
-                // DB Insert
-                const { data, error } = await supabase
-                    .from('letter_requests')
-                    .insert([{
-                        user_id: userId,
-                        type: type,
-                        details: { name: name },
-                        status: 'Pending'
-                    }]);
-
-                if (error) {
-                    console.error('Error saving letter request:', error);
-                    await chat.sendMessage('❌ Error submitting request. Please try again.');
-                } else {
-                    await chat.sendMessage('✅ *Request Submitted!*');
-                    await chat.sendMessage(`Your request for a *${type}* has been received.\nWe will notify you once it is approved.`);
-                }
-
-                // Reset state
-                userStates[userId] = { step: STATES.IDLE, data: {} };
-                await sendMainMenu(chat);
-            }
-
-            // Personal Help Flow
-            else if (userState.step === STATES.REPORTING_PERSONAL_HELP) {
-                const problem = text;
-
-                // Save to Complaints with 'Personal Help' category
-                const { data: insertedData, error } = await supabase
-                    .from('complaints')
-                    .insert([{
-                        user_id: userId,
-                        user_name: contact.pushname || 'WhatsApp User',
-                        problem: problem,
-                        location: 'Not Provided',
-                        status: 'Pending',
-                        category: 'Personal Help',
-                        source: 'WhatsApp'
-                    }])
-                    .select()
-                    .single();
-
-                if (error) {
-                    console.error('Error saving help request:', error);
-                    await chat.sendMessage('❌ Error submitting request. Please try again.');
-                } else {
-                    await chat.sendMessage('✅ *Request Received!*');
-                    await chat.sendMessage(`We have noted your problem: "${problem}".\n\nOur team will contact you personally to assist provided we can help. Ticket ID: #${insertedData.id}`);
-                }
-
-                // Reset state
-                userStates[userId] = { step: STATES.IDLE, data: {} };
-                await sendMainMenu(chat);
-            }
-
-            // Scheme Finder Flow
-            else if (userState.step === STATES.FIND_SCHEME_GENDER) {
-                let gender = text.toUpperCase();
-                if (['M', 'MALE', 'MAN'].includes(gender)) gender = 'Male';
-                else if (['F', 'FEMALE', 'WOMAN', 'WOMEN'].includes(gender)) gender = 'Female';
-                else gender = 'Other';
-
-                userStates[userId].data.gender = gender;
-                userStates[userId].step = STATES.FIND_SCHEME_AGE;
-                await chat.sendMessage('2. What is your *Age*? (e.g. 25)');
-            }
-            else if (userState.step === STATES.FIND_SCHEME_AGE) {
-                const age = parseInt(text);
-                if (isNaN(age)) {
-                    await chat.sendMessage('Please enter a valid number for Age.');
-                    return;
-                }
-                userStates[userId].data.age = age;
-                userStates[userId].step = STATES.FIND_SCHEME_INCOME;
-                await chat.sendMessage('3. What is your *Annual Family Income*?\n\nA. Less than 1 Lakh\nB. 1 Lakh - 2.5 Lakh\nC. More than 2.5 Lakh\n\n_Reply with A, B, or C_');
-            }
-            else if (userState.step === STATES.FIND_SCHEME_INCOME) {
-                const incomeMap = { 'a': 100000, 'b': 250000, 'c': 500000 };
-                const incomeLimit = incomeMap[text.toLowerCase()] || 1000000;
-
-                userStates[userId].data.incomeLimit = incomeLimit;
-
-                await chat.sendMessage('🔄 Finding best schemes for you...');
-
-                try {
-                    // Fetch all schemes
-                    const { data: schemes, error } = await supabase
-                        .from('schemes')
-                        .select('*');
-
-                    if (error || !schemes) {
-                        throw error;
-                    }
-
-                    const gender = userStates[userId].data.gender;
-                    const age = userStates[userId].data.age;
-
-                    // Simple Scoring/Filtering Logic
-                    const recommended = schemes.filter(scheme => {
-                        const name = scheme.name.toLowerCase();
-                        const elig = (scheme.eligibility || '').toLowerCase();
-                        const desc = (scheme.description || '').toLowerCase();
-                        const combined = name + ' ' + elig + ' ' + desc;
-
-                        // Gender Filter
-                        if (gender === 'Male') {
-                            // Exclude specific female schemes
-                            if (combined.includes('women') || combined.includes('female') || combined.includes('girl') || combined.includes('ladki') || combined.includes('mahila')) {
-                                return false;
-                            }
-                        }
-                        if (gender === 'Female') {
-                            // Keep mostly everything, women are usually eligible for general + women schemes
-                        }
-
-                        // Age Filter (Very basic keyword check)
-                        if (age > 60) {
-                            // prioritize senior citizen?
-                        }
-                        if (age < 18) {
-                            // student/child schemes
-                        }
-
-                        return true;
-                    }).slice(0, 3); // Take top 3
-
-                    if (recommended.length > 0) {
-                        let msg = `🎉 *Recommended Schemes For You* 🎉\n\n`;
-                        recommended.forEach((s, i) => {
-                            msg += `*${i + 1}. ${s.name}*\n_${s.description}_\nBenefits: ${s.benefits}\n\n`;
-                        });
-                        msg += `_Reply with scheme name to know required documents._`; // Placeholder for future detail flow
-                        await chat.sendMessage(msg);
-                    } else {
-                        await chat.sendMessage('⚠️ No specific schemes found matching your criteria exactly. Please check the "Schemes" menu for a full list.');
-                    }
-
-                } catch (err) {
-                    console.error('Scheme fetch error:', err);
-                    await chat.sendMessage('❌ Error fetching schemes. Please try again later.');
-                }
-
-                // Reset state
-                userStates[userId] = { step: STATES.IDLE, data: {} };
-                await sendMainMenu(chat);
-            }
-        } catch (error) {
-            console.error('Error handling message:', error);
-        }
-    });
-
-// --- Auto Assignment ---
-async function checkAndAssignStaff(complaint) {
-    try {
-        // Fetch all staff
-        const { data: staffList } = await supabase.from('staff').select('*');
-        if (!staffList || staffList.length === 0) return;
-
-        const problemText = complaint.problem.toLowerCase();
-        let assignedStaff = null;
-
-        // Find match
-        for (const staff of staffList) {
-            if (staff.keywords && staff.keywords.some(k => problemText.includes(k.toLowerCase()))) {
-                assignedStaff = staff;
-                break;
-            }
-        }
-
-        if (assignedStaff) {
-            console.log(`Auto-assigning complaint #${complaint.id} to ${assignedStaff.name}`);
-
-            // Update DB
-            await supabase
-                .from('complaints')
-                .update({
-                    assigned_to: assignedStaff.id,
-                    status: 'Assigned'
-                })
-                .eq('id', complaint.id);
-
-            // Notify Staff via WhatsApp (if valid number)
-            // We use the same client to send message
-            const staffNumber = assignedStaff.mobile.replace('+', '').replace(' ', '') + '@c.us';
-            const message = `🚨 *New Task Assigned*\n\n` +
-                `🆔 Ticket: #${complaint.id}\n` +
-                `📍 Location: ${complaint.location}\n` +
-                `📝 Issue: ${complaint.problem}\n\n` +
-                `Please attend to this immediately.`;
-
-            try {
-                await client.sendMessage(staffNumber, message);
-                console.log(`Notification sent to ${assignedStaff.name}`);
-            } catch (msgErr) {
-                console.error('Failed to message staff:', msgErr);
-            }
-        }
-
-    } catch (err) {
-        console.error('Auto-assign error:', err);
-    }
-}
-
-async function sendMainMenu(chat) {
-    const menu = `🏛 *Nagar Sevak Bot* 🏛\n\n` +
-        `Welcome! How can I help you today?\n\n` +
-        `1️⃣ *Report a Problem* 📝\n` +
-        `2️⃣ *Candidate Info* 👤\n` +
-        `3️⃣ *Schemes* 📜\n` +
-        `4️⃣ *Upcoming Events* 🗓\n` +
-        `5️⃣ *Request Letter* 📄\n` +
-        `6️⃣ *Need Help* 🆘\n` +
-        `7️⃣ *Find Scheme for Me* 🔍\n\n` +
-        `_Reply with the number to select an option._`;
-    await chat.sendMessage(menu);
-}
-
-async function sendCandidateInfo(chat) {
-    const info = `👤 *Candidate Information*\n\n` +
-        `*Name:* Rajesh Sharma\n` +
-        `*Party:* Janta Sewa Party\n` +
-        `*Ward:* 12 - Shivaji Nagar\n\n` +
-        `*Vision:* "Clean Ward, Green Ward. Committed to 24/7 water supply and better roads."\n\n` +
-        `*Contact:* +91 98765 43210`;
-    await chat.sendMessage(info);
-}
-
-async function sendSchemesInfo(chat) {
-    const schemes = `📜 *Government Schemes*\n\n` +
-        `1. *PM Awas Yojana*: Housing for all.\n` +
-        `2. *Swachh Bharat*: Sanitation facilities subsidy.\n` +
-        `3. *Ayushman Bharat*: Health insurance up to 5L.\n\n` +
-        `Reply with scheme name for more details (Mock).`;
-    await chat.sendMessage(schemes);
-}
-
-async function sendEventsInfo(chat) {
-    const events = `🗓 *Upcoming Events*\n\n` +
-        `🔹 *Free Health Checkup Camp*\n` +
-        `   📅 Date: 25th Jan 2026\n` +
-        `   📍 Location: Community Hall, Ward 12\n\n` +
-        `🔹 *Voter ID Registration Drive*\n` +
-        `   📅 Date: 28th Jan 2026\n` +
-        `   📍 Location: Ward Office`;
-    await chat.sendMessage(events);
-}
-
-client.initialize().catch(err => {
-    console.error('Initialization Error:', err);
-});
+// Start
+connectToWhatsApp();
 
 server.listen(PORT, () => {
-    console.log(`Bot Server running on port ${PORT}`);
+    console.log(`Baileys Bot Server running on port ${PORT}`);
 });

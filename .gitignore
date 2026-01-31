@@ -23,3 +23,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Bot Session Data
+auth_info_baileys/
+bot/auth_info_baileys/
+bot/.wwebjs_auth/
+bot/.wwebjs_cache/

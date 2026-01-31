@@ -61,6 +61,7 @@ export interface Voter {
   booth: string;
   epicNo: string; // Voter ID Card Number
   mobile?: string;
+  houseNo?: string;
   history: ServiceRecord[];
 }
 
@@ -107,6 +108,7 @@ export interface DiaryEntry {
   subject: string;
   description?: string;
   department?: string; // e.g. 'Water', 'Road'
+  area?: string;
   status: DiaryStatus;
   response?: string;
   tags: string[];
@@ -180,6 +182,7 @@ export interface Survey {
   id: string;
   title: string;
   description: string;
+  area?: string;
   questions: Question[];
   targetSampleSize: number; // calculated as 1% of total voters (or custom)
   status: 'Draft' | 'Active' | 'Closed';

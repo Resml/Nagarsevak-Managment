@@ -171,6 +171,15 @@ export const MockService = {
         localStorage.setItem(STORAGE_KEYS.SADASYA, JSON.stringify(filtered));
     },
 
+    updateSadasya: (id: string, updates: Partial<Sadasya>) => {
+        const sadasyas = MockService.getSadasyas();
+        const idx = sadasyas.findIndex(s => s.id === id);
+        if (idx !== -1) {
+            sadasyas[idx] = { ...sadasyas[idx], ...updates };
+            localStorage.setItem(STORAGE_KEYS.SADASYA, JSON.stringify(sadasyas));
+        }
+    },
+
     // Surveys
     getSurveys: (): Survey[] => JSON.parse(localStorage.getItem(STORAGE_KEYS.SURVEYS) || '[]'),
 

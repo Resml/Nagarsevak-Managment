@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -62,10 +63,11 @@ const LetterForm = () => {
                 }]);
 
             if (error) throw error;
+            toast.success('Letter request created successfully!');
             navigate('/letters');
         } catch (err) {
             console.error('Error saving letter request:', err);
-            alert('Failed to save request. Please try again.');
+            toast.error('Failed to save request. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -75,52 +77,52 @@ const LetterForm = () => {
         <div className="max-w-2xl mx-auto space-y-6">
             <button
                 onClick={() => navigate('/letters')}
-                className="flex items-center text-gray-600 hover:text-brand-600 font-medium transition"
+                className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
             </button>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-brand-50 p-6 border-b border-brand-100">
-                    <h1 className="text-xl font-bold text-gray-900">New Letter Request</h1>
-                    <p className="text-sm text-brand-700 mt-1">Manually create a request for a resident.</p>
+            <div className="ns-card overflow-hidden">
+                <div className="p-6 border-b border-slate-200/70 bg-slate-50">
+                    <h1 className="text-xl font-bold text-slate-900">New letter request</h1>
+                    <p className="text-sm text-slate-500 mt-1">Create a request for a resident.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Applicant name</label>
                             <input
                                 required
                                 name="name"
                                 type="text"
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                                className="ns-input"
                                 placeholder="Full Name"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Mobile number</label>
                             <input
                                 required
                                 name="mobile"
                                 type="tel"
                                 value={formData.mobile}
                                 onChange={handleChange}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                                className="ns-input"
                                 placeholder="+91 98765 43210"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Letter Type</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Letter type</label>
                         <select
                             name="type"
                             value={formData.type}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                         >
                             {types.map(t => (
                                 <option key={t.name} value={t.name}>{t.name}</option>
@@ -129,39 +131,39 @@ const LetterForm = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Area / Colony Name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Area / colony</label>
                         <input
                             required
                             name="area"
                             type="text"
                             value={formData.area}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="e.g. Ganesh Nagar, Lane 3"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address / Details</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Address / details</label>
                         <textarea
                             required
                             name="address"
                             rows={3}
                             value={formData.address}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="Current residential address or specific details..."
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Purpose (Optional)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Purpose (optional)</label>
                         <input
                             name="purpose"
                             type="text"
                             value={formData.purpose}
                             onChange={handleChange}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="e.g. For School Admission, Job Application"
                         />
                     </div>
@@ -170,7 +172,7 @@ const LetterForm = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex items-center space-x-2 bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm font-medium disabled:opacity-50"
+                            className="ns-btn-primary disabled:opacity-50"
                         >
                             <Save className="w-4 h-4" />
                             <span>{loading ? 'Saving...' : 'Create Request'}</span>

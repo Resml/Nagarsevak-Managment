@@ -132,6 +132,45 @@ export const GalleryService = {
         }
     },
 
+    updateGalleryItem: async (id: string, item: Partial<GalleryItem>): Promise<GalleryItem | null> => {
+        try {
+            const { data, error } = await supabase
+                .from('gallery')
+                .update({
+                    title: item.title,
+                    category: item.category,
+                    image_url: item.imageUrl,
+                    description: item.description,
+                    date: item.date
+                })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            return {
+                id: data.id,
+                title: data.title,
+                category: data.category,
+                imageUrl: data.image_url,
+                description: data.description,
+                date: data.date,
+                createdAt: data.created_at
+            };
+        } catch (e) {
+            console.warn('Falling back to local storage for updateGalleryItem');
+            const current = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
+            const index = current.findIndex((x: GalleryItem) => x.id === id);
+            if (index !== -1) {
+                current[index] = { ...current[index], ...item };
+                localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(current));
+                return current[index];
+            }
+            return null;
+        }
+    },
+
     deleteGalleryItem: async (id: string): Promise<void> => {
         try {
             await supabase.from('gallery').delete().eq('id', id);

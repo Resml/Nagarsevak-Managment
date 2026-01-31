@@ -28,57 +28,124 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-brand-700">Nagar Sevak</h1>
-                    <p className="text-gray-500 mt-2">Management Automation Platform</p>
-                </div>
-
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">Email Address</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 p-2 border"
-                            placeholder="user@example.com"
-                        />
+        <div className="min-h-screen grid lg:grid-cols-2">
+            {/* Brand / Info side */}
+            <div className="hidden lg:flex relative overflow-hidden bg-brand-700">
+                <div className="p-12 flex flex-col justify-between w-full">
+                    <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 rounded-2xl bg-white/10 border border-white/15 text-white flex items-center justify-center font-black">
+                            N
+                        </div>
+                        <div>
+                            <div className="text-white font-display font-bold text-xl leading-tight">Nagar Sevak</div>
+                            <div className="text-white/70 text-sm">Staff & office operations</div>
+                        </div>
                     </div>
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
-                    <button
-                        type="submit"
-                        className="w-full bg-brand-600 text-white py-2 px-4 rounded-md hover:bg-brand-700 transition-colors"
-                    >
-                        Login
-                    </button>
-                </form>
 
-                <div className="mt-8">
-                    <p className="text-xs text-center text-gray-400 mb-4">DEMO LOGIN OPTIONS</p>
-                    <div className="grid grid-cols-3 gap-2">
-                        <button
-                            onClick={() => quickLogin('admin@ns.com')}
-                            className="flex flex-col items-center justify-center p-2 border rounded hover:bg-gray-50 text-xs"
-                        >
-                            <Shield className="w-5 h-5 text-purple-600 mb-1" />
-                            <span>Admin</span>
-                        </button>
-                        <button
-                            onClick={() => quickLogin('staff@ns.com')}
-                            className="flex flex-col items-center justify-center p-2 border rounded hover:bg-gray-50 text-xs"
-                        >
-                            <Users className="w-5 h-5 text-blue-600 mb-1" />
-                            <span>Staff</span>
-                        </button>
-                        <button
-                            onClick={() => quickLogin('voter@ns.com')}
-                            className="flex flex-col items-center justify-center p-2 border rounded hover:bg-gray-50 text-xs"
-                        >
-                            <User className="w-5 h-5 text-green-600 mb-1" />
-                            <span>Citizen</span>
-                        </button>
+                    <div className="max-w-md">
+                        <h1 className="text-white text-3xl font-display font-extrabold leading-tight">
+                            One workspace for Nagarasevaks and staff.
+                        </h1>
+                        <p className="mt-3 text-white/70 leading-relaxed">
+                            Manage citizen requests, office work, media, and reporting with a clean dashboard and fast navigation.
+                        </p>
+                        <div className="mt-8 grid grid-cols-3 gap-3">
+                            {[
+                                { icon: Shield, label: 'Admin', hint: 'Full access', email: 'admin@ns.com' },
+                                { icon: Users, label: 'Staff', hint: 'Team workflows', email: 'staff@ns.com' },
+                                { icon: User, label: 'Citizen', hint: 'Limited access', email: 'voter@ns.com' },
+                            ].map((role) => (
+                                <button
+                                    key={role.label}
+                                    type="button"
+                                    onClick={() => quickLogin(role.email)}
+                                    className="text-left p-4 rounded-2xl border border-white/15 bg-white/10 hover:bg-white/15 transition"
+                                >
+                                    <role.icon className="h-5 w-5 text-white/80" />
+                                    <div className="mt-3 text-white font-semibold">{role.label}</div>
+                                    <div className="text-xs text-white/60">{role.hint}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="text-xs text-white/50">
+                        Demo accounts are enabled for preview.
+                    </div>
+                </div>
+            </div>
+
+            {/* Login side */}
+            <div className="flex items-center justify-center p-6 md:p-10 bg-slate-50">
+                <div className="w-full max-w-md">
+                    <div className="ns-card p-6 md:p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="h-11 w-11 rounded-2xl bg-brand-600 text-white flex items-center justify-center font-black shadow-sm">
+                                N
+                            </div>
+                            <div>
+                                <div className="text-lg font-display font-bold text-slate-900">Sign in</div>
+                                <div className="text-sm text-slate-500">Use your email to continue</div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Email</label>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="ns-input mt-1"
+                                    placeholder="admin@ns.com"
+                                    autoComplete="email"
+                                />
+                            </div>
+
+                            {error ? (
+                                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                    {error}
+                                </div>
+                            ) : null}
+
+                            <button type="submit" className="ns-btn-primary w-full">
+                                Login
+                            </button>
+                        </form>
+
+                        <div className="mt-6 lg:hidden">
+                            <div className="text-xs font-semibold text-slate-500 mb-3">DEMO LOGIN</div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => quickLogin('admin@ns.com')}
+                                    className="ns-btn-ghost border border-slate-200"
+                                >
+                                    <Shield className="h-4 w-4 text-purple-600" />
+                                    <span className="text-xs">Admin</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => quickLogin('staff@ns.com')}
+                                    className="ns-btn-ghost border border-slate-200"
+                                >
+                                    <Users className="h-4 w-4 text-blue-600" />
+                                    <span className="text-xs">Staff</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => quickLogin('voter@ns.com')}
+                                    className="ns-btn-ghost border border-slate-200"
+                                >
+                                    <User className="h-4 w-4 text-green-600" />
+                                    <span className="text-xs">Citizen</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 text-center text-xs text-slate-500">
+                        Tip: try <span className="font-mono text-slate-700">admin@ns.com</span> for full access.
                     </div>
                 </div>
             </div>

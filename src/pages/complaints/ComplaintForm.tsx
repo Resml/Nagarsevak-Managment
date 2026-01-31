@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { MockService } from '../../services/mockData';
 import { type ComplaintType } from '../../types';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
@@ -23,7 +23,6 @@ const ComplaintForm = () => {
 
     // AI States
     const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [aiValidation, setAiValidation] = useState<string | null>(null);
     const [urgency, setUrgency] = useState<'Low' | 'Medium' | 'High'>('Medium');
 
     // Smart AI Auto-Categorization & Urgency
@@ -64,10 +63,11 @@ const ComplaintForm = () => {
             }]);
 
             if (error) throw error;
+            toast.success('Complaint submitted successfully!');
             navigate(-1);
         } catch (err) {
             console.error('Error submitting complaint:', err);
-            alert('Failed to submit complaint');
+            toast.error('Failed to submit complaint');
         }
     };
 
@@ -83,16 +83,16 @@ const ComplaintForm = () => {
         <div className="max-w-2xl mx-auto">
             <button
                 onClick={() => navigate(-1)}
-                className="flex items-center text-gray-600 hover:text-brand-600 mb-6"
+                className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700 mb-6"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back
             </button>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-brand-50 p-6 border-b border-brand-100">
-                    <h1 className="text-xl font-bold text-gray-900">New Complaint</h1>
+            <div className="ns-card overflow-hidden">
+                <div className="p-6 border-b border-slate-200/70 bg-gradient-to-br from-brand-50 to-white">
+                    <h1 className="text-xl font-bold text-slate-900">New Request</h1>
                     {prefillVoterName && (
-                        <p className="text-sm text-brand-700 mt-1">
+                        <p className="text-sm text-brand-700 mt-2">
                             Linking to Voter: <span className="font-semibold">{prefillVoterName}</span>
                         </p>
                     )}
@@ -100,23 +100,23 @@ const ComplaintForm = () => {
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Issue Title</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Issue Title</label>
                         <input
                             required
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input"
                             placeholder="e.g. Garbage not collected"
                         />
                         {isAnalyzing && (
-                            <div className="flex items-center gap-2 mt-2 text-xs text-brand-600 animate-pulse">
+                            <div className="flex items-center gap-2 mt-2 text-xs text-brand-700 animate-pulse">
                                 <Sparkles className="w-3 h-3" />
                                 <span>AI is analyzing issue details...</span>
                             </div>
                         )}
                         {urgency === 'High' && (
-                            <div className="flex items-center gap-2 mt-2 text-xs text-red-600 font-medium">
+                            <div className="flex items-center gap-2 mt-2 text-xs text-red-700 font-medium">
                                 <AlertTriangle className="w-3 h-3" />
                                 <span>High Urgency Detected by AI</span>
                             </div>
@@ -125,11 +125,11 @@ const ComplaintForm = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Complaint Type</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
                             <select
                                 value={type}
                                 onChange={(e) => setType(e.target.value as ComplaintType)}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-3 px-3 border"
+                                className="ns-input"
                             >
                                 <option value="Cleaning">Cleaning / Garbage</option>
                                 <option value="Water">Water Supply</option>
@@ -141,11 +141,11 @@ const ComplaintForm = () => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Ward Number</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Ward</label>
                             <select
                                 value={ward}
                                 onChange={(e) => setWard(e.target.value)}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-3 px-3 border"
+                                className="ns-input"
                             >
                                 <option value="12">Ward 12</option>
                                 <option value="13">Ward 13</option>
@@ -153,47 +153,47 @@ const ComplaintForm = () => {
                             </select>
                         </div>
                         <div className="md:col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Area / Colony Name</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Area / Colony</label>
                             <input
                                 type="text"
                                 value={area}
                                 onChange={(e) => setArea(e.target.value)}
-                                className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                                className="ns-input"
                                 placeholder="e.g. Ganesh Nagar, Lane 3"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description & Location Details</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                         <textarea
                             required
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             rows={4}
-                            className="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input min-h-[120px]"
                             placeholder="Describe the issue in detail..."
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Photos</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Photos</label>
                         <div className="flex flex-wrap gap-4">
                             {photos.map((photo, index) => (
-                                <div key={index} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                                <div key={index} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200">
                                     <img src={photo} alt="evidence" className="w-full h-full object-cover" />
                                     <button
                                         type="button"
                                         onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-500"
+                                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-600 transition"
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
                                 </div>
                             ))}
-                            <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-brand-400 transition-colors">
-                                <Camera className="w-6 h-6 text-gray-400 mb-1" />
-                                <span className="text-xs text-gray-500">Add Photo</span>
+                            <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-brand-300 transition-colors">
+                                <Camera className="w-6 h-6 text-slate-400 mb-1" />
+                                <span className="text-xs text-slate-500">Add Photo</span>
                                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                             </label>
                         </div>
@@ -202,7 +202,7 @@ const ComplaintForm = () => {
                     <div className="pt-4 flex justify-end">
                         <button
                             type="submit"
-                            className="bg-brand-600 text-white px-6 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm font-medium"
+                            className="ns-btn-primary px-6"
                         >
                             Submit Complaint
                         </button>

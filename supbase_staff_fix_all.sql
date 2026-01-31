@@ -1,0 +1,2 @@
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS area text;
+ALTER TABLE staff ADD COLUMN IF NOT EXISTS category text DEFAULT 'Office';

@@ -1,5 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 // Initialize Supabase
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function broadcastEvent(client, eventId) {
+async function broadcastEvent(sock, eventId) {
     try {
         console.log(`Starting broadcast for Event ID: ${eventId}`);
 
@@ -25,7 +25,6 @@ async function broadcastEvent(client, eventId) {
         }
 
         // 2. Fetch Recipients (Voters + Non-Voters with mobile numbers)
-        // Note: For large datasets, pagination is needed. Here assuming < 1000 for verified numbers.
         const { data: voters } = await supabase
             .from('voters')
             .select('mobile, name_english')
@@ -49,7 +48,7 @@ async function broadcastEvent(client, eventId) {
         console.log(`Found ${recipients.size} unique recipients.`);
 
         // 3. Prepare Message
-        const message = `📢 *New Event Announcement!* 📢\n\n` +
+        const messageText = `📢 *New Event Announcement!* 📢\n\n` +
             `*${event.title}*\n\n` +
             `📅 *Date:* ${event.event_date}\n` +
             `⏰ *Time:* ${event.event_time}\n` +
@@ -64,10 +63,10 @@ async function broadcastEvent(client, eventId) {
                 // Format Number (Assume IN +91 if missing)
                 let number = mobile.replace(/\D/g, '');
                 if (number.length === 10) number = '91' + number;
-                const chatId = number + "@c.us";
+                const jid = number + "@s.whatsapp.net";
 
                 console.log(`Sending to ${name} (${number})...`);
-                await client.sendMessage(chatId, message);
+                await sock.sendMessage(jid, { text: messageText });
 
                 count++;
 

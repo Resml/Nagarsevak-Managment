@@ -30,8 +30,16 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   body {
     @apply bg-slate-50 text-slate-900 font-sans antialiased;
+  }
+
+  #root {
+    @apply min-h-screen;
   }
 
   h1,
@@ -45,15 +53,83 @@
 }
 
 @layer components {
-  .card {
-    @apply bg-white rounded-xl border border-slate-200 shadow-sm;
+  /* Modern shared building blocks (use across pages for consistent UI) */
+  .ns-card {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm;
   }
 
-  .btn-primary {
-    @apply bg-brand-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-700 transition-colors shadow-sm;
+  .ns-card-muted {
+    @apply bg-white/70 backdrop-blur rounded-2xl border border-slate-200/70 shadow-sm;
   }
 
-  .nav-item-active {
-    @apply bg-brand-50 text-brand-700 font-bold border-l-4 border-brand-600;
+  .ns-btn,
+  .ns-btn-primary,
+  .ns-btn-ghost,
+  .ns-btn-soft {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition;
+  }
+
+  .ns-btn-primary {
+    @apply bg-brand-600 text-white shadow-sm;
+  }
+
+  .ns-btn-ghost {
+    @apply bg-transparent text-slate-700;
+  }
+
+  .ns-btn-soft {
+    @apply bg-brand-50 text-brand-700 border border-brand-100;
+  }
+
+  .ns-input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm;
+  }
+
+  .ns-badge {
+    @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium;
+  }
+
+  /* States (avoid variants in @apply for best compatibility) */
+  .ns-btn:focus-visible,
+  .ns-btn-primary:focus-visible,
+  .ns-btn-ghost:focus-visible,
+  .ns-btn-soft:focus-visible {
+    @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-slate-50;
+  }
+
+  .ns-btn:disabled,
+  .ns-btn-primary:disabled,
+  .ns-btn-ghost:disabled,
+  .ns-btn-soft:disabled {
+    @apply opacity-60 pointer-events-none;
+  }
+
+  .ns-btn-primary:hover {
+    @apply bg-brand-700;
+  }
+  .ns-btn-primary:active {
+    @apply bg-brand-800;
+  }
+
+  .ns-btn-ghost:hover {
+    @apply bg-slate-100;
+  }
+  .ns-btn-ghost:active {
+    @apply bg-slate-200;
+  }
+
+  .ns-btn-soft:hover {
+    @apply bg-brand-100;
+  }
+  .ns-btn-soft:active {
+    @apply bg-brand-200;
+  }
+
+  .ns-input:focus {
+    @apply outline-none ring-2 ring-brand-400 border-brand-300;
+  }
+
+  .ns-input::placeholder {
+    @apply text-slate-400;
   }
 }

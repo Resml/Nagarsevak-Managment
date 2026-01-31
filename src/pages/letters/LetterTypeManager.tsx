@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Trash2, Plus, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface LetterType {
     id: string;
@@ -14,6 +15,7 @@ const LetterTypeManager = () => {
     const [newType, setNewType] = useState('');
     const [loading, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string, name: string } | null>(null);
 
     useEffect(() => {
         fetchTypes();
@@ -34,34 +36,72 @@ const LetterTypeManager = () => {
         setErrorMsg('');
         if (!newType.trim()) return;
 
-        const { error } = await supabase
-            .from('letter_types')
-            .insert([{ name: newType }]);
+        const typeName = newType;
 
-        if (error) {
-            console.error('Error adding type:', error);
-            setErrorMsg('Failed to add type: ' + error.message);
-        } else {
-            setNewType('');
-            fetchTypes();
-        }
+        const promise = new Promise(async (resolve, reject) => {
+            const { error } = await supabase
+                .from('letter_types')
+                .insert([{ name: typeName }]);
+
+            if (error) {
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+
+        toast.promise(promise, {
+            loading: 'Adding letter type...',
+            success: () => {
+                setNewType('');
+                fetchTypes();
+                return `${typeName} added successfully!`;
+            },
+            error: (err) => {
+                console.error('Error adding type:', err);
+                setErrorMsg('Failed to add type: ' + err.message);
+                return 'Failed to add letter type';
+            },
+        });
     };
 
-    const deleteType = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this letter type?')) return;
+    const handleDeleteClick = (id: string, name: string) => {
+        setDeleteTarget({ id, name });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         setErrorMsg('');
 
-        const { error } = await supabase
-            .from('letter_types')
-            .delete()
-            .eq('id', id);
+        const typeName = deleteTarget.name;
+        const typeId = deleteTarget.id;
 
-        if (error) {
-            console.error('Error deleting type:', error);
-            setErrorMsg('Failed to delete type: ' + error.message);
-        } else {
-            fetchTypes();
-        }
+        const promise = new Promise(async (resolve, reject) => {
+            const { error } = await supabase
+                .from('letter_types')
+                .delete()
+                .eq('id', typeId);
+
+            if (error) {
+                reject(error);
+            } else {
+                resolve(true);
+            }
+        });
+
+        toast.promise(promise, {
+            loading: 'Deleting letter type...',
+            success: () => {
+                fetchTypes();
+                return `${typeName} deleted successfully!`;
+            },
+            error: (err) => {
+                console.error('Error deleting type:', err);
+                setErrorMsg('Failed to delete type: ' + err.message);
+                return 'Failed to delete letter type';
+            },
+        });
+        setDeleteTarget(null);
     };
 
     const restoreDefaults = async () => {
@@ -91,15 +131,15 @@ const LetterTypeManager = () => {
         <div className="max-w-2xl mx-auto space-y-6">
             <button
                 onClick={() => navigate('/letters')}
-                className="flex items-center text-gray-600 hover:text-brand-600 font-medium transition"
+                className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> Back to Dashboard
             </button>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="bg-brand-50 p-6 border-b border-brand-100">
-                    <h1 className="text-xl font-bold text-gray-900">Manage Letter Types</h1>
-                    <p className="text-sm text-brand-700 mt-1">Add or remove types of letters available for request.</p>
+            <div className="ns-card overflow-hidden">
+                <div className="p-6 border-b border-slate-200/70 bg-slate-50">
+                    <h1 className="text-xl font-bold text-slate-900">Manage letter types</h1>
+                    <p className="text-sm text-slate-500 mt-1">Add or remove types available for request.</p>
                 </div>
 
                 {errorMsg && (
@@ -115,12 +155,12 @@ const LetterTypeManager = () => {
                             type="text"
                             value={newType}
                             onChange={(e) => setNewType(e.target.value)}
-                            className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 py-2 px-3 border"
+                            className="ns-input flex-1"
                             placeholder="Enter new letter type name..."
                         />
                         <button
                             type="submit"
-                            className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 flex items-center gap-2"
+                            className="ns-btn-primary"
                         >
                             <Plus className="w-4 h-4" /> Add
                         </button>
@@ -129,11 +169,11 @@ const LetterTypeManager = () => {
                     {/* List */}
                     <div className="space-y-2">
                         {loading ? <p>Loading...</p> : types.map(type => (
-                            <div key={type.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100 group">
-                                <span className="font-medium text-gray-800">{type.name}</span>
+                            <div key={type.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-200/70 group">
+                                <span className="font-semibold text-slate-800">{type.name}</span>
                                 <button
-                                    onClick={() => deleteType(type.id)}
-                                    className="text-gray-400 hover:text-red-600 transition p-2"
+                                    onClick={() => handleDeleteClick(type.id, type.name)}
+                                    className="ns-btn-ghost border border-slate-200 px-2 py-2 text-red-700"
                                     title="Delete Type"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -142,10 +182,10 @@ const LetterTypeManager = () => {
                         ))}
                         {types.length === 0 && !loading && (
                             <div className="text-center py-8 space-y-4">
-                                <p className="text-gray-500">No letter types found.</p>
+                                <p className="text-slate-500">No letter types found.</p>
                                 <button
                                     onClick={restoreDefaults}
-                                    className="text-brand-600 hover:text-brand-700 font-medium text-sm underline"
+                                    className="text-brand-700 hover:underline font-semibold text-sm"
                                 >
                                     Restore Default Types
                                 </button>
@@ -154,6 +194,39 @@ const LetterTypeManager = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {
+                deleteTarget && (
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">Delete Letter Type?</h3>
+                                <p className="text-slate-500 mt-2 text-sm">
+                                    Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.name}</span>? This action cannot be undone.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
         </div>
     );
 };

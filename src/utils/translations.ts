@@ -165,6 +165,8 @@ export const translations = {
             is_voter: "Voter",
             is_member: "Member",
             add_modal_title: "Add New Sadasya",
+            edit_modal_title: "Edit Sadasya",
+            update_member: "Update Sadasya",
             search_tab: "Search Voter",
             manual_tab: "Manual Entry",
             confirm_details: "Confirm Member Details",
@@ -250,18 +252,19 @@ export const translations = {
             actions: "Actions"
         },
         diary: {
-            title: "Daily Diary Register",
+            title: "GB Register",
             subtitle: "Committee meetings, issues and outcomes",
             add_entry: "Add Entry",
             search_placeholder: "Search by subject or description...",
             filter_type: "Filter by Type",
             all_types: "All Types",
             no_entries: "No diary entries found.",
-            new_entry_title: "New Diary Entry",
+            new_entry_title: "New GB Register Entry",
             meeting_date: "Meeting Date",
             meeting_type: "Meeting Type",
             subject: "Subject / Issue",
             description: "Description",
+            area: "Area",
             desc_placeholder: "Detailed description of the issue raised...",
             department: "Department",
             status: "Outcome / Status",
@@ -306,7 +309,8 @@ export const translations = {
             ben_placeholder: "What do beneficiaries get? (e.g. ₹1500/month)",
             documents: "Required Documents",
             docs_placeholder: "Aadhar, PAN, etc. (comma separated)",
-            save_scheme: "Save Scheme"
+            save_scheme: "Save Scheme",
+            find_schemes: "Find Schemes with AI"
         },
         letters: {
             title: "Letters Dashboard",
@@ -315,6 +319,7 @@ export const translations = {
             manage_types: "Manage Types",
             search_placeholder: "Search by name, type, area...",
             no_letters: "No letter requests found.",
+            select_request: "Select a request to view details",
             new_request_title: "New Letter Request",
             applicant_name: "Applicant Name",
             mobile: "Mobile Number",
@@ -329,7 +334,13 @@ export const translations = {
             add_new_type: "New Type",
             type_name: "Type Name",
             type_placeholder: "Name of new letter type...",
-            add: "Add"
+            add: "Add",
+            generate_pdf: "Generate PDF",
+            request_from: "Request from",
+            request_details: "Request Details",
+            name: "Name",
+            reject: "Reject",
+            approve: "Approve"
         },
         social: {
             title: "Social Media Analytics",
@@ -385,7 +396,8 @@ export const translations = {
                 created_at: "Created At",
                 actions: "Actions"
             }
-        }
+        },
+
     },
     mr: {
         common: {
@@ -550,6 +562,8 @@ export const translations = {
             is_voter: "मतदार",
             is_member: "सदस्य",
             add_modal_title: "नवीन सदस्य जोडा",
+            edit_modal_title: "सदस्य संपादित करा",
+            update_member: "सदस्य अपडेट करा",
             search_tab: "मतदार शोधा",
             manual_tab: "मॅन्युअल नोंदणी",
             confirm_details: "सदस्याची माहिती तपासा",
@@ -635,18 +649,19 @@ export const translations = {
             actions: "क्रिया"
         },
         diary: {
-            title: "दैनंदिन डायरी",
+            title: "GB रजिस्टर",
             subtitle: "समितीच्या बैठका, मुद्दे आणि निकाल",
             add_entry: "नोंद जोडा",
             search_placeholder: "विषय किंवा वर्णनाद्वारे शोधा...",
             filter_type: "प्रकारानुसार फिल्टर",
             all_types: "सर्व प्रकार",
             no_entries: "डायरी नोंदी आढळल्या नाहीत.",
-            new_entry_title: "नवीन डायरी नोंद",
+            new_entry_title: "नवीन GB रजिस्टर नोंद",
             meeting_date: "बैठकीची तारीख",
             meeting_type: "बैठकीचा प्रकार",
             subject: "विषय / मुद्दा",
             description: "वर्णन",
+            area: "क्षेत्र / भाग",
             desc_placeholder: "मंडलेल्या मुद्द्याचे सविस्तर वर्णन...",
             department: "विभाग",
             status: "निकाल / स्थिती",
@@ -714,7 +729,13 @@ export const translations = {
             add_new_type: "नवीन प्रकार",
             type_name: "प्रकाराचे नाव",
             type_placeholder: "नवीन पत्र प्रकाराचे नाव...",
-            add: "जोडा"
+            add: "जोडा",
+            generate_pdf: "PDF तयार करा",
+            request_from: "विनंती कोणाकडून",
+            request_details: "विनंती तपशील",
+            name: "नाव",
+            reject: "नाकारा",
+            approve: "मंजूर करा"
         },
         social: {
             title: "सोशल मीडिया",
@@ -935,6 +956,8 @@ export const translations = {
             is_voter: "मतदाता",
             is_member: "सदस्य",
             add_modal_title: "नया सदस्य जोड़ें",
+            edit_modal_title: "सदस्य संपादित करें",
+            update_member: "सदस्य अपडेट करें",
             search_tab: "मतदाता खोजें",
             manual_tab: "मैन्युअल प्रविष्टि",
             confirm_details: "सदस्य विवरण की पुष्टि करें",
@@ -1020,18 +1043,19 @@ export const translations = {
             actions: "क्रियाएँ"
         },
         diary: {
-            title: "दैनिक डायरी रजिस्टर",
+            title: "GB रजिस्टर",
             subtitle: "समिति की बैठकें, मुद्दे और परिणाम",
             add_entry: "प्रविष्टि जोड़ें",
             search_placeholder: "विषय या विवरण द्वारा खोजें...",
             filter_type: "प्रकार द्वारा फ़िल्टर",
             all_types: "सभी प्रकार",
             no_entries: "कोई डायरी प्रविष्टियाँ नहीं मिलीं।",
-            new_entry_title: "नई डायरी प्रविष्टि",
+            new_entry_title: "नई GB रजिस्टर प्रविष्टि",
             meeting_date: "बैठक की तारीख",
             meeting_type: "बैठक का प्रकार",
             subject: "विषय / मुद्दा",
             description: "विवरण",
+            area: "क्षेत्र",
             desc_placeholder: "उठाए गए मुद्दे का विस्तृत विवरण...",
             department: "विभाग",
             status: "परिणाम / स्थिति",
@@ -1099,7 +1123,13 @@ export const translations = {
             add_new_type: "नया प्रकार",
             type_name: "प्रकार का नाम",
             type_placeholder: "नए पत्र प्रकार का नाम...",
-            add: "जोड़ें"
+            add: "जोड़ें",
+            generate_pdf: "PDF जनरेट करें",
+            request_from: "अनुरोध कर्ता",
+            request_details: "अनुरोध विवरण",
+            name: "नाम",
+            reject: "अस्वीकार करें",
+            approve: "स्वीकार करें"
         },
         social: {
             title: "सोशल मीडिया एनालिटिक्स",

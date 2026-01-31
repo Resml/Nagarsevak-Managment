@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 const path = require('path');
@@ -18,6 +18,36 @@ const DATA_DIR = path.join(__dirname, 'data');
 const COMPLAINTS_FILE = path.join(DATA_DIR, 'complaints.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
 if (!fs.existsSync(COMPLAINTS_FILE)) fs.writeFileSync(COMPLAINTS_FILE, JSON.stringify([], null, 2));
+
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, JSON.stringify({}, null, 2));
+
+async function saveUser(userId, data) {
+    // 1. Local File Update
+    const fileData = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    fileData[userId] = { ...fileData[userId], ...data, lastUpdated: new Date().toISOString() };
+    fs.writeFileSync(USERS_FILE, JSON.stringify(fileData, null, 2));
+
+    // 2. Supabase Update (Upsert)
+    try {
+        const { error } = await supabase
+            .from('voters') // Assuming we map whatsapp users to voters or a 'users' table
+            .upsert({
+                mobile: userId.replace('@s.whatsapp.net', ''),
+                ...data
+            }, { onConflict: 'mobile' });
+
+        // If voters table is strict, we might need a separate 'bot_users' table. 
+        // For now, let's rely on local file for preferences to be fast and safe.
+    } catch (err) {
+        console.error('Supabase User Save Error:', err);
+    }
+}
+
+async function getUser(userId) {
+    const fileData = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
+    return fileData[userId] || null;
+}
 
 async function saveComplaint(complaint) {
     console.log('Saving complaint to Supabase...');
@@ -97,5 +127,7 @@ async function getSchemes() {
 
 module.exports = {
     saveComplaint,
-    getSchemes
+    getSchemes,
+    saveUser,
+    getUser
 };

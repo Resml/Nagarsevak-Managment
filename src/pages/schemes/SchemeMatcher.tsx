@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { X, Sparkles, CheckCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 
@@ -28,7 +29,7 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
             onClose();
         } catch (error) {
             console.error(error);
-            alert('Failed to match schemes.');
+            toast.error('Failed to match schemes.');
         } finally {
             setIsAnalyzing(false);
         }
@@ -36,34 +37,34 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                <div className="bg-brand-600 px-6 py-4 flex justify-between items-center text-white">
+            <div className="ns-card w-full max-w-md overflow-hidden">
+                <div className="px-6 py-4 flex justify-between items-center bg-slate-50 border-b border-slate-200/70">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <Sparkles className="w-5 h-5" /> Find Schemes for Me
+                        <Sparkles className="w-5 h-5 text-brand-700" /> Find matching schemes
                     </h2>
-                    <button onClick={onClose} className="hover:bg-brand-700 p-1 rounded-full transition">
-                        <X className="w-5 h-5" />
+                    <button onClick={onClose} className="ns-btn-ghost border border-slate-200 px-2 py-2">
+                        <X className="w-5 h-5 text-slate-700" />
                     </button>
                 </div>
 
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Age</label>
                         <input
                             type="number"
                             value={age}
                             onChange={(e) => setAge(e.target.value)}
-                            className="w-full rounded-md border-gray-300 border px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
+                            className="ns-input"
                             placeholder="e.g. 25"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
                         <select
                             value={gender}
                             onChange={(e) => setGender(e.target.value)}
-                            className="w-full rounded-md border-gray-300 border px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
+                            className="ns-input"
                         >
                             <option>Male</option>
                             <option>Female</option>
@@ -72,23 +73,23 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Annual Income (₹)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Annual income (₹)</label>
                         <input
                             type="number"
                             value={income}
                             onChange={(e) => setIncome(e.target.value)}
-                            className="w-full rounded-md border-gray-300 border px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
+                            className="ns-input"
                             placeholder="e.g. 100000"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
                         <input
                             type="text"
                             value={occupation}
                             onChange={(e) => setOccupation(e.target.value)}
-                            className="w-full rounded-md border-gray-300 border px-3 py-2 focus:ring-brand-500 focus:border-brand-500"
+                            className="ns-input"
                             placeholder="e.g. Student, Farmer, Small Business"
                         />
                     </div>
@@ -97,7 +98,7 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
                         <button
                             onClick={handleSearch}
                             disabled={isAnalyzing}
-                            className="w-full bg-brand-600 text-white py-2.5 rounded-lg flex items-center justify-center gap-2 hover:bg-brand-700 transition disabled:opacity-70"
+                            className="ns-btn-primary w-full justify-center py-2.5 disabled:opacity-70"
                         >
                             {isAnalyzing ? (
                                 <>

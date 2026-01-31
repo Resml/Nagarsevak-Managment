@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/dashboard/Dashboard';
@@ -18,7 +18,9 @@ import SocialDashboard from './pages/social/SocialDashboard';
 import SchemeList from './pages/schemes/SchemeList';
 import SchemeForm from './pages/schemes/SchemeForm';
 import WorkHistory from './pages/works/WorkHistory';
+import WorkDetail from './pages/works/WorkDetail';
 import EventManagement from './pages/events/EventManagement';
+import EventDetail from './pages/events/EventDetail';
 import StaffList from './pages/staff/StaffList';
 import LetterDashboard from './pages/letters/LetterDashboard';
 import LetterForm from './pages/letters/LetterForm';
@@ -47,45 +49,46 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/join-party" element={<JoinParty />} />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/join-party" element={<JoinParty />} />
 
-          <Route path="/" element={
-            <ProtectedRoute>
-              <AppLayout />
-            </ProtectedRoute>
-          }>
-            <Route index element={<Dashboard />} />
-            <Route path="voters" element={<VoterList />} />
-            <Route path="voters/:id" element={<VoterProfile />} />
-            <Route path="complaints" element={<ComplaintList />} />
-            <Route path="complaints/new" element={<ComplaintForm />} />
-            <Route path="complaints/:id" element={<ComplaintDetail />} />
-            <Route path="schemes" element={<SchemeList />} />
-            <Route path="schemes/new" element={<SchemeForm />} />
-            <Route path="events" element={<EventManagement />} />
-            <Route path="tasks" element={<Tasks />} />
-            <Route path="staff" element={<StaffList />} />
-            <Route path="letters" element={<LetterDashboard />} />
-            <Route path="letters/new" element={<LetterForm />} />
-            <Route path="letters/types" element={<LetterTypeManager />} />
-            <Route path="visitors" element={<VisitorLog />} />
-            <Route path="bot-dashboard" element={<BotDashboard />} />
-            <Route path="sadasya" element={<SadasyaList />} />
-            <Route path="social" element={<SocialDashboard />} />
-            <Route path="history" element={<WorkHistory />} />
-            <Route path="diary" element={<DiaryList />} />
-            <Route path="gallery" element={<Gallery />} />
-            <Route path="budget" element={<BudgetDashboard />} />
-            <Route path="results" element={<ResultAnalysis />} />
-            <Route path="content" element={<ContentStudio />} />
-            <Route path="surveys" element={<SurveyDashboard />} />
-            <Route path="surveys/new" element={<CreateSurvey />} />
-          </Route>
-        </Routes>
-      </AuthProvider>
+        <Route path="/" element={
+          <ProtectedRoute>
+            <AppLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          <Route path="voters" element={<VoterList />} />
+          <Route path="voters/:id" element={<VoterProfile />} />
+          <Route path="complaints" element={<ComplaintList />} />
+          <Route path="complaints/new" element={<ComplaintForm />} />
+          <Route path="complaints/:id" element={<ComplaintDetail />} />
+          <Route path="schemes" element={<SchemeList />} />
+          <Route path="schemes/new" element={<SchemeForm />} />
+          <Route path="schemes/edit/:id" element={<SchemeForm />} />
+          <Route path="events" element={<EventManagement />} />
+          <Route path="events/:id" element={<EventDetail />} />
+          <Route path="tasks" element={<Tasks />} />
+          <Route path="staff" element={<StaffList />} />
+          <Route path="letters" element={<LetterDashboard />} />
+          <Route path="letters/new" element={<LetterForm />} />
+          <Route path="letters/types" element={<LetterTypeManager />} />
+          <Route path="visitors" element={<VisitorLog />} />
+          <Route path="bot-dashboard" element={<BotDashboard />} />
+          <Route path="sadasya" element={<SadasyaList />} />
+          <Route path="social" element={<SocialDashboard />} />
+          <Route path="history" element={<WorkHistory />} />
+          <Route path="history/:id" element={<WorkDetail />} />
+          <Route path="diary" element={<DiaryList />} />
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="budget" element={<BudgetDashboard />} />
+          <Route path="results" element={<ResultAnalysis />} />
+          <Route path="content" element={<ContentStudio />} />
+          <Route path="surveys" element={<SurveyDashboard />} />
+          <Route path="surveys/new" element={<CreateSurvey />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }

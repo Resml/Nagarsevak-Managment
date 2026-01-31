@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { AIService } from '../../services/aiService';
 import { FeedbackService } from '../../services/feedbackService';
-import type { FeedbackStats, FeedbackItem } from '../../services/feedbackService';
-import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2 } from 'lucide-react';
+import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface WorkItem {
@@ -19,17 +20,22 @@ interface WorkItem {
 }
 
 const WorkHistory = () => {
+    const navigate = useNavigate();
     const [items, setItems] = useState<WorkItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [generatingAI, setGeneratingAI] = useState(false);
 
     // Feedback State
-    const [feedbackData, setFeedbackData] = useState<Record<string, FeedbackStats>>({});
-    const [broadcastingId, setBroadcastingId] = useState<string | null>(null);
-    const [showReport, setShowReport] = useState<string | null>(null);
+    const [feedbackStats, setFeedbackStats] = useState<Record<string, { count: number, average: string }>>({});
 
-    // Modal State
+    // Advanced Filtering State
+    const [areaSearch, setAreaSearch] = useState('');
+    const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+    const [dateSearch, setDateSearch] = useState('');
+    const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+    // Modal State (Create Only)
     const [showModal, setShowModal] = useState(false);
     const [newWork, setNewWork] = useState({
         title: '',
@@ -54,12 +60,11 @@ const WorkHistory = () => {
         const feedbackSubscription = FeedbackService.subscribeToFeedback(async (payload) => {
             const newFeedback = payload.new;
             const workId = newFeedback.work_id;
-
-            // Refresh stats for this workId
+            // Limit specific table fetches if possible, but for now refreshing all works is safer or single stats
             const stats = await FeedbackService.getFeedbackStats(workId);
-            setFeedbackData(prev => ({
+            setFeedbackStats(prev => ({
                 ...prev,
-                [workId]: stats
+                [workId]: { count: stats.count, average: stats.average }
             }));
         });
 
@@ -69,11 +74,17 @@ const WorkHistory = () => {
         };
     }, []);
 
-    // Helper to fetch feedback for a work item if not already loaded
-    const loadFeedbackStats = async (workId: string) => {
-        const stats = await FeedbackService.getFeedbackStats(workId);
-        setFeedbackData(prev => ({ ...prev, [workId]: stats }));
-    };
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!(event.target as Element).closest('.dropdown-container')) {
+                setShowAreaDropdown(false);
+                setShowDateDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const fetchData = async () => {
         setLoading(true);
@@ -128,9 +139,14 @@ const WorkHistory = () => {
             setItems(allItems);
 
             // Load stats for all items
-            allItems.forEach(item => {
-                loadFeedbackStats(item.id);
-            });
+            const statsMap: Record<string, { count: number, average: string }> = {};
+            for (const item of manualItems) {
+                // Remove prefix for DB query
+                const dbId = item.id.replace('work-', '');
+                const stats = await FeedbackService.getFeedbackStats(dbId);
+                statsMap[dbId] = { count: stats.count, average: stats.average };
+            }
+            setFeedbackStats(statsMap);
 
         } catch (err) {
             console.error('Error fetching data:', err);
@@ -147,7 +163,7 @@ const WorkHistory = () => {
             setNewWork(prev => ({ ...prev, description: desc }));
         } catch (error) {
             console.error(error);
-            alert('Failed to generate description');
+            toast.error('Failed to generate description');
         } finally {
             setGeneratingAI(false);
         }
@@ -155,49 +171,78 @@ const WorkHistory = () => {
 
     const handleAddWork = async (e: React.FormEvent) => {
         e.preventDefault();
-        try {
-            const { error } = await supabase
-                .from('works')
-                .insert([{
-                    ...newWork,
-                    created_at: new Date().toISOString()
-                }]);
 
-            if (error) throw error;
-            setShowModal(false);
-            if (error) throw error;
+        try {
+            const payload = {
+                ...newWork,
+                completion_date: newWork.completion_date || null,
+                created_at: new Date().toISOString()
+            };
+
+            const { error: insertError } = await supabase
+                .from('works')
+                .insert([payload]);
+
+            if (insertError) throw insertError;
+
             setShowModal(false);
             setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '' });
             fetchData();
-            alert('Work added successfully!');
-        } catch (err) {
+            toast.success('Work added successfully!');
+        } catch (err: any) {
             console.error(err);
-            alert('Failed to add work.');
+            toast.error('Failed to save work.');
         }
     };
 
-
-    // Trigger Broadcast for Real-Time Feedback
-    const handleGetFeedback = async (id: string) => {
-        setBroadcastingId(id);
-
-        // This triggers the "Bot" simulation which starts inserting records into the DB
-        await FeedbackService.broadcastFeedbackRequest(id);
-
-        // Since we are subscribed to Real-Time changes, we don't need to manually update state here.
-        // The subscription will catch the INSERT events and update the UI live.
-
-        setTimeout(() => {
-            setBroadcastingId(null);
-            alert("Broadcast Sent! Watch for real-time updates...");
-        }, 1000);
+    const handleCardClick = (item: WorkItem) => {
+        if (item.source === 'Manual') {
+            const dbId = item.id.replace('work-', '');
+            navigate(`/history/${dbId}`);
+        } else {
+            const dbId = item.id.replace('comp-', '');
+            navigate(`/complaints/${dbId}`);
+        }
     };
 
-    const filteredItems = items.filter(item =>
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Helper: Get Unique Areas with Counts
+    const getAreaSuggestions = () => {
+        const stats: Record<string, number> = {};
+        items.forEach(item => {
+            if (item.area) {
+                stats[item.area] = (stats[item.area] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([area, count]) => ({ area, count }));
+    };
+
+    // Helper: Get Unique Dates with Counts
+    const getDateSuggestions = () => {
+        const stats: Record<string, number> = {};
+        items.forEach(item => {
+            if (item.date) {
+                const dateStr = format(new Date(item.date), 'MMM d, yyyy');
+                stats[dateStr] = (stats[dateStr] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([date, count]) => ({ date, count }));
+    };
+
+    const filteredItems = items.filter(item => {
+        const matchesSearch = !searchTerm || (() => {
+            const term = searchTerm.toLowerCase();
+            return (
+                item.title.toLowerCase().includes(term) ||
+                item.description.toLowerCase().includes(term) ||
+                item.location.toLowerCase().includes(term)
+            );
+        })();
+
+        const matchesArea = !areaSearch || (item.area && item.area.toLowerCase().includes(areaSearch.toLowerCase()));
+        const matchesDate = !dateSearch || (item.date && format(new Date(item.date), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase()));
+
+        return matchesSearch && matchesArea && matchesDate;
+    });
 
     const getSourceIcon = (source: string) => {
         switch (source) {
@@ -223,51 +268,188 @@ const WorkHistory = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Work History & Achievements</h1>
-                    <p className="text-sm text-gray-500">Unified view of development works, resolved issues, and help provided.</p>
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            Work History & Achievements
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
+                                Found: {filteredItems.length}
+                            </span>
+                        </h1>
+                        <p className="text-sm text-slate-500">Unified view of development works, resolved issues, and help provided.</p>
+                    </div>
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="ns-btn-primary"
+                    >
+                        <Plus className="w-4 h-4" /> Add Work
+                    </button>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brand-700"
-                >
-                    <Plus className="w-4 h-4" /> Add Work
-                </button>
+
+                {/* Filters Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Main Search */}
+                    <div className="md:col-span-6 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder="Search by Title, Location, or Description..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="ns-input pl-10 w-full"
+                        />
+                    </div>
+
+                    {/* Area Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder="Search Area..."
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={areaSearch}
+                            onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
+                            onChange={(e) => setAreaSearch(e.target.value)}
+                        />
+                        {showAreaDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.area}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setAreaSearch(item.area);
+                                            setShowAreaDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.area}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">No areas found</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Date Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder="Filter by Date..."
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={dateSearch}
+                            onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
+                            onChange={(e) => setDateSearch(e.target.value)}
+                        />
+                        {showDateDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getDateSuggestions().filter(d => d.date.toLowerCase().includes(dateSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.date}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setDateSearch(item.date);
+                                            setShowDateDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.date}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative max-w-md w-full">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                    type="text"
-                    placeholder="Search by Title, Location, or Description..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                />
-            </div>
+            {/* Content Grid */}
+            {loading ? (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map(i => <div key={i} className="h-48 bg-slate-100 animate-pulse rounded-2xl"></div>)}
+                </div>
+            ) : (
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredItems.map((item) => (
+                        <div
+                            key={item.id}
+                            className="ns-card overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer group"
+                            onClick={() => handleCardClick(item)}
+                        >
+                            <div className="p-5 flex flex-col h-full">
+                                <div className="flex justify-between items-start mb-3">
+                                    {getStatusBadge(item.status, item.source)}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200/70">
+                                            {getSourceIcon(item.source)}
+                                            <span>{item.source}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-700 transition-colors flex justify-between items-start">
+                                    {item.title}
+                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-400" />
+                                </h3>
+                                <p className="text-sm text-slate-600 mb-4 line-clamp-3">{item.description}</p>
+
+                                <div className="mt-auto pt-3 border-t border-slate-200/70">
+                                    {item.source === 'Manual' && feedbackStats[item.id.replace('work-', '')] && (
+                                        <div className="mb-3 flex items-center justify-between text-xs font-semibold bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100">
+                                            <span>{feedbackStats[item.id.replace('work-', '')].count} Feedback</span>
+                                            <span>{feedbackStats[item.id.replace('work-', '')].average} ★</span>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-center text-xs text-slate-500 gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            <span>{format(new Date(item.date), 'MMM d, yyyy')}</span>
+                                        </div>
+                                        <div className="flex items-center text-xs text-slate-500 gap-1">
+                                            <MapPin className="w-3 h-3" />
+                                            <span className="truncate">{item.location} {item.area ? `(${item.area})` : ''}</span>
+                                        </div>
+                                        {item.citizenName && (
+                                            <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">
+                                                <User className="w-3 h-3" />
+                                                <span>For: {item.citizenName}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    {filteredItems.length === 0 && (
+                        <div className="col-span-full text-center py-10 text-slate-500 ns-card border-dashed">
+                            No work records found matching your search.
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Add Work Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
-                        <h2 className="text-xl font-bold mb-4">Add New Work Project</h2>
+                    <div className="ns-card max-w-lg w-full p-6">
+                        <h2 className="text-xl font-bold mb-4 text-slate-900">Add work project</h2>
                         <form onSubmit={handleAddWork} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Project Title</label>
+                                <label className="block text-sm font-medium text-slate-700">Project title</label>
                                 <input
                                     type="text" required
-                                    className="w-full border rounded-lg p-2 mt-1"
+                                    className="ns-input mt-1"
                                     value={newWork.title}
                                     onChange={e => setNewWork({ ...newWork, title: e.target.value })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Description</label>
+                                <label className="block text-sm font-medium text-slate-700">Description</label>
                                 <div className="relative">
                                     <textarea
-                                        className="w-full border rounded-lg p-2 mt-1 pr-10"
+                                        className="ns-input mt-1 pr-10"
                                         rows={3}
                                         value={newWork.description}
                                         onChange={e => setNewWork({ ...newWork, description: e.target.value })}
@@ -276,47 +458,47 @@ const WorkHistory = () => {
                                         type="button"
                                         onClick={handleAutoGenerate}
                                         disabled={generatingAI || !newWork.title}
-                                        className="absolute right-2 bottom-2 text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
-                                        title="Auto-Generate Description with AI"
+                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                        title="Auto draft description"
                                     >
                                         <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
                                     </button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">Enter a title and click the wand to auto-generate a description.</p>
+                                <p className="text-xs text-slate-500 mt-1">Enter a title and click the wand to auto draft a description.</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Location</label>
+                                    <label className="block text-sm font-medium text-slate-700">Location</label>
                                     <input
                                         type="text"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="ns-input mt-1"
                                         value={newWork.location}
                                         onChange={e => setNewWork({ ...newWork, location: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Area / Locality</label>
+                                    <label className="block text-sm font-medium text-slate-700">Area / locality</label>
                                     <input
                                         type="text"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="ns-input mt-1"
                                         value={newWork.area}
                                         onChange={e => setNewWork({ ...newWork, area: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Completion Date (Est)</label>
+                                    <label className="block text-sm font-medium text-slate-700">Completion date (est.)</label>
                                     <input
                                         type="date"
-                                        className="w-full border rounded-lg p-2 mt-1"
+                                        className="ns-input mt-1"
                                         value={newWork.completion_date}
                                         onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Status</label>
+                                <label className="block text-sm font-medium text-slate-700">Status</label>
                                 <select
-                                    className="w-full border rounded-lg p-2 mt-1"
+                                    className="ns-input mt-1"
                                     value={newWork.status}
                                     onChange={e => setNewWork({ ...newWork, status: e.target.value })}
                                 >
@@ -326,132 +508,11 @@ const WorkHistory = () => {
                                 </select>
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
-                                <button type="submit" className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700">Save Project</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">Cancel</button>
+                                <button type="submit" className="ns-btn-primary">Save project</button>
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
-
-            {/* Report Modal */}
-            {showReport && feedbackData[showReport] && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl max-h-[80vh] overflow-y-auto">
-                        <div className="flex justify-between items-start mb-4">
-                            <h2 className="text-xl font-bold">Feedback Report</h2>
-                            <button onClick={() => setShowReport(null)} className="text-gray-500 hover:text-gray-700">
-                                X
-                            </button>
-                        </div>
-
-                        <div className="bg-indigo-50 p-4 rounded-lg mb-4 text-center">
-                            <div className="text-3xl font-bold text-indigo-700">{feedbackData[showReport].average}/5</div>
-                            <div className="text-sm text-indigo-600">Average Rating based on {feedbackData[showReport].count} responses</div>
-                        </div>
-
-                        <div className="bg-green-50 p-3 rounded-lg border border-green-100 mb-4">
-                            <h4 className="font-semibold text-green-800 text-sm flex items-center mb-1">
-                                <Wand2 className="w-3 h-3 mr-1" /> AI Summary
-                            </h4>
-                            <p className="text-sm text-green-700 italic">
-                                "Citizens have largely appreciated the work. Key positive sentiments include 'Good work' and 'Great initiative'. Some concerns were raised regarding execution speed."
-                            </p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <h3 className="font-semibold text-gray-800">Recent Comments</h3>
-                            {feedbackData[showReport].items.map((fb: FeedbackItem) => (
-                                <div key={fb.id} className="border-b border-gray-100 pb-2 last:border-0">
-                                    <div className="flex justify-between items-center mb-1">
-                                        <span className="font-medium text-xs text-gray-600">{fb.citizen_name}</span>
-                                        <span className="text-yellow-500 text-xs">{'★'.repeat(fb.rating)}</span>
-                                    </div>
-                                    <p className="text-sm text-gray-800">{fb.comment}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {loading ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-xl"></div>)}
-                </div>
-            ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredItems.map((item) => (
-                        <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition flex flex-col h-full">
-                            <div className="flex justify-between items-start mb-3">
-                                {getStatusBadge(item.status, item.source)}
-                                <div className="flex items-center gap-1 text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                                    {getSourceIcon(item.source)}
-                                    <span>{item.source}</span>
-                                </div>
-                            </div>
-
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
-                            <p className="text-sm text-gray-600 mb-4 line-clamp-3">{item.description}</p>
-
-                            {/* Feedback Section */}
-                            <div className="mt-auto pt-3 border-t border-gray-100">
-                                {feedbackData[item.id] ? (
-                                    <div
-                                        onClick={() => setShowReport(item.id)}
-                                        className="mb-3 p-2 bg-indigo-50 rounded-lg flex items-center justify-between cursor-pointer hover:bg-indigo-100 transition-colors"
-                                    >
-                                        <div>
-                                            <span className="text-xs font-semibold text-indigo-700 block">Feedback Report</span>
-                                            <span className="text-xs text-indigo-600">{feedbackData[item.id].count} Responses</span>
-                                        </div>
-                                        <div className="text-indigo-700 font-bold text-sm">
-                                            {feedbackData[item.id].average} ★
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleGetFeedback(item.id)}
-                                        disabled={broadcastingId === item.id}
-                                        className="w-full mb-3 py-1.5 border border-indigo-200 text-indigo-600 rounded-lg text-xs font-medium hover:bg-indigo-50 flex items-center justify-center space-x-1 disabled:opacity-50"
-                                    >
-                                        {broadcastingId === item.id ? (
-                                            <>
-                                                <div className="w-3 h-3 border-2 border-600 border-t-transparent rounded-full animate-spin"></div>
-                                                <span>Broadcasting...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <span>📢 Get Feedback</span>
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-
-                                <div className="space-y-2">
-                                    <div className="flex items-center text-xs text-gray-500 gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        <span>{format(new Date(item.date), 'MMM d, yyyy')}</span>
-                                    </div>
-                                    <div className="flex items-center text-xs text-gray-500 gap-1">
-                                        <MapPin className="w-3 h-3" />
-                                        <span className="truncate">{item.location} {item.area ? `(${item.area})` : ''}</span>
-                                    </div>
-                                    {item.citizenName && (
-                                        <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">
-                                            <User className="w-3 h-3" />
-                                            <span>For: {item.citizenName}</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    {filteredItems.length === 0 && (
-                        <div className="col-span-full text-center py-10 text-gray-500">
-                            No work records found matching your search.
-                        </div>
-                    )}
                 </div>
             )}
         </div>

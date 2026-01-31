@@ -92,110 +92,112 @@ const ResultAnalysis = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Election Result Analysis</h1>
-                    <p className="text-gray-600">Performance report for <span className="font-semibold text-brand-600">{selectedCandidate}</span></p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200">
-                        <span className="text-sm font-medium text-gray-500 ml-2">Ward:</span>
-                        <select
-                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-gray-700 max-w-[120px]"
-                            value={ward}
-                            onChange={(e) => setWard(e.target.value)}
-                        >
-                            <option value="Prabhag 5 A">Prabhag 5 A</option>
-                            <option value="Prabhag 5 B">Prabhag 5 B</option>
-                            <option value="Prabhag 5 C">Prabhag 5 C</option>
-                            <option value="Prabhag 5 D">Prabhag 5 D</option>
-                        </select>
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">Election Result Analysis</h1>
+                        <p className="text-slate-600">Performance report for <span className="font-semibold text-brand-700">{selectedCandidate}</span></p>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-gray-200">
-                        <span className="text-sm font-medium text-gray-500 ml-2">Analyze For:</span>
-                        <select
-                            className="bg-transparent border-none focus:ring-0 text-sm font-bold text-brand-600 max-w-[200px]"
-                            value={selectedCandidate}
-                            onChange={(e) => setSelectedCandidate(e.target.value)}
-                        >
-                            {availableCandidates.map(c => (
-                                <option key={c} value={c}>{c}</option>
-                            ))}
-                        </select>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                            <span className="text-sm font-medium text-slate-500 ml-1">Ward:</span>
+                            <select
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 max-w-[120px]"
+                                value={ward}
+                                onChange={(e) => setWard(e.target.value)}
+                            >
+                                <option value="Prabhag 5 A">Prabhag 5 A</option>
+                                <option value="Prabhag 5 B">Prabhag 5 B</option>
+                                <option value="Prabhag 5 C">Prabhag 5 C</option>
+                                <option value="Prabhag 5 D">Prabhag 5 D</option>
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                            <span className="text-sm font-medium text-slate-500 ml-1">Analyze for:</span>
+                            <select
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 max-w-[200px]"
+                                value={selectedCandidate}
+                                onChange={(e) => setSelectedCandidate(e.target.value)}
+                            >
+                                {availableCandidates.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Total Votes</span>
+                        <span className="text-slate-500 text-sm">Total Votes</span>
                         <Users className="w-5 h-5 text-blue-500" />
                     </div>
 
-                    <p className="text-2xl font-bold text-gray-900">{ourVotes.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">out of {totalVotes.toLocaleString()} casted</p>
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{ourVotes.toLocaleString()}</p>
+                    <p className="text-xs text-slate-500">out of {totalVotes.toLocaleString()} cast</p>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Vote Share</span>
+                        <span className="text-slate-500 text-sm">Vote share</span>
                         <PieChart className="w-5 h-5 text-purple-500" />
                     </div>
-                    <p className="text-2xl font-bold text-gray-900">{voteShare.toFixed(1)}%</p>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+                    <p className="text-2xl font-bold text-slate-900 tabular-nums">{voteShare.toFixed(1)}%</p>
+                    <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2">
                         <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: `${voteShare}%` }}></div>
                     </div>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Winning Booths</span>
+                        <span className="text-slate-500 text-sm">Winning booths</span>
                         <CheckCircle className="w-5 h-5 text-green-500" />
                     </div>
                     <p className="text-2xl font-bold text-green-600">{winningBooths}</p>
-                    <p className="text-xs text-gray-500">Strongholds</p>
+                    <p className="text-xs text-slate-500">Strongholds</p>
                 </div>
-                <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-gray-500 text-sm">Losing Booths</span>
+                        <span className="text-slate-500 text-sm">Losing booths</span>
                         <XCircle className="w-5 h-5 text-red-500" />
                     </div>
                     <p className="text-2xl font-bold text-red-600">{losingBooths}</p>
-                    <p className="text-xs text-gray-500">Need improvement</p>
+                    <p className="text-xs text-slate-500">Needs improvement</p>
                 </div>
             </div>
 
             {/* Detailed Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-6 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900">Booth-wise Performance</h2>
+            <div className="ns-card overflow-hidden">
+                <div className="p-6 border-b border-slate-200/70">
+                    <h2 className="text-lg font-semibold text-slate-900">Booth-wise performance</h2>
                 </div>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full divide-y divide-slate-200/70">
+                        <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50">Booth No</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">Booth No</th>
                                 {sortedResults.length > 0 && Object.keys(sortedResults[0].candidateVotes).map(candidate => (
-                                    <th key={candidate} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">
+                                    <th key={candidate} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">
                                         <span className="line-clamp-2" title={candidate}>{candidate}</span>
                                     </th>
                                 ))}
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winner</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Margin</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Winner</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Margin</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white divide-y divide-slate-200/70">
                             {loading ? (
                                 <tr><td colSpan={10} className="px-6 py-4 text-center">Loading...</td></tr>
                             ) : sortedResults.map((r) => {
                                 const candidates = Object.keys(r.candidateVotes);
                                 const ourV = r.candidateVotes[selectedCandidate] || 0;
                                 return (
-                                    <tr key={r.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
+                                    <tr key={r.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 sticky left-0 bg-white">
                                             {r.boothNumber}
                                             {/* <span className="block text-xs text-gray-500 font-normal">{r.boothName}</span> */}
                                         </td>
@@ -204,16 +206,16 @@ const ResultAnalysis = () => {
                                             const isWin = r.winner === c;
                                             const isSelected = c === selectedCandidate;
                                             return (
-                                                <td key={c} className={`px-6 py-4 whitespace-nowrap text-sm ${isWin ? 'font-bold text-green-700 bg-green-50' : isSelected ? 'font-medium text-brand-700 bg-brand-50' : 'text-gray-500'}`}>
+                                                <td key={c} className={`px-6 py-4 whitespace-nowrap text-sm ${isWin ? 'font-bold text-green-700 bg-green-50' : isSelected ? 'font-semibold text-brand-800 bg-brand-50/60' : 'text-slate-500'}`}>
                                                     {votes}
                                                 </td>
                                             );
                                         })}
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">{r.totalVotesCasted}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-600 font-medium truncate max-w-[150px]" title={r.winner}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900 tabular-nums">{r.totalVotesCasted}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-brand-700 font-semibold truncate max-w-[150px]" title={r.winner}>
                                             {r.winner}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                             {r.margin}
                                         </td>
                                     </tr>
@@ -222,14 +224,14 @@ const ResultAnalysis = () => {
 
                             {/* Totals Row */}
                             {!loading && sortedResults.length > 0 && (
-                                <tr className="bg-gray-100 font-bold">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 sticky left-0 bg-gray-100">TOTAL</td>
+                                <tr className="bg-slate-50 font-bold">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 sticky left-0 bg-slate-50">TOTAL</td>
                                     {Object.keys(sortedResults[0].candidateVotes).map(c => (
-                                        <td key={c} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td key={c} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 tabular-nums">
                                             {sortedResults.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0).toLocaleString()}
                                         </td>
                                     ))}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 tabular-nums">
                                         {sortedResults.reduce((sum, r) => sum + r.totalVotesCasted, 0).toLocaleString()}
                                     </td>
                                     <td colSpan={2}></td>

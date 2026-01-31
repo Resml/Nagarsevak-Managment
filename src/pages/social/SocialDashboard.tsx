@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { Search, Facebook, Instagram, ThumbsUp, MessageCircle, Share2, TrendingUp, Users, Eye } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
@@ -81,7 +82,7 @@ const SocialDashboard = () => {
     };
 
     const sendBirthdayWish = (mobile?: string) => {
-        if (!mobile) return alert('No mobile number for this voter');
+        if (!mobile) return toast.error('No mobile number for this voter');
         const msg = encodeURIComponent("🎂 Happy Birthday! Wishing you good health and happiness. - Your Nagar Sevak");
         window.open(`https://wa.me/${mobile}?text=${msg}`, '_blank');
     };
@@ -90,161 +91,154 @@ const SocialDashboard = () => {
         <div className="space-y-6">
 
 
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <TrendingUp className="text-brand-600 w-8 h-8" />
-                    {t('social.title')}
-                </h1>
-                <div className="flex space-x-2">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition">
-                        <Facebook className="w-4 h-4" /> {t('social.connect_fb')}
-                    </button>
-                    <button className="px-4 py-2 bg-pink-600 text-white rounded-lg flex items-center gap-2 hover:bg-pink-700 transition">
-                        <Instagram className="w-4 h-4" /> {t('social.connect_ig')}
-                    </button>
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <TrendingUp className="text-brand-700 w-7 h-7" />
+                        {t('social.title')}
+                    </h1>
+                    <div className="flex space-x-2">
+                        <button className="ns-btn-ghost border border-slate-200 flex items-center gap-2">
+                            <Facebook className="w-4 h-4" /> {t('social.connect_fb')}
+                        </button>
+                        <button className="ns-btn-ghost border border-slate-200 flex items-center gap-2">
+                            <Instagram className="w-4 h-4" /> {t('social.connect_ig')}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Search and Filter */}
+                <div className="ns-card p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder={t('social.search_placeholder')}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="ns-input pl-10"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setPlatformFilter('All')}
+                                className={`ns-btn-ghost border border-slate-200 ${platformFilter === 'All' ? 'bg-slate-900 text-white border-slate-900' : ''}`}
+                            >
+                                {t('social.all_posts')}
+                            </button>
+                            <button
+                                onClick={() => setPlatformFilter('Facebook')}
+                                className={`ns-btn-ghost border border-slate-200 flex items-center gap-2 ${platformFilter === 'Facebook' ? 'bg-blue-600 text-white border-blue-600' : ''}`}
+                            >
+                                <Facebook className="w-4 h-4" /> Facebook
+                            </button>
+                            <button
+                                onClick={() => setPlatformFilter('Instagram')}
+                                className={`ns-btn-ghost border border-slate-200 flex items-center gap-2 ${platformFilter === 'Instagram' ? 'bg-slate-900 text-white border-slate-900' : ''}`}
+                            >
+                                <Instagram className="w-4 h-4" /> Instagram
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Analytics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="ns-card p-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">{t('social.total_reach')}</p>
-                            <h3 className="text-2xl font-bold text-gray-900 mt-1">45.2K</h3>
+                            <p className="text-sm font-medium text-slate-500">{t('social.total_reach')}</p>
+                            <h3 className="text-2xl font-bold text-slate-900 mt-1">—</h3>
                         </div>
-                        <div className="p-2 bg-purple-50 rounded-lg text-purple-600">
+                        <div className="p-2 bg-purple-50 rounded-xl border border-purple-100 text-purple-700">
                             <Eye className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-sm text-green-600">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        <span>+12.5% this month</span>
-                    </div>
+                    <div className="mt-4 text-xs text-slate-500">Connect accounts to see reach.</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="ns-card p-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">{t('social.total_likes')}</p>
-                            <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalLikes.toLocaleString()}</h3>
+                            <p className="text-sm font-medium text-slate-500">{t('social.total_likes')}</p>
+                            <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{totalLikes.toLocaleString()}</h3>
                         </div>
-                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
+                        <div className="p-2 bg-blue-50 rounded-xl border border-blue-100 text-blue-700">
                             <ThumbsUp className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-sm text-green-600">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        <span>+8.2% this month</span>
-                    </div>
+                    <div className="mt-4 text-xs text-slate-500">Demo totals from sample posts.</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="ns-card p-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">{t('social.comments')}</p>
-                            <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalComments.toLocaleString()}</h3>
+                            <p className="text-sm font-medium text-slate-500">{t('social.comments')}</p>
+                            <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{totalComments.toLocaleString()}</h3>
                         </div>
-                        <div className="p-2 bg-green-50 rounded-lg text-green-600">
+                        <div className="p-2 bg-green-50 rounded-xl border border-green-100 text-green-700">
                             <MessageCircle className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-sm text-gray-500">
-                        <span>Across all platforms</span>
-                    </div>
+                    <div className="mt-4 text-xs text-slate-500">Across the sample feed.</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div className="ns-card p-6">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-sm font-medium text-gray-500">{t('social.shares')}</p>
-                            <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalShares.toLocaleString()}</h3>
+                            <p className="text-sm font-medium text-slate-500">{t('social.shares')}</p>
+                            <h3 className="text-2xl font-bold text-slate-900 mt-1 tabular-nums">{totalShares.toLocaleString()}</h3>
                         </div>
-                        <div className="p-2 bg-orange-50 rounded-lg text-orange-600">
+                        <div className="p-2 bg-orange-50 rounded-xl border border-orange-100 text-orange-700">
                             <Share2 className="w-5 h-5" />
                         </div>
                     </div>
-                    <div className="mt-4 flex items-center text-sm text-green-600">
-                        <TrendingUp className="w-4 h-4 mr-1" />
-                        <span>+24.0% viral growth</span>
-                    </div>
+                    <div className="mt-4 text-xs text-slate-500">Across the sample feed.</div>
                 </div>
             </div>
 
-            {/* Search and Filter */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 sticky top-0 z-10">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder={t('social.search_placeholder')}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-                        />
-                    </div>
-                    <div className="flex gap-2">
-                        <button
-                            onClick={() => setPlatformFilter('All')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${platformFilter === 'All' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                        >
-                            {t('social.all_posts')}
-                        </button>
-                        <button
-                            onClick={() => setPlatformFilter('Facebook')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${platformFilter === 'Facebook' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
-                        >
-                            <Facebook className="w-4 h-4" /> Facebook
-                        </button>
-                        <button
-                            onClick={() => setPlatformFilter('Instagram')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${platformFilter === 'Instagram' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600 hover:bg-pink-100'}`}
-                        >
-                            <Instagram className="w-4 h-4" /> Instagram
-                        </button>
-                    </div>
-                </div>
-            </div>
+
 
             {/* Posts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredPosts.map((post) => (
-                    <div key={post.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition">
+                    <div key={post.id} className="ns-card overflow-hidden hover:shadow-md transition-shadow">
                         <div className="relative h-48 bg-gray-100">
                             <img src={post.image} alt="Post" className="w-full h-full object-cover" />
                             <div className="absolute top-3 right-3">
                                 {post.platform === 'Facebook' ? (
-                                    <div className="bg-blue-600 text-white p-1.5 rounded-full shadow-lg">
+                                    <div className="bg-slate-900 text-white p-1.5 rounded-full shadow-sm">
                                         <Facebook className="w-4 h-4" />
                                     </div>
                                 ) : (
-                                    <div className="bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 text-white p-1.5 rounded-full shadow-lg">
+                                    <div className="bg-slate-900 text-white p-1.5 rounded-full shadow-sm">
                                         <Instagram className="w-4 h-4" />
                                     </div>
                                 )}
                             </div>
                         </div>
                         <div className="p-5">
-                            <div className="flex items-center space-x-2 text-xs text-gray-500 mb-3">
+                            <div className="flex items-center space-x-2 text-xs text-slate-500 mb-3">
                                 <CalendarIcon className="w-3 h-3" />
                                 <span>{post.date}</span>
                             </div>
-                            <p className="text-gray-800 text-sm line-clamp-3 mb-4 font-medium">
+                            <p className="text-slate-800 text-sm line-clamp-3 mb-4 font-medium">
                                 {post.content}
                             </p>
 
-                            <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm text-gray-500">
+                            <div className="flex items-center justify-between pt-4 border-t border-slate-200/70 text-sm text-slate-500">
                                 <div className="flex items-center space-x-1">
-                                    <ThumbsUp className="w-4 h-4 text-blue-500" />
+                                    <ThumbsUp className="w-4 h-4 text-slate-500" />
                                     <span>{post.likes}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
-                                    <MessageCircle className="w-4 h-4 text-green-500" />
+                                    <MessageCircle className="w-4 h-4 text-slate-500" />
                                     <span>{post.comments}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
-                                    <Share2 className="w-4 h-4 text-orange-500" />
+                                    <Share2 className="w-4 h-4 text-slate-500" />
                                     <span>{post.shares}</span>
                                 </div>
                             </div>
@@ -254,8 +248,8 @@ const SocialDashboard = () => {
             </div>
 
             {filteredPosts.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
-                    <Search className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <div className="text-center py-12 text-slate-500 ns-card border-dashed">
+                    <Search className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                     <p>{t('social.no_posts')}</p>
                 </div>
             )}

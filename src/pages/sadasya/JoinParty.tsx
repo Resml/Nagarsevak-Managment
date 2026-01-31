@@ -49,18 +49,18 @@ const JoinParty = () => {
 
     if (isSubmitted) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="max-w-md w-full ns-card p-8 text-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <CheckCircle className="w-8 h-8 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
-                    <p className="text-gray-600 mb-6">
+                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Registration successful</h2>
+                    <p className="text-slate-600 mb-6">
                         Thank you for joining our party as a Sadasya. We will keep you updated with our latest activities.
                     </p>
                     <button
                         onClick={() => navigate('/login')}
-                        className="w-full bg-brand-600 text-white py-3 rounded-lg font-medium hover:bg-brand-700 transition-colors"
+                        className="ns-btn-primary w-full justify-center py-3"
                     >
                         Go to Login
                     </button>
@@ -77,7 +77,7 @@ const JoinParty = () => {
                                 voterId: ''
                             });
                         }}
-                        className="mt-3 text-brand-600 font-medium hover:text-brand-700 block w-full"
+                        className="mt-3 text-brand-700 font-semibold hover:underline block w-full"
                     >
                         Register Another Member
                     </button>
@@ -87,29 +87,23 @@ const JoinParty = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-            <div className="sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="flex justify-center">
-                    <div className="w-12 h-12 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                        N
-                    </div>
-                </div>
-                <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    Join Our Party
-                </h2>
-                <p className="mt-2 text-center text-sm text-gray-600">
-                    Become a Sadasya and contribute to our community
-                </p>
-            </div>
-
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 relative">
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                <div className="ns-card p-6 md:p-8 relative">
                     <button
                         onClick={() => navigate('/login')}
-                        className="absolute top-4 left-4 text-gray-400 hover:text-gray-600"
+                        className="absolute top-4 left-4 ns-btn-ghost px-2 py-2 border border-slate-200"
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
+
+                    <div className="text-center mb-6">
+                        <div className="mx-auto h-12 w-12 rounded-2xl bg-brand-600 text-white flex items-center justify-center font-black shadow-sm">
+                            N
+                        </div>
+                        <h2 className="mt-4 text-2xl font-bold text-slate-900">Join as Sadasya</h2>
+                        <p className="mt-1 text-sm text-slate-500">Submit details for registration</p>
+                    </div>
 
                     <form className="space-y-6" onSubmit={handleSubmit}>
                         <div>
@@ -122,7 +116,7 @@ const JoinParty = () => {
                                     name="name"
                                     type="text"
                                     required
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                    className="ns-input"
                                     value={formData.name}
                                     onChange={handleChange}
                                 />
@@ -139,7 +133,7 @@ const JoinParty = () => {
                                     name="mobile"
                                     type="tel"
                                     required
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                    className="ns-input"
                                     value={formData.mobile}
                                     onChange={handleChange}
                                     placeholder="+91 "
@@ -159,7 +153,7 @@ const JoinParty = () => {
                                         type="number"
                                         min="18"
                                         required
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                        className="ns-input"
                                         value={formData.age}
                                         onChange={handleChange}
                                     />
@@ -176,7 +170,7 @@ const JoinParty = () => {
                                     id="area"
                                     name="area"
                                     type="text"
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                    className="ns-input"
                                     value={formData.area || ''}
                                     onChange={handleChange}
                                     placeholder="e.g. Ganesh Nagar"
@@ -194,7 +188,7 @@ const JoinParty = () => {
                                     name="address"
                                     rows={3}
                                     required
-                                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                    className="ns-input"
                                     value={formData.address}
                                     onChange={handleChange}
                                 />
@@ -225,7 +219,7 @@ const JoinParty = () => {
                                         id="voterId"
                                         name="voterId"
                                         type="text"
-                                        className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-500 focus:border-brand-500 sm:text-sm"
+                                        className="ns-input"
                                         value={formData.voterId}
                                         onChange={handleChange}
                                     />
@@ -236,7 +230,7 @@ const JoinParty = () => {
                         <div>
                             <button
                                 type="submit"
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
+                                className="ns-btn-primary w-full justify-center py-3"
                             >
                                 <UserPlus className="w-5 h-5 mr-2" />
                                 Join Party

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link } from 'react-router-dom';
 import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search } from 'lucide-react';
@@ -23,6 +24,12 @@ const LetterDashboard = () => {
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
+    // New State for Advanced Filtering
+    const [areaSearch, setAreaSearch] = useState('');
+    const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+    const [dateSearch, setDateSearch] = useState('');
+    const [showDateDropdown, setShowDateDropdown] = useState(false);
+
     useEffect(() => {
         fetchRequests();
     }, []);
@@ -37,35 +44,61 @@ const LetterDashboard = () => {
         setLoading(false);
     };
 
+    // Helper: Get Unique Areas with Counts
+    const getAreaSuggestions = () => {
+        const stats: Record<string, number> = {};
+        requests.forEach(r => {
+            if (r.area) {
+                stats[r.area] = (stats[r.area] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([area, count]) => ({ area, count }));
+    };
+
+    // Helper: Get Unique Dates with Counts
+    const getDateSuggestions = () => {
+        const stats: Record<string, number> = {};
+        requests.forEach(r => {
+            if (r.created_at) {
+                const dateStr = format(new Date(r.created_at), 'MMM d, yyyy');
+                stats[dateStr] = (stats[dateStr] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([date, count]) => ({ date, count }));
+    };
+
     const filteredRequests = requests.filter(req => {
-        if (!searchQuery) return true;
-        const term = searchQuery.toLowerCase();
-        return (
-            req.user_id.toLowerCase().includes(term) ||
-            req.type.toLowerCase().includes(term) ||
-            (req.area && req.area.toLowerCase().includes(term)) ||
-            (req.details?.name && req.details.name.toLowerCase().includes(term))
-        );
+        const matchesSearch = !searchQuery || (() => {
+            const term = searchQuery.toLowerCase();
+            return (
+                req.user_id.toLowerCase().includes(term) ||
+                req.type.toLowerCase().includes(term) ||
+                (req.area && req.area.toLowerCase().includes(term)) ||
+                (req.details?.name && req.details.name.toLowerCase().includes(term))
+            );
+        })();
+
+        const matchesArea = !areaSearch || (req.area && req.area.toLowerCase().includes(areaSearch.toLowerCase()));
+        const matchesDate = !dateSearch || (req.created_at && format(new Date(req.created_at), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase()));
+
+        return matchesSearch && matchesArea && matchesDate;
     });
 
     const generatePDF = (req: LetterRequest, returnBlob: boolean = false) => {
         const doc = new jsPDF();
 
-        // --- Letterhead Header (Visual Mock) ---
-        doc.setFillColor(255, 140, 0); // Orange Header
-        doc.rect(0, 0, 210, 40, 'F');
-
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24);
+        // --- Letterhead Header (simple, official) ---
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.text('Rajesh Sharma', 20, 20);
-
-        doc.setFontSize(12);
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        doc.text('Nagar Sevak - Ward 12, Shivaji Nagar', 20, 30);
+        doc.text('Nagar Sevak - Ward 12, Shivaji Nagar', 20, 28);
+        doc.setDrawColor(180, 180, 180);
+        doc.line(20, 34, 190, 34);
 
         // --- Content ---
-        doc.setTextColor(0, 0, 0);
         doc.setFontSize(12);
         doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy')}`, 160, 50);
 
@@ -94,13 +127,9 @@ I wish them all the best for their future endeavors.
         doc.text('Rajesh Sharma', 150, 210);
         doc.setFont('helvetica', 'normal');
         doc.text('(Nagar Sevak)', 150, 215);
-
-        // --- Footer ---
-        doc.setFillColor(0, 100, 0); // Green Footer
-        doc.rect(0, 280, 210, 17, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(10);
-        doc.text('Office: 123, Main Road, Shivaji Nagar | Contact: +91 98765 43210', 105, 290, { align: 'center' });
+        doc.setTextColor(90, 90, 90);
+        doc.setFontSize(9);
+        doc.text('Office: 123, Main Road, Shivaji Nagar | Contact: +91 98765 43210', 105, 285, { align: 'center' });
 
         if (returnBlob) {
             return doc.output('blob');
@@ -133,7 +162,7 @@ I wish them all the best for their future endeavors.
                 console.log('PDF Uploaded:', publicUrl);
             } catch (err) {
                 console.error('Failed to upload PDF:', err);
-                alert('Failed to generate/upload PDF. Check console.');
+                toast.error('Failed to generate/upload PDF. Check console.');
                 return;
             }
         }
@@ -143,80 +172,172 @@ I wish them all the best for their future endeavors.
         setSelectedRequest(null);
     };
 
+    // Close dropdowns when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!(event.target as Element).closest('.dropdown-container')) {
+                setShowAreaDropdown(false);
+                setShowDateDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <FileText className="w-8 h-8 text-brand-600" /> {t('letters.title')}
-                </h1>
-                <div className="flex gap-2">
-                    <Link
-                        to="/letters/types"
-                        className="flex items-center gap-2 bg-white text-gray-700 border border-gray-300 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition shadow-sm"
-                    >
-                        <Settings className="w-4 h-4" /> {t('letters.manage_types')}
-                    </Link>
-                    <Link
-                        to="/letters/new"
-                        className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-700 transition shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" /> {t('letters.new_request')}
-                    </Link>
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <FileText className="w-7 h-7 text-brand-700" /> {t('letters.title')}
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
+                                Found: {filteredRequests.length}
+                            </span>
+                        </h1>
+                    </div>
+                    <div className="flex gap-2">
+                        <Link
+                            to="/letters/types"
+                            className="ns-btn-ghost border border-slate-200"
+                        >
+                            <Settings className="w-4 h-4" /> {t('letters.manage_types')}
+                        </Link>
+                        <Link
+                            to="/letters/new"
+                            className="ns-btn-primary"
+                        >
+                            <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                        </Link>
+                    </div>
                 </div>
-            </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                    type="text"
-                    placeholder={t('letters.search_placeholder')}
-                    className="w-full pl-10 pr-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                {/* Search & Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Main Search */}
+                    <div className="md:col-span-6 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder={t('letters.search_placeholder')}
+                            className="ns-input pl-10 py-3 bg-white shadow-sm w-full"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Area Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder="Search Area..."
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={areaSearch}
+                            onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
+                            onChange={(e) => setAreaSearch(e.target.value)}
+                        />
+                        {showAreaDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.area}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setAreaSearch(item.area);
+                                            setShowAreaDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.area}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">No areas found</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Date Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder="Filter by Date..."
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={dateSearch}
+                            onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
+                            onChange={(e) => setDateSearch(e.target.value)}
+                        />
+                        {showDateDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getDateSuggestions().filter(d => d.date.toLowerCase().includes(dateSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.date}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setDateSearch(item.date);
+                                            setShowDateDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.date}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6">
                 {/* List */}
-                <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
+                <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
                     {loading ? <div className="p-4">{t('letters.loading')}</div> : filteredRequests.map(req => (
                         <div
                             key={req.id}
                             onClick={() => setSelectedRequest(req)}
-                            className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition ${selectedRequest?.id === req.id ? 'bg-brand-50 border-l-4 border-l-brand-600' : ''}`}
+                            className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
                         >
                             <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-gray-800">{req.type}</h3>
+                                <h3 className="font-bold text-slate-800">{req.type}</h3>
                                 <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                                     {req.status}
                                 </span>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">{req.details?.name || req.user_id}</p>
+                            <p className="text-sm text-slate-600 mt-1">{req.details?.name || req.user_id}</p>
                             {req.area && <p className="text-xs text-brand-600 mt-1">{req.area}</p>}
-                            <p className="text-xs text-gray-400 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
+                            <p className="text-xs text-slate-500 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
                         </div>
                     ))}
                     {filteredRequests.length === 0 && !loading && (
-                        <div className="p-8 text-center text-gray-500">
-                            {t('letters.no_requests')}
+                        <div className="p-8 text-center flex flex-col items-center justify-center h-64">
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                <FileText className="w-8 h-8 text-slate-400" />
+                            </div>
+                            <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
+                            <Link
+                                to="/letters/new"
+                                className="ns-btn-primary"
+                            >
+                                <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                            </Link>
                         </div>
                     )}
                 </div>
 
                 {/* Preview */}
-                <div className="bg-white rounded-xl shadow border border-gray-200 md:col-span-2 p-6 min-h-[500px] flex flex-col">
+                <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col">
                     {selectedRequest ? (
                         <>
-                            <div className="flex justify-between items-start pb-4 border-b border-gray-100">
+                            <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
                                 <div>
-                                    <h2 className="text-xl font-bold text-gray-900">{selectedRequest.type}</h2>
-                                    <p className="text-sm text-gray-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
+                                    <h2 className="text-xl font-bold text-slate-900">{selectedRequest.type}</h2>
+                                    <p className="text-sm text-slate-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => generatePDF(selectedRequest)}
-                                        className="bg-brand-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-brand-700"
+                                        className="ns-btn-primary"
                                     >
                                         <Printer className="w-4 h-4" /> {t('letters.generate_pdf')}
                                     </button>
@@ -224,33 +345,33 @@ I wish them all the best for their future endeavors.
                             </div>
 
                             <div className="flex-1 py-6 space-y-4">
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                    <h4 className="text-xs font-bold uppercase text-gray-400 mb-2">{t('letters.request_details')}</h4>
-                                    <p className="text-gray-800"><span className="font-semibold">{t('letters.name')}:</span> {selectedRequest.details?.name}</p>
-                                    <p className="text-gray-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
-                                    <p className="bg-white p-2 rounded border border-gray-200 mt-1 text-sm">{selectedRequest.details?.text}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
+                                    <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> {selectedRequest.details?.name}</p>
+                                    <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
+                                    <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">{selectedRequest.details?.text}</p>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                            <div className="pt-4 border-t border-slate-200/70 flex justify-end gap-3">
                                 {selectedRequest.status === 'Pending' && (
                                     <>
                                         <button
                                             onClick={() => updateStatus(selectedRequest.id, 'Rejected')}
-                                            className="px-4 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 flex items-center gap-2"
+                                            className="ns-btn-ghost border border-red-200 text-red-700"
                                         >
                                             <XCircle className="w-4 h-4" /> {t('letters.reject')}
                                         </button>
                                         <button
                                             onClick={() => updateStatus(selectedRequest.id, 'Approved', selectedRequest)}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            className="ns-btn-primary bg-green-600 hover:bg-green-700"
                                         >
                                             <CheckCircle className="w-4 h-4" /> {t('letters.approve')}
                                         </button>
                                     </>
                                 )}
                                 {selectedRequest.status !== 'Pending' && (
-                                    <div className="flex items-center gap-2 text-gray-500">
+                                    <div className="flex items-center gap-2 text-slate-500">
                                         <CheckCircle className="w-5 h-5 text-green-500" />
                                         Request is {selectedRequest.status}
                                     </div>
@@ -258,7 +379,7 @@ I wish them all the best for their future endeavors.
                             </div>
                         </>
                     ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
                             <FileText className="w-16 h-16 mb-4 opacity-20" />
                             <p>{t('letters.select_request')}</p>
                         </div>
