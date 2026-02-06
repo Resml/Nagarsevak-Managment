@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link } from 'react-router-dom';
-import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
+import IncomingLetterUpload from './IncomingLetterUpload';
 
 interface LetterRequest {
     id: string;
@@ -17,12 +18,39 @@ interface LetterRequest {
     created_at: string;
 }
 
+interface IncomingLetter {
+    id: string;
+    title: string;
+    description?: string;
+    scanned_file_url: string;
+    file_type: string;
+    area?: string;
+    received_date: string;
+    created_at: string;
+}
+
+import { translateText } from '../../services/translationService';
+import { TranslatedText } from '../../components/TranslatedText';
+
+// ... (other imports)
+
 const LetterDashboard = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage(); // Get language
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'outgoing' | 'incoming'>('outgoing');
+
+    // Incoming Letters State
+    const [incomingLetters, setIncomingLetters] = useState<IncomingLetter[]>([]);
+    const [selectedIncoming, setSelectedIncoming] = useState<IncomingLetter | null>(null);
+    const [showUploadModal, setShowUploadModal] = useState(false);
+
+    // Translations Cache
+    const [translatedTypes, setTranslatedTypes] = useState<Record<string, string>>({});
 
     // New State for Advanced Filtering
     const [areaSearch, setAreaSearch] = useState('');
@@ -32,7 +60,27 @@ const LetterDashboard = () => {
 
     useEffect(() => {
         fetchRequests();
+        fetchIncomingLetters();
     }, []);
+
+    // Translate types when language matches Marathi
+    useEffect(() => {
+        const translateTypes = async () => {
+            if (language === 'mr' && requests.length > 0) {
+                const types = Array.from(new Set(requests.map(r => r.type)));
+                const newTranslations: Record<string, string> = { ...translatedTypes };
+
+                await Promise.all(types.map(async (type) => {
+                    if (!newTranslations[type]) {
+                        newTranslations[type] = await translateText(type, 'mr');
+                    }
+                }));
+
+                setTranslatedTypes(newTranslations);
+            }
+        };
+        translateTypes();
+    }, [language, requests]);
 
     const fetchRequests = async () => {
         const { data, error } = await supabase
@@ -42,6 +90,15 @@ const LetterDashboard = () => {
 
         if (data) setRequests(data);
         setLoading(false);
+    };
+
+    const fetchIncomingLetters = async () => {
+        const { data, error } = await supabase
+            .from('incoming_letters')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (data) setIncomingLetters(data);
     };
 
     // Helper: Get Unique Areas with Counts
@@ -192,24 +249,65 @@ I wish them all the best for their future endeavors.
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             <FileText className="w-7 h-7 text-brand-700" /> {t('letters.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                Found: {filteredRequests.length}
+                                {t('letters.found')}: {activeTab === 'outgoing' ? filteredRequests.length : incomingLetters.length}
                             </span>
                         </h1>
                     </div>
                     <div className="flex gap-2">
-                        <Link
-                            to="/letters/types"
-                            className="ns-btn-ghost border border-slate-200"
-                        >
-                            <Settings className="w-4 h-4" /> {t('letters.manage_types')}
-                        </Link>
-                        <Link
-                            to="/letters/new"
-                            className="ns-btn-primary"
-                        >
-                            <Plus className="w-4 h-4" /> {t('letters.new_request')}
-                        </Link>
+                        {activeTab === 'outgoing' ? (
+                            <>
+                                <Link
+                                    to="/letters/types"
+                                    className="ns-btn-ghost border border-slate-200"
+                                >
+                                    <Settings className="w-4 h-4" /> {t('letters.manage_types')}
+                                </Link>
+                                <Link
+                                    to="/letters/new"
+                                    className="ns-btn-primary"
+                                >
+                                    <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                                </Link>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => setShowUploadModal(true)}
+                                className="ns-btn-primary"
+                            >
+                                <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
+                            </button>
+                        )}
                     </div>
+                </div>
+
+                {/* Tab Navigation */}
+                <div className="flex gap-2 border-b border-slate-200">
+                    <button
+                        onClick={() => {
+                            setActiveTab('outgoing');
+                            setSelectedRequest(null);
+                            setSelectedIncoming(null);
+                        }}
+                        className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'outgoing'
+                            ? 'border-brand-600 text-brand-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        {t('letters.outgoing')} ({requests.length})
+                    </button>
+                    <button
+                        onClick={() => {
+                            setActiveTab('incoming');
+                            setSelectedRequest(null);
+                            setSelectedIncoming(null);
+                        }}
+                        className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'incoming'
+                            ? 'border-brand-600 text-brand-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        {t('letters.incoming')} ({incomingLetters.length})
+                    </button>
                 </div>
 
                 {/* Search & Filters */}
@@ -220,7 +318,7 @@ I wish them all the best for their future endeavors.
                         <input
                             type="text"
                             placeholder={t('letters.search_placeholder')}
-                            className="ns-input pl-10 py-3 bg-white shadow-sm w-full"
+                            className="ns-input pl-10 py-3 bg-white shadow-sm w-full notranslate"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -230,8 +328,8 @@ I wish them all the best for their future endeavors.
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Search Area..."
-                            className="ns-input w-full bg-white shadow-sm"
+                            placeholder={t('letters.search_area_placeholder')}
+                            className="ns-input w-full bg-white shadow-sm notranslate"
                             value={areaSearch}
                             onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
                             onChange={(e) => setAreaSearch(e.target.value)}
@@ -247,12 +345,14 @@ I wish them all the best for their future endeavors.
                                             setShowAreaDropdown(false);
                                         }}
                                     >
-                                        <span className="text-sm text-slate-700">{item.area}</span>
+                                        <span className="text-sm text-slate-700">
+                                            <TranslatedText text={item.area} />
+                                        </span>
                                         <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
                                     </div>
                                 ))}
                                 {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
-                                    <div className="px-4 py-2 text-sm text-slate-500 italic">No areas found</div>
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">{t('letters.no_areas_found')}</div>
                                 )}
                             </div>
                         )}
@@ -262,8 +362,8 @@ I wish them all the best for their future endeavors.
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Filter by Date..."
-                            className="ns-input w-full bg-white shadow-sm"
+                            placeholder={t('letters.filter_date_placeholder')}
+                            className="ns-input w-full bg-white shadow-sm notranslate"
                             value={dateSearch}
                             onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
                             onChange={(e) => setDateSearch(e.target.value)}
@@ -292,46 +392,117 @@ I wish them all the best for their future endeavors.
             <div className="grid md:grid-cols-3 gap-6">
                 {/* List */}
                 <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
-                    {loading ? <div className="p-4">{t('letters.loading')}</div> : filteredRequests.map(req => (
-                        <div
-                            key={req.id}
-                            onClick={() => setSelectedRequest(req)}
-                            className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
-                        >
-                            <div className="flex justify-between items-start">
-                                <h3 className="font-bold text-slate-800">{req.type}</h3>
-                                <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                                    {req.status}
-                                </span>
-                            </div>
-                            <p className="text-sm text-slate-600 mt-1">{req.details?.name || req.user_id}</p>
-                            {req.area && <p className="text-xs text-brand-600 mt-1">{req.area}</p>}
-                            <p className="text-xs text-slate-500 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
-                        </div>
-                    ))}
-                    {filteredRequests.length === 0 && !loading && (
-                        <div className="p-8 text-center flex flex-col items-center justify-center h-64">
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
-                                <FileText className="w-8 h-8 text-slate-400" />
-                            </div>
-                            <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
-                            <Link
-                                to="/letters/new"
-                                className="ns-btn-primary"
-                            >
-                                <Plus className="w-4 h-4" /> {t('letters.new_request')}
-                            </Link>
-                        </div>
+                    {activeTab === 'outgoing' ? (
+                        <>
+                            {loading ? (
+                                <div className="space-y-2 p-4">
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <div key={i} className="p-4 border-b border-slate-200/70">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+                                                <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+                                            </div>
+                                            <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-2" />
+                                            <div className="h-3 w-20 bg-slate-200 rounded animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : filteredRequests.map(req => (
+                                <div
+                                    key={req.id}
+                                    onClick={() => setSelectedRequest(req)}
+                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="font-bold text-slate-800">
+                                            {translatedTypes[req.type] || req.type}
+                                        </h3>
+                                        <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                            {req.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 mt-1">
+                                        <TranslatedText text={req.details?.name || req.user_id} />
+                                    </p>
+                                    {req.area && (
+                                        <p className="text-xs text-brand-600 mt-1">
+                                            <TranslatedText text={req.area} />
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-slate-500 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
+                                </div>
+                            ))}
+                            {filteredRequests.length === 0 && !loading && (
+                                <div className="p-8 text-center flex flex-col items-center justify-center h-64">
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                        <FileText className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
+                                    <Link
+                                        to="/letters/new"
+                                        className="ns-btn-primary"
+                                    >
+                                        <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                                    </Link>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            {incomingLetters.map(letter => (
+                                <div
+                                    key={letter.id}
+                                    onClick={() => setSelectedIncoming(letter)}
+                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedIncoming?.id === letter.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="font-bold text-slate-800">
+                                            <TranslatedText text={letter.title} />
+                                        </h3>
+                                        <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                                            {letter.file_type.includes('pdf') ? 'PDF' : 'Image'}
+                                        </span>
+                                    </div>
+                                    {letter.description && (
+                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                            <TranslatedText text={letter.description} />
+                                        </p>
+                                    )}
+                                    {letter.area && (
+                                        <p className="text-xs text-brand-600 mt-1">
+                                            <TranslatedText text={letter.area} />
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-slate-500 mt-1">{format(new Date(letter.received_date), 'PP')}</p>
+                                </div>
+                            ))}
+                            {incomingLetters.length === 0 && (
+                                <div className="p-8 text-center flex flex-col items-center justify-center h-64">
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                        <Upload className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 mb-4">No incoming letters uploaded yet</p>
+                                    <button
+                                        onClick={() => setShowUploadModal(true)}
+                                        className="ns-btn-primary"
+                                    >
+                                        <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
                 {/* Preview */}
                 <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col">
-                    {selectedRequest ? (
+                    {activeTab === 'outgoing' && selectedRequest ? (
                         <>
                             <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
                                 <div>
-                                    <h2 className="text-xl font-bold text-slate-900">{selectedRequest.type}</h2>
+                                    <h2 className="text-xl font-bold text-slate-900">
+                                        {translatedTypes[selectedRequest.type] || selectedRequest.type}
+                                    </h2>
                                     <p className="text-sm text-slate-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
                                 </div>
                                 <div className="flex gap-2">
@@ -347,9 +518,11 @@ I wish them all the best for their future endeavors.
                             <div className="flex-1 py-6 space-y-4">
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
                                     <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
-                                    <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> {selectedRequest.details?.name}</p>
+                                    <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
                                     <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
-                                    <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">{selectedRequest.details?.text}</p>
+                                    <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
+                                        <TranslatedText text={selectedRequest.details?.text || ''} />
+                                    </p>
                                 </div>
                             </div>
 
@@ -378,14 +551,82 @@ I wish them all the best for their future endeavors.
                                 )}
                             </div>
                         </>
+                    ) : activeTab === 'incoming' && selectedIncoming ? (
+                        <>
+                            <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">
+                                        <TranslatedText text={selectedIncoming.title} />
+                                    </h2>
+                                    <p className="text-sm text-slate-500">
+                                        {t('letters.received_date')}: {format(new Date(selectedIncoming.received_date), 'PPP')}
+                                    </p>
+                                </div>
+                                <a
+                                    href={selectedIncoming.scanned_file_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ns-btn-primary"
+                                >
+                                    <ExternalLink className="w-4 h-4" /> {t('letters.view_document')}
+                                </a>
+                            </div>
+
+                            <div className="flex-1 py-6 space-y-4">
+                                {selectedIncoming.description && (
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.description')}</h4>
+                                        <p className="text-slate-700"><TranslatedText text={selectedIncoming.description} /></p>
+                                    </div>
+                                )}
+
+                                {selectedIncoming.area && (
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.area')}</h4>
+                                        <p className="text-slate-700"><TranslatedText text={selectedIncoming.area} /></p>
+                                    </div>
+                                )}
+
+                                {/* Document Preview */}
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Document Preview</h4>
+                                    {selectedIncoming.file_type.includes('image') ? (
+                                        <img
+                                            src={selectedIncoming.scanned_file_url}
+                                            alt={selectedIncoming.title}
+                                            className="w-full rounded-lg border border-slate-200"
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center bg-white p-8 rounded-lg border border-slate-200">
+                                            <div className="text-center">
+                                                <FileText className="w-16 h-16 text-slate-400 mx-auto mb-3" />
+                                                <p className="text-slate-600 font-semibold">PDF Document</p>
+                                                <p className="text-sm text-slate-500 mt-1">Click "View Document" to open</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
                     ) : (
                         <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
                             <FileText className="w-16 h-16 mb-4 opacity-20" />
-                            <p>{t('letters.select_request')}</p>
+                            <p>{activeTab === 'outgoing' ? t('letters.select_request') : 'Select an incoming letter'}</p>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Upload Modal */}
+            {showUploadModal && (
+                <IncomingLetterUpload
+                    onClose={() => setShowUploadModal(false)}
+                    onSuccess={() => {
+                        fetchIncomingLetters();
+                        setShowUploadModal(false);
+                    }}
+                />
+            )}
         </div>
     );
 };

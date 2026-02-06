@@ -8,45 +8,55 @@ const DUMMY_GALLERY: GalleryItem[] = [
     {
         id: '1',
         title: 'Ganpati Visarjan 2024',
+        titleKey: 'gallery.items.ganpati_title',
         category: 'Event',
         imageUrl: 'https://images.unsplash.com/photo-1567591414240-e19730eb66ac?auto=format&fit=crop&q=80',
         description: 'Grand celebration of Ganpati Visarjan in Ward 12 with all residents.',
+        descriptionKey: 'gallery.items.ganpati_desc',
         date: '2024-09-17',
         createdAt: new Date().toISOString()
     },
     {
         id: '2',
         title: 'Road Inauguration',
+        titleKey: 'gallery.items.road_title',
         category: 'Work',
         imageUrl: 'https://images.unsplash.com/photo-1590059395928-9833512630f7?auto=format&fit=crop&q=80',
         description: 'Inauguration of the new concrete road in Lane 5.',
+        descriptionKey: 'gallery.items.road_desc',
         date: '2025-01-10',
         createdAt: new Date().toISOString()
     },
     {
         id: '3',
         title: 'Best Nagar Sevak Award',
+        titleKey: 'gallery.items.award_title',
         category: 'Award',
         imageUrl: 'https://images.unsplash.com/photo-1594122230689-45899d9e6f69?auto=format&fit=crop&q=80',
         description: 'Received the Best Nagar Sevak award from the Municipal Commissioner.',
+        descriptionKey: 'gallery.items.award_desc',
         date: '2024-12-15',
         createdAt: new Date().toISOString()
     },
     {
         id: '4',
         title: 'Lokmat News Coverage',
+        titleKey: 'gallery.items.newspaper_1_title',
         category: 'Newspaper',
         imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80',
         description: 'Coverage of our successful vaccination drive in Lokmat.',
+        descriptionKey: 'gallery.items.newspaper_1_desc',
         date: '2025-01-05',
         createdAt: new Date().toISOString()
     },
     {
         id: '5',
         title: 'Sakal Times Feature',
+        titleKey: 'gallery.items.newspaper_2_title',
         category: 'Newspaper',
         imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?auto=format&fit=crop&q=80',
         description: 'Feature article on the drainage improvement project.',
+        descriptionKey: 'gallery.items.newspaper_2_desc',
         date: '2024-11-20',
         createdAt: new Date().toISOString()
     }
@@ -82,6 +92,9 @@ export const GalleryService = {
                 imageUrl: row.image_url,
                 description: row.description,
                 date: row.date,
+                sentiment: row.sentiment,
+                titleKey: row.title_key,
+                descriptionKey: row.description_key,
                 createdAt: row.created_at
             }));
 
@@ -102,7 +115,8 @@ export const GalleryService = {
                     category: item.category,
                     image_url: item.imageUrl,
                     description: item.description,
-                    date: item.date
+                    date: item.date,
+                    sentiment: item.sentiment
                 })
                 .select()
                 .single();
@@ -116,6 +130,7 @@ export const GalleryService = {
                 imageUrl: data.image_url,
                 description: data.description,
                 date: data.date,
+                sentiment: data.sentiment,
                 createdAt: data.created_at
             };
         } catch (e) {
@@ -141,7 +156,8 @@ export const GalleryService = {
                     category: item.category,
                     image_url: item.imageUrl,
                     description: item.description,
-                    date: item.date
+                    date: item.date,
+                    sentiment: item.sentiment
                 })
                 .eq('id', id)
                 .select()
@@ -156,6 +172,7 @@ export const GalleryService = {
                 imageUrl: data.image_url,
                 description: data.description,
                 date: data.date,
+                sentiment: data.sentiment,
                 createdAt: data.created_at
             };
         } catch (e) {

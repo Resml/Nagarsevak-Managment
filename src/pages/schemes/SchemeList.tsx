@@ -5,10 +5,11 @@ import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import SchemeMatcher from './SchemeMatcher';
+import SchemeApplicationModal from './SchemeApplicationModal';
 import clsx from 'clsx';
+import { TranslatedText } from '../../components/TranslatedText';
 
 interface Scheme {
-
     id: number;
     name: string;
     description: string;
@@ -18,7 +19,7 @@ interface Scheme {
 }
 
 const SchemeList = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const navigate = useNavigate();
     const [schemes, setSchemes] = useState<Scheme[]>([]);
     const [loading, setLoading] = useState(true);
@@ -28,16 +29,45 @@ const SchemeList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState('All');
     const [deleteTarget, setDeleteTarget] = useState<Scheme | null>(null);
+    const [applyingScheme, setApplyingScheme] = useState<Scheme | null>(null);
+
+    // Helper to split "English / Marathi" text based on current language
+    const getLocalizedData = (text: string) => {
+        if (!text) return text;
+
+        // 1. Try strict separator first
+        const parts = text.split(' / ');
+        if (parts.length === 2) {
+            return language === 'mr' ? parts[1] : parts[0];
+        }
+
+        // 2. Fallback: Detect Devanagari script for mixed content (e.g. "English. मराठी")
+        const hasDevanagari = /[\u0900-\u097F]/.test(text);
+
+        if (hasDevanagari) {
+            if (language === 'mr') {
+                // Extract the Marathi part (starting from first Devanagari char)
+                const match = text.match(/[\u0900-\u097F].*/s);
+                return match ? match[0] : text;
+            } else {
+                // Extract English part (everything before the first Devanagari char)
+                const split = text.split(/[\u0900-\u097F]/);
+                return split[0].trim().replace(/[./]*$/, ''); // removing trailing punctuation
+            }
+        }
+
+        return text;
+    };
 
     const categories = [
-        { id: 'All', label: t('All') || 'All' },
-        { id: 'Women', label: t('Women') || 'Women', keywords: ['women', 'mahila', 'girl', 'lady', 'widow', 'wife', 'female'] },
-        { id: 'Student', label: t('Student') || 'Student', keywords: ['student', 'education', 'scholarship', 'school', 'college', 'vidyarthi'] },
-        { id: 'Senior Citizen', label: t('Senior Citizen') || 'Senior Citizen', keywords: ['senior', 'pension', 'old', 'age', 'vrrudh'] },
-        { id: 'Farmer', label: t('Farmer') || 'Farmer', keywords: ['farmer', 'agriculture', 'kisan', 'crop', 'shetkari'] },
-        { id: 'Health', label: t('Health') || 'Health', keywords: ['health', 'medical', 'treatment', 'hospital', 'insurance', 'aarogya'] },
-        { id: 'Youth', label: t('Youth') || 'Youth', keywords: ['youth', 'employment', 'job', 'skill', 'training', 'tarun'] },
-        { id: 'Housing', label: t('Housing') || 'Housing', keywords: ['housing', 'home', 'house', 'awas', 'gharkul'] },
+        { id: 'All', label: t('common.All') || 'All' },
+        { id: 'Women', label: t('common.Women') || 'Women', keywords: ['women', 'mahila', 'girl', 'lady', 'widow', 'wife', 'female', 'महिला', 'विधवा', 'पत्नी', 'मुली'] },
+        { id: 'Student', label: t('common.Student') || 'Student', keywords: ['student', 'education', 'scholarship', 'school', 'college', 'vidyarthi', 'विद्यार्थी', 'शिक्षण', 'शिष्यवृत्ती', 'शाळा', 'महाविद्यालय'] },
+        { id: 'Senior Citizen', label: t('common.Senior Citizen') || 'Senior Citizen', keywords: ['senior', 'pension', 'old', 'age', 'vrrudh', 'jeyshtha', 'ज्येष्ठ', 'नागरिक', 'पेन्शन', 'वृद्ध'] },
+        { id: 'Farmer', label: t('common.Farmer') || 'Farmer', keywords: ['farmer', 'agriculture', 'kisan', 'crop', 'shetkari', 'शेतकरी', 'कृषी', 'पीक'] },
+        { id: 'Health', label: t('common.Health') || 'Health', keywords: ['health', 'medical', 'treatment', 'hospital', 'insurance', 'aarogya', 'आरोग्य', 'वैद्यकीय', 'उपचार', 'रुग्णालय', 'विमा'] },
+        { id: 'Youth', label: t('common.Youth') || 'Youth', keywords: ['youth', 'employment', 'job', 'skill', 'training', 'tarun', 'युवक', 'रोजगार', 'नोकरी', 'कौशल्य', 'प्रशिक्षण', 'तरुण'] },
+        { id: 'Housing', label: t('common.Housing') || 'Housing', keywords: ['housing', 'home', 'house', 'awas', 'gharkul', 'घरकुल', 'आवास', 'घर'] },
     ];
 
     useEffect(() => {
@@ -66,6 +96,7 @@ const SchemeList = () => {
         if (!searchQuery) return matchesFilter;
 
         const term = searchQuery.toLowerCase();
+        // Search in both parts if possible, but for now searching the raw text is safer to find matches in either lang
         const matchesSearch =
             s.name.toLowerCase().includes(term) ||
             s.description.toLowerCase().includes(term) ||
@@ -114,14 +145,14 @@ const SchemeList = () => {
     return (
         <div className="space-y-6">
             {/* Sticky Header Section */}
-            <div className="sticky top-0 z-10 bg-slate-50 pt-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-y-6 shadow-sm">
+            <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-y-6 border-b border-slate-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('schemes.title')}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-sm text-slate-500">{t('schemes.subtitle')}</p>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                Found: {schemesToDisplay.length}
+                                {t('schemes.found')}: {schemesToDisplay.length}
                             </span>
                         </div>
                     </div>
@@ -190,8 +221,21 @@ const SchemeList = () => {
 
             {loading ? (
                 <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="ns-card p-6 animate-pulse h-32"></div>
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="ns-card p-6">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-start gap-4 w-full">
+                                    <div className="p-3 bg-slate-100 rounded-xl border border-slate-200 shrink-0">
+                                        <div className="w-6 h-6 bg-slate-200 rounded animate-pulse" />
+                                    </div>
+                                    <div className="space-y-2 w-full max-w-lg">
+                                        <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                        <div className="h-4 w-full bg-slate-200 rounded animate-pulse" />
+                                    </div>
+                                </div>
+                                <div className="w-5 h-5 bg-slate-200 rounded-full animate-pulse shrink-0 ml-4" />
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : (
@@ -207,8 +251,8 @@ const SchemeList = () => {
                                         <FileText className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900">{scheme.name}</h3>
-                                        <p className="text-slate-500 text-sm mt-1">{scheme.description}</p>
+                                        <h3 className="text-lg font-semibold text-slate-900">{getLocalizedData(scheme.name)}</h3>
+                                        <p className="text-slate-500 text-sm mt-1">{getLocalizedData(scheme.description)}</p>
                                     </div>
                                 </div>
                                 <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${expandedScheme === scheme.id ? 'rotate-90' : ''}`} />
@@ -222,24 +266,34 @@ const SchemeList = () => {
                                             <h4 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
                                                 <Info className="w-4 h-4 text-blue-500" /> {t('schemes.eligibility')}
                                             </h4>
-                                            <p className="text-sm text-slate-600">{scheme.eligibility}</p>
+                                            <p className="text-sm text-slate-600">{getLocalizedData(scheme.eligibility)}</p>
                                         </div>
                                         <div className="ns-card-muted p-4">
                                             <h4 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
                                                 <Info className="w-4 h-4 text-green-500" /> {t('schemes.benefits')}
                                             </h4>
-                                            <p className="text-sm text-slate-600">{scheme.benefits}</p>
+                                            <p className="text-sm text-slate-600">{getLocalizedData(scheme.benefits)}</p>
                                         </div>
                                         <div className="ns-card-muted p-4">
                                             <h4 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
                                                 <Info className="w-4 h-4 text-orange-500" /> {t('schemes.documents')}
                                             </h4>
-                                            <p className="text-sm text-slate-600">{scheme.documents}</p>
+                                            <p className="text-sm text-slate-600">{getLocalizedData(scheme.documents)}</p>
                                         </div>
                                     </div>
 
                                     {/* Actions */}
                                     <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setApplyingScheme(scheme);
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition-colors shadow-sm"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Apply
+                                        </button>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -286,6 +340,16 @@ const SchemeList = () => {
                     schemes={schemes}
                     onClose={() => setShowMatcher(false)}
                     onMatch={(ids) => setFilteredSchemes(ids)}
+                />
+            )}
+
+            {applyingScheme && (
+                <SchemeApplicationModal
+                    scheme={applyingScheme}
+                    onClose={() => setApplyingScheme(null)}
+                    onSuccess={() => {
+                        // Optional: Refresh some stats or show success confetti
+                    }}
                 />
             )}
 

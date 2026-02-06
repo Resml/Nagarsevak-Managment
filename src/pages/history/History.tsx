@@ -9,12 +9,17 @@ const History = () => {
     const { t } = useLanguage();
     const [history, setHistory] = useState<Complaint[]>([]);
     const [filterWard, setFilterWard] = useState<string>('All');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const all = MockService.getComplaints();
-        // In history, we typically show resolved/closed items
-        const resolved = all.filter(c => c.status === 'Resolved' || c.status === 'Closed');
-        setHistory(resolved);
+        // Simulate network delay for loading state
+        setTimeout(() => {
+            const all = MockService.getComplaints();
+            // In history, we typically show resolved/closed items
+            const resolved = all.filter(c => c.status === 'Resolved' || c.status === 'Closed');
+            setHistory(resolved);
+            setLoading(false);
+        }, 800);
     }, []);
 
     const filteredHistory = filterWard === 'All'
@@ -66,7 +71,22 @@ const History = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200/70">
-                            {filteredHistory.length > 0 ? filteredHistory.map((item) => (
+                            {loading ? (
+                                <>
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <tr key={i}>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></td>
+                                            <td className="px-6 py-4">
+                                                <div className="h-4 w-48 bg-slate-200 rounded animate-pulse mb-2" />
+                                                <div className="h-3 w-32 bg-slate-200 rounded animate-pulse" />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-12 bg-slate-200 rounded animate-pulse" /></td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" /></td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></td>
+                                        </tr>
+                                    ))}
+                                </>
+                            ) : filteredHistory.length > 0 ? filteredHistory.map((item) => (
                                 <tr key={item.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {item.resolvedAt ? format(new Date(item.resolvedAt), 'MMM d, yyyy') : '-'}

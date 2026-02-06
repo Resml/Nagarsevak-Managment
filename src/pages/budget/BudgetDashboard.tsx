@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IndianRupee, PieChart, TrendingUp, Plus, Edit2, Save, X, Calendar, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { TranslatedText } from '../../components/TranslatedText';
 import { BudgetService } from '../../services/budgetService';
 import { type BudgetRecord } from '../../types';
 import { toast } from 'sonner';
@@ -12,12 +13,16 @@ const BudgetDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+    const [selectedBudgetForUpdate, setSelectedBudgetForUpdate] = useState<{ id: string, current: number, new: number } | null>(null);
+
     // Form State
     const [formData, setFormData] = useState<Partial<BudgetRecord>>({
         financialYear: '2024-2025',
         category: '',
         totalAllocation: 0,
         utilizedAmount: 0,
+        area: '',
         status: 'Active'
     });
 
@@ -42,15 +47,18 @@ const BudgetDashboard = () => {
 
     const loadBudgets = async () => {
         setLoading(true);
-        try {
-            const data = await BudgetService.getBudgets(year);
-            setBudgets(data);
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to load budget data');
-        } finally {
-            setLoading(false);
-        }
+        // Simulate network delay to show skeleton
+        setTimeout(async () => {
+            try {
+                const data = await BudgetService.getBudgets(year);
+                setBudgets(data);
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to load budget data');
+            } finally {
+                setLoading(false);
+            }
+        }, 800);
     };
 
     const handleAdd = async (e: React.FormEvent) => {
@@ -75,17 +83,23 @@ const BudgetDashboard = () => {
         }
     };
 
-    const handleUpdateUtilization = async (id: string, current: number) => {
-        const newAmount = prompt('Enter new total utilized amount:', current.toString());
-        if (newAmount && !isNaN(Number(newAmount))) {
-            try {
-                await BudgetService.updateUtilization(id, Number(newAmount));
-                toast.success('Utilization updated successfully');
-                loadBudgets();
-            } catch (error) {
-                console.error(error);
-                toast.error('Failed to update utilization');
-            }
+    const openUpdateModal = (id: string, current: number) => {
+        setSelectedBudgetForUpdate({ id, current, new: current });
+        setIsUpdateModalOpen(true);
+    };
+
+    const handleUpdateUtilization = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedBudgetForUpdate) return;
+
+        try {
+            await BudgetService.updateUtilization(selectedBudgetForUpdate.id, selectedBudgetForUpdate.new);
+            toast.success('Utilization updated successfully');
+            setIsUpdateModalOpen(false);
+            loadBudgets();
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to update utilization');
         }
     };
 
@@ -205,7 +219,7 @@ const BudgetDashboard = () => {
                 <div className="relative">
                     <input
                         type="text"
-                        placeholder="Filter by Area..."
+                        placeholder={t('budget.filter_area') || "Filter by Area..."}
                         className="ns-input w-full"
                         value={areaSearch}
                         onFocus={() => setShowAreaDropdown(true)}
@@ -222,7 +236,7 @@ const BudgetDashboard = () => {
                                         setShowAreaDropdown(false);
                                     }}
                                 >
-                                    {area as string}
+                                    <TranslatedText text={area as string} />
                                 </div>
                             ))}
                             {uniqueAreas.filter(area => (area as string).toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
@@ -259,15 +273,28 @@ const BudgetDashboard = () => {
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200/70">
                             {loading ? (
-                                <tr><td colSpan={5} className="px-6 py-8 text-center text-slate-500">{t('budget.loading')}</td></tr>
+                                <>
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <tr key={i}>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-32 bg-slate-200 rounded animate-pulse" /></td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></td>
+                                            <td className="px-6 py-4 whitespace-nowrap"><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="w-full bg-slate-200 rounded-full h-2.5 max-w-[140px] animate-pulse" />
+                                                <div className="mt-1 h-3 w-8 bg-slate-200 rounded animate-pulse" />
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right"><div className="h-8 w-16 bg-slate-200 rounded ml-auto animate-pulse" /></td>
+                                        </tr>
+                                    ))}
+                                </>
                             ) : filteredBudgets.length > 0 ? (
                                 filteredBudgets.map((budget) => {
                                     const percent = (budget.utilizedAmount / budget.totalAllocation) * 100;
                                     return (
                                         <tr key={budget.id} className="hover:bg-slate-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900">
-                                                {budget.category}
-                                                {budget.area && <span className="block text-xs text-slate-500 font-normal">{budget.area}</span>}
+                                                <TranslatedText text={budget.category} />
+                                                {budget.area && <span className="block text-xs text-slate-500 font-normal"><TranslatedText text={budget.area} /></span>}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 tabular-nums">{formatCurrency(budget.totalAllocation)}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 tabular-nums">{formatCurrency(budget.utilizedAmount)}</td>
@@ -282,11 +309,11 @@ const BudgetDashboard = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <button
-                                                    onClick={() => handleUpdateUtilization(budget.id, budget.utilizedAmount)}
+                                                    onClick={() => openUpdateModal(budget.id, budget.utilizedAmount)}
                                                     className="ns-btn-ghost border border-slate-200 ml-auto"
                                                 >
                                                     <Edit2 className="w-4 h-4" />
-                                                    Update
+                                                    {t('budget.update_btn')}
                                                 </button>
                                             </td>
                                         </tr>
@@ -329,7 +356,7 @@ const BudgetDashboard = () => {
                                 <label className="block text-sm font-medium text-slate-700">{t('budget.category_head')}</label>
                                 <input
                                     type="text" required
-                                    placeholder="e.g. Road Maintenance"
+                                    placeholder={t('budget.category_placeholder') || "e.g. Road Maintenance"}
                                     className="ns-input mt-1"
                                     value={formData.category}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
@@ -340,7 +367,7 @@ const BudgetDashboard = () => {
                                 <label className="block text-sm font-medium text-slate-700">{t('budget.area')}</label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Shivaji Nagar"
+                                    placeholder={t('budget.area_placeholder') || "e.g. Shivaji Nagar"}
                                     className="ns-input mt-1"
                                     value={formData.area || ''}
                                     onChange={e => setFormData({ ...formData, area: e.target.value })}
@@ -374,8 +401,65 @@ const BudgetDashboard = () => {
                                 className="ns-btn-primary w-full justify-center"
                             >
                                 <Save className="w-4 h-4 mr-2" />
-                                Save Allocation
+                                <TranslatedText text={t('budget.save_btn')} />
                             </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Update Utilization Modal */}
+            {isUpdateModalOpen && selectedBudgetForUpdate && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="ns-card w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-5 border-b border-slate-100">
+                            <h2 className="text-lg font-bold text-slate-900">{t('budget.update_utilization_title')}</h2>
+                            <button onClick={() => setIsUpdateModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleUpdateUtilization} className="p-5 space-y-5">
+                            <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{t('budget.current_utilized')}</label>
+                                <div className="text-xl font-bold text-slate-800 tabular-nums">
+                                    {formatCurrency(selectedBudgetForUpdate.current)}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('budget.new_utilized')}</label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <IndianRupee className="h-4 w-4 text-slate-400" />
+                                    </div>
+                                    <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        className="ns-input pl-9 text-lg font-medium"
+                                        value={selectedBudgetForUpdate.new}
+                                        onChange={e => setSelectedBudgetForUpdate({ ...selectedBudgetForUpdate, new: Number(e.target.value) })}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUpdateModalOpen(false)}
+                                    className="flex-1 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors"
+                                >
+                                    {t('budget.cancel_btn')}
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 ns-btn-primary justify-center"
+                                >
+                                    {t('budget.update_btn')}
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

@@ -195,7 +195,7 @@ const StaffList = () => {
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-sm text-gray-500">{t('staff.subtitle')}</p>
                                 <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                    Found: {filteredStaff.length}
+                                    {t('staff.list.found')}: {filteredStaff.length}
                                 </span>
                                 {filteredStaff.length !== staffInCurrentTab.length && (
                                     <span className="text-xs text-slate-400">
@@ -217,7 +217,6 @@ const StaffList = () => {
                         {[
                             { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
                             { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
-                            { id: 'Cooperative', label: t('staff.tabs.cooperative'), icon: Wrench }
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -242,7 +241,7 @@ const StaffList = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder="Search Name or Mobile"
+                            placeholder={t('staff.list.search_name_mobile') || "Search Name or Mobile"}
                             value={nameSearch}
                             onChange={(e) => setNameSearch(e.target.value)}
                             className="ns-input pl-9 w-full"
@@ -252,7 +251,7 @@ const StaffList = () => {
                         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder="Search Area"
+                            placeholder={t('staff.list.search_area') || "Search Area"}
                             value={areaSearch}
                             onChange={(e) => {
                                 setAreaSearch(e.target.value);

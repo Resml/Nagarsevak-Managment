@@ -27,6 +27,7 @@ export const DiaryService = {
                 department: row.department,
                 area: row.area,
                 status: row.status,
+                beneficiaries: row.beneficiaries,
                 response: row.response,
                 tags: row.tags || [],
                 createdAt: row.created_at,
@@ -48,6 +49,7 @@ export const DiaryService = {
                 department: entry.department,
                 area: entry.area,
                 status: entry.status,
+                beneficiaries: entry.beneficiaries,
                 response: entry.response,
                 tags: entry.tags,
             };
@@ -69,6 +71,7 @@ export const DiaryService = {
                 department: data.department,
                 area: data.area,
                 status: data.status,
+                beneficiaries: data.beneficiaries,
                 response: data.response,
                 tags: data.tags || [],
                 createdAt: data.created_at,

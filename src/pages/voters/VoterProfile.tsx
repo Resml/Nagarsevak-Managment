@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
 import { supabase } from '../../services/supabaseClient';
-import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save } from 'lucide-react';
+import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
@@ -62,6 +62,7 @@ const VoterProfile = () => {
                         booth: voterData.part_no?.toString(),
                         epicNo: voterData.epic_no,
                         mobile: voterData.mobile,
+                        is_friend_relative: voterData.is_friend_relative,
                         history: []
                     };
                     setVoter(mappedVoter);
@@ -200,7 +201,14 @@ const VoterProfile = () => {
                             <User className="w-8 h-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900">{getDisplayName(voter)}</h1>
+                            <div className="flex items-center gap-3">
+                                <h1 className="text-2xl font-bold text-slate-900">{getDisplayName(voter)}</h1>
+                                {voter.is_friend_relative && (
+                                    <span className="ns-badge bg-brand-100 text-brand-700 border-brand-200 text-xs py-0.5">
+                                        {t('voter_profile.is_friend_relative')}
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 mt-2">
                                 <span className="ns-badge border-brand-100 bg-white text-brand-800">{t('voter_profile.epic_no')}: {voter.epicNo}</span>
                                 <span>{t('voter_profile.age')}: {voter.age}</span>
@@ -209,6 +217,28 @@ const VoterProfile = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={async () => {
+                                const newStatus = !voter.is_friend_relative;
+                                try {
+                                    const { error } = await supabase
+                                        .from('voters')
+                                        .update({ is_friend_relative: newStatus })
+                                        .eq('id', voter.id);
+                                    if (error) throw error;
+                                    setVoter({ ...voter, is_friend_relative: newStatus });
+                                    toast.success(newStatus ? t('voter_profile.mark_friend') : t('voter_profile.unmark_friend'));
+                                } catch (err) {
+                                    toast.error('Operation failed');
+                                }
+                            }}
+                            className={`flex flex-col items-center px-3 transition-colors ${voter.is_friend_relative ? 'text-brand-600' : 'text-slate-400 hover:text-brand-600'}`}
+                        >
+                            <Users className={`w-5 h-5 mb-0.5 ${voter.is_friend_relative ? 'fill-brand-600' : ''}`} />
+                            <span className="text-xs font-medium">
+                                {voter.is_friend_relative ? 'Tagged' : 'Tag'}
+                            </span>
+                        </button>
                         <button
                             onClick={() => setIsEditing(true)}
                             className="flex flex-col items-center text-slate-500 hover:text-brand-700 px-3"

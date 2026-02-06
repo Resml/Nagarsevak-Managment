@@ -17,10 +17,11 @@ import {
     UserPlus,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { TranslatedText } from '../../components/TranslatedText';
 
 const Dashboard = () => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         total: 0,
@@ -31,6 +32,12 @@ const Dashboard = () => {
     });
     const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null }>>([]);
     const [dailyBriefing, setDailyBriefing] = useState<string>('');
+
+    // Reload briefing when language changes
+    useEffect(() => {
+        setDailyBriefing('');
+        fetchDashboardData();
+    }, [language]);
 
     useEffect(() => {
         fetchDashboardData();
@@ -70,9 +77,9 @@ const Dashboard = () => {
             setStats(newStats);
             setRecentActivity(allComplaints.slice(0, 5)); // Just take top 5 for now (assuming sort order)
 
-            // AI Briefing (Only fetch if data changed signficantly or just once on load/refresh)
+            // AI Briefing (Regenerate if empty or language changed)
             if (!dailyBriefing) {
-                const briefing = await AIAnalysisService.generateDailyBriefing(newStats, allComplaints.slice(0, 3));
+                const briefing = await AIAnalysisService.generateDailyBriefing(newStats, allComplaints.slice(0, 3), language as 'en' | 'mr');
                 setDailyBriefing(briefing);
             }
 
@@ -109,7 +116,7 @@ const Dashboard = () => {
                     <div className="flex gap-3">
                         <button onClick={() => fetchDashboardData()} className="ns-btn-ghost border border-slate-200">
                             <RefreshCw className="w-4 h-4" />
-                            <span className="hidden sm:inline">Refresh</span>
+                            <span className="hidden sm:inline">{t('dashboard.refresh')}</span>
                         </button>
                         <button className="ns-btn-primary" onClick={() => navigate('/complaints/new')}>
                             <Plus className="w-4 h-4" /> {t('complaints.new_request') || 'New Request'}
@@ -121,20 +128,20 @@ const Dashboard = () => {
             {/* Quick actions */}
             <div className="ns-card p-4 flex flex-col sm:flex-row gap-3 sm:items-center">
                 <div className="text-sm text-slate-600">
-                    Quick actions
+                    {t('dashboard.quick_actions')}
                 </div>
                 <div className="sm:ml-auto flex flex-wrap gap-2">
                     <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/voters')}>
                         <Search className="w-4 h-4" />
-                        Voter search
+                        {t('dashboard.action_voter')}
                     </button>
                     <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/staff')}>
                         <UserPlus className="w-4 h-4" />
-                        Add / manage staff
+                        {t('dashboard.action_staff')}
                     </button>
                     <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/complaints')}>
                         <Megaphone className="w-4 h-4" />
-                        View complaints
+                        {t('dashboard.action_complaints')}
                     </button>
                 </div>
             </div>
@@ -149,7 +156,7 @@ const Dashboard = () => {
                         <div className="min-w-0">
                             <h3 className="font-semibold text-slate-900">{t('dashboard.ai_insight')}</h3>
                             <p className="text-slate-600 leading-relaxed text-sm mt-1">
-                                {dailyBriefing || "Once you start receiving complaints, a short briefing will appear here."}
+                                {dailyBriefing || t('dashboard.default_briefing')}
                             </p>
                         </div>
                     </div>
@@ -179,7 +186,7 @@ const Dashboard = () => {
                     {/* Custom CSS Bar Chart */}
                     <div className="space-y-6">
                         {[
-                            { label: 'Pending', count: stats.pending, color: 'bg-red-500' },
+                            { label: t('dashboard.pending'), count: stats.pending, color: 'bg-red-500' },
                             { label: t('dashboard.in_progress'), count: stats.inProgress, color: 'bg-amber-500' },
                             { label: t('dashboard.resolved'), count: stats.resolved, color: 'bg-green-600' },
                         ].map((item) => (
@@ -227,7 +234,7 @@ const Dashboard = () => {
                                     }`}></div>
                                 <div>
                                     <p className="text-sm font-medium text-slate-800 group-hover:text-brand-700 transition-colors line-clamp-2">
-                                        {activity.problem || activity.title}
+                                        <TranslatedText text={activity.problem || activity.title || ''} />
                                     </p>
                                     <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                                         <Calendar className="w-3 h-3" />

@@ -4,8 +4,10 @@ import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { AIService } from '../../services/aiService';
 import { FeedbackService } from '../../services/feedbackService';
+import { useLanguage } from '../../context/LanguageContext';
 import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import { TranslatedText } from '../../components/TranslatedText';
 
 interface WorkItem {
     id: string;
@@ -21,6 +23,7 @@ interface WorkItem {
 
 const WorkHistory = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const [items, setItems] = useState<WorkItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -44,6 +47,7 @@ const WorkHistory = () => {
         area: '',
         status: 'Planned',
         completion_date: '',
+        peopleBenefited: ''
     });
 
     useEffect(() => {
@@ -124,7 +128,7 @@ const WorkHistory = () => {
             const complaintItems: WorkItem[] = (complaints || []).map((c: any) => ({
                 id: `comp-${c.id}`,
                 source: c.category === 'Help' ? 'Help' : 'Complaint',
-                title: c.category === 'Help' ? 'Help Provided' : 'Issue Resolved',
+                title: c.category === 'Help' ? t('work_history.help_provided') : t('work_history.issue_resolved'),
                 description: c.problem,
                 location: c.location || 'Not Provided',
                 status: 'Completed',
@@ -163,7 +167,7 @@ const WorkHistory = () => {
             setNewWork(prev => ({ ...prev, description: desc }));
         } catch (error) {
             console.error(error);
-            toast.error('Failed to generate description');
+            toast.error(t('work_history.desc_gen_failed'));
         } finally {
             setGeneratingAI(false);
         }
@@ -176,6 +180,9 @@ const WorkHistory = () => {
             const payload = {
                 ...newWork,
                 completion_date: newWork.completion_date || null,
+                metadata: JSON.stringify({
+                    people_benefited: newWork.peopleBenefited
+                }),
                 created_at: new Date().toISOString()
             };
 
@@ -186,12 +193,12 @@ const WorkHistory = () => {
             if (insertError) throw insertError;
 
             setShowModal(false);
-            setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '' });
+            setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '', peopleBenefited: '' });
             fetchData();
-            toast.success('Work added successfully!');
+            toast.success(t('work_history.work_added'));
         } catch (err: any) {
             console.error(err);
-            toast.error('Failed to save work.');
+            toast.error(t('work_history.work_failed'));
         }
     };
 
@@ -254,15 +261,15 @@ const WorkHistory = () => {
 
     const getStatusBadge = (status: string, source: string) => {
         if (source !== 'Manual') {
-            return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Resolved</span>;
+            return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {t('work_history.resolved')}</span>;
         }
         switch (status) {
             case 'Completed':
-                return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Completed</span>;
+                return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {t('work_history.completed')}</span>;
             case 'InProgress':
-                return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Hammer className="w-3 h-3" /> In Progress</span>;
+                return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Hammer className="w-3 h-3" /> {t('work_history.in_progress')}</span>;
             default:
-                return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Clock className="w-3 h-3" /> Planned</span>;
+                return <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><Clock className="w-3 h-3" /> {t('work_history.planned')}</span>;
         }
     };
 
@@ -272,18 +279,18 @@ const WorkHistory = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            Work History & Achievements
+                            {t('work_history.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                Found: {filteredItems.length}
+                                {t('work_history.found')}: {filteredItems.length}
                             </span>
                         </h1>
-                        <p className="text-sm text-slate-500">Unified view of development works, resolved issues, and help provided.</p>
+                        <p className="text-sm text-slate-500">{t('work_history.subtitle')}</p>
                     </div>
                     <button
                         onClick={() => setShowModal(true)}
                         className="ns-btn-primary"
                     >
-                        <Plus className="w-4 h-4" /> Add Work
+                        <Plus className="w-4 h-4" /> {t('work_history.add_work')}
                     </button>
                 </div>
 
@@ -294,7 +301,7 @@ const WorkHistory = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder="Search by Title, Location, or Description..."
+                            placeholder={t('work_history.search_placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="ns-input pl-10 w-full"
@@ -305,7 +312,7 @@ const WorkHistory = () => {
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Search Area..."
+                            placeholder={t('work_history.search_area')}
                             className="ns-input w-full bg-white shadow-sm"
                             value={areaSearch}
                             onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
@@ -327,7 +334,7 @@ const WorkHistory = () => {
                                     </div>
                                 ))}
                                 {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
-                                    <div className="px-4 py-2 text-sm text-slate-500 italic">No areas found</div>
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">{t('work_history.no_areas')}</div>
                                 )}
                             </div>
                         )}
@@ -337,7 +344,7 @@ const WorkHistory = () => {
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Filter by Date..."
+                            placeholder={t('work_history.filter_date')}
                             className="ns-input w-full bg-white shadow-sm"
                             value={dateSearch}
                             onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
@@ -383,21 +390,21 @@ const WorkHistory = () => {
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200/70">
                                             {getSourceIcon(item.source)}
-                                            <span>{item.source}</span>
+                                            <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-700 transition-colors flex justify-between items-start">
-                                    {item.title}
+                                    <TranslatedText text={item.title} />
                                     <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-400" />
                                 </h3>
-                                <p className="text-sm text-slate-600 mb-4 line-clamp-3">{item.description}</p>
+                                <p className="text-sm text-slate-600 mb-4 line-clamp-3"><TranslatedText text={item.description} /></p>
 
                                 <div className="mt-auto pt-3 border-t border-slate-200/70">
                                     {item.source === 'Manual' && feedbackStats[item.id.replace('work-', '')] && (
                                         <div className="mb-3 flex items-center justify-between text-xs font-semibold bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100">
-                                            <span>{feedbackStats[item.id.replace('work-', '')].count} Feedback</span>
+                                            <span>{feedbackStats[item.id.replace('work-', '')].count} {t('work_history.feedback')}</span>
                                             <span>{feedbackStats[item.id.replace('work-', '')].average} ★</span>
                                         </div>
                                     )}
@@ -409,12 +416,12 @@ const WorkHistory = () => {
                                         </div>
                                         <div className="flex items-center text-xs text-slate-500 gap-1">
                                             <MapPin className="w-3 h-3" />
-                                            <span className="truncate">{item.location} {item.area ? `(${item.area})` : ''}</span>
+                                            <span className="truncate"><TranslatedText text={item.location} /> {item.area ? `(${item.area})` : ''}</span>
                                         </div>
                                         {item.citizenName && (
                                             <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">
                                                 <User className="w-3 h-3" />
-                                                <span>For: {item.citizenName}</span>
+                                                <span>{t('work_history.for_citizen')} {item.citizenName}</span>
                                             </div>
                                         )}
                                     </div>
@@ -424,7 +431,7 @@ const WorkHistory = () => {
                     ))}
                     {filteredItems.length === 0 && (
                         <div className="col-span-full text-center py-10 text-slate-500 ns-card border-dashed">
-                            No work records found matching your search.
+                            {t('work_history.no_records')}
                         </div>
                     )}
                 </div>
@@ -434,10 +441,10 @@ const WorkHistory = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="ns-card max-w-lg w-full p-6">
-                        <h2 className="text-xl font-bold mb-4 text-slate-900">Add work project</h2>
+                        <h2 className="text-xl font-bold mb-4 text-slate-900">{t('work_history.modal_title')}</h2>
                         <form onSubmit={handleAddWork} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">Project title</label>
+                                <label className="block text-sm font-medium text-slate-700">{t('work_history.project_title')}</label>
                                 <input
                                     type="text" required
                                     className="ns-input mt-1"
@@ -446,7 +453,7 @@ const WorkHistory = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">Description</label>
+                                <label className="block text-sm font-medium text-slate-700">{t('work_history.description')}</label>
                                 <div className="relative">
                                     <textarea
                                         className="ns-input mt-1 pr-10"
@@ -464,11 +471,11 @@ const WorkHistory = () => {
                                         <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
                                     </button>
                                 </div>
-                                <p className="text-xs text-slate-500 mt-1">Enter a title and click the wand to auto draft a description.</p>
+                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint')}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">Location</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.location')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -477,7 +484,7 @@ const WorkHistory = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">Area / locality</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.area_locality')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -486,7 +493,7 @@ const WorkHistory = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">Completion date (est.)</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
                                     <input
                                         type="date"
                                         className="ns-input mt-1"
@@ -494,22 +501,32 @@ const WorkHistory = () => {
                                         onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>
+                                    <input
+                                        type="number"
+                                        className="ns-input mt-1"
+                                        placeholder={t('work_history.people_benefited_placeholder')}
+                                        value={newWork.peopleBenefited}
+                                        onChange={e => setNewWork({ ...newWork, peopleBenefited: e.target.value })}
+                                    />
+                                </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">Status</label>
+                                <label className="block text-sm font-medium text-slate-700">{t('work_history.status')}</label>
                                 <select
                                     className="ns-input mt-1"
                                     value={newWork.status}
                                     onChange={e => setNewWork({ ...newWork, status: e.target.value })}
                                 >
-                                    <option value="Planned">Planned</option>
-                                    <option value="InProgress">In Progress</option>
-                                    <option value="Completed">Completed</option>
+                                    <option value="Planned">{t('work_history.planned')}</option>
+                                    <option value="InProgress">{t('work_history.in_progress')}</option>
+                                    <option value="Completed">{t('work_history.completed')}</option>
                                 </select>
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">Cancel</button>
-                                <button type="submit" className="ns-btn-primary">Save project</button>
+                                <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">{t('work_history.cancel')}</button>
+                                <button type="submit" className="ns-btn-primary">{t('work_history.save_project')}</button>
                             </div>
                         </form>
                     </div>

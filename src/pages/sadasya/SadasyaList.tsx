@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, PlusCircle, X, Trash2, Home, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { MockService } from '../../services/mockData';
+import { CUSTOM_TRANSLATIONS } from '../../services/translationService';
 import { VoterService } from '../../services/voterService';
 import { type Voter, type Sadasya } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import { format } from 'date-fns';
+import { mr } from '../../utils/marathiLocale';
 import SadasyaProfile from './SadasyaProfile';
 
 const getGenderDisplay = (gender: string) => {
@@ -103,14 +105,15 @@ const SadasyaList = () => {
     useEffect(() => {
         if (!isModalOpen) return;
         const fetchStats = async () => {
-            const { data: addrData } = await supabase.rpc('get_unique_addresses');
+            const rpcName = language === 'mr' ? 'get_unique_addresses_marathi' : 'get_unique_addresses';
+            const { data: addrData } = await supabase.rpc(rpcName);
             if (addrData) setAddressSuggestions(addrData);
 
             const { data: houseData } = await supabase.rpc('get_unique_house_numbers');
             if (houseData) setHouseNoSuggestions(houseData);
         };
         fetchStats();
-    }, [isModalOpen]);
+    }, [isModalOpen, language]);
 
     // Filter Suggestions based on input
     const filteredAddresses = addressSuggestions.filter(item =>
@@ -229,7 +232,9 @@ const SadasyaList = () => {
 
     // Manual Entry State
     const [manualForm, setManualForm] = useState({
-        name: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
         mobile: '+91 ',
         age: '',
         gender: '' as 'M' | 'F' | 'O' | '',
@@ -242,44 +247,6 @@ const SadasyaList = () => {
     // Using a simple state to trigger re-renders when data changes
     const [, setRefreshTrigger] = useState(0);
     const sadasyas = MockService.getSadasyas();
-
-    // Extract Unique Values with Counts for Autocomplete
-    const getSuggestionsWithCounts = (items: (string | undefined)[]) => {
-        const counts: Record<string, number> = {};
-        items.forEach(item => {
-            const val = item?.trim();
-            if (val) counts[val] = (counts[val] || 0) + 1;
-        });
-        return Object.entries(counts)
-            .map(([value, count]) => ({ value, count }))
-            .sort((a, b) => b.count - a.count);
-    };
-
-    const areaSuggestionsWithCounts = getSuggestionsWithCounts(sadasyas.map(s => s.area));
-    const addressSuggestionsWithCounts = getSuggestionsWithCounts(sadasyas.map(s => s.address));
-
-    // Filter suggestions based on input (show top results if input is empty)
-    const filteredAreaSuggestions = areaSuggestionsWithCounts.filter(item =>
-        !areaSearch || item.value.toLowerCase().includes(areaSearch.toLowerCase())
-    ).slice(0, 10);
-
-    const filteredAddressSuggestions = addressSuggestionsWithCounts.filter(item =>
-        !addressSearch || item.value.toLowerCase().includes(addressSearch.toLowerCase())
-    ).slice(0, 10);
-
-    const filteredSadasyas = sadasyas.filter((sadasya) => {
-        const matchesSearch = sadasya.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sadasya.mobile.includes(searchTerm);
-
-        const matchesArea = areaSearch ? (sadasya.area?.toLowerCase() || '').includes(areaSearch.toLowerCase()) : true;
-        const matchesAddress = addressSearch ? (sadasya.address?.toLowerCase() || '').includes(addressSearch.toLowerCase()) : true;
-
-        const matchesAll = matchesSearch && matchesArea && matchesAddress;
-
-        if (filterVoter === 'voter') return matchesAll && sadasya.isVoter;
-        if (filterVoter === 'non-voter') return matchesAll && !sadasya.isVoter;
-        return matchesAll;
-    });
 
     const getDisplayName = (member: any) => {
         if (language === 'mr') {
@@ -294,6 +261,58 @@ const SadasyaList = () => {
         }
         return member.address_english || member.address;
     };
+
+    const getDisplayArea = (area: string | undefined) => {
+        if (!area) return '';
+        if (language === 'mr') {
+            return CUSTOM_TRANSLATIONS[area] || area;
+        }
+        return area;
+    };
+
+    // Extract Unique Values with Counts for Autocomplete
+    const getSuggestionsWithCounts = (items: (string | undefined)[]) => {
+        const counts: Record<string, number> = {};
+        items.forEach(item => {
+            const val = item?.trim();
+            if (val) counts[val] = (counts[val] || 0) + 1;
+        });
+        return Object.entries(counts)
+            .map(([value, count]) => ({ value, count }))
+            .sort((a, b) => b.count - a.count);
+    };
+
+    const areaSuggestionsWithCounts = getSuggestionsWithCounts(sadasyas.map(s => s.area));
+    const addressSuggestionsWithCounts = getSuggestionsWithCounts(sadasyas.map(s => getDisplayAddress(s)));
+
+    // Filter suggestions based on input (show top results if input is empty)
+    const filteredAreaSuggestions = areaSuggestionsWithCounts.filter(item =>
+        !areaSearch || item.value.toLowerCase().includes(areaSearch.toLowerCase())
+    ).slice(0, 10);
+
+    const filteredAddressSuggestions = addressSuggestionsWithCounts.filter(item =>
+        !addressSearch || item.value.toLowerCase().includes(addressSearch.toLowerCase())
+    ).slice(0, 10);
+
+    const filteredSadasyas = sadasyas.filter((sadasya) => {
+        const matchesSearch = sadasya.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            sadasya.mobile.includes(searchTerm);
+
+        const matchesArea = areaSearch ? (
+            (sadasya.area?.toLowerCase() || '').includes(areaSearch.toLowerCase()) ||
+            (getDisplayArea(sadasya.area).toLowerCase()).includes(areaSearch.toLowerCase())
+        ) : true;
+
+        // Use localized address for matching
+        const displayAddress = getDisplayAddress(sadasya);
+        const matchesAddress = addressSearch ? (displayAddress?.toLowerCase() || '').includes(addressSearch.toLowerCase()) : true;
+
+        const matchesAll = matchesSearch && matchesArea && matchesAddress;
+
+        if (filterVoter === 'voter') return matchesAll && sadasya.isVoter;
+        if (filterVoter === 'non-voter') return matchesAll && !sadasya.isVoter;
+        return matchesAll;
+    });
 
     // Confirm Add Voter State
     // const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null); // Moved up
@@ -363,8 +382,9 @@ const SadasyaList = () => {
             loading: editingSadasyaId ? 'Updating Member...' : 'Adding Member...',
             success: () => {
                 if (editingSadasyaId) {
+                    const fullName = [manualForm.firstName, manualForm.middleName, manualForm.lastName].filter(Boolean).join(' ');
                     MockService.updateSadasya(editingSadasyaId, {
-                        name: manualForm.name,
+                        name: fullName,
                         mobile: manualForm.mobile,
                         age: parseInt(manualForm.age) || 0,
                         gender: manualForm.gender || undefined,
@@ -373,8 +393,9 @@ const SadasyaList = () => {
                         area: manualForm.area,
                     });
                 } else {
+                    const fullName = [manualForm.firstName, manualForm.middleName, manualForm.lastName].filter(Boolean).join(' ');
                     MockService.addSadasya({
-                        name: manualForm.name,
+                        name: fullName,
                         mobile: manualForm.mobile,
                         age: parseInt(manualForm.age) || 0,
                         gender: manualForm.gender || undefined,
@@ -386,7 +407,7 @@ const SadasyaList = () => {
                 }
                 setIsModalOpen(false);
                 setRefreshTrigger(prev => prev + 1);
-                setManualForm({ name: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' });
+                setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' });
                 setEditingSadasyaId(null);
                 setSelectedMember(null); // Ensure profile view is reset if editing from there
                 return editingSadasyaId ? 'Member updated successfully!' : 'Member added successfully!';
@@ -400,8 +421,19 @@ const SadasyaList = () => {
         const name = member.name_marathi || member.name || member.name_english || '';
         const address = member.address_marathi || member.address || member.address_english || '';
 
+        const parts = name.trim().split(/\s+/);
+        let f = '', m = '', l = '';
+        if (parts.length > 0) f = parts[0];
+        if (parts.length === 2) l = parts[1];
+        if (parts.length >= 3) {
+            m = parts[1];
+            l = parts.slice(2).join(' ');
+        }
+
         setManualForm({
-            name: name,
+            firstName: f,
+            middleName: m,
+            lastName: l,
             mobile: member.mobile,
             age: member.age?.toString() || '',
             gender: member.gender || '',
@@ -452,11 +484,11 @@ const SadasyaList = () => {
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-slate-500">{t('sadasya.subtitle')}</p>
                                 <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                    Found: {filteredSadasyas.length}
+                                    {t('sadasya.found')}: {filteredSadasyas.length}
                                 </span>
                                 {filteredSadasyas.length !== sadasyas.length && (
                                     <span className="text-xs text-slate-400">
-                                        of {sadasyas.length}
+                                        {t('sadasya.of')} {sadasyas.length}
                                     </span>
                                 )}
                             </div>
@@ -466,7 +498,7 @@ const SadasyaList = () => {
                                 setIsModalOpen(true);
                                 setEditingSadasyaId(null); // Reset edit mode
                                 initVoterList();
-                                setManualForm({ name: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' }); // Clear form
+                                setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' }); // Clear form
                             }}
                             className="ns-btn-primary"
                         >
@@ -478,87 +510,78 @@ const SadasyaList = () => {
                     {/* Filters */}
                     <div className="ns-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder={t('sadasya.search_placeholder') || "Search Name / Mobile"}
-                                className="ns-input pl-9 w-full"
+                                placeholder={t('sadasya.search_voter_label') || "Search Voter by Name, EPIC No or Mobile..."}
+                                className="ns-input pl-10 w-full"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
+
                         <div className="relative" ref={areaWrapperRef}>
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Search Area"
-                                className="ns-input pl-9 w-full"
+                                placeholder={t('sadasya.search_area') || "Search Area"}
+                                className="ns-input w-full"
                                 value={areaSearch}
+                                onFocus={() => setShowAreaSuggestions(true)}
                                 onChange={(e) => {
                                     setAreaSearch(e.target.value);
                                     setShowAreaSuggestions(true);
                                 }}
-                                onFocus={() => setShowAreaSuggestions(true)}
                             />
                             {showAreaSuggestions && filteredAreaSuggestions.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                     {filteredAreaSuggestions.map((item, idx) => (
-                                        <button
+                                        <div
                                             key={idx}
-                                            className="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm flex items-center justify-between group"
+                                            className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 flex justify-between"
                                             onClick={() => {
-                                                setAreaSearch(item.value);
+                                                setAreaSearch(getDisplayArea(item.value));
                                                 setShowAreaSuggestions(false);
                                             }}
                                         >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <MapPin className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                                                <span className="truncate">{item.value}</span>
-                                            </div>
-                                            <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded group-hover:bg-slate-200 flex-shrink-0 ml-2">
-                                                {item.count}
-                                            </span>
-                                        </button>
+                                            <span>{getDisplayArea(item.value)}</span>
+                                            <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">{item.count}</span>
+                                        </div>
                                     ))}
                                 </div>
                             )}
                         </div>
+
                         <div className="relative" ref={addressWrapperRef}>
-                            <Home className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input
                                 type="text"
-                                placeholder="Search Address"
-                                className="ns-input pl-9 w-full"
+                                placeholder={t('sadasya.search_address') || "Search Address"}
+                                className="ns-input w-full"
                                 value={addressSearch}
+                                onFocus={() => setShowAddressSuggestions(true)}
                                 onChange={(e) => {
                                     setAddressSearch(e.target.value);
                                     setShowAddressSuggestions(true);
                                 }}
-                                onFocus={() => setShowAddressSuggestions(true)}
                             />
                             {showAddressSuggestions && filteredAddressSuggestions.length > 0 && (
-                                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                                     {filteredAddressSuggestions.map((item, idx) => (
-                                        <button
+                                        <div
                                             key={idx}
-                                            className="w-full text-left px-4 py-2 hover:bg-slate-50 text-sm flex items-center justify-between group"
+                                            className="px-4 py-2 hover:bg-slate-50 cursor-pointer text-sm text-slate-700 flex justify-between"
                                             onClick={() => {
                                                 setAddressSearch(item.value);
                                                 setShowAddressSuggestions(false);
                                             }}
                                         >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <Home className="w-3 h-3 text-slate-400 flex-shrink-0" />
-                                                <span className="truncate">{item.value}</span>
-                                            </div>
-                                            <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded group-hover:bg-slate-200 flex-shrink-0 ml-2">
-                                                {item.count}
-                                            </span>
-                                        </button>
+                                            <span>{item.value}</span>
+                                            <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">{item.count}</span>
+                                        </div>
                                     ))}
                                 </div>
                             )}
                         </div>
+
                         <div>
                             <select
                                 className="ns-input w-full"
@@ -609,7 +632,7 @@ const SadasyaList = () => {
                                                             </span>
                                                             {member.age > 0 && (
                                                                 <span className="text-xs text-slate-500 border-l border-slate-300 pl-2">
-                                                                    {member.age} Yrs
+                                                                    {t('sadasya.age_label')}: {member.age}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -625,9 +648,9 @@ const SadasyaList = () => {
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center mb-1 gap-2">
                                                     {member.area ? (
-                                                        <span className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">{member.area}</span>
+                                                        <span className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">{getDisplayArea(member.area)}</span>
                                                     ) : (
-                                                        <span className="text-sm font-medium text-slate-500 italic">No Area</span>
+                                                        <span className="text-sm font-medium text-slate-500 italic">{t('sadasya.no_area') || "No Area"}</span>
                                                     )}
                                                     {member.ward && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Ward {member.ward}</span>}
                                                 </div>
@@ -639,7 +662,7 @@ const SadasyaList = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                {format(new Date(member.registeredAt), 'MMM d, yyyy')}
+                                                {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}
                                             </td>
 
                                         </tr>
@@ -679,7 +702,7 @@ const SadasyaList = () => {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-slate-900">{getDisplayName(member)}</h3>
-                                        <p className="text-xs text-slate-500">Age: {member.age}</p>
+                                        <p className="text-xs text-slate-500">{t('sadasya.age_label')}: {member.age}</p>
                                     </div>
                                 </div>
                                 {member.isVoter ? (
@@ -701,12 +724,12 @@ const SadasyaList = () => {
                                 <div className="flex items-start gap-2">
                                     <MapPin className="w-4 h-4 text-slate-400 mt-0.5" />
                                     <div className="flex flex-col">
-                                        {member.area && <span className="font-bold text-slate-900">{member.area}</span>}
+                                        {member.area && <span className="font-bold text-slate-900">{getDisplayArea(member.area)}</span>}
                                         <span className="line-clamp-2">{getDisplayAddress(member)}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                    <span>Joined: {new Date(member.registeredAt).toLocaleDateString()}</span>
+                                    <span>{t('sadasya.joined')}: {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}</span>
                                 </div>
                             </div>
                         </div>
@@ -717,7 +740,7 @@ const SadasyaList = () => {
                         </div>
                     )}
                 </div>
-            </div>
+            </div >
         );
     };
 
@@ -787,12 +810,12 @@ const SadasyaList = () => {
                                             </div>
 
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Area / Colony</label>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.area') || "Area / Colony"}</label>
                                                 <input
                                                     type="text"
                                                     value={confirmArea}
                                                     onChange={(e) => setConfirmArea(e.target.value)}
-                                                    placeholder="Enter Area / Colony Name"
+                                                    placeholder={t('sadasya.area_name_placeholder') || "Enter Area / Colony Name"}
                                                     className="ns-input mt-1"
                                                 />
                                             </div>
@@ -810,14 +833,14 @@ const SadasyaList = () => {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <input
                                                     type="text"
-                                                    placeholder="Search Name (Eng/Mar)"
+                                                    placeholder={t('sadasya.search_name_placeholder')}
                                                     className="ns-input"
                                                     value={nameFilter}
                                                     onChange={(e) => setNameFilter(e.target.value)}
                                                 />
                                                 <input
                                                     type="text"
-                                                    placeholder="Search House No"
+                                                    placeholder={t('sadasya.search_house_no')}
                                                     className="ns-input"
                                                     value={houseNoFilter}
                                                     onFocus={() => setShowHouseNoSuggestions(true)}
@@ -852,7 +875,7 @@ const SadasyaList = () => {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <input
                                                     type="text"
-                                                    placeholder="Age / Range (e.g. 18-25)"
+                                                    placeholder={t('sadasya.age_range_placeholder')}
                                                     className="ns-input"
                                                     value={ageFilter}
                                                     onChange={(e) => setAgeFilter(e.target.value)}
@@ -862,7 +885,7 @@ const SadasyaList = () => {
                                                     value={genderFilter}
                                                     onChange={(e) => setGenderFilter(e.target.value)}
                                                 >
-                                                    <option value="">All Genders</option>
+                                                    <option value="">{t('sadasya.all_genders')}</option>
                                                     <option value="M">Male</option>
                                                     <option value="F">Female</option>
                                                     <option value="O">Other</option>
@@ -872,7 +895,7 @@ const SadasyaList = () => {
                                             <div className="relative" ref={addressWrapperRef}>
                                                 <input
                                                     type="text"
-                                                    placeholder="Search Address"
+                                                    placeholder={t('sadasya.search_address')}
                                                     className="ns-input w-full"
                                                     value={addressFilter}
                                                     onFocus={() => setShowAddressSuggestions(true)}
@@ -917,7 +940,7 @@ const SadasyaList = () => {
                                                                     <div>
                                                                         <div className="font-medium text-slate-900">{getDisplayName(voter)}</div>
                                                                         <div className="text-xs text-slate-500 mt-0.5">
-                                                                            {voter.age} Yrs • {getGenderDisplay(voter.gender)} • EPIC: {voter.epicNo}
+                                                                            {t('sadasya.age_label')}: {voter.age} • {getGenderDisplay(voter.gender)} • EPIC: {voter.epicNo}
                                                                         </div>
                                                                         <div className="text-xs text-slate-400 mt-1 line-clamp-1">{getDisplayAddress(voter)}</div>
                                                                     </div>
@@ -946,18 +969,37 @@ const SadasyaList = () => {
                                     )
                                 ) : (
                                     <form onSubmit={handleManualSubmit} className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.name')}</label>
-                                            <input
-                                                type="text" required
-                                                className="ns-input mt-1"
-                                                value={manualForm.name}
-                                                onChange={(e) => setManualForm({ ...manualForm, name: e.target.value })}
-                                                placeholder="Enter Full Name"
-                                            />
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.first_name')}</label>
+                                                <input
+                                                    type="text" required
+                                                    className="ns-input mt-1"
+                                                    value={manualForm.firstName}
+                                                    onChange={(e) => setManualForm({ ...manualForm, firstName: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.middle_name')}</label>
+                                                <input
+                                                    type="text"
+                                                    className="ns-input mt-1"
+                                                    value={manualForm.middleName}
+                                                    onChange={(e) => setManualForm({ ...manualForm, middleName: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.last_name')}</label>
+                                                <input
+                                                    type="text" required
+                                                    className="ns-input mt-1"
+                                                    value={manualForm.lastName}
+                                                    onChange={(e) => setManualForm({ ...manualForm, lastName: e.target.value })}
+                                                />
+                                            </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.mobile')}</label>
                                             <input
                                                 type="tel"
                                                 className="ns-input mt-1"
@@ -968,7 +1010,7 @@ const SadasyaList = () => {
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Age</label>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.age_label')}</label>
                                                 <input
                                                     type="number" required min="18"
                                                     className="ns-input mt-1"
@@ -977,41 +1019,41 @@ const SadasyaList = () => {
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700">Gender</label>
+                                                <label className="block text-sm font-medium text-gray-700">{t('sadasya.gender')}</label>
                                                 <select
                                                     className="ns-input mt-1"
                                                     value={manualForm.gender}
                                                     onChange={(e) => setManualForm({ ...manualForm, gender: e.target.value as 'M' | 'F' | 'O' })}
                                                 >
-                                                    <option value="">Select</option>
-                                                    <option value="M">Male</option>
-                                                    <option value="F">Female</option>
-                                                    <option value="O">Other</option>
+                                                    <option value="">{t('sadasya.select')}</option>
+                                                    <option value="M">{t('voter_profile.gender_male')}</option>
+                                                    <option value="F">{t('voter_profile.gender_female')}</option>
+                                                    <option value="O">{t('voter_profile.gender_other')}</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Ward No</label>
+                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.ward')}</label>
                                             <input
                                                 type="text"
                                                 className="ns-input mt-1"
                                                 value={manualForm.ward}
                                                 onChange={(e) => setManualForm({ ...manualForm, ward: e.target.value })}
-                                                placeholder="Enter Ward No"
+                                                placeholder={t('sadasya.enter_ward_no')}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Area / Colony</label>
+                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.area')}</label>
                                             <input
                                                 type="text"
                                                 className="ns-input mt-1"
                                                 value={manualForm.area || ''}
                                                 onChange={(e) => setManualForm({ ...manualForm, area: e.target.value })}
-                                                placeholder="Area Name"
+                                                placeholder={t('sadasya.area_name_placeholder')}
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700">Address</label>
+                                            <label className="block text-sm font-medium text-gray-700">{t('sadasya.address')}</label>
                                             <textarea
                                                 rows={2} required
                                                 className="ns-input mt-1"

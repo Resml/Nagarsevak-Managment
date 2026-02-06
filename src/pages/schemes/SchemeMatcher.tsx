@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { X, Sparkles, CheckCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface SchemeMatcherProps {
     schemes: any[];
@@ -10,6 +11,7 @@ interface SchemeMatcherProps {
 }
 
 const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch }) => {
+    const { t } = useLanguage();
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('Male');
     const [income, setIncome] = useState('');
@@ -40,7 +42,7 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
             <div className="ns-card w-full max-w-md overflow-hidden">
                 <div className="px-6 py-4 flex justify-between items-center bg-slate-50 border-b border-slate-200/70">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-brand-700" /> Find matching schemes
+                        <Sparkles className="w-5 h-5 text-brand-700" /> {t('schemes.find_schemes')}
                     </h2>
                     <button onClick={onClose} className="ns-btn-ghost border border-slate-200 px-2 py-2">
                         <X className="w-5 h-5 text-slate-700" />
@@ -49,48 +51,48 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
 
                 <div className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Age</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.age')}</label>
                         <input
                             type="number"
                             value={age}
                             onChange={(e) => setAge(e.target.value)}
                             className="ns-input"
-                            placeholder="e.g. 25"
+                            placeholder={t('schemes.age_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Gender</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.gender')}</label>
                         <select
                             value={gender}
                             onChange={(e) => setGender(e.target.value)}
                             className="ns-input"
                         >
-                            <option>Male</option>
-                            <option>Female</option>
-                            <option>Other</option>
+                            <option>{t('schemes.gender_male')}</option>
+                            <option>{t('schemes.gender_female')}</option>
+                            <option>{t('schemes.gender_other')}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Annual income (₹)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.annual_income')}</label>
                         <input
                             type="number"
                             value={income}
                             onChange={(e) => setIncome(e.target.value)}
                             className="ns-input"
-                            placeholder="e.g. 100000"
+                            placeholder={t('schemes.income_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Occupation</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.occupation')}</label>
                         <input
                             type="text"
                             value={occupation}
                             onChange={(e) => setOccupation(e.target.value)}
                             className="ns-input"
-                            placeholder="e.g. Student, Farmer, Small Business"
+                            placeholder={t('schemes.occupation_placeholder')}
                         />
                     </div>
 
@@ -102,11 +104,11 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
                         >
                             {isAnalyzing ? (
                                 <>
-                                    <Sparkles className="w-4 h-4 animate-spin" /> Analyzing...
+                                    <Sparkles className="w-4 h-4 animate-spin" /> {t('schemes.analyzing')}
                                 </>
                             ) : (
                                 <>
-                                    <CheckCircle className="w-4 h-4" /> Check Eligibility
+                                    <CheckCircle className="w-4 h-4" /> {t('schemes.check_eligibility')}
                                 </>
                             )}
                         </button>

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { type Sadasya, type Complaint } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { MockService } from '../../services/mockData';
+import { TranslatedText } from '../../components/TranslatedText';
 
 interface SadasyaProfileProps {
     member: Sadasya;
@@ -115,7 +116,7 @@ const SadasyaProfile: React.FC<SadasyaProfileProps> = ({ member, onBack, onEdit,
                             <div>
                                 <p className="text-slate-900">{getDisplayAddress(member)}</p>
                                 {member.ward && <p className="text-sm text-slate-500 mt-1">{t('voter_profile.ward')} {member.ward}</p>}
-                                {member.area && <p className="text-sm text-slate-500">{member.area}</p>}
+                                {member.area && <p className="text-sm text-slate-500"><TranslatedText text={member.area} /></p>}
                             </div>
                         </div>
                         <div className="flex items-center space-x-3">

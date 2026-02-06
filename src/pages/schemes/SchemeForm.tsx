@@ -3,8 +3,10 @@ import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const SchemeForm = () => {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
@@ -86,18 +88,18 @@ const SchemeForm = () => {
                 onClick={() => navigate('/schemes')}
                 className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700"
             >
-                <ArrowLeft className="w-4 h-4 mr-1" /> Back to Schemes
+                <ArrowLeft className="w-4 h-4 mr-1" /> {t('schemes.form.back')}
             </button>
 
             <div className="ns-card overflow-hidden">
                 <div className="p-6 border-b border-slate-200/70 bg-slate-50">
-                    <h1 className="text-xl font-bold text-slate-900">{id ? 'Edit Scheme' : 'Add new scheme'}</h1>
-                    <p className="text-sm text-slate-500 mt-1">{id ? 'Update scheme details, eligibility, and benefits.' : 'Add eligibility, benefits and required documents.'}</p>
+                    <h1 className="text-xl font-bold text-slate-900">{id ? t('schemes.form.edit_title') : t('schemes.form.add_title')}</h1>
+                    <p className="text-sm text-slate-500 mt-1">{id ? t('schemes.form.edit_subtitle') : t('schemes.form.add_subtitle')}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Scheme name</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.form.name_label')}</label>
                         <input
                             required
                             name="name"
@@ -105,12 +107,12 @@ const SchemeForm = () => {
                             value={formData.name}
                             onChange={handleChange}
                             className="ns-input"
-                            placeholder="e.g. Pradhan Mantri Awas Yojana"
+                            placeholder={t('schemes.form.name_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.form.description_label')}</label>
                         <textarea
                             required
                             name="description"
@@ -118,43 +120,43 @@ const SchemeForm = () => {
                             value={formData.description}
                             onChange={handleChange}
                             className="ns-input"
-                            placeholder="Brief summary of the scheme..."
+                            placeholder={t('schemes.form.description_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Eligibility criteria</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.form.eligibility_label')}</label>
                         <textarea
                             name="eligibility"
                             rows={3}
                             value={formData.eligibility}
                             onChange={handleChange}
                             className="ns-input"
-                            placeholder="Who can apply? (e.g. Women aged 21-60, Income < 2.5L)"
+                            placeholder={t('schemes.form.eligibility_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Benefits</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.form.benefits_label')}</label>
                         <textarea
                             name="benefits"
                             rows={3}
                             value={formData.benefits}
                             onChange={handleChange}
                             className="ns-input"
-                            placeholder="What do beneficiaries get? (e.g. ₹1500 per month)"
+                            placeholder={t('schemes.form.benefits_placeholder')}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Documents required</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.form.documents_label')}</label>
                         <textarea
                             name="documents"
                             rows={2}
                             value={formData.documents}
                             onChange={handleChange}
                             className="ns-input"
-                            placeholder="e.g. Aadhar Card, Ration Card, Bank Passbook"
+                            placeholder={t('schemes.form.documents_placeholder')}
                         />
                     </div>
 
@@ -165,7 +167,7 @@ const SchemeForm = () => {
                             className="ns-btn-primary disabled:opacity-50"
                         >
                             <Save className="w-4 h-4" />
-                            <span>{loading ? 'Saving...' : (id ? 'Update Scheme' : 'Save Scheme')}</span>
+                            <span>{loading ? t('schemes.form.saving') : (id ? t('schemes.form.update_btn') : t('schemes.form.save_btn'))}</span>
                         </button>
                     </div>
                 </form>

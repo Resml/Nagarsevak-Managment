@@ -1,0 +1,342 @@
+common.welcome: Welcome
+common.save: Save
+common.cancel: Cancel
+common.loading: Loading...
+common.logout: Sign Out
+common.dashboard: Dashboard
+common.office_management: Office Management
+common.public_works: Public Works
+common.digital_media: Digital & Media
+common.finance_reports: Finance & Reports
+complaints.title: Requests & Complaints
+complaints.subtitle: Manage citizen issues and help requests
+complaints.new_request: New Request
+complaints.tabs.area: Area Complaints
+complaints.tabs.personal: Personal Requests
+complaints.tabs.self: Self-Identified Issues
+complaints.filters.all: All
+complaints.filters.pending: Pending
+complaints.filters.assigned: Assigned
+complaints.filters.in_progress: In Progress
+complaints.filters.resolved: Resolved
+complaints.filters.closed: Closed
+complaints.status.pending: Pending
+complaints.status.assigned: Assigned
+complaints.status.in_progress: In Progress
+complaints.status.resolved: Resolved
+complaints.status.closed: Closed
+complaints.no_requests: No requests found with status
+complaints.loading: Loading requests...
+staff.title: Staff Management
+staff.subtitle: Manage your team and auto-assignment rules
+staff.add_staff: Add Staff
+staff.tabs.office: Office Team
+staff.tabs.party: Party Workers
+staff.tabs.cooperative: Cooperative Workers
+staff.modal.title: Add New Team Member
+staff.modal.category: Category
+staff.modal.office_desc: Office Team (Admin/Staff)
+staff.modal.party_desc: Party Worker
+staff.modal.coop_desc: Cooperative Worker (Electrician/Plumber etc)
+staff.modal.name: Name
+staff.modal.name_placeholder: e.g. Ramesh Patil
+staff.modal.mobile: Mobile Number
+staff.modal.role: Role / Designation
+staff.modal.role_placeholder: e.g. Electrician
+staff.modal.area: Area
+staff.modal.area_placeholder: e.g. Ward 12
+staff.modal.keywords: Auto-Assign Keywords
+staff.modal.optional: (Optional)
+staff.modal.keywords_placeholder: e.g. light, pole, current
+staff.modal.keywords_help: Complaints containing these words will be auto-assigned.
+staff.modal.cancel: Cancel
+staff.modal.save: Save Staff
+staff.list.no_keywords: No auto-assign keywords
+staff.list.no_members: No members found in this category
+staff.list.get_started: Get started by adding a new staff member using the Add Staff button.
+staff.list.delete_confirm: Are you sure you want to delete this staff member?
+staff.list.valid_mobile: Please enter a valid 10-digit mobile number
+staff.list.success_add: Staff member added successfully!
+staff.list.error_add: Failed to add staff.
+nav.voter_search: Voter Search
+nav.sadasya: Sadasya (Members)
+nav.my_team: My Team
+nav.visitor_log: Visitor Log
+nav.gb_register: GB Register
+nav.complaints: Complaints
+nav.govt_schemes: Govt Schemes
+nav.letters: Letters
+nav.task_management: Task Management
+nav.work_history: Work History
+nav.whatsapp_bot: WhatsApp Bot
+nav.social_analytics: Social Analytics
+nav.events_invites: Events & Invites
+nav.gallery_media: Gallery & Media
+nav.ai_content: AI Content Studio
+nav.sample_surveys: Sample Surveys
+nav.ward_budget: Ward Budget
+nav.result_analysis: Result Analysis
+dashboard.title: Dashboard
+dashboard.welcome: Welcome back, Nagar Sevak
+dashboard.broadcast: Broadcast Update
+dashboard.ai_insight: AI Daily Insight
+dashboard.total_citizens: Total Citizens
+dashboard.pending_issues: Pending Issues
+dashboard.in_progress: In Progress
+dashboard.resolved: Resolved
+dashboard.clearance_rate: Clearance Rate
+dashboard.avg_response: Avg Response
+dashboard.satisfaction: Satisfaction
+dashboard.live_activity: Live Activity
+dashboard.view_full_log: View Full Log
+dashboard.no_activity: No recent activity.
+dashboard.status_overview: Complaint Status Overview
+dashboard.view_all: View All
+voters.title: Voter Search
+voters.search_placeholder: Search by Name, EPIC, Address...
+voters.ward: Ward
+voters.booth: Booth
+voters.age: Age
+voters.no_results: No voters found matching
+voter_profile.back_to_search: Back to Search
+voter_profile.report_problem: Report Problem
+voter_profile.epic_no: EPIC
+voter_profile.age: Age
+voter_profile.gender_male: Male
+voter_profile.gender_female: Female
+voter_profile.contact_address: Contact & Address
+voter_profile.ward: Ward
+voter_profile.booth: Booth
+voter_profile.mobile_number: Mobile Number
+voter_profile.no_mobile: No mobile number
+voter_profile.service_history_stats: Service History Stats
+voter_profile.total_requests: Total Requests
+voter_profile.solved: Solved
+voter_profile.service_history: Service History
+voter_profile.no_history: No service history recorded for this voter yet.
+voter_profile.status_resolved: Resolved
+voter_profile.status_closed: Closed
+voter_profile.status_pending: Pending
+voter_profile.status_inprogress: In Progress
+sadasya.title: Party Members (Sadasya)
+sadasya.subtitle: Manage registered party members
+sadasya.add_member: Add Member
+sadasya.search_placeholder: Search by name or mobile...
+sadasya.filter_all: All Members
+sadasya.filter_voters: Voters
+sadasya.filter_non_voters: Non-Voters
+sadasya.member: Member
+sadasya.contact: Contact
+sadasya.area_address: Area / Address
+sadasya.status: Status
+sadasya.joined_date: Joined Date
+sadasya.is_voter: Voter
+sadasya.is_member: Member
+sadasya.add_modal_title: Add New Sadasya
+sadasya.edit_modal_title: Edit Sadasya
+sadasya.update_member: Update Sadasya
+sadasya.search_tab: Search Voter
+sadasya.manual_tab: Manual Entry
+sadasya.confirm_details: Confirm Member Details
+sadasya.confirm_subtitle: Please verify or add missing details.
+sadasya.name: Name
+sadasya.mobile: Mobile Number
+sadasya.area: Area / Colony
+sadasya.address: Address
+sadasya.gender: Gender
+sadasya.ward: Ward No
+sadasya.age: Age
+sadasya.confirm_add: Confirm Add
+sadasya.back: Back
+sadasya.search_voter_label: Search Voter by Name, EPIC No or Mobile...
+sadasya.searching: Searching...
+sadasya.no_voters_found: No voters found.
+sadasya.select: Select
+status.Pending: Pending
+status.InProgress: In Progress
+status.Resolved: Resolved
+status.Closed: Closed
+events.title: Events & Broadcasts
+events.subtitle: Manage community events and invites
+events.all_categories: All Categories
+events.create_event: New Event
+events.search_placeholder: Search by title, location or description...
+events.create_modal_title: Create New Event
+events.event_title: Event Title
+events.description: Description
+events.date: Date
+events.time: Time
+events.location: Location
+events.area: Area
+events.target_audience: Target Audience
+events.all_citizens: All Citizens
+events.upload_image: Upload Image
+events.cancel: Cancel
+events.submit: Create Event
+events.loading: Loading...
+events.no_events: No upcoming events.
+work_history.title: Work History
+work_history.subtitle: Archive of all completed works
+work_history.export_report: Export Report
+work_history.filter_ward: Filter by Ward:
+work_history.all_wards: All Wards
+work_history.ward_12: Ward 12
+work_history.ward_13: Ward 13
+work_history.ward_14: Ward 14
+work_history.col_date: Completion Date
+work_history.col_title: Title / Issue
+work_history.col_ward: Ward
+work_history.col_type: Type
+work_history.col_beneficiary: Beneficiary
+work_history.search_placeholder: Search works...
+budget.title: Ward Budget Management
+budget.subtitle: Track fund allocation and utilization
+budget.allocated: Total Allocated
+budget.utilized: Total Utilized
+budget.remaining: Remaining Funds
+budget.available: Available for Use
+budget.budget_heads: Budget Heads
+budget.add_allocation: Add Allocation
+budget.col_category: Category
+budget.col_allocated: Allocated
+budget.col_utilized: Utilized
+budget.col_progress: Progress
+budget.col_actions: Actions
+budget.loading: Loading...
+budget.no_records: No records found for this year.
+budget.new_allocation_title: New Budget Allocation
+budget.financial_year: Financial Year
+budget.category_head: Category / Head
+budget.area: Area
+budget.amount: Total Allocation Amount (₹)
+budget.actions: Actions
+diary.title: GB Register
+diary.subtitle: Committee meetings, issues and outcomes
+diary.add_entry: Add Entry
+diary.search_placeholder: Search by subject or description...
+diary.filter_type: Filter by Type
+diary.all_types: All Types
+diary.no_entries: No diary entries found.
+diary.new_entry_title: New GB Register Entry
+diary.meeting_date: Meeting Date
+diary.meeting_type: Meeting Type
+diary.subject: Subject / Issue
+diary.description: Description
+diary.area: Area
+diary.desc_placeholder: Detailed description of the issue raised...
+diary.department: Department
+diary.status: Outcome / Status
+diary.response: Administrative Response
+diary.resp_placeholder: Response received from administration...
+diary.save_entry: Save Entry
+office.visitor_log: Visitor Log
+office.visitor_subtitle: Track daily citizen visits
+office.add_visitor: Add Visitor
+office.search_placeholder: Search by name or mobile...
+office.today_visitors: Today's Visitors
+office.total_visitors: Total Visitors
+office.new_visitor_title: Log New Visitor
+office.full_name: Full Name
+office.mobile: Contact Number
+office.purpose: Purpose / Reason
+office.select_purpose: Select Purpose
+office.notes: Notes (Optional)
+office.notes_placeholder: Optional comments...
+office.priority: Priority
+office.normal: Normal
+office.high: High
+office.log_visit: Log Visit
+office.no_logs: No visits logged today.
+schemes.title: Government Schemes
+schemes.subtitle: Repository of government schemes
+schemes.add_scheme: Add Scheme
+schemes.search_placeholder: Search by name, benefit or description...
+schemes.no_schemes: No schemes found.
+schemes.new_scheme_title: New Government Scheme
+schemes.scheme_name: Scheme Name
+schemes.ministry: Ministry / Department
+schemes.description: Description
+schemes.desc_placeholder: Brief summary of the scheme...
+schemes.eligibility: Eligibility
+schemes.elig_placeholder: Who can apply? (e.g. Women 21-60 yrs)
+schemes.benefits: Benefits
+schemes.ben_placeholder: What do beneficiaries get? (e.g. ₹1500/month)
+schemes.documents: Required Documents
+schemes.docs_placeholder: Aadhar, PAN, etc. (comma separated)
+schemes.save_scheme: Save Scheme
+schemes.find_schemes: Find Schemes with AI
+letters.title: Letters Dashboard
+letters.subtitle: Track and manage official letter requests
+letters.new_request: New Request
+letters.manage_types: Manage Types
+letters.search_placeholder: Search by name, type, area...
+letters.no_letters: No letter requests found.
+letters.select_request: Select a request to view details
+letters.new_request_title: New Letter Request
+letters.applicant_name: Applicant Name
+letters.mobile: Mobile Number
+letters.letter_type: Letter Type
+letters.select_type: Select Type
+letters.address: Address / Details
+letters.addr_placeholder: Current resident address or specific details...
+letters.area: Area
+letters.urgent: Urgent Request
+letters.create_request: Create Request
+letters.type_manager_title: Letter Type Management
+letters.add_new_type: New Type
+letters.type_name: Type Name
+letters.type_placeholder: Name of new letter type...
+letters.add: Add
+letters.generate_pdf: Generate PDF
+letters.request_from: Request from
+letters.request_details: Request Details
+letters.name: Name
+letters.reject: Reject
+letters.approve: Approve
+social.title: Social Media Analytics
+social.subtitle: Track Facebook/Instagram post performance
+social.add_post: Track Post
+social.search_placeholder: Search posts...
+social.total_reach: Total Reach
+social.total_likes: Total Likes
+social.comments: Comments
+social.shares: Shares
+social.connect_fb: Connect FB
+social.connect_ig: Connect IG
+social.all_posts: All Posts
+social.no_posts: No posts found matching your search.
+gallery.title: Media Gallery
+gallery.subtitle: Photo and video archive
+gallery.add_photo: Add Photo
+gallery.search_placeholder: Search gallery...
+gallery.tab_events: Work & Celebrations
+gallery.tab_media: Newspaper Clippings
+gallery.loading: Loading photos...
+gallery.no_photos: No photos found in this category.
+gallery.modal_title: Add New Photo
+gallery.category: Category
+gallery.image_title: Title
+gallery.image_label: Image
+gallery.uploading: Uploading...
+gallery.click_upload: Click to upload
+gallery.use_url: Or use URL
+gallery.date: Date
+gallery.desc: Description
+gallery.submit: Add to Gallery
+gallery.upload_error: Failed to upload image. Please try again.
+surveys.title: Survey Center
+surveys.subtitle: Create and manage citizen surveys
+surveys.create_survey: Create Survey
+surveys.total_voters: Total Voters
+surveys.sample_size: Sample Size Target (1%)
+surveys.active_surveys: Active Surveys
+surveys.recent_surveys: Recent Surveys
+surveys.no_surveys: No surveys created yet.
+surveys.create_prompt: Create your first survey to start collecting data.
+surveys.questions_suffix: Questions
+surveys.send_whatsapp: Send to WhatsApp
+surveys.table.title: Title
+surveys.table.status: Status
+surveys.table.questions: Questions
+surveys.table.created_at: Created At
+surveys.table.actions: Actions

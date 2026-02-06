@@ -5,6 +5,7 @@ import { Calendar, Clock, MapPin, Plus, Search, Filter, Send, Users, ChevronRigh
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface Event {
     id: string;
@@ -22,6 +23,7 @@ interface Event {
 
 const EventManagement = () => {
     const navigate = useNavigate();
+    const { t } = useLanguage();
     const { user } = useAuth();
     const isAdmin = user?.role === 'admin';
 
@@ -78,20 +80,23 @@ const EventManagement = () => {
 
     const fetchEvents = async () => {
         setLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('events')
-                .select('*')
-                .order('event_date', { ascending: false });
+        // Simulate network delay
+        setTimeout(async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('events')
+                    .select('*')
+                    .order('event_date', { ascending: false });
 
-            if (error) throw error;
-            setEvents(data || []);
-        } catch (err) {
-            console.error('Error fetching events:', err);
-            toast.error('Failed to load events');
-        } finally {
-            setLoading(false);
-        }
+                if (error) throw error;
+                setEvents(data || []);
+            } catch (err) {
+                console.error('Error fetching events:', err);
+                toast.error('Failed to load events');
+            } finally {
+                setLoading(false);
+            }
+        }, 800);
     };
 
     // Helper to get unique areas
@@ -168,19 +173,19 @@ const EventManagement = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                            Events & Broadcasts
+                            {t('events.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                Found: {filteredEvents.length}
+                                {t('events.found')}: {filteredEvents.length}
                             </span>
                         </h1>
-                        <p className="text-sm text-slate-500">Manage public events, meetings, and rallies.</p>
+                        <p className="text-sm text-slate-500">{t('events.subtitle')}</p>
                     </div>
                     {isAdmin && (
                         <button
                             onClick={() => setIsCreateModalOpen(true)}
                             className="ns-btn-primary"
                         >
-                            <Plus className="w-4 h-4" /> Create Event
+                            <Plus className="w-4 h-4" /> {t('events.create_btn')}
                         </button>
                     )}
                 </div>
@@ -192,7 +197,7 @@ const EventManagement = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder="Search events..."
+                            placeholder={t('events.search_placeholder')}
                             className="ns-input pl-10 w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -203,7 +208,7 @@ const EventManagement = () => {
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Filter by Area..."
+                            placeholder={t('events.filter_area')}
                             className="ns-input w-full"
                             value={areaSearch}
                             onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
@@ -235,7 +240,7 @@ const EventManagement = () => {
                     <div className="md:col-span-3 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Filter by Date..."
+                            placeholder={t('events.filter_date')}
                             className="ns-input w-full"
                             value={dateSearch}
                             onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
@@ -266,7 +271,28 @@ const EventManagement = () => {
             </div>
 
             {loading ? (
-                <div className="flex justify-center py-10 text-slate-500">Loading events...</div>
+                <div className="grid gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div className="flex items-start gap-4 flex-1">
+                                <div className="bg-slate-100 rounded-xl w-[80px] h-[80px] animate-pulse" />
+                                <div className="space-y-3 flex-1">
+                                    <div className="h-6 w-1/3 bg-slate-200 rounded animate-pulse" />
+                                    <div className="flex gap-4">
+                                        <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                                        <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+                                        <div className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
+                                    </div>
+                                    <div className="h-4 w-2/3 bg-slate-200 rounded animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="w-full md:w-auto flex md:flex-col gap-2">
+                                <div className="h-9 w-full md:w-40 bg-slate-200 rounded-lg animate-pulse" />
+                                <div className="h-9 w-full md:w-40 bg-slate-200 rounded-lg animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             ) : (
                 <div className="grid gap-4">
                     {filteredEvents.map((event) => (
@@ -314,7 +340,7 @@ const EventManagement = () => {
                                     className="flex-1 md:w-40 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-sm font-medium text-sm"
                                 >
                                     <Send className="w-4 h-4" />
-                                    Send Invites
+                                    {t('events.send_invites')}
                                 </button>
                                 <button
                                     onClick={(e) => {
@@ -323,25 +349,26 @@ const EventManagement = () => {
                                     }}
                                     className="flex-1 md:w-40 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 font-medium text-sm"
                                 >
-                                    <Users className="w-4 h-4" /> View RSVPs
+                                    <Users className="w-4 h-4" /> {t('events.view_rsvps')}
                                 </button>
                             </div>
                         </div>
                     ))}
                     {filteredEvents.length === 0 && (
                         <div className="text-center py-10 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                            No upcoming events matching your criteria.
+                            {t('events.no_events')}
                         </div>
                     )}
                 </div>
             )}
+
 
             {/* Create Event Modal */}
             {isCreateModalOpen && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="ns-card max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold text-slate-900">Create New Event</h2>
+                            <h2 className="text-xl font-bold text-slate-900">{t('events.create_modal_title')}</h2>
                             <button
                                 onClick={() => setIsCreateModalOpen(false)}
                                 className="text-slate-400 hover:text-slate-600"
@@ -352,31 +379,31 @@ const EventManagement = () => {
 
                         <form onSubmit={handleCreateEvent} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Event Title</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.event_title')}</label>
                                 <input
                                     type="text" required
                                     className="ns-input w-full"
                                     value={newEvent.title}
                                     onChange={e => setNewEvent({ ...newEvent, title: e.target.value })}
-                                    placeholder="e.g. Town Hall Meeting"
+                                    placeholder={t('events.title_placeholder')}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.description')}</label>
                                 <textarea
                                     required
                                     className="ns-input w-full"
                                     rows={3}
                                     value={newEvent.description}
                                     onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    placeholder="Details about the event..."
+                                    placeholder={t('events.desc_placeholder')}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.date')}</label>
                                     <input
                                         type="date" required
                                         className="ns-input w-full"
@@ -385,7 +412,7 @@ const EventManagement = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Time</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.time')}</label>
                                     <input
                                         type="time" required
                                         className="ns-input w-full"
@@ -396,56 +423,56 @@ const EventManagement = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Location</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.location')}</label>
                                 <input
                                     type="text" required
                                     className="ns-input w-full"
                                     value={newEvent.location}
                                     onChange={e => setNewEvent({ ...newEvent, location: e.target.value })}
-                                    placeholder="e.g. Community Hall, Ward 10"
+                                    placeholder={t('events.loc_placeholder')}
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Area / Locality</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.area')}</label>
                                 <input
                                     type="text"
                                     className="ns-input w-full"
                                     value={newEvent.area}
                                     onChange={e => setNewEvent({ ...newEvent, area: e.target.value })}
-                                    placeholder="e.g. Shivaji Nagar"
+                                    placeholder={t('events.area_placeholder')}
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Event Type</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.type_label')}</label>
                                     <select
                                         className="ns-input w-full"
                                         value={newEvent.type}
                                         onChange={e => setNewEvent({ ...newEvent, type: e.target.value })}
                                     >
-                                        <option value="Public Meeting">Public Meeting</option>
-                                        <option value="Rally">Rally</option>
-                                        <option value="Door-to-Door">Door-to-Door</option>
-                                        <option value="Inauguration">Inauguration</option>
-                                        <option value="Other">Other</option>
+                                        <option value="Public Meeting">{t('events.types.Public Meeting')}</option>
+                                        <option value="Rally">{t('events.types.Rally')}</option>
+                                        <option value="Door-to-Door">{t('events.types.Door-to-Door')}</option>
+                                        <option value="Inauguration">{t('events.types.Inauguration')}</option>
+                                        <option value="Other">{t('events.types.Other')}</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Target Audience</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.audience_label')}</label>
                                     <select
                                         className="ns-input w-full"
                                         value={newEvent.target_audience}
                                         onChange={e => setNewEvent({ ...newEvent, target_audience: e.target.value })}
                                     >
-                                        <option value="All">All Citizens</option>
-                                        <option value="OPEN">OPEN</option>
-                                        <option value="OBC">OBC</option>
-                                        <option value="SC">SC</option>
-                                        <option value="ST">ST</option>
-                                        <option value="VJNT">VJNT</option>
-                                        <option value="SBC">SBC</option>
+                                        <option value="All">{t('events.audiences.All')}</option>
+                                        <option value="OPEN">{t('events.audiences.OPEN')}</option>
+                                        <option value="OBC">{t('events.audiences.OBC')}</option>
+                                        <option value="SC">{t('events.audiences.SC')}</option>
+                                        <option value="ST">{t('events.audiences.ST')}</option>
+                                        <option value="VJNT">{t('events.audiences.VJNT')}</option>
+                                        <option value="SBC">{t('events.audiences.SBC')}</option>
                                     </select>
                                 </div>
                             </div>
@@ -456,14 +483,14 @@ const EventManagement = () => {
                                     onClick={() => setIsCreateModalOpen(false)}
                                     className="px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 text-sm font-medium"
                                 >
-                                    Cancel
+                                    {t('events.cancel')}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={creating}
                                     className="ns-btn-primary"
                                 >
-                                    {creating ? 'Creating...' : 'Create Event'}
+                                    {creating ? t('events.creating') : t('events.create_btn')}
                                 </button>
                             </div>
                         </form>

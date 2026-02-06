@@ -119,7 +119,7 @@ const SurveyDashboard = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder="Search surveys..."
+                            placeholder={t('surveys.search_placeholder') || "Search surveys..."}
                             className="ns-input pl-10 w-full"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -130,7 +130,7 @@ const SurveyDashboard = () => {
                     <div className="md:col-span-4 relative dropdown-container">
                         <input
                             type="text"
-                            placeholder="Filter by Area..."
+                            placeholder={t('surveys.filter_area') || "Filter by Area..."}
                             className="ns-input w-full"
                             value={areaSearch}
                             onFocus={() => setShowAreaDropdown(true)}
@@ -152,7 +152,7 @@ const SurveyDashboard = () => {
                                     </div>
                                 ))}
                                 {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
-                                    <div className="px-4 py-2 text-sm text-slate-500 italic">No areas found</div>
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">{t('surveys.no_areas_found')}</div>
                                 )}
                             </div>
                         )}
@@ -203,7 +203,7 @@ const SurveyDashboard = () => {
                 <div className="p-6 border-b border-slate-200/70 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-slate-900">{t('surveys.recent_surveys')}</h2>
                     <span className="text-sm text-slate-500">
-                        Found: {filteredSurveys.length}
+                        {t('surveys.found')}: {filteredSurveys.length}
                     </span>
                 </div>
 
@@ -265,7 +265,7 @@ const SurveyDashboard = () => {
                                                 ) : (
                                                     <Send className="w-3 h-3 mr-1" />
                                                 )}
-                                                {broadcastingId === survey.id ? 'Sending...' : t('surveys.send_whatsapp')}
+                                                {broadcastingId === survey.id ? t('surveys.sending') : t('surveys.send_whatsapp')}
                                             </button>
                                         </td>
                                     </tr>

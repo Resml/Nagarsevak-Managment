@@ -4,7 +4,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X } from 'lucide-react';
 import { format } from 'date-fns';
-import { translateText } from '../../services/aiTranslation';
+import { TranslatedText } from '../../components/TranslatedText';
 
 interface Visitor {
     id: string;
@@ -46,9 +46,6 @@ const VisitorLog = () => {
     const areaWrapperRef = useRef<HTMLDivElement>(null);
     const dateWrapperRef = useRef<HTMLDivElement>(null);
 
-    // Translation State
-    const [translatedData, setTranslatedData] = useState<Record<string, { remarks: string, purpose: string }>>({});
-
     useEffect(() => {
         fetchVisitors();
 
@@ -64,43 +61,6 @@ const VisitorLog = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    // Auto-Translate Effect
-    useEffect(() => {
-        if (language === 'en' || loading || visitors.length === 0) return;
-
-        const translateVisibleItems = async () => {
-            // Only translate items that have remarks or custom purpose, and haven't been translated yet
-            const itemsToTranslate = visitors.filter(v =>
-                (v.remarks || v.purpose) && !translatedData[v.id]
-            );
-
-            if (itemsToTranslate.length === 0) return;
-
-            const BATCH_SIZE = 5;
-            for (let i = 0; i < itemsToTranslate.length; i += BATCH_SIZE) {
-                const batch = itemsToTranslate.slice(i, i + BATCH_SIZE);
-
-                await Promise.all(batch.map(async (item) => {
-                    try {
-                        const [transRemarks, transPurpose] = await Promise.all([
-                            item.remarks ? translateText(item.remarks, language as 'mr' | 'hi') : item.remarks,
-                            item.purpose ? translateText(item.purpose, language as 'mr' | 'hi') : item.purpose
-                        ]);
-
-                        setTranslatedData(prev => ({
-                            ...prev,
-                            [item.id]: { remarks: transRemarks, purpose: transPurpose }
-                        }));
-                    } catch (err) {
-                        console.error(`Failed to translate item ${item.id}`, err);
-                    }
-                }));
-            }
-        };
-
-        translateVisibleItems();
-    }, [language, visitors, loading]);
 
     const fetchVisitors = async () => {
         // Fetch last 200 visitors to have decent data for filtering
@@ -262,7 +222,7 @@ const VisitorLog = () => {
                 <div className="md:col-span-1">
                     <div className="ns-card p-6 sticky top-24">
                         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-slate-500" /> {editingId ? 'Edit Visitor' : t('office.new_visitor_title')}
+                            <Clock className="w-5 h-5 text-slate-500" /> {editingId ? t('office.edit_visitor') : t('office.new_visitor_title')}
                         </h2>
                         <form onSubmit={handleCheckIn} className="space-y-4">
                             <div>
@@ -289,18 +249,18 @@ const VisitorLog = () => {
                                             const val = e.target.value.replace(/\D/g, '').slice(0, 10);
                                             setFormData({ ...formData, mobile: val });
                                         }}
-                                        placeholder="Mobile Number"
+                                        placeholder={t('office.mobile_placeholder')}
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">Area</label>
+                                <label className="block text-sm font-medium text-slate-700">{t('office.area')}</label>
                                 <input
                                     type="text"
                                     className="ns-input mt-1"
                                     value={formData.area}
                                     onChange={e => setFormData({ ...formData, area: e.target.value })}
-                                    placeholder="Area Name"
+                                    placeholder={t('office.area_placeholder')}
                                 />
                             </div>
                             <div>
@@ -310,23 +270,23 @@ const VisitorLog = () => {
                                     value={formData.purpose}
                                     onChange={e => setFormData({ ...formData, purpose: e.target.value })}
                                 >
-                                    <option value="Complaint">Complaint</option>
-                                    <option value="Meeting">Meeting with Saheb</option>
-                                    <option value="Greeting">Greeting / Invitation</option>
-                                    <option value="Donation">Donation / Help</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Complaint">{t('office.purpose_complaint')}</option>
+                                    <option value="Meeting">{t('office.purpose_meeting')}</option>
+                                    <option value="Greeting">{t('office.purpose_greeting')}</option>
+                                    <option value="Donation">{t('office.purpose_donation')}</option>
+                                    <option value="Other">{t('office.purpose_other')}</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">
-                                    Reference <span className="text-gray-400 font-normal ml-1">(Optional)</span>
+                                    {t('office.reference')} <span className="text-gray-400 font-normal ml-1">{t('staff.modal.optional')}</span>
                                 </label>
                                 <input
                                     type="text"
                                     className="ns-input mt-1"
                                     value={formData.reference}
                                     onChange={e => setFormData({ ...formData, reference: e.target.value })}
-                                    placeholder="Sent by..."
+                                    placeholder={t('office.reference_placeholder')}
                                 />
                             </div>
                             <div>
@@ -339,7 +299,7 @@ const VisitorLog = () => {
                                 />
                             </div>
                             <button type="submit" className="ns-btn-primary w-full justify-center">
-                                <Save className="w-4 h-4" /> {editingId ? 'Update Visitor' : t('office.log_visit')}
+                                <Save className="w-4 h-4" /> {editingId ? t('office.update_visitor') : t('office.log_visit')}
                             </button>
                             {editingId && (
                                 <button
@@ -350,7 +310,7 @@ const VisitorLog = () => {
                                     }}
                                     className="w-full mt-2 text-sm text-slate-500 hover:text-slate-700"
                                 >
-                                    Cancel Edit
+                                    {t('office.cancel_edit')}
                                 </button>
                             )}
                         </form>
@@ -363,14 +323,14 @@ const VisitorLog = () => {
                         <div className="sticky top-11 z-20 p-4 border-b border-slate-200/70 bg-slate-50 space-y-3 rounded-t-xl">
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <h3 className="text-lg font-bold">Recent visitors</h3>
+                                    <h3 className="text-lg font-bold">{t('office.visitor_log')}</h3>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                            Found: {filteredVisitors.length}
+                                            {t('office.found')}: {filteredVisitors.length}
                                         </span>
                                         {visitors.length !== filteredVisitors.length && (
                                             <span className="text-xs text-slate-400">
-                                                of {visitors.length}
+                                                {t('office.of')} {visitors.length}
                                             </span>
                                         )}
                                     </div>
@@ -395,7 +355,7 @@ const VisitorLog = () => {
                                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="Filter Area"
+                                        placeholder={t('office.filter_area')}
                                         className="ns-input pl-9 text-sm w-full"
                                         value={areaSearch}
                                         onChange={e => {
@@ -415,7 +375,7 @@ const VisitorLog = () => {
                                                         setShowAreaSuggestions(false);
                                                     }}
                                                 >
-                                                    <span className="truncate">{item.value}</span>
+                                                    <span className="truncate"><TranslatedText text={item.value} /></span>
                                                     <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded group-hover:bg-slate-200">
                                                         {item.count}
                                                     </span>
@@ -430,7 +390,7 @@ const VisitorLog = () => {
                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="Filter Date"
+                                        placeholder={t('office.filter_date')}
                                         className="ns-input pl-9 text-sm w-full"
                                         value={dateSearch}
                                         onChange={e => {
@@ -463,7 +423,31 @@ const VisitorLog = () => {
                         </div>
 
                         <div className="bg-slate-50 p-4 overflow-y-auto flex-1 h-[600px] md:h-auto space-y-3">
-                            {loading ? <div className="p-8 text-center">{t('common.loading')}</div> : filteredVisitors.map(v => (
+                            {loading ? (
+                                <div className="space-y-3">
+                                    {[1, 2, 3, 4, 5].map((i) => (
+                                        <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-slate-200">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+                                                        <div className="h-5 w-5 bg-slate-200 rounded-full animate-pulse" />
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <div className="h-5 w-20 bg-slate-200 rounded-full animate-pulse" />
+                                                        <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+                                                    </div>
+                                                </div>
+                                                <div className="text-right shrink-0 ml-4">
+                                                    <div className="h-5 w-16 bg-slate-200 rounded animate-pulse mb-1" />
+                                                    <div className="h-4 w-12 bg-slate-200 rounded animate-pulse ml-auto" />
+                                                </div>
+                                            </div>
+                                            <div className="h-4 w-48 bg-slate-200 rounded animate-pulse mt-3" />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : filteredVisitors.map(v => (
                                 <div
                                     key={v.id}
                                     className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 transition hover:shadow-md cursor-pointer overflow-hidden"
@@ -472,12 +456,14 @@ const VisitorLog = () => {
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <h4 className="font-bold text-slate-900 text-lg">{v.name}</h4>
+                                                <h4 className="font-bold text-slate-900 text-lg">
+                                                    <TranslatedText text={v.name} />
+                                                </h4>
                                                 <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${expandedId === v.id ? 'rotate-90' : ''}`} />
                                             </div>
                                             <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
                                                 <span className="ns-badge border-brand-100 bg-brand-50 text-brand-800 uppercase font-semibold text-xs px-2 py-0.5 rounded-full">
-                                                    {translatedData[v.id]?.purpose || v.purpose}
+                                                    <TranslatedText text={v.purpose} />
                                                 </span>
                                                 {v.mobile && <span className="flex items-center gap-1 font-medium"><Phone className="w-3.5 h-3.5" /> {v.mobile}</span>}
                                             </div>
@@ -491,7 +477,7 @@ const VisitorLog = () => {
                                     <div className={`space-y-2 ${expandedId === v.id ? '' : 'line-clamp-2'}`}>
                                         {v.area && (
                                             <p className="text-sm text-slate-600 flex items-center gap-1.5">
-                                                <MapPin className="w-4 h-4 text-slate-400" /> {v.area}
+                                                <MapPin className="w-4 h-4 text-slate-400" /> <TranslatedText text={v.area} />
                                             </p>
                                         )}
                                         {(v.remarks || v.reference) && (
@@ -499,12 +485,12 @@ const VisitorLog = () => {
                                                 {v.reference && (
                                                     <p className="text-xs text-slate-500 flex items-center gap-1.5">
                                                         <UserCircle className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span className="font-medium text-slate-700">Ref: {v.reference}</span>
+                                                        <span className="font-medium text-slate-700">Ref: <TranslatedText text={v.reference} /></span>
                                                     </p>
                                                 )}
                                                 {v.remarks && (
                                                     <p className="text-slate-600 text-sm italic">
-                                                        "{translatedData[v.id]?.remarks || v.remarks}"
+                                                        "<TranslatedText text={v.remarks} />"
                                                     </p>
                                                 )}
                                             </div>
@@ -522,7 +508,7 @@ const VisitorLog = () => {
                                                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
                                             >
                                                 <Edit2 className="w-4 h-4" />
-                                                Edit
+                                                {t('common.edit')}
                                             </button>
                                             <button
                                                 onClick={(e) => {
@@ -532,7 +518,7 @@ const VisitorLog = () => {
                                                 className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
-                                                Delete
+                                                {t('common.delete')}
                                             </button>
                                         </div>
                                     )}
@@ -547,6 +533,7 @@ const VisitorLog = () => {
                     </div>
                 </div>
             </div>
+
             {/* Delete Confirmation Modal */}
             {deleteTarget && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[60] p-4">

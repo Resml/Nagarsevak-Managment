@@ -3,9 +3,11 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { MockService } from '../../services/mockData';
+import { useLanguage } from '../../context/LanguageContext';
 import type { Question } from '../../types';
 
 const CreateSurvey = () => {
+    const { t } = useLanguage();
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -45,11 +47,11 @@ const CreateSurvey = () => {
 
     const handleSave = () => {
         if (!title.trim()) {
-            toast.error('Please enter a survey title');
+            toast.error(t('surveys.form.error_title') || 'Please enter a survey title');
             return;
         }
         if (questions.length === 0) {
-            toast.error('Please add at least one question');
+            toast.error(t('surveys.form.error_questions') || 'Please add at least one question');
             return;
         }
 
@@ -76,49 +78,49 @@ const CreateSurvey = () => {
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-700" />
                 </button>
-                <h1 className="text-2xl font-bold text-slate-900">Create new survey</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{t('surveys.create_new_title')}</h1>
             </div>
 
             <div className="ns-card p-6 space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Survey title</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('surveys.form.title_label')}</label>
                     <input
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                         className="ns-input"
-                        placeholder="e.g. Sanitation Feedback 2026"
+                        placeholder={t('surveys.form.title_placeholder')}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('surveys.form.description_label')}</label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         className="ns-input"
                         rows={3}
-                        placeholder="Purpose of this survey..."
+                        placeholder={t('surveys.form.description_placeholder')}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Area (Optional)</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('surveys.form.area_label')}</label>
                     <input
                         type="text"
                         value={area}
                         onChange={(e) => setArea(e.target.value)}
                         className="ns-input"
-                        placeholder="e.g. Ward 12, Main Street"
+                        placeholder={t('surveys.form.area_placeholder')}
                     />
                 </div>
             </div>
 
             <div className="space-y-4">
-                <h2 className="text-lg font-semibold text-slate-900">Questions ({questions.length})</h2>
+                <h2 className="text-lg font-semibold text-slate-900">
+                    {t('surveys.form.questions_count')} ({questions.length})
+                </h2>
 
                 {questions.map((q, index) => (
                     <div key={q.id} className="ns-card p-6 space-y-4 relative group">
-
-
                         <div className="flex items-start space-x-3">
                             <span className="bg-slate-100 text-slate-700 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200/70 flex-shrink-0 text-sm font-bold">
                                 {index + 1}
@@ -129,7 +131,7 @@ const CreateSurvey = () => {
                                     value={q.text}
                                     onChange={(e) => updateQuestion(q.id, 'text', e.target.value)}
                                     className="ns-input font-medium"
-                                    placeholder="Enter your question here..."
+                                    placeholder={t('surveys.form.question_placeholder')}
                                 />
 
                                 <div className="flex items-center space-x-4">
@@ -140,7 +142,7 @@ const CreateSurvey = () => {
                                             onChange={() => updateQuestion(q.id, 'type', 'MCQ')}
                                             className="text-brand-600 focus:ring-brand-500"
                                         />
-                                        <span className="text-sm text-slate-700">Multiple Choice</span>
+                                        <span className="text-sm text-slate-700">{t('surveys.form.type_mcq')}</span>
                                     </label>
                                     <label className="flex items-center space-x-2">
                                         <input
@@ -149,7 +151,7 @@ const CreateSurvey = () => {
                                             onChange={() => updateQuestion(q.id, 'type', 'YesNo')}
                                             className="text-brand-600 focus:ring-brand-500"
                                         />
-                                        <span className="text-sm text-slate-700">Yes / No / Can't Say</span>
+                                        <span className="text-sm text-slate-700">{t('surveys.form.type_yesno')}</span>
                                     </label>
                                     <label className="flex items-center space-x-2">
                                         <input
@@ -158,7 +160,7 @@ const CreateSurvey = () => {
                                             onChange={() => updateQuestion(q.id, 'type', 'Rating')}
                                             className="text-brand-600 focus:ring-brand-500"
                                         />
-                                        <span className="text-sm text-slate-700">Rating (1-5 Stars)</span>
+                                        <span className="text-sm text-slate-700">{t('surveys.form.type_rating')}</span>
                                     </label>
                                 </div>
 
@@ -172,7 +174,7 @@ const CreateSurvey = () => {
                                                     value={opt}
                                                     onChange={(e) => updateOption(q.id, i, e.target.value)}
                                                     className="ns-input py-1 text-sm"
-                                                    placeholder={`Option ${i + 1}`}
+                                                    placeholder={`${t('surveys.form.option_placeholder')} ${i + 1}`}
                                                 />
                                             </div>
                                         ))}
@@ -183,7 +185,7 @@ const CreateSurvey = () => {
                             <button
                                 onClick={() => removeQuestion(q.id)}
                                 className="text-slate-400 hover:text-red-700 p-2 transition-colors self-start mt-1"
-                                title="Delete Question"
+                                title={t('surveys.form.delete_question') || "Delete Question"}
                             >
                                 <Trash2 className="w-5 h-5" />
                             </button>
@@ -196,7 +198,7 @@ const CreateSurvey = () => {
                     className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-600 hover:border-brand-300 hover:text-brand-700 transition-colors flex items-center justify-center font-semibold"
                 >
                     <Plus className="w-5 h-5 mr-2" />
-                    Add Question
+                    {t('surveys.form.add_question')}
                 </button>
             </div>
 
@@ -206,10 +208,10 @@ const CreateSurvey = () => {
                     className="ns-btn-primary px-8 py-3"
                 >
                     <Save className="w-5 h-5 mr-2" />
-                    Save & Launch Survey
+                    {t('surveys.form.save_launch')}
                 </button>
             </div>
-        </div >
+        </div>
     );
 };
 

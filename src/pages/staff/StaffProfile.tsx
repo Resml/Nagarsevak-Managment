@@ -5,6 +5,7 @@ import { type Staff } from '../../types/staff';
 import { type Complaint } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { MockService } from '../../services/mockData';
+import { TranslatedText } from '../../components/TranslatedText';
 
 interface StaffProfileProps {
     member: Staff;
@@ -92,7 +93,7 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                             <div className="flex items-start space-x-3">
                                 <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
                                 <div>
-                                    <p className="text-slate-900">{member.area}</p>
+                                    <p className="text-slate-900"><TranslatedText text={member.area} /></p>
                                     <p className="text-xs text-slate-500 mt-0.5">Assigned Area</p>
                                 </div>
                             </div>
@@ -103,7 +104,7 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                                 <div className="flex flex-wrap gap-2">
                                     {member.keywords.map((k, i) => (
                                         <span key={i} className="bg-slate-50 text-slate-600 px-2 py-1 rounded text-xs border border-slate-200">
-                                            {k}
+                                            <TranslatedText text={k} />
                                         </span>
                                     ))}
                                 </div>

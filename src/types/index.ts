@@ -62,6 +62,8 @@ export interface Voter {
   epicNo: string; // Voter ID Card Number
   mobile?: string;
   houseNo?: string;
+  caste?: string;
+  is_friend_relative?: boolean;
   history: ServiceRecord[];
 }
 
@@ -110,6 +112,7 @@ export interface DiaryEntry {
   department?: string; // e.g. 'Water', 'Road'
   area?: string;
   status: DiaryStatus;
+  beneficiaries?: string;
   response?: string;
   tags: string[];
   createdAt: string;
@@ -122,10 +125,13 @@ export interface GalleryItem {
   id: string;
   title: string;
   category: GalleryCategory;
+  sentiment?: 'positive' | 'negative';
   imageUrl: string;
   description?: string;
   date: string;
   createdAt: string;
+  titleKey?: string;
+  descriptionKey?: string;
 }
 
 export interface BudgetRecord {
@@ -195,4 +201,20 @@ export interface SurveyResponse {
   voterId?: string; // Optional if anonymous
   answers: Record<string, string | number>; // questionId -> answer
   submittedAt: string;
+}
+
+export interface ProvisionRecord {
+  id: string;
+  title: string;
+  description: string;
+  requestedAmount: number;
+  sanctionedAmount: number | null;
+  requestedDate: string;
+  sanctionedDate: string | null;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Partially Approved';
+  financialYear: string;
+  category: string;
+  letterReference: string;
+  metadata?: any;
+  createdAt: string;
 }

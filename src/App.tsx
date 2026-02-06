@@ -33,8 +33,21 @@ import Gallery from './pages/gallery/Gallery';
 import BudgetDashboard from './pages/budget/BudgetDashboard';
 import ResultAnalysis from './pages/results/ResultAnalysis';
 import ContentStudio from './pages/content/ContentStudio';
-import SurveyDashboard from './pages/surveys/SurveyDashboard';
-import CreateSurvey from './pages/surveys/CreateSurvey';
+import SurveyDashboard from './pages/surveys/SurveyDashboard'; import CreateSurvey from './pages/surveys/CreateSurvey';
+
+import WardWiseProblem from './pages/ward/WardWiseProblem';
+import PossibleImprovements from './pages/ward/PossibleImprovements';
+import ImprovementDetail from './pages/ward/ImprovementDetail';
+import WardWiseProvision from './pages/ward/WardProvisions';
+import GovernmentOffice from './pages/office/GovernmentOffice';
+import NewspaperClipping from './pages/media/NewspaperClipping';
+import AnalysisStrategy from './pages/political/AnalysisStrategy';
+import CastWiseVoters from './pages/political/CastWiseVoters';
+import AddVoter from './pages/political/AddVoter';
+import FriendsRelatives from './pages/political/FriendsRelatives';
+import WardInfoConstituency from './pages/political/WardInfoConstituency';
+import PublicCommunication from './pages/political/PublicCommunication';
+import ProfileSettings from './pages/settings/ProfileSettings';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -86,7 +99,24 @@ function App() {
           <Route path="results" element={<ResultAnalysis />} />
           <Route path="content" element={<ContentStudio />} />
           <Route path="surveys" element={<SurveyDashboard />} />
+          <Route path="surveys" element={<SurveyDashboard />} />
           <Route path="surveys/new" element={<CreateSurvey />} />
+
+          {/* New Routes */}
+          <Route path="ward/problems" element={<WardWiseProblem />} />
+          <Route path="ward/improvements" element={<PossibleImprovements />} />
+          <Route path="ward/improvements/:id" element={<ImprovementDetail />} />
+          <Route path="ward/provision" element={<WardWiseProvision />} />
+          <Route path="government-office" element={<GovernmentOffice />} />
+          <Route path="media/newspaper" element={<NewspaperClipping />} />
+          <Route path="analysis-strategy" element={<AnalysisStrategy />} />
+          <Route path="political/cast-wise" element={<CastWiseVoters />} />
+          <Route path="political/add-voter" element={<AddVoter />} />
+          <Route path="political/friends-relatives" element={<FriendsRelatives />} />
+          <Route path="political/ward-info" element={<WardInfoConstituency />} />
+          <Route path="political/ward-info" element={<WardInfoConstituency />} />
+          <Route path="political/public-communication" element={<PublicCommunication />} />
+          <Route path="settings/profile" element={<ProfileSettings />} />
         </Route>
       </Routes>
     </BrowserRouter>

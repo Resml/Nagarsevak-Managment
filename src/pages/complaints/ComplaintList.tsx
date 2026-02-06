@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
-import { translateText } from '../../services/aiTranslation';
+import { TranslatedText } from '../../components/TranslatedText';
 
 const ComplaintList = () => {
     const { t, language } = useLanguage();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
-    const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help' | 'Self Identified'>('Complaints');
+    const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help'>('Complaints');
+
+    // Derived state for translation - simplified and more robust matching AppLayout logic
+    const isTranslated = language === 'mr';
 
     const [loading, setLoading] = useState(true);
 
@@ -23,9 +26,6 @@ const ComplaintList = () => {
     const [dateSearch, setDateSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [showDateDropdown, setShowDateDropdown] = useState(false);
-
-    // Translation State
-    const [translatedData, setTranslatedData] = useState<Record<string, { title: string, description: string }>>({});
 
     const fetchComplaints = async () => {
         try {
@@ -122,47 +122,15 @@ const ComplaintList = () => {
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'complaints' }, () => {
                 fetchComplaints();
             })
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'complaints' }, () => {
+                fetchComplaints();
+            })
             .subscribe();
 
         return () => {
             subscription.unsubscribe();
         };
     }, []);
-
-    // Auto-Translate Effect
-    useEffect(() => {
-        if (language === 'en' || loading || complaints.length === 0) return;
-
-        const translateVisibleItems = async () => {
-            const itemsToTranslate = complaints.filter(c => !translatedData[c.id]);
-            if (itemsToTranslate.length === 0) return;
-
-            // Translate in batches to avoid rate limits
-            const BATCH_SIZE = 5;
-            for (let i = 0; i < itemsToTranslate.length; i += BATCH_SIZE) {
-                const batch = itemsToTranslate.slice(i, i + BATCH_SIZE);
-
-                await Promise.all(batch.map(async (item) => {
-                    try {
-                        const [transTitle, transDesc] = await Promise.all([
-                            translateText(item.title, language as 'mr' | 'hi'),
-                            translateText(item.description, language as 'mr' | 'hi')
-                        ]);
-
-                        setTranslatedData(prev => ({
-                            ...prev,
-                            [item.id]: { title: transTitle, description: transDesc }
-                        }));
-                    } catch (err) {
-                        console.error(`Failed to translate item ${item.id}`, err);
-                    }
-                }));
-            }
-        };
-
-        translateVisibleItems();
-        translateVisibleItems();
-    }, [language, complaints, loading]);
 
     // Unique Areas with Counts
     const uniqueAreas = Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {
@@ -199,8 +167,6 @@ const ComplaintList = () => {
             typeMatch = c.type !== 'Personal Help' && c.type !== 'SelfIdentified';
         } else if (activeTab === 'Personal Help') {
             typeMatch = c.type === 'Personal Help';
-        } else if (activeTab === 'Self Identified') {
-            typeMatch = c.type === 'SelfIdentified';
         }
 
         return statusMatch && typeMatch && matchesSearch && matchesArea && matchesDate;
@@ -224,7 +190,37 @@ const ComplaintList = () => {
     };
 
     if (loading) {
-        return <div className="p-8 text-center text-gray-500">{t('complaints.loading')}</div>;
+        return (
+            <div className="space-y-6">
+                {/* Header Skeleton */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pt-1 pb-2">
+                    <div className="space-y-2">
+                        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
+                        <div className="h-4 w-64 bg-slate-200 rounded animate-pulse" />
+                    </div>
+                </div>
+
+                {/* Cards Skeleton Grid */}
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 flex flex-col h-48">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="h-5 w-20 bg-slate-200 rounded animate-pulse" />
+                                <div className="h-5 w-24 bg-slate-200 rounded animate-pulse" />
+                            </div>
+                            <div className="h-4 w-32 bg-slate-200 rounded animate-pulse mb-3" />
+                            <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse mb-2" />
+                            <div className="h-4 w-full bg-slate-200 rounded animate-pulse mb-auto" />
+
+                            <div className="pt-4 border-t border-gray-100 flex justify-between items-center mt-4">
+                                <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+                                <div className="h-3 w-32 bg-slate-200 rounded animate-pulse" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -232,21 +228,31 @@ const ComplaintList = () => {
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{t('complaints.title')}</h1>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {isTranslated ? (
+                                <span className="notranslate">तक्रारी आणि विनंती</span>
+                            ) : (
+                                t('complaints.title')
+                            )}
+                        </h1>
                         <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-gray-500">{t('complaints.subtitle')}</p>
+                            <p className="text-sm text-gray-500">
+                                {isTranslated ? <span className="notranslate">नागरिकांच्या समस्या आणि विनंती व्यवस्थापित करा</span> : t('complaints.subtitle')}
+                            </p>
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                Found: {filteredComplaints.length}
+                                {isTranslated ? <span className="notranslate">सापडले</span> : t('complaints.found')}: {filteredComplaints.length}
                             </span>
                         </div>
                     </div>
-                    <Link
-                        to="/complaints/new"
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>{t('complaints.new_request')}</span>
-                    </Link>
+                    <div className="flex gap-2">
+                        <Link
+                            to="/complaints/new"
+                            className="ns-btn-primary"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>{isTranslated ? <span className="notranslate">नवीन तक्रार</span> : t('complaints.new_request')}</span>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Tabs */}
@@ -261,7 +267,7 @@ const ComplaintList = () => {
                                 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
                             )}
                         >
-                            {t('complaints.tabs.area')}
+                            {isTranslated ? <span className="notranslate">परिसरातील तक्रारी</span> : t('complaints.tabs.area')}
                         </button>
                         <button
                             onClick={() => setActiveTab('Personal Help')}
@@ -272,19 +278,9 @@ const ComplaintList = () => {
                                 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
                             )}
                         >
-                            {t('complaints.tabs.personal')}
+                            {isTranslated ? <span className="notranslate">वैयक्तिक विनंत्या</span> : t('complaints.tabs.personal')}
                         </button>
-                        <button
-                            onClick={() => setActiveTab('Self Identified')}
-                            className={clsx(
-                                activeTab === 'Self Identified'
-                                    ? 'border-brand-500 text-brand-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-                            )}
-                        >
-                            {t('complaints.tabs.self')}
-                        </button>
+
                     </nav>
                 </div>
 
@@ -298,8 +294,8 @@ const ComplaintList = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder="Search complaints..."
-                                className="ns-input pl-10"
+                                placeholder={t('complaints.search_placeholder')}
+                                className="ns-input pl-10 notranslate"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -310,8 +306,8 @@ const ComplaintList = () => {
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder="Search Area..."
-                                className="ns-input pl-10"
+                                placeholder={t('complaints.search_area_placeholder')}
+                                className="ns-input pl-10 notranslate"
                                 value={areaSearch}
                                 onChange={(e) => {
                                     setAreaSearch(e.target.value);
@@ -333,7 +329,9 @@ const ComplaintList = () => {
                                                     setShowAreaDropdown(false);
                                                 }}
                                             >
-                                                <span className="text-gray-700">{area.name}</span>
+                                                <span className="text-gray-700">
+                                                    <TranslatedText text={area.name || ''} />
+                                                </span>
                                                 <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
                                                     {area.count}
                                                 </span>
@@ -348,8 +346,8 @@ const ComplaintList = () => {
                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
-                                placeholder="Filter by Date..."
-                                className="ns-input pl-10"
+                                placeholder={t('complaints.filter_date_placeholder')}
+                                className="ns-input pl-10 notranslate"
                                 value={dateSearch}
                                 onChange={(e) => {
                                     setDateSearch(e.target.value);
@@ -395,12 +393,23 @@ const ComplaintList = () => {
                                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
                                 )}
                             >
-                                {status === 'All' ? t('complaints.filters.all') :
-                                    status === 'InProgress' ? t('complaints.filters.in_progress') :
-                                        status === 'Pending' ? t('complaints.filters.pending') :
-                                            status === 'Assigned' ? t('complaints.filters.assigned') :
-                                                status === 'Resolved' ? t('complaints.filters.resolved') :
-                                                    t('complaints.filters.closed')}
+                                {isTranslated ? (
+                                    <span className="notranslate">
+                                        {status === 'All' ? 'सर्व' :
+                                            status === 'InProgress' ? 'काम चालू' :
+                                                status === 'Pending' ? 'प्रलंबित' :
+                                                    status === 'Assigned' ? 'सोपवलेले' :
+                                                        status === 'Resolved' ? 'सोडवलेले' :
+                                                            'बंद'}
+                                    </span>
+                                ) : (
+                                    status === 'All' ? t('complaints.filters.all') :
+                                        status === 'InProgress' ? t('complaints.filters.in_progress') :
+                                            status === 'Pending' ? t('complaints.filters.pending') :
+                                                status === 'Assigned' ? t('complaints.filters.assigned') :
+                                                    status === 'Resolved' ? t('complaints.filters.resolved') :
+                                                        t('complaints.filters.closed')
+                                )}
                             </button>
                         ))}
                     </div>
@@ -409,8 +418,6 @@ const ComplaintList = () => {
 
             <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
                 {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => {
-                    const translation = translatedData[complaint.id];
-
                     return (
                         <div
                             key={complaint.id}
@@ -427,7 +434,10 @@ const ComplaintList = () => {
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ml-2", getTypeColor(complaint.type))}>
-                                        {complaint.type}
+                                        {/* Helper to translate known types dynamically */}
+                                        {['Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'SelfIdentified', 'Other', 'Complaint', 'Help', 'Personal Help'].includes(complaint.type)
+                                            ? t(`complaints.form.types.${complaint.type == 'Personal Help' ? 'personal_help' : complaint.type.toLowerCase().replace(/ /g, '_')}`)
+                                            : complaint.type}
                                     </span>
                                 </div>
                             </div>
@@ -435,15 +445,17 @@ const ComplaintList = () => {
                             {complaint.voter && (
                                 <div className="mb-2 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded flex items-center gap-1 w-fit">
                                     <User className="w-3 h-3" />
-                                    {complaint.voter.name_english || complaint.voter.name_marathi}
+                                    {language === 'mr' && complaint.voter.name_marathi
+                                        ? complaint.voter.name_marathi
+                                        : (complaint.voter.name_english || complaint.voter.name_marathi)}
                                 </div>
                             )}
 
                             <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
-                                {translation ? translation.title : complaint.title}
+                                <TranslatedText text={complaint.title} />
                             </h3>
                             <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
-                                {translation ? translation.description : complaint.description}
+                                <TranslatedText text={complaint.description} />
                             </p>
 
                             <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
@@ -454,9 +466,10 @@ const ComplaintList = () => {
                                 {complaint.location && (
                                     <div className="flex items-center space-x-1 max-w-[50%]">
                                         <MapPin className="w-3 h-3 flex-shrink-0" />
-                                        <span className="truncate">
-                                            {complaint.area ? `${complaint.area}, ` : ''}{complaint.location}
-                                        </span>
+                                        <TranslatedText
+                                            text={(complaint.area ? `${complaint.area}, ` : '') + complaint.location}
+                                            className="truncate"
+                                        />
                                     </div>
                                 )}
                             </div>

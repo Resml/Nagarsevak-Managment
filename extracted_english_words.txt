@@ -1,0 +1,342 @@
+Welcome
+Save
+Cancel
+Loading...
+Sign Out
+Dashboard
+Office Management
+Public Works
+Digital & Media
+Finance & Reports
+Requests & Complaints
+Manage citizen issues and help requests
+New Request
+Area Complaints
+Personal Requests
+Self-Identified Issues
+All
+Pending
+Assigned
+In Progress
+Resolved
+Closed
+Pending
+Assigned
+In Progress
+Resolved
+Closed
+No requests found with status
+Loading requests...
+Staff Management
+Manage your team and auto-assignment rules
+Add Staff
+Office Team
+Party Workers
+Cooperative Workers
+Add New Team Member
+Category
+Office Team (Admin/Staff)
+Party Worker
+Cooperative Worker (Electrician/Plumber etc)
+Name
+e.g. Ramesh Patil
+Mobile Number
+Role / Designation
+e.g. Electrician
+Area
+e.g. Ward 12
+Auto-Assign Keywords
+(Optional)
+e.g. light, pole, current
+Complaints containing these words will be auto-assigned.
+Cancel
+Save Staff
+No auto-assign keywords
+No members found in this category
+Get started by adding a new staff member using the Add Staff button.
+Are you sure you want to delete this staff member?
+Please enter a valid 10-digit mobile number
+Staff member added successfully!
+Failed to add staff.
+Voter Search
+Sadasya (Members)
+My Team
+Visitor Log
+GB Register
+Complaints
+Govt Schemes
+Letters
+Task Management
+Work History
+WhatsApp Bot
+Social Analytics
+Events & Invites
+Gallery & Media
+AI Content Studio
+Sample Surveys
+Ward Budget
+Result Analysis
+Dashboard
+Welcome back, Nagar Sevak
+Broadcast Update
+AI Daily Insight
+Total Citizens
+Pending Issues
+In Progress
+Resolved
+Clearance Rate
+Avg Response
+Satisfaction
+Live Activity
+View Full Log
+No recent activity.
+Complaint Status Overview
+View All
+Voter Search
+Search by Name, EPIC, Address...
+Ward
+Booth
+Age
+No voters found matching
+Back to Search
+Report Problem
+EPIC
+Age
+Male
+Female
+Contact & Address
+Ward
+Booth
+Mobile Number
+No mobile number
+Service History Stats
+Total Requests
+Solved
+Service History
+No service history recorded for this voter yet.
+Resolved
+Closed
+Pending
+In Progress
+Party Members (Sadasya)
+Manage registered party members
+Add Member
+Search by name or mobile...
+All Members
+Voters
+Non-Voters
+Member
+Contact
+Area / Address
+Status
+Joined Date
+Voter
+Member
+Add New Sadasya
+Edit Sadasya
+Update Sadasya
+Search Voter
+Manual Entry
+Confirm Member Details
+Please verify or add missing details.
+Name
+Mobile Number
+Area / Colony
+Address
+Gender
+Ward No
+Age
+Confirm Add
+Back
+Search Voter by Name, EPIC No or Mobile...
+Searching...
+No voters found.
+Select
+Pending
+In Progress
+Resolved
+Closed
+Events & Broadcasts
+Manage community events and invites
+All Categories
+New Event
+Search by title, location or description...
+Create New Event
+Event Title
+Description
+Date
+Time
+Location
+Area
+Target Audience
+All Citizens
+Upload Image
+Cancel
+Create Event
+Loading...
+No upcoming events.
+Work History
+Archive of all completed works
+Export Report
+Filter by Ward:
+All Wards
+Ward 12
+Ward 13
+Ward 14
+Completion Date
+Title / Issue
+Ward
+Type
+Beneficiary
+Search works...
+Ward Budget Management
+Track fund allocation and utilization
+Total Allocated
+Total Utilized
+Remaining Funds
+Available for Use
+Budget Heads
+Add Allocation
+Category
+Allocated
+Utilized
+Progress
+Actions
+Loading...
+No records found for this year.
+New Budget Allocation
+Financial Year
+Category / Head
+Area
+Total Allocation Amount (₹)
+Actions
+GB Register
+Committee meetings, issues and outcomes
+Add Entry
+Search by subject or description...
+Filter by Type
+All Types
+No diary entries found.
+New GB Register Entry
+Meeting Date
+Meeting Type
+Subject / Issue
+Description
+Area
+Detailed description of the issue raised...
+Department
+Outcome / Status
+Administrative Response
+Response received from administration...
+Save Entry
+Visitor Log
+Track daily citizen visits
+Add Visitor
+Search by name or mobile...
+Today's Visitors
+Total Visitors
+Log New Visitor
+Full Name
+Contact Number
+Purpose / Reason
+Select Purpose
+Notes (Optional)
+Optional comments...
+Priority
+Normal
+High
+Log Visit
+No visits logged today.
+Government Schemes
+Repository of government schemes
+Add Scheme
+Search by name, benefit or description...
+No schemes found.
+New Government Scheme
+Scheme Name
+Ministry / Department
+Description
+Brief summary of the scheme...
+Eligibility
+Who can apply? (e.g. Women 21-60 yrs)
+Benefits
+What do beneficiaries get? (e.g. ₹1500/month)
+Required Documents
+Aadhar, PAN, etc. (comma separated)
+Save Scheme
+Find Schemes with AI
+Letters Dashboard
+Track and manage official letter requests
+New Request
+Manage Types
+Search by name, type, area...
+No letter requests found.
+Select a request to view details
+New Letter Request
+Applicant Name
+Mobile Number
+Letter Type
+Select Type
+Address / Details
+Current resident address or specific details...
+Area
+Urgent Request
+Create Request
+Letter Type Management
+New Type
+Type Name
+Name of new letter type...
+Add
+Generate PDF
+Request from
+Request Details
+Name
+Reject
+Approve
+Social Media Analytics
+Track Facebook/Instagram post performance
+Track Post
+Search posts...
+Total Reach
+Total Likes
+Comments
+Shares
+Connect FB
+Connect IG
+All Posts
+No posts found matching your search.
+Media Gallery
+Photo and video archive
+Add Photo
+Search gallery...
+Work & Celebrations
+Newspaper Clippings
+Loading photos...
+No photos found in this category.
+Add New Photo
+Category
+Title
+Image
+Uploading...
+Click to upload
+Or use URL
+Date
+Description
+Add to Gallery
+Failed to upload image. Please try again.
+Survey Center
+Create and manage citizen surveys
+Create Survey
+Total Voters
+Sample Size Target (1%)
+Active Surveys
+Recent Surveys
+No surveys created yet.
+Create your first survey to start collecting data.
+Questions
+Send to WhatsApp
+Title
+Status
+Questions
+Created At
+Actions

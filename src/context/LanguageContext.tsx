@@ -1,7 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, type Language } from '../utils/translations';
-import { translateWidget } from '../services/googleTranslateWidget';
 
 interface LanguageContextType {
     language: Language;
@@ -22,17 +21,10 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const [language, setLanguageState] = useState<Language>(getInitialLanguage);
 
-    // Initialize Google Translate widget on mount
     useEffect(() => {
-        translateWidget.initialize();
-
-        // If initial language is Marathi, trigger translation
         const initialLang = getInitialLanguage();
-        if (initialLang === 'mr') {
-            // Small delay to ensure widget is ready
-            setTimeout(() => {
-                translateWidget.changeLanguage('mr');
-            }, 1000);
+        if (initialLang !== language) {
+            setLanguageState(initialLang);
         }
     }, []);
 
@@ -43,29 +35,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             return;
         }
 
-        const previousLang = language;
-
         setLanguageState(lang);
         localStorage.setItem('ns_language', lang);
-
-        // If switching back to English from Marathi, clear Google Translate cookie and reload
-        if (lang === 'en' && previousLang === 'mr') {
-            // Clear Google Translate cookies
-            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.' + window.location.hostname.split('.').slice(-2).join('.');
-
-            // Small delay to ensure cookies are cleared
-            setTimeout(() => {
-                window.location.reload();
-            }, 100);
-            return;
-        }
-
-        // If switching to Marathi, trigger Google Translate
-        if (lang === 'mr') {
-            translateWidget.changeLanguage('mr');
-        }
     };
 
     // Translation function: supports nested keys like 'common.welcome'

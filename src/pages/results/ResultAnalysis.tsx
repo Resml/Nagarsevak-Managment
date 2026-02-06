@@ -73,9 +73,10 @@ const ResultAnalysis = () => {
         setLoading(false);
     };
 
-    // Calculations based on SELECTED Candidate
-    const totalVotes = results.reduce((sum, r) => sum + r.totalVotesCasted, 0);
-    const ourVotes = results.reduce((sum, r) => sum + (r.candidateVotes[selectedCandidate] || 0), 0);
+    // Get the "एकूण मत" row for total calculations
+    const totalVotesRow = results.find(r => r.boothNumber === 'एकूण मत');
+    const totalVotes = totalVotesRow ? totalVotesRow.totalVotesCasted : results.reduce((sum, r) => sum + r.totalVotesCasted, 0);
+    const ourVotes = totalVotesRow ? (totalVotesRow.candidateVotes[selectedCandidate] || 0) : results.reduce((sum, r) => sum + (r.candidateVotes[selectedCandidate] || 0), 0);
     const voteShare = totalVotes > 0 ? (ourVotes / totalVotes) * 100 : 0;
 
     const winningBooths = results.filter(r => r.winner === selectedCandidate).length;
@@ -95,7 +96,7 @@ const ResultAnalysis = () => {
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Election Result Analysis</h1>
+                        <h1 className="text-2xl font-bold text-slate-900">निवडणूक निकाल</h1>
                         <p className="text-slate-600">Performance report for <span className="font-semibold text-brand-700">{selectedCandidate}</span></p>
                     </div>
 
@@ -190,9 +191,10 @@ const ResultAnalysis = () => {
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200/70">
+                            {/* Filter out summary rows except "एकूण मत" */}
                             {loading ? (
                                 <tr><td colSpan={10} className="px-6 py-4 text-center">Loading...</td></tr>
-                            ) : sortedResults.map((r) => {
+                            ) : sortedResults.filter(r => !['सर्व मतदान केंद्र नोंदवण्यात आलेली मते', 'टपाल मतदान'].includes(r.boothNumber)).map((r) => {
                                 const candidates = Object.keys(r.candidateVotes);
                                 const ourV = r.candidateVotes[selectedCandidate] || 0;
                                 return (
@@ -222,21 +224,7 @@ const ResultAnalysis = () => {
                                 );
                             })}
 
-                            {/* Totals Row */}
-                            {!loading && sortedResults.length > 0 && (
-                                <tr className="bg-slate-50 font-bold">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 sticky left-0 bg-slate-50">TOTAL</td>
-                                    {Object.keys(sortedResults[0].candidateVotes).map(c => (
-                                        <td key={c} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 tabular-nums">
-                                            {sortedResults.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0).toLocaleString()}
-                                        </td>
-                                    ))}
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 tabular-nums">
-                                        {sortedResults.reduce((sum, r) => sum + r.totalVotesCasted, 0).toLocaleString()}
-                                    </td>
-                                    <td colSpan={2}></td>
-                                </tr>
-                            )}
+                            {/* Removed Totals Row as per user request */}
                         </tbody>
                     </table>
                 </div>

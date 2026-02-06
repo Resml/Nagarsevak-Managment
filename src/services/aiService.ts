@@ -104,7 +104,16 @@ export const AIAnalysisService = {
         title: string,
         description: string,
         imageBase64?: string
-    ): Promise<{ category: string; urgency: 'Low' | 'Medium' | 'High'; validation: string }> => {
+    ): Promise<{
+        category: string;
+        urgency: 'Low' | 'Medium' | 'High';
+        validation: string;
+        translated_title_en: string;
+        translated_description_en: string;
+        translated_title_mr: string;
+        translated_description_mr: string;
+        original_language: string;
+    }> => {
         try {
             const model = genAI.getGenerativeModel({
                 model: "gemini-2.5-flash",
@@ -113,15 +122,30 @@ export const AIAnalysisService = {
 
             let prompt = `
             Analyze this citizen complaint for a City Council system.
-            Title: "${title}"
-            Description: "${description}"
+            
+            Input Title: "${title}"
+            Input Description: "${description}"
             
             Task:
-            1. Categorize it into one of: 'Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'Other'.
-            2. Determine Urgency (Low, Medium, High) based on keywords like 'safety', 'danger', 'health', 'broken'.
-            3. If an image is provided, verify if it matches the description. If no image, set validation to "No image provided".
+            1. Detect the language of the input (e.g., 'English', 'Marathi', 'Hindi', 'Hinglish').
+            2. Categorize it into one of: 'Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'Other'.
+            3. Determine Urgency (Low, Medium, High) based on keywords like 'safety', 'danger', 'health', 'broken'.
+            4. **Translate** the Title and Description into:
+               - English (Professional Standard)
+               - Marathi (Formal Std)
+            5. If an image is provided, verify if it matches the description. If no image, set validation to "No image provided".
             
-            Return JSON: { "category": "...", "urgency": "...", "validation": "..." }
+            Return JSON: 
+            { 
+              "category": "...", 
+              "urgency": "...", 
+              "validation": "...",
+              "translated_title_en": "...",
+              "translated_description_en": "...",
+              "translated_title_mr": "...",
+              "translated_description_mr": "...",
+              "original_language": "..."
+            }
             `;
 
             let imagePart = null;
@@ -143,7 +167,16 @@ export const AIAnalysisService = {
             return JSON.parse(result.response.text());
         } catch (error) {
             console.error("AI Complaint Analysis Failed:", error);
-            return { category: 'Other', urgency: 'Medium', validation: 'AI Analysis Failed' };
+            return {
+                category: 'Other',
+                urgency: 'Medium',
+                validation: 'AI Analysis Failed',
+                translated_title_en: title,
+                translated_description_en: description,
+                translated_title_mr: title,
+                translated_description_mr: description,
+                original_language: 'Unknown'
+            };
         }
     },
 
@@ -220,7 +253,7 @@ export const AIAnalysisService = {
     },
 
     // 4. Dashboard Daily Briefing
-    generateDailyBriefing: async (stats: any, recentComplaints: any[]): Promise<string> => {
+    generateDailyBriefing: async (stats: any, recentComplaints: any[], language: 'en' | 'mr' = 'en'): Promise<string> => {
         try {
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const prompt = `
@@ -235,12 +268,16 @@ export const AIAnalysisService = {
             Recent Issues: ${recentComplaints.map(c => c.title).join(', ')}
             
             Goal: Highlight the most critical area to focus on today. Be inspiring but practical.
+
+            Output Language: ${language === 'mr' ? 'Marathi' : 'English'}
             `;
 
             const result = await model.generateContent(prompt);
             return result.response.text();
         } catch (error) {
-            return "Focus on clearing pending complaints and engaging with citizens today.";
+            return language === 'mr'
+                ? "आज प्रलंबित तक्रारी सोडवण्यावर आणि नागरिकांशी संवाद साधण्यावर भर द्या."
+                : "Focus on clearing pending complaints and engaging with citizens today.";
         }
     }
 };

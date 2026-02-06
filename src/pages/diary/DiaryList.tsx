@@ -22,7 +22,8 @@ const DiaryList = () => {
         meetingType: 'GB',
         status: 'Raised',
         meetingDate: new Date().toISOString().split('T')[0],
-        tags: []
+        tags: [],
+        beneficiaries: ''
     });
 
     // Delete Modal State
@@ -34,9 +35,12 @@ const DiaryList = () => {
 
     const loadEntries = async () => {
         setLoading(true);
-        const data = await DiaryService.getEntries();
-        setEntries(data);
-        setLoading(false);
+        // Simulate network delay
+        setTimeout(async () => {
+            const data = await DiaryService.getEntries();
+            setEntries(data);
+            setLoading(false);
+        }, 800);
     };
 
     const uniqueAreas = Array.from(new Set(entries.map(e => e.area).filter(Boolean)))
@@ -68,6 +72,7 @@ const DiaryList = () => {
                 department: entry.department,
                 area: entry.area,
                 status: entry.status,
+                beneficiaries: entry.beneficiaries || '',
                 response: entry.response,
                 tags: entry.tags
             });
@@ -81,6 +86,7 @@ const DiaryList = () => {
                 description: '',
                 department: '',
                 area: '',
+                beneficiaries: '',
                 response: '',
                 tags: []
             });
@@ -141,7 +147,7 @@ const DiaryList = () => {
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-slate-500">{t('diary.subtitle')}</p>
                             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                Found: {filteredEntries.length}
+                                {t('diary.found')}: {filteredEntries.length}
                             </span>
                         </div>
                     </div>
@@ -171,7 +177,7 @@ const DiaryList = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
-                            placeholder={t('diary.area') ? `Search ${t('diary.area')}...` : 'Search Area...'}
+                            placeholder={t('diary.search_area_placeholder')}
                             className="ns-input pl-10"
                             value={areaSearch}
                             onChange={(e) => {
@@ -211,11 +217,11 @@ const DiaryList = () => {
                             onChange={(e) => setFilterType(e.target.value as any)}
                         >
                             <option value="All">{t('diary.all_types')}</option>
-                            <option value="GB">General Body (GB)</option>
-                            <option value="Standing Committee">Standing Committee</option>
-                            <option value="Ward Committee">Ward Committee</option>
-                            <option value="Special GB">Special GB</option>
-                            <option value="Other">Other</option>
+                            <option value="GB">{t('diary.type_gb')}</option>
+                            <option value="Standing Committee">{t('diary.type_standing')}</option>
+                            <option value="Ward Committee">{t('diary.type_ward')}</option>
+                            <option value="Special GB">{t('diary.type_special_gb')}</option>
+                            <option value="Other">{t('diary.type_other')}</option>
                         </select>
                     </div>
                 </div>
@@ -224,7 +230,29 @@ const DiaryList = () => {
             {/* List */}
             <div className="space-y-4">
                 {loading ? (
-                    <div className="text-center py-12 text-slate-500">Loading entries...</div>
+                    <>
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="ns-card overflow-hidden">
+                                <div className="p-6">
+                                    <div className="flex justify-between items-start">
+                                        <div className="space-y-2 w-full">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+                                                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+                                            </div>
+                                            <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                            <div className="h-4 w-1/4 bg-slate-200 rounded animate-pulse" />
+                                        </div>
+                                        <div className="flex items-center gap-2 ml-4">
+                                            <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 h-4 w-full bg-slate-200 rounded animate-pulse" />
+                                    <div className="mt-2 h-4 w-2/3 bg-slate-200 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        ))}
+                    </>
                 ) : filteredEntries.length > 0 ? (
                     filteredEntries.map(entry => (
                         <div
@@ -259,6 +287,13 @@ const DiaryList = () => {
 
                                 {entry.description && (
                                     <p className={`mt-3 text-slate-600 text-sm whitespace-pre-wrap ${expandedId === entry.id ? '' : 'line-clamp-2'}`}>{entry.description}</p>
+                                )}
+
+                                {entry.beneficiaries && expandedId === entry.id && (
+                                    <div className="mt-3 flex items-center gap-2 text-sm text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 w-fit">
+                                        <CheckCircle className="w-4 h-4" />
+                                        <span className="font-semibold">{t('diary.beneficiaries')}: {entry.beneficiaries}</span>
+                                    </div>
                                 )}
 
                                 {entry.response && expandedId === entry.id && (
@@ -310,7 +345,7 @@ const DiaryList = () => {
                     <div className="ns-card w-full max-w-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-6 border-b border-slate-200/70 sticky top-0 bg-white z-10">
                             <h2 className="text-xl font-bold text-slate-900">
-                                {editingEntry ? 'Edit Diary Entry' : t('diary.new_entry_title')}
+                                {editingEntry ? t('diary.edit_entry_title') : t('diary.new_entry_title')}
                             </h2>
                             <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-6 h-6" />
@@ -335,11 +370,11 @@ const DiaryList = () => {
                                         value={formData.meetingType}
                                         onChange={e => setFormData({ ...formData, meetingType: e.target.value as MeetingType })}
                                     >
-                                        <option value="GB">General Body (GB)</option>
-                                        <option value="Standing Committee">Standing Committee</option>
-                                        <option value="Ward Committee">Ward Committee</option>
-                                        <option value="Special GB">Special GB</option>
-                                        <option value="Other">Other</option>
+                                        <option value="GB">{t('diary.type_gb')}</option>
+                                        <option value="Standing Committee">{t('diary.type_standing')}</option>
+                                        <option value="Ward Committee">{t('diary.type_ward')}</option>
+                                        <option value="Special GB">{t('diary.type_special_gb')}</option>
+                                        <option value="Other">{t('diary.type_other')}</option>
                                     </select>
                                 </div>
                             </div>
@@ -348,7 +383,7 @@ const DiaryList = () => {
                                 <label className="block text-sm font-medium text-slate-700">{t('diary.subject')}</label>
                                 <input
                                     type="text" required
-                                    placeholder="e.g. Water shortage in Ward 12"
+                                    placeholder={t('diary.subject_placeholder')}
                                     className="ns-input mt-1"
                                     value={formData.subject}
                                     onChange={e => setFormData({ ...formData, subject: e.target.value })}
@@ -366,15 +401,27 @@ const DiaryList = () => {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('diary.area') || 'Area'}</label>
-                                <input
-                                    type="text"
-                                    placeholder="e.g. Ward 12 or Colony Name"
-                                    className="ns-input mt-1"
-                                    value={formData.area}
-                                    onChange={e => setFormData({ ...formData, area: e.target.value })}
-                                />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('diary.area') || 'Area'}</label>
+                                    <input
+                                        type="text"
+                                        placeholder={t('diary.area_placeholder')}
+                                        className="ns-input mt-1"
+                                        value={formData.area}
+                                        onChange={e => setFormData({ ...formData, area: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('diary.beneficiaries') || 'People Benefited'}</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. 500+ residents"
+                                        className="ns-input mt-1"
+                                        value={formData.beneficiaries}
+                                        onChange={e => setFormData({ ...formData, beneficiaries: e.target.value })}
+                                    />
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -382,7 +429,7 @@ const DiaryList = () => {
                                     <label className="block text-sm font-medium text-slate-700">{t('diary.department')}</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. Water Supply"
+                                        placeholder={t('diary.dept_placeholder')}
                                         className="ns-input mt-1"
                                         value={formData.department}
                                         onChange={e => setFormData({ ...formData, department: e.target.value })}
@@ -395,10 +442,10 @@ const DiaryList = () => {
                                         value={formData.status}
                                         onChange={e => setFormData({ ...formData, status: e.target.value as DiaryStatus })}
                                     >
-                                        <option value="Raised">Raised</option>
-                                        <option value="In Discussion">In Discussion</option>
-                                        <option value="Resolved">Resolved</option>
-                                        <option value="Action Taken">Action Taken</option>
+                                        <option value="Raised">{t('diary.status_raised')}</option>
+                                        <option value="In Discussion">{t('diary.status_discussion')}</option>
+                                        <option value="Resolved">{t('diary.status_resolved')}</option>
+                                        <option value="Action Taken">{t('diary.status_action')}</option>
                                     </select>
                                 </div>
                             </div>
