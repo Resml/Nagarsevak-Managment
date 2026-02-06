@@ -426,14 +426,14 @@ const AppLayout = () => {
         >
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className={cn("flex items-center border-b border-slate-200/70 p-4", isCollapsed ? "justify-center" : "justify-between px-5")}>
+            <div className={cn("flex items-center border-b border-brand-700/50 p-4 bg-gradient-to-r from-brand-600 to-brand-700", isCollapsed ? "justify-center" : "justify-between px-5")}>
               {!isCollapsed && (
                 <button
                   type="button"
                   onClick={() => navigate('/')}
                   className="flex items-center gap-3 text-left overflow-hidden"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm font-black overflow-hidden relative">
+                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md font-black overflow-hidden relative border-2 border-white/20">
                     {branding?.profile_image ? (
                       <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -441,17 +441,17 @@ const AppLayout = () => {
                     )}
                   </div>
                   <div>
-                    <div className="font-display text-base font-bold leading-tight text-slate-900 whitespace-nowrap">
+                    <div className="font-display text-base font-bold leading-tight text-white whitespace-nowrap drop-shadow-sm">
                       {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
                     </div>
-                    <div className="text-xs text-slate-500 leading-tight whitespace-nowrap">
+                    <div className="text-xs text-brand-100 leading-tight whitespace-nowrap font-medium opacity-90">
                       {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
                     </div>
                   </div>
                 </button>
               )}
               {isCollapsed && (
-                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative" onClick={() => navigate('/')}>
+                <div className="h-10 w-10 shrink-0 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md font-black cursor-pointer overflow-hidden relative border-2 border-white/20" onClick={() => navigate('/')}>
                   {branding?.profile_image ? (
                     <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -461,14 +461,14 @@ const AppLayout = () => {
               )}
 
               {/* Mobile Close */}
-              <button type="button" className="md:hidden ns-btn-ghost px-2 py-2" onClick={() => setSidebarOpen(false)}>
+              <button type="button" className="md:hidden ns-btn-ghost px-2 py-2 text-white hover:bg-white/10" onClick={() => setSidebarOpen(false)}>
                 <X className="h-5 w-5" />
               </button>
 
               {/* Desktop Toggle */}
               <button
                 type="button"
-                className="hidden md:flex ns-btn-ghost px-2 py-2 text-slate-400 hover:text-slate-600"
+                className="hidden md:flex ns-btn-ghost px-2 py-2 text-brand-100 hover:text-white hover:bg-white/10"
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
               >
@@ -629,16 +629,21 @@ const AppLayout = () => {
             <div className="mx-auto max-w-7xl px-4 md:px-8 py-6 md:py-8">
 
 
-              <div className="md:hidden flex items-center mb-6">
+              <div className="md:hidden flex items-center mb-6 bg-gradient-to-r from-brand-600 to-brand-700 p-4 rounded-2xl shadow-md text-white">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="p-2 -ml-2 text-brand-100 hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <Menu className="w-6 h-6" />
                 </button>
-                <span className="ml-3 font-bold text-lg text-slate-800">
-                  {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
-                </span>
+                <div className="ml-3 flex flex-col">
+                  <span className="font-bold text-lg leading-none drop-shadow-sm">
+                    {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
+                  </span>
+                  <span className="text-xs text-brand-100 opacity-90 font-medium">
+                    {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
+                  </span>
+                </div>
               </div>
 
               <Outlet />

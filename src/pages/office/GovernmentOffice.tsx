@@ -196,7 +196,9 @@ const GovernmentOfficePage = () => {
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">{t('government_office.title')}</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">
+                        {activeTab === 'Offices' ? t('government_office.title') : t('government_office.employee_title')}
+                    </h1>
                     <p className="text-slate-500">{t('government_office.subtitle')}</p>
                 </div>
                 {activeTab === 'Offices' ? (

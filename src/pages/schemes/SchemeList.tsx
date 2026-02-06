@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import SchemeMatcher from './SchemeMatcher';
 import SchemeApplicationModal from './SchemeApplicationModal';
+import SchemeBeneficiaryList from './SchemeBeneficiaryList';
 import clsx from 'clsx';
 import { TranslatedText } from '../../components/TranslatedText';
 
@@ -30,6 +31,7 @@ const SchemeList = () => {
     const [activeCategory, setActiveCategory] = useState('All');
     const [deleteTarget, setDeleteTarget] = useState<Scheme | null>(null);
     const [applyingScheme, setApplyingScheme] = useState<Scheme | null>(null);
+    const [showApplications, setShowApplications] = useState(false);
 
     // Helper to split "English / Marathi" text based on current language
     const getLocalizedData = (text: string) => {
@@ -145,81 +147,108 @@ const SchemeList = () => {
     return (
         <div className="space-y-6">
             {/* Sticky Header Section */}
-            <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-y-6 border-b border-slate-100">
+            <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-y-4 border-b border-slate-100">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('schemes.title')}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-sm text-slate-500">{t('schemes.subtitle')}</p>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                {t('schemes.found')}: {schemesToDisplay.length}
-                            </span>
                         </div>
                     </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => {
-                                if (filteredSchemes) {
-                                    setFilteredSchemes(null);
-                                } else {
-                                    setShowMatcher(true);
-                                }
-                            }}
-                            className={filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}
-                        >
-                            {filteredSchemes ? (
-                                <>
-                                    <RefreshCw className="w-4 h-4" /> {t('schemes.show_all')}
-                                </>
-                            ) : (
-                                <>
-                                    <Sparkles className="w-4 h-4" /> {t('schemes.find_schemes')}
-                                </>
-                            )}
-                        </button>
-                        <Link
-                            to="/schemes/new"
-                            className="ns-btn-primary"
-                        >
-                            <Plus className="w-4 h-4" /> {t('schemes.add_scheme')}
-                        </Link>
-                    </div>
                 </div>
 
-                <div className="space-y-4">
-                    {/* Search Bar */}
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder={t('schemes.search_placeholder')}
-                            className="ns-input pl-10 py-3 bg-white shadow-sm"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Category Filters */}
-                    <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide">
-                        {categories.map((cat) => (
-                            <button
-                                key={cat.id}
-                                onClick={() => setActiveCategory(cat.id)}
-                                className={clsx(
-                                    "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border transition-colors",
-                                    activeCategory === cat.id
-                                        ? "bg-brand-600 text-white border-brand-600"
-                                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                )}
-                            >
-                                {cat.label}
-                            </button>
-                        ))}
-                    </div>
+                {/* Tab Navigation */}
+                <div className="flex gap-2 border-b border-slate-200">
+                    <button
+                        onClick={() => setShowApplications(false)}
+                        className={`px-6 py-3 font-semibold transition border-b-2 ${!showApplications
+                            ? 'border-brand-600 text-brand-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        {t('schemes.schemes_tab')} ({schemesToDisplay.length})
+                    </button>
+                    <button
+                        onClick={() => setShowApplications(true)}
+                        className={`px-6 py-3 font-semibold transition border-b-2 ${showApplications
+                            ? 'border-brand-600 text-brand-700'
+                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        {t('schemes.applications_tab')}
+                    </button>
                 </div>
+
+                {/* Filters - Only show for Schemes tab */}
+                {!showApplications && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            {/* Category Filters */}
+                            <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide flex-1 mr-4">
+                                {categories.map((cat) => (
+                                    <button
+                                        key={cat.id}
+                                        onClick={() => setActiveCategory(cat.id)}
+                                        className={clsx(
+                                            "px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border transition-colors",
+                                            activeCategory === cat.id
+                                                ? "bg-brand-600 text-white border-brand-600"
+                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        {cat.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => {
+                                        if (filteredSchemes) {
+                                            setFilteredSchemes(null);
+                                        } else {
+                                            setShowMatcher(true);
+                                        }
+                                    }}
+                                    className={filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}
+                                >
+                                    {filteredSchemes ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4" /> {t('schemes.show_all')}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" /> {t('schemes.find_schemes')}
+                                        </>
+                                    )}
+                                </button>
+                                <Link
+                                    to="/schemes/new"
+                                    className="ns-btn-primary"
+                                >
+                                    <Plus className="w-4 h-4" /> {t('schemes.add_scheme')}
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder={t('schemes.search_placeholder')}
+                                className="ns-input pl-10 py-3 bg-white shadow-sm"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {loading ? (
+            {showApplications ? (
+                <SchemeBeneficiaryList />
+            ) : loading ? (
                 <div className="space-y-4">
                     {[1, 2, 3, 4].map((i) => (
                         <div key={i} className="ns-card p-6">
@@ -292,7 +321,7 @@ const SchemeList = () => {
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 rounded-md transition-colors shadow-sm"
                                         >
                                             <Plus className="w-4 h-4" />
-                                            Apply
+                                            {t('schemes.apply')}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -302,7 +331,7 @@ const SchemeList = () => {
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
                                         >
                                             <Edit className="w-4 h-4" />
-                                            Edit
+                                            {t('schemes.edit')}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -312,7 +341,7 @@ const SchemeList = () => {
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                         >
                                             <Trash2 className="w-4 h-4" />
-                                            Delete
+                                            {t('schemes.delete')}
                                         </button>
                                     </div>
                                 </div>
@@ -361,9 +390,9 @@ const SchemeList = () => {
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 className="w-6 h-6 text-red-600" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900">Delete Scheme?</h3>
+                            <h3 className="text-lg font-bold text-slate-900">{t('schemes.delete_confirm_title')}</h3>
                             <p className="text-slate-500 mt-2 text-sm">
-                                Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.name}</span>? This action cannot be undone.
+                                {t('schemes.delete_confirm_msg')}
                             </p>
                         </div>
                         <div className="flex gap-3 pt-2">
@@ -371,13 +400,13 @@ const SchemeList = () => {
                                 onClick={() => setDeleteTarget(null)}
                                 className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                             <button
                                 onClick={confirmDelete}
                                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
                             >
-                                Delete
+                                {t('schemes.delete')}
                             </button>
                         </div>
                     </div>

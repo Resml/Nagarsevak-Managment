@@ -141,8 +141,36 @@ const LetterDashboard = () => {
         return matchesSearch && matchesArea && matchesDate;
     });
 
-    const generatePDF = (req: LetterRequest, returnBlob: boolean = false) => {
+    const generatePDF = async (req: LetterRequest, returnBlob: boolean = false) => {
         const doc = new jsPDF();
+
+        // 1. Fetch Letter Type Details to get the template
+        let templateContent = '';
+        try {
+            const { data, error } = await supabase
+                .from('letter_types')
+                .select('template_content')
+                .eq('name', req.type)
+                .single();
+
+            if (data?.template_content) {
+                templateContent = data.template_content;
+            }
+        } catch (err) {
+            console.error("Error fetching template", err);
+        }
+
+        // Fallback Template if DB fetch fails or is empty
+        if (!templateContent) {
+            templateContent = `This is to certify that Mr./Ms. {{name}},\nresiding at {{address}}, is a resident of Ward 12\nto the best of my knowledge.\n\nThis letter is issued upon their request for the purpose of {{purpose}}.\nI wish them all the best for their future endeavors.`;
+        }
+
+        // 2. Hydrate Template with Request Data
+        const filledContent = templateContent
+            .replace(/{{name}}/g, req.details?.name || 'Unknown')
+            .replace(/{{address}}/g, req.details?.text || 'the address provided')
+            .replace(/{{purpose}}/g, req.type)
+            .replace(/{{date}}/g, format(new Date(), 'dd/MM/yyyy'));
 
         // --- Letterhead Header (simple, official) ---
         doc.setTextColor(0, 0, 0);
@@ -166,16 +194,7 @@ const LetterDashboard = () => {
         doc.setFontSize(12);
         doc.setFont('helvetica', 'normal');
 
-        const bodyText = `
-This is to certify that Mr./Ms. ${req.details?.name || 'Unknown'},
-residing at ${req.details?.text || 'the address provided'}, is a resident of Ward 12
-to the best of my knowledge.
-
-This letter is issued upon their request for the purpose of ${req.type}.
-I wish them all the best for their future endeavors.
-        `;
-
-        const splitText = doc.splitTextToSize(bodyText, 170);
+        const splitText = doc.splitTextToSize(filledContent, 170);
         doc.text(splitText, 20, 90);
 
         // --- Signature ---
@@ -200,7 +219,14 @@ I wish them all the best for their future endeavors.
 
         if (status === 'Approved' && request) {
             try {
-                const pdfBlob = generatePDF(request, true) as Blob;
+                // Ensure generatePDF is awaited and cast strictly if needed
+                const pdfBlob = await generatePDF(request, true) as Blob;
+
+                // Validate if pdfBlob is actually a Blob (safety check)
+                if (!(pdfBlob instanceof Blob)) {
+                    throw new Error('PDF generation failed to return a valid blob');
+                }
+
                 const fileName = `letters/${id}_${Date.now()}.pdf`;
 
                 const { data, error: uploadError } = await supabase.storage
