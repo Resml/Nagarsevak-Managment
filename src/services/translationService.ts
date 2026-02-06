@@ -79,18 +79,31 @@ export const translateText = async (
     }
 
     try {
-        const params = new URLSearchParams({
-            client: "gtx",
-            sl: sourceLang,
-            tl: targetLang,
-            dt: "t",
-            q: textToTranslate
-        });
+        let response;
+        const isProduction = import.meta.env.PROD;
 
-        const googleUrl = `${API_URL}?${params.toString()}`;
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(googleUrl)}`;
+        if (isProduction) {
+            // Use Vercel Serverless Function in Production
+            const params = new URLSearchParams({
+                sl: sourceLang,
+                tl: targetLang,
+                q: textToTranslate
+            });
+            response = await fetch(`/api/translate?${params.toString()}`);
+        } else {
+            // Use CORS Proxy in Development
+            const params = new URLSearchParams({
+                client: "gtx",
+                sl: sourceLang,
+                tl: targetLang,
+                dt: "t",
+                q: textToTranslate
+            });
 
-        const response = await fetch(proxyUrl);
+            const googleUrl = `${API_URL}?${params.toString()}`;
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(googleUrl)}`;
+            response = await fetch(proxyUrl);
+        }
 
         if (!response.ok) {
             console.warn(`Translation API error: ${response.statusText}`);
