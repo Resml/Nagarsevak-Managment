@@ -21,9 +21,13 @@ const VoterProfile = () => {
         name_marathi: '',
         mobile: '',
         age: 0,
+        dob: '',
+        profession: '',
         gender: '',
         address: '',
         address_marathi: '',
+        current_address_english: '',
+        current_address_marathi: '',
         ward_no: '',
         part_no: '',
         epic_no: ''
@@ -58,6 +62,10 @@ const VoterProfile = () => {
                         address: voterData.address,
                         address_marathi: voterData.address_marathi,
                         address_english: voterData.address_english,
+                        current_address_english: voterData.current_address_english,
+                        current_address_marathi: voterData.current_address_marathi,
+                        dob: voterData.dob,
+                        profession: voterData.profession,
                         ward: voterData.ward_no,
                         booth: voterData.part_no?.toString(),
                         epicNo: voterData.epic_no,
@@ -71,9 +79,13 @@ const VoterProfile = () => {
                         name_marathi: voterData.name_marathi || '',
                         mobile: voterData.mobile || '',
                         age: voterData.age || 0,
+                        dob: voterData.dob || '',
+                        profession: voterData.profession || '',
                         gender: voterData.gender || 'M',
                         address: voterData.address || voterData.address_english || '',
                         address_marathi: voterData.address_marathi || '',
+                        current_address_english: voterData.current_address_english || '',
+                        current_address_marathi: voterData.current_address_marathi || '',
                         ward_no: voterData.ward_no || '',
                         part_no: voterData.part_no || '',
                         epic_no: voterData.epic_no || ''
@@ -157,10 +169,14 @@ const VoterProfile = () => {
                 name_marathi: editForm.name_marathi,
                 mobile: editForm.mobile ? editForm.mobile : null,
                 age: editForm.age,
+                dob: editForm.dob ? editForm.dob : null,
+                profession: editForm.profession,
                 gender: editForm.gender,
                 address: editForm.address,
                 address_english: editForm.address,
                 address_marathi: editForm.address_marathi,
+                current_address_english: editForm.current_address_english,
+                current_address_marathi: editForm.current_address_marathi,
                 ward_no: editForm.ward_no,
                 part_no: editForm.part_no,
                 epic_no: editForm.epic_no
@@ -244,7 +260,7 @@ const VoterProfile = () => {
                             className="flex flex-col items-center text-slate-500 hover:text-brand-700 px-3"
                         >
                             <Edit2 className="w-5 h-5 mb-0.5" />
-                            <span className="text-xs font-medium">Edit</span>
+                            <span className="text-xs font-medium">{t('voter_profile.edit')}</span>
                         </button>
                         <button
                             onClick={() => navigate('/complaints/new', { state: { voterId: voter.id, voterName: getDisplayName(voter) } })}
@@ -275,7 +291,7 @@ const VoterProfile = () => {
                                     onClick={() => setIsEditing(true)}
                                     className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
                                 >
-                                    + Add Mobile Number
+                                    {t('voter_profile.add_mobile')}
                                 </button>
                             )}
                         </div>
@@ -334,7 +350,7 @@ const VoterProfile = () => {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl w-full max-w-2xl p-6 shadow-xl max-h-[90vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-lg font-bold text-gray-900">Edit Voter Details</h3>
+                            <h3 className="text-lg font-bold text-gray-900">{t('voter_profile.edit_title')}</h3>
                             <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
                             </button>
@@ -343,7 +359,7 @@ const VoterProfile = () => {
                             {/* Personal Info */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Name (English)</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.name_english')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -352,7 +368,7 @@ const VoterProfile = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Name (Marathi)</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.name_marathi')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -362,9 +378,30 @@ const VoterProfile = () => {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.dob')}</label>
+                                    <input
+                                        type="date"
+                                        className="ns-input mt-1"
+                                        value={editForm.dob}
+                                        onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.profession')}</label>
+                                    <input
+                                        type="text"
+                                        className="ns-input mt-1"
+                                        value={editForm.profession}
+                                        onChange={e => setEditForm({ ...editForm, profession: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Age</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.age')}</label>
                                     <input
                                         type="number"
                                         className="ns-input mt-1"
@@ -373,21 +410,21 @@ const VoterProfile = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Gender</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.gender')}</label>
                                     <select
                                         className="ns-input mt-1"
                                         value={editForm.gender}
                                         onChange={e => setEditForm({ ...editForm, gender: e.target.value })}
                                     >
-                                        <option value="M">Male</option>
-                                        <option value="F">Female</option>
-                                        <option value="O">Other</option>
+                                        <option value="M">{t('voter_profile.male')}</option>
+                                        <option value="F">{t('voter_profile.female')}</option>
+                                        <option value="O">{t('voter_profile.other')}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('voter_profile.mobile_form')}</label>
                                 <input
                                     type="tel"
                                     className="ns-input mt-1"
@@ -399,7 +436,7 @@ const VoterProfile = () => {
 
                             {/* Location Info */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Address (English)</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('voter_profile.address_english')}</label>
                                 <textarea
                                     className="ns-input mt-1"
                                     rows={2}
@@ -408,7 +445,7 @@ const VoterProfile = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Address (Marathi)</label>
+                                <label className="block text-sm font-medium text-gray-700">{t('voter_profile.address_marathi')}</label>
                                 <textarea
                                     className="ns-input mt-1"
                                     rows={2}
@@ -417,9 +454,28 @@ const VoterProfile = () => {
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">{t('voter_profile.current_address_english')}</label>
+                                <textarea
+                                    className="ns-input mt-1"
+                                    rows={2}
+                                    value={editForm.current_address_english}
+                                    onChange={e => setEditForm({ ...editForm, current_address_english: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">{t('voter_profile.current_address_marathi')}</label>
+                                <textarea
+                                    className="ns-input mt-1"
+                                    rows={2}
+                                    value={editForm.current_address_marathi}
+                                    onChange={e => setEditForm({ ...editForm, current_address_marathi: e.target.value })}
+                                />
+                            </div>
+
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Ward No</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.ward_no')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -428,7 +484,7 @@ const VoterProfile = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Part/Booth</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.part_no')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -437,7 +493,7 @@ const VoterProfile = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">EPIC No</label>
+                                    <label className="block text-sm font-medium text-gray-700">{t('voter_profile.epic_no')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -452,14 +508,14 @@ const VoterProfile = () => {
                                     onClick={() => setIsEditing(false)}
                                     className="ns-btn-ghost"
                                 >
-                                    Cancel
+                                    {t('voter_profile.cancel')}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSaving}
                                     className="ns-btn-primary"
                                 >
-                                    {isSaving ? 'Saving...' : 'Save Changes'}
+                                    {isSaving ? t('voter_profile.saving') : t('voter_profile.save_changes')}
                                 </button>
                             </div>
                         </form>

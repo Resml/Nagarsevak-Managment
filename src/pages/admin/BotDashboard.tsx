@@ -17,16 +17,19 @@ const BotDashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Initial simulated loading
-        setTimeout(() => setLoading(false), 1000);
+        if (!tenantId) return;
 
-        const socket = io(SOCKET_URL, {
-            query: { tenantIds: tenantId } // Passing tenant context
-        });
+        // Initial simulated loading
+        // setTimeout(() => setLoading(false), 1000);
+
+        const socket = io(SOCKET_URL);
 
         socket.on('connect', () => {
             console.log('Connected to Bot Server');
-            setStatus('connected_to_server');
+            // Join the specific tenant room
+            socket.emit('join_tenant', { tenantId });
+            // Request to start session if not exists
+            socket.emit('start_session', { tenantId });
         });
 
         socket.on('disconnect', () => {
@@ -37,11 +40,13 @@ const BotDashboard = () => {
         socket.on('status', (newStatus) => {
             console.log('Bot Status:', newStatus);
             setStatus(newStatus);
+            setLoading(false); // Stop loading when we get status
         });
 
         socket.on('qr', (qr) => {
             console.log('QR Received');
             setQrCode(qr);
+            setLoading(false);
         });
 
         return () => {

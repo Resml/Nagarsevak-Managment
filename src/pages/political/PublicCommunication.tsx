@@ -235,7 +235,7 @@ const PublicCommunication = () => {
 
         } else {
             console.warn('Bot not connected. Logging payload:', { numbers, message });
-            toast.warning('Bot not connected. Check Bot Dashboard. Action logged to console.');
+            toast.warning(t('communication_page.bot_not_connected_warning'));
             setSending(false);
         }
     };
@@ -279,7 +279,7 @@ const PublicCommunication = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                             type="text"
-                            placeholder={t('voters.search_placeholder') || "Search Name"}
+                            placeholder={t('communication_page.search_placeholder')}
                             value={nameFilter}
                             onChange={(e) => setNameFilter(e.target.value)}
                             className="ns-input pl-9 w-full text-sm"
@@ -419,7 +419,7 @@ const PublicCommunication = () => {
                                         className="w-full py-3 text-sm font-medium text-brand-600 hover:bg-brand-50 rounded-lg flex items-center justify-center gap-2"
                                     >
                                         {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        {t('communication_page.load_more')} ({totalCount - voters.length} remaining)
+                                        {t('communication_page.load_more')} ({totalCount - voters.length} {t('communication_page.remaining')})
                                     </button>
                                 )}
                             </div>

@@ -71,6 +71,7 @@ function SidebarNavItem({
   end,
   isCollapsed,
   itemRef,
+  className,
 }: {
   to: string;
   icon: LucideIcon;
@@ -79,6 +80,7 @@ function SidebarNavItem({
   end?: boolean;
   isCollapsed?: boolean;
   itemRef?: (el: HTMLAnchorElement | null) => void;
+  className?: string;
 }) {
   return (
     <NavLink
@@ -89,11 +91,12 @@ function SidebarNavItem({
       title={isCollapsed ? label : undefined}
       className={({ isActive }) =>
         cn(
-          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all relative',
+          'group flex items-center gap-3 rounded-xl px-3 py-2 text-base font-bold transition-all relative',
           isActive
-            ? 'bg-brand-50 text-brand-800 shadow-sm ring-1 ring-brand-100'
-            : 'text-slate-700 hover:bg-slate-100',
-          isCollapsed && 'justify-center px-2'
+            ? 'bg-brand-50 text-brand-900 shadow-sm ring-1 ring-brand-100'
+            : 'text-slate-900 hover:bg-slate-100',
+          isCollapsed && 'justify-center px-2',
+          className
         )
       }
     >
@@ -121,6 +124,7 @@ function SidebarNavGroup({
   onToggle,
   children,
   isCollapsed,
+  className,
 }: {
   label: string;
   icon: LucideIcon;
@@ -128,6 +132,7 @@ function SidebarNavGroup({
   onToggle: () => void;
   children: ReactNode;
   isCollapsed?: boolean;
+  className?: string;
 }) {
   return (
     <div className="space-y-1">
@@ -136,8 +141,9 @@ function SidebarNavGroup({
         onClick={onToggle}
         title={isCollapsed ? label : undefined}
         className={cn(
-          "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-800 hover:bg-slate-100 transition",
-          isCollapsed && "justify-center px-2"
+          "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-base font-bold text-slate-900 hover:bg-slate-100 transition",
+          isCollapsed && "justify-center px-2",
+          className
         )}
       >
         <span className="flex items-center gap-3">
@@ -490,6 +496,11 @@ const AppLayout = () => {
                 if (entry.kind === 'group') {
                   const visibleItems = entry.items.filter((i) => i.show !== false);
                   if (visibleItems.length === 0) return null;
+
+                  // Groups that should have the highlighted background
+                  const highlightedGroups = ['daily_work', 'ward_info', 'municipal', 'media', 'programs', 'political'];
+                  const isHighlighted = highlightedGroups.includes(entry.id);
+
                   return (
                     <SidebarNavGroup
                       key={entry.id}
@@ -498,6 +509,7 @@ const AppLayout = () => {
                       isOpen={!!openGroups[entry.id]}
                       onToggle={() => setOpenGroups((p) => ({ ...p, [entry.id]: !p[entry.id] }))}
                       isCollapsed={isCollapsed}
+                      className={isHighlighted ? 'bg-brand-600 text-white shadow-md ring-1 ring-brand-700 mb-1 hover:bg-brand-600' : ''}
                     >
                       {visibleItems.map((item) => (
                         <SidebarNavItem
@@ -521,6 +533,10 @@ const AppLayout = () => {
                 // If it's a single item
                 else {
                   if (entry.show === false) return null;
+
+                  // Items that should have the highlighted background
+                  const isHighlighted = entry.to === '/analysis-strategy';
+
                   return (
                     <SidebarNavItem
                       key={entry.to}
@@ -530,6 +546,7 @@ const AppLayout = () => {
                       onNavigate={onNavigate}
                       end={entry.end}
                       isCollapsed={isCollapsed}
+                      className={isHighlighted ? 'bg-brand-600 text-white shadow-md ring-1 ring-brand-700 mb-1 hover:bg-brand-600 hover:text-white' : ''}
                       itemRef={(el) => {
                         const isActive = entry.end
                           ? location.pathname === entry.to

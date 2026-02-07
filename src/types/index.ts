@@ -62,6 +62,10 @@ export interface Voter {
   booth: string;
   epicNo: string; // Voter ID Card Number
   mobile?: string;
+  dob?: string;
+  profession?: string;
+  current_address_english?: string;
+  current_address_marathi?: string;
   houseNo?: string;
   caste?: string;
   is_friend_relative?: boolean;
