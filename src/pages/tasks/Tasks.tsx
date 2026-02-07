@@ -6,9 +6,11 @@ import { AIAnalysisService } from '../../services/aiService';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 const Tasks = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [tasks, setTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -41,6 +43,7 @@ const Tasks = () => {
                 const { data, error } = await supabase
                     .from('tasks')
                     .select('*')
+                    .eq('tenant_id', tenantId) // Secured
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -55,7 +58,8 @@ const Tasks = () => {
     };
 
     const fetchStaff = async () => {
-        const { data } = await supabase.from('users').select('id, full_name').eq('role', 'staff');
+        // Changed from 'users' to 'staff' for consistency and tenant isolation
+        const { data } = await supabase.from('staff').select('id, name').eq('tenant_id', tenantId);
         setStaffList(data || []);
     };
 
@@ -91,7 +95,7 @@ const Tasks = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { error } = await supabase.from('tasks').insert([newTask]);
+            const { error } = await supabase.from('tasks').insert([{ ...newTask, tenant_id: tenantId }]); // Secured
             if (error) throw error;
 
             setShowForm(false);

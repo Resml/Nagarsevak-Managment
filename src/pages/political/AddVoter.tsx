@@ -4,10 +4,12 @@ import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import { toast } from 'sonner';
+import { useTenant } from '../../context/TenantContext';
 
 const AddVoter = () => {
     const { t } = useLanguage();
     const navigate = useNavigate();
+    const { tenantId } = useTenant();
     const [loading, setLoading] = useState(false);
 
     const [formData, setFormData] = useState({
@@ -49,7 +51,8 @@ const AddVoter = () => {
                     age: parseInt(formData.age),
                     ac_no: formData.ac_no ? parseInt(formData.ac_no) : null,
                     part_no: formData.part_no ? parseInt(formData.part_no) : null,
-                    new_serial_no: formData.serial_no ? parseInt(formData.serial_no) : null
+                    new_serial_no: formData.serial_no ? parseInt(formData.serial_no) : null,
+                    tenant_id: tenantId // Secured
                 }]);
 
             if (error) throw error;

@@ -6,9 +6,11 @@ import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wren
 import StaffProfile from './StaffProfile';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 const StaffList = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -53,6 +55,7 @@ const StaffList = () => {
             const { data, error } = await supabase
                 .from('staff')
                 .select('*')
+                .eq('tenant_id', tenantId) // Secured
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -87,7 +90,8 @@ const StaffList = () => {
                         area: formData.area,
                         keywords: keywordsArray
                     })
-                    .eq('id', editingStaffId);
+                    .eq('id', editingStaffId)
+                    .eq('tenant_id', tenantId); // Secured
                 if (error) throw error;
                 toast.success('Staff updated successfully');
             } else {
@@ -100,7 +104,8 @@ const StaffList = () => {
                         role: formData.role,
                         category: formData.category,
                         area: formData.area,
-                        keywords: keywordsArray
+                        keywords: keywordsArray,
+                        tenant_id: tenantId // Secured
                     }]);
                 if (error) throw error;
                 toast.success(t('staff.list.success_add'));
@@ -142,7 +147,7 @@ const StaffList = () => {
     const confirmDelete = async () => {
         if (!deleteTarget) return;
         try {
-            const { error } = await supabase.from('staff').delete().eq('id', deleteTarget.id);
+            const { error } = await supabase.from('staff').delete().eq('id', deleteTarget.id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success('Staff deleted successfully');
             setDeleteTarget(null);

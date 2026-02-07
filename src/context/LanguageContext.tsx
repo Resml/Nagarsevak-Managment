@@ -5,7 +5,7 @@ import { translations, type Language } from '../utils/translations';
 interface LanguageContextType {
     language: Language;
     setLanguage: (lang: Language) => void;
-    t: (key: string) => string;
+    t: (key: string, params?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -39,28 +39,53 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         localStorage.setItem('ns_language', lang);
     };
 
-    // Translation function: supports nested keys like 'common.welcome'
-    const t = (key: string): string => {
+    // Translation function: supports nested keys like 'common.welcome' and interpolation {{key}}
+    const t = (key: string, params?: Record<string, string | number>): string => {
         const keys = key.split('.');
         let current: any = translations[language];
+        let result = key;
 
+        let found = true;
+
+        // Try finding in current language
         for (const k of keys) {
             if (current && current[k]) {
                 current = current[k];
             } else {
-                // Fallback to English if missing
-                let fallback: any = translations['en'];
-                for (const fk of keys) {
-                    if (fallback && fallback[fk]) {
-                        fallback = fallback[fk];
-                    } else {
-                        return key; // Return key if not found
-                    }
-                }
-                return fallback || key;
+                found = false;
+                break;
             }
         }
-        return current as string;
+
+        // If not found or not a string, try fallback
+        if (!found || typeof current !== 'string') {
+            let fallback: any = translations['en'];
+            let fallbackFound = true;
+            for (const k of keys) {
+                if (fallback && fallback[k]) {
+                    fallback = fallback[k];
+                } else {
+                    fallbackFound = false;
+                    break;
+                }
+            }
+            if (fallbackFound && typeof fallback === 'string') {
+                result = fallback;
+            } else {
+                return key; // Return key if absolutely not found
+            }
+        } else {
+            result = current as string;
+        }
+
+        // Interpolation
+        if (params) {
+            Object.entries(params).forEach(([paramKey, paramValue]) => {
+                result = result.replace(new RegExp(`{{${paramKey}}}`, 'g'), String(paramValue));
+            });
+        }
+
+        return result;
     };
 
     return (

@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 interface Event {
     id: string;
@@ -34,6 +35,7 @@ const EventDetail = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
 
     const [event, setEvent] = useState<Event | null>(null);
     const [loading, setLoading] = useState(true);
@@ -74,6 +76,7 @@ const EventDetail = () => {
                 .from('events')
                 .select('*')
                 .eq('id', id)
+                .eq('tenant_id', tenantId) // Secured
                 .single();
 
             if (error) throw error;
@@ -108,7 +111,8 @@ const EventDetail = () => {
                     response_source,
                     voter:voters (name_english, name_marathi, mobile)
                 `)
-                .eq('event_id', id);
+                .eq('event_id', id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) {
                 console.warn("Could not fetch RSVPs, likely table missing", error);
@@ -136,7 +140,7 @@ const EventDetail = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            const { error } = await supabase.from('events').delete().eq('id', id);
+            const { error } = await supabase.from('events').delete().eq('id', id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success(t('events.delete_success'));
             navigate('/events');
@@ -166,7 +170,8 @@ const EventDetail = () => {
                     status: editForm.status,
                     area: editForm.area
                 })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
 

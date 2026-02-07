@@ -1,13 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 const LetterForm = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
+
     const [loading, setLoading] = useState(false);
     const [types, setTypes] = useState<{ name: string }[]>([]);
     const [formData, setFormData] = useState({
@@ -66,7 +70,8 @@ const LetterForm = () => {
                         purpose: formData.purpose,
                         mobile: formData.mobile
                     },
-                    status: 'Pending'
+                    status: 'Pending',
+                    tenant_id: tenantId
                 }]);
 
             if (error) throw error;

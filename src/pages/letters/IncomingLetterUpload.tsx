@@ -3,6 +3,7 @@ import { Upload, X, FileText, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 interface IncomingLetterUploadProps {
     onClose: () => void;
@@ -11,6 +12,7 @@ interface IncomingLetterUploadProps {
 
 const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps) => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [area, setArea] = useState('');
@@ -103,7 +105,8 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                     description: finalDescription,
                     area: area || null,
                     scanned_file_url: publicUrl,
-                    file_type: file.type
+                    file_type: file.type,
+                    tenant_id: tenantId
                 });
 
             if (dbError) throw dbError;

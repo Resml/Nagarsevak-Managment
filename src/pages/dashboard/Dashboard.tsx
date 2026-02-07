@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext'; // Added useTenant
 import {
     Users,
     CheckCircle,
@@ -22,6 +23,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 const Dashboard = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         total: 0,
@@ -45,7 +47,7 @@ const Dashboard = () => {
         // Realtime Subscription for Complaints
         const subscription = supabase
             .channel('dashboard-realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchDashboardData(); // Refresh on any change
             })
             .subscribe();
@@ -53,14 +55,14 @@ const Dashboard = () => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [tenantId]);
 
     const fetchDashboardData = async () => {
         try {
             // Parallel Fetch
             const [complaintsRes, votersRes] = await Promise.all([
-                supabase.from('complaints').select('*'),
-                supabase.from('voters').select('id', { count: 'exact', head: true })
+                supabase.from('complaints').select('*').eq('tenant_id', tenantId), // Secured
+                supabase.from('voters').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId) // Secured
             ]);
 
             const allComplaints = complaintsRes.data || [];

@@ -3,9 +3,12 @@ import { PieChart, Users, CheckCircle, XCircle } from 'lucide-react';
 import { ResultService } from '../../services/resultService';
 import { type ElectionResult } from '../../types';
 
+import { useLanguage } from '../../context/LanguageContext';
+
 const CANDIDATE_NAME = "Mamit Chougale";
 
 const ResultAnalysis = () => {
+    const { t } = useLanguage();
     const [ward, setWard] = useState('Prabhag 5 A');
     const [results, setResults] = useState<ElectionResult[]>([]);
     const [loading, setLoading] = useState(true);
@@ -96,13 +99,13 @@ const ResultAnalysis = () => {
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">निवडणूक निकाल</h1>
-                        <p className="text-slate-600">Performance report for <span className="font-semibold text-brand-700">{selectedCandidate}</span></p>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('election.title')}</h1>
+                        <p className="text-slate-600">{t('election.performance_report')} <span className="font-semibold text-brand-700">{selectedCandidate}</span></p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
-                            <span className="text-sm font-medium text-slate-500 ml-1">Ward:</span>
+                            <span className="text-sm font-medium text-slate-500 ml-1">{t('voters.ward')}:</span>
                             <select
                                 className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 max-w-[120px]"
                                 value={ward}
@@ -116,7 +119,7 @@ const ResultAnalysis = () => {
                         </div>
 
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
-                            <span className="text-sm font-medium text-slate-500 ml-1">Analyze for:</span>
+                            <span className="text-sm font-medium text-slate-500 ml-1">{t('election.analyze_for')}</span>
                             <select
                                 className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 max-w-[200px]"
                                 value={selectedCandidate}
@@ -135,16 +138,16 @@ const ResultAnalysis = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-slate-500 text-sm">Total Votes</span>
+                        <span className="text-slate-500 text-sm">{t('election.total_votes')}</span>
                         <Users className="w-5 h-5 text-blue-500" />
                     </div>
 
                     <p className="text-2xl font-bold text-slate-900 tabular-nums">{ourVotes.toLocaleString()}</p>
-                    <p className="text-xs text-slate-500">out of {totalVotes.toLocaleString()} cast</p>
+                    <p className="text-xs text-slate-500">{t('election.votes_cast').replace('{{total}}', totalVotes.toLocaleString())}</p>
                 </div>
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-slate-500 text-sm">Vote share</span>
+                        <span className="text-slate-500 text-sm">{t('election.vote_share')}</span>
                         <PieChart className="w-5 h-5 text-purple-500" />
                     </div>
                     <p className="text-2xl font-bold text-slate-900 tabular-nums">{voteShare.toFixed(1)}%</p>
@@ -154,40 +157,40 @@ const ResultAnalysis = () => {
                 </div>
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-slate-500 text-sm">Winning booths</span>
+                        <span className="text-slate-500 text-sm">{t('election.winning_booths')}</span>
                         <CheckCircle className="w-5 h-5 text-green-500" />
                     </div>
                     <p className="text-2xl font-bold text-green-600">{winningBooths}</p>
-                    <p className="text-xs text-slate-500">Strongholds</p>
+                    <p className="text-xs text-slate-500">{t('election.strongholds')}</p>
                 </div>
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
-                        <span className="text-slate-500 text-sm">Losing booths</span>
+                        <span className="text-slate-500 text-sm">{t('election.losing_booths')}</span>
                         <XCircle className="w-5 h-5 text-red-500" />
                     </div>
                     <p className="text-2xl font-bold text-red-600">{losingBooths}</p>
-                    <p className="text-xs text-slate-500">Needs improvement</p>
+                    <p className="text-xs text-slate-500">{t('election.needs_improvement')}</p>
                 </div>
             </div>
 
             {/* Detailed Table */}
             <div className="ns-card overflow-hidden">
                 <div className="p-6 border-b border-slate-200/70">
-                    <h2 className="text-lg font-semibold text-slate-900">Booth-wise performance</h2>
+                    <h2 className="text-lg font-semibold text-slate-900">{t('election.booth_performance')}</h2>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200/70">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">Booth No</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">{t('election.booth_no')}</th>
                                 {sortedResults.length > 0 && Object.keys(sortedResults[0].candidateVotes).map(candidate => (
                                     <th key={candidate} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">
                                         <span className="line-clamp-2" title={candidate}>{candidate}</span>
                                     </th>
                                 ))}
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Winner</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Margin</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.total')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.winner')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.margin')}</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200/70">

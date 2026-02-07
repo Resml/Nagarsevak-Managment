@@ -533,6 +533,23 @@ export const translations = {
             status_action: "Action Taken",
             edit_entry_title: "Edit Diary Entry"
         },
+        election: {
+            title: "Election Result",
+            total: "Total",
+            winner: "Winner",
+            margin: "Margin",
+            booth_performance: "Booth-wise performance",
+            booth_no: "Booth No",
+            performance_report: "Performance report for",
+            analyze_for: "Analyze for",
+            total_votes: "Total Votes",
+            votes_cast: "out of {{total}} cast",
+            vote_share: "Vote Share",
+            winning_booths: "Winning Booths",
+            strongholds: "Strongholds",
+            losing_booths: "Losing Booths",
+            needs_improvement: "Needs Improvement"
+        },
         office: {
             visitor_log: "Visitor Log",
             visitor_subtitle: "Track daily citizen visits",
@@ -1074,8 +1091,30 @@ export const translations = {
                 actions: "Actions"
             },
             found: "Found",
-            of: "of"
+            of: "of",
         },
+        communication_page: {
+            title: "Jan-Samvad (Public Communication)",
+            subtitle: "Filter voters and broadcast messages via WhatsApp or SMS.",
+            bot_connected: "Bot Connected",
+            bot_disconnected: "Bot Disconnected",
+            select_all_visible: "Select All Visible",
+            total_records: "Total Records",
+            selected: "Selected",
+            no_voters: "No voters found matching filters",
+            mobile_available: "Mobile Available",
+            load_more: "Load More",
+            compose_message: "Compose Message",
+            message_placeholder: "Type your message here...",
+            send_whatsapp: "Send via WhatsApp Bot",
+            send_sms: "Send via SMS (Simulated)",
+            note_mobile: "Note: Requires valid mobile numbers linked to voter records.",
+            error_select_voter: "Please select at least one voter",
+            error_enter_message: "Please enter a message",
+            error_no_mobile: "Selected voters do not have valid mobile numbers.",
+            success_queued: "Message queued for {{count}} voters via WhatsApp Bot",
+            success_sms: "SMS Simulation: Sent to {{count}} voters."
+        }
 
     },
     mr: {
@@ -1267,12 +1306,12 @@ export const translations = {
             ai_content: "AI कंटेंट स्टुडिओ",
             sample_surveys: "सर्वेक्षणे",
             ward_budget: "अंदाजपत्रक",
-            ward_improvement: "सुधारणा सुचवा",
+            ward_improvement: "संभाव्य सुधारणा",
             ward_provision: "प्रभागनिहाय तरतूद",
             ward_problem: "प्रभाग समस्या",
             result_analysis: "निवडणूक निकाल",
             // New Navigation Items
-            daily_work: "दैनंदिन कामकाज",
+            daily_work: "दैनंदिनी कामकाज",
             ward_info: "प्रभाग माहिती",
             municipal_work: "मनपा कामकाज",
             gov_office: "शासकीय कार्यालय",
@@ -1628,6 +1667,23 @@ export const translations = {
             status_resolved: "सोडवले",
             status_action: "कार्यवाही केली",
             edit_entry_title: "नोंद संपादित करा"
+        },
+        election: {
+            title: "निवडणूक निकाल",
+            total: "एकूण",
+            winner: "विजयी",
+            margin: "मताधिक्य",
+            booth_performance: "केंद्रा निहाय कामगिरी",
+            booth_no: "केंद्र क्र.",
+            performance_report: "कामगिरी अहवाल:",
+            analyze_for: "विश्लेषण करा:",
+            total_votes: "एकूण मते",
+            votes_cast: "{{total}} पैकी",
+            vote_share: "मत वाटा",
+            winning_booths: "विजयी बूथ",
+            strongholds: "बालेकिल्ले",
+            losing_booths: "पराभूत बूथ",
+            needs_improvement: "सुधारणेची गरज"
         },
         office: {
             visitor_log: "भेट देणारे (व्हिजिटर लॉग)",
@@ -2578,7 +2634,29 @@ export const translations = {
             option: "विकल्प",
             publish: "सर्वेक्षण प्रकाशित करें",
             found: "सापडले",
-            of: "एकूण"
+            of: "एकूण",
+        },
+        communication_page: {
+            title: "जनसंवाद (Public Communication)",
+            subtitle: "मतदारांना फिल्टर करा आणि व्हॉट्सअॅप किंवा एसएमएसद्वारे संदेश पाठवा.",
+            bot_connected: "बॉट कनेक्टेड आहे",
+            bot_disconnected: "बॉट डिस्कनेक्ट झाला",
+            select_all_visible: "सर्व निवडा",
+            total_records: "एकूण रेकॉर्ड",
+            selected: "निवडले",
+            no_voters: "फिल्टरशी जुळणारे मतदार सापडले नाहीत",
+            mobile_available: "मोबाईल उपलब्ध",
+            load_more: "आणखी लोड करा",
+            compose_message: "संदेश लिहा",
+            message_placeholder: "येथे तुमचा संदेश टाईप करा...",
+            send_whatsapp: "व्हॉट्सअॅप बॉटद्वारे पाठवा",
+            send_sms: "एसएमएसद्वारे पाठवा (सिम्युलेटेड)",
+            note_mobile: "टीप: मतदार रेकॉर्डशी लिंक केलेले वैध मोबाईल नंबर आवश्यक आहेत.",
+            error_select_voter: "कृपया किमान एक मतदार निवडा",
+            error_enter_message: "कृपया संदेश प्रविष्ट करा",
+            error_no_mobile: "निवडलेल्या मतदारांकडे वैध मोबाईल नंबर नाहीत.",
+            success_queued: "व्हॉट्सअॅप बॉटद्वारे {{count}} मतदारांसाठी संदेश रांगेत लावला",
+            success_sms: "एसएमएस सिम्युलेशन: {{count}} मतदारांना पाठवले."
         }
     }
 };

@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { type User } from '../types';
-import { MockService } from '../services/mockData';
+import { supabase } from '../services/supabaseClient';
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string) => Promise<boolean>;
-    logout: () => void;
+    login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    logout: () => Promise<void>;
     isLoading: boolean;
 }
 
@@ -16,34 +16,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Initialize mock data on first load
-        MockService.init();
+        // Check active session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setUser({
+                    id: session.user.id,
+                    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                    email: session.user.email || '',
+                    role: 'admin', // Defaulting to admin for now, ideally fetch from mapping
+                    permissions: []
+                });
+            }
+            setIsLoading(false);
+        });
 
-        // Check for existing session
-        const currentUser = MockService.getCurrentUser();
-        if (currentUser) {
-            setUser(currentUser);
-        }
-        setIsLoading(false);
+        // Listen for changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                setUser({
+                    id: session.user.id,
+                    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                    email: session.user.email || '',
+                    role: 'admin',
+                    permissions: []
+                });
+            } else {
+                setUser(null);
+            }
+            setIsLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
-    const login = async (email: string) => {
+    const login = async (email: string, password: string) => {
         setIsLoading(true);
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        const user = MockService.login(email);
-        if (user) {
-            setUser(user);
+            if (error) {
+                return { success: false, error: error.message };
+            }
+
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: 'An unexpected error occurred' };
+        } finally {
             setIsLoading(false);
-            return true;
         }
-        setIsLoading(false);
-        return false;
     };
 
-    const logout = () => {
-        MockService.logout();
+    const logout = async () => {
+        await supabase.auth.signOut();
         setUser(null);
     };
 

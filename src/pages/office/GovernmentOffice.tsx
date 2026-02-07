@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { GovernmentService, type GovernmentOffice } from '../../services/governmentService';
 import { Search, MapPin, Phone, User, Building2, ExternalLink, X, Wrench, Briefcase, Plus, Trash2, Edit2, Tag } from 'lucide-react';
@@ -10,6 +11,7 @@ import clsx from 'clsx';
 
 const GovernmentOfficePage = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const [activeTab, setActiveTab] = useState<'Offices' | 'Cooperative'>('Offices');
 
     // Offices State
@@ -66,6 +68,7 @@ const GovernmentOfficePage = () => {
                 .from('staff')
                 .select('*')
                 .eq('category', 'Cooperative')
+                .eq('tenant_id', tenantId) // Secured
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -123,7 +126,8 @@ const GovernmentOfficePage = () => {
                         area: staffFormData.area,
                         keywords: keywordsArray
                     })
-                    .eq('id', editingStaffId);
+                    .eq('id', editingStaffId)
+                    .eq('tenant_id', tenantId); // Secured
                 if (error) throw error;
                 toast.success('Worker updated successfully');
             } else {
@@ -135,7 +139,8 @@ const GovernmentOfficePage = () => {
                         role: staffFormData.role,
                         category: 'Cooperative',
                         area: staffFormData.area,
-                        keywords: keywordsArray
+                        keywords: keywordsArray,
+                        tenant_id: tenantId // Secured
                     }]);
                 if (error) throw error;
                 toast.success(t('staff.list.success_add'));
@@ -168,7 +173,7 @@ const GovernmentOfficePage = () => {
     const confirmDeleteStaff = async () => {
         if (!deleteTarget) return;
         try {
-            const { error } = await supabase.from('staff').delete().eq('id', deleteTarget.id);
+            const { error } = await supabase.from('staff').delete().eq('id', deleteTarget.id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success('Worker deleted successfully');
             setDeleteTarget(null);

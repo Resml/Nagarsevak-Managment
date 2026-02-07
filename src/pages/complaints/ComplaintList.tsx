@@ -6,10 +6,12 @@ import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 
 const ComplaintList = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
@@ -40,6 +42,7 @@ const ComplaintList = () => {
                         mobile
                     )
                 `)
+                .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (error) {
@@ -114,15 +117,16 @@ const ComplaintList = () => {
         fetchComplaints();
 
         // Real-time Subscription
+        // Real-time Subscription
         const subscription = supabase
             .channel('complaints_channel')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'complaints' }, () => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'complaints' }, () => {
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'complaints' }, () => {
+            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .subscribe();
@@ -130,7 +134,7 @@ const ComplaintList = () => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [tenantId]);
 
     // Unique Areas with Counts
     const uniqueAreas = Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {

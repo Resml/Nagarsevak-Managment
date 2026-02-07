@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, PieChart, TrendingUp, Plus, Edit2, Save, X, Calendar, Search } from 'lucide-react';
+import { Plus, Search, Filter, AlertTriangle, TrendingUp, IndianRupee, Wallet, PieChart, Edit2, Save, X, Calendar } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { BudgetService } from '../../services/budgetService';
 import { type BudgetRecord } from '../../types';
 import { toast } from 'sonner';
 
 const BudgetDashboard = () => {
-    const { t } = useLanguage();
-    const [year, setYear] = useState('2024-2025');
+    const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
+    const [stats, setStats] = useState({
+        total: 0,
+        utilized: 0,
+        remaining: 0,
+        percentage: 0
+    });
     const [budgets, setBudgets] = useState<BudgetRecord[]>([]);
+    const [year, setYear] = useState('2024-2025');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -43,43 +51,54 @@ const BudgetDashboard = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [year]);
+    }, [year, tenantId]);
 
     const loadBudgets = async () => {
         setLoading(true);
-        // Simulate network delay to show skeleton
-        setTimeout(async () => {
-            try {
-                const data = await BudgetService.getBudgets(year);
-                setBudgets(data);
-            } catch (error) {
-                console.error(error);
-                toast.error('Failed to load budget data');
-            } finally {
-                setLoading(false);
-            }
-        }, 800);
+        if (!tenantId) {
+            setLoading(false);
+            return;
+        }
+        try {
+            const data = await BudgetService.getBudgets(year, tenantId);
+            setBudgets(data);
+
+            const total = data.reduce((sum, b) => sum + b.totalAllocation, 0);
+            const utilized = data.reduce((sum, b) => sum + b.utilizedAmount, 0);
+
+            setStats({
+                total,
+                utilized,
+                remaining: total - utilized,
+                percentage: total > 0 ? (utilized / total) * 100 : 0
+            });
+        } catch (error) {
+            console.error(error);
+            toast.error(t('error.fetch_failed') || 'Failed to fetch budget data');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!tenantId) return;
         try {
-            await BudgetService.addBudget(formData as any);
+            await BudgetService.addBudget(formData as BudgetRecord, tenantId);
+            toast.success(t('budget.added_success') || 'Budget allocation added successfully');
             setIsModalOpen(false);
-            // Reset form but keep year
             setFormData({
-                financialYear: year,
+                financialYear: year, // Keep the current year
                 category: '',
                 totalAllocation: 0,
                 utilizedAmount: 0,
                 area: '',
                 status: 'Active'
             });
-            toast.success('Budget allocated successfully');
             loadBudgets();
         } catch (error) {
             console.error(error);
-            toast.error('Failed to allocate budget');
+            toast.error(t('error.action_failed') || 'Failed to add budget');
         }
     };
 
@@ -90,16 +109,17 @@ const BudgetDashboard = () => {
 
     const handleUpdateUtilization = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedBudgetForUpdate) return;
+        if (!selectedBudgetForUpdate || !tenantId) return;
 
         try {
-            await BudgetService.updateUtilization(selectedBudgetForUpdate.id, selectedBudgetForUpdate.new);
-            toast.success('Utilization updated successfully');
+            await BudgetService.updateUtilization(selectedBudgetForUpdate.id, selectedBudgetForUpdate.new, tenantId);
+            toast.success(t('budget.updated_success') || 'Utilization updated successfully');
             setIsUpdateModalOpen(false);
+            setSelectedBudgetForUpdate(null);
             loadBudgets();
         } catch (error) {
             console.error(error);
-            toast.error('Failed to update utilization');
+            toast.error(t('error.action_failed') || 'Failed to update utilization');
         }
     };
 

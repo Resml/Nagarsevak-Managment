@@ -6,6 +6,8 @@ import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2,
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 
+import { useTenant } from '../../context/TenantContext';
+
 interface Visitor {
     id: string;
     name: string;
@@ -20,6 +22,7 @@ interface Visitor {
 
 const VisitorLog = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [formData, setFormData] = useState({
         name: '',
@@ -67,6 +70,7 @@ const VisitorLog = () => {
         const { data, error } = await supabase
             .from('visitors')
             .select('*')
+            .eq('tenant_id', tenantId) // Secured
             .order('visit_date', { ascending: false })
             .limit(200);
 
@@ -88,7 +92,8 @@ const VisitorLog = () => {
                         area: formData.area,
                         remarks: formData.remarks
                     })
-                    .eq('id', editingId);
+                    .eq('id', editingId)
+                    .eq('tenant_id', tenantId); // Secured
 
                 if (error) throw error;
                 toast.success('Visitor updated successfully');
@@ -103,7 +108,8 @@ const VisitorLog = () => {
                         reference: formData.reference,
                         area: formData.area,
                         remarks: formData.remarks,
-                        visit_date: new Date().toISOString()
+                        visit_date: new Date().toISOString(),
+                        tenant_id: tenantId // Secured
                     }]);
 
                 if (error) throw error;
@@ -142,7 +148,8 @@ const VisitorLog = () => {
             const { error } = await supabase
                 .from('visitors')
                 .delete()
-                .eq('id', deleteTarget.id);
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
             toast.success('Visitor log deleted');

@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { translateText } from '../../services/translationService';
 import { TranslatedText } from '../../components/TranslatedText';
 
@@ -17,6 +18,7 @@ const ComplaintDetail = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
 
     const [complaint, setComplaint] = useState<Complaint | undefined>(undefined);
     const [translatedData, setTranslatedData] = useState<{ title: string; description: string } | null>(null);
@@ -57,7 +59,7 @@ const ComplaintDetail = () => {
     }, [id]);
 
     const fetchStaff = async () => {
-        const { data } = await supabase.from('staff').select('*');
+        const { data } = await supabase.from('staff').select('*').eq('tenant_id', tenantId);
         if (data) setStaffList(data);
     };
 
@@ -71,6 +73,7 @@ const ComplaintDetail = () => {
                     staff:assigned_to (name, mobile)
                 `)
                 .eq('id', id)
+                .eq('tenant_id', tenantId) // Secured
                 .single();
 
             if (error) throw error;
@@ -116,7 +119,8 @@ const ComplaintDetail = () => {
             const { error } = await supabase
                 .from('complaints')
                 .update({ status: newStatus })
-                .eq('id', complaint.id);
+                .eq('id', complaint.id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
             setComplaint({ ...complaint, status: newStatus as any });
@@ -166,7 +170,8 @@ const ComplaintDetail = () => {
             const { error, count } = await supabase
                 .from('complaints')
                 .delete({ count: 'exact' })
-                .eq('id', complaint.id);
+                .eq('id', complaint.id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
 

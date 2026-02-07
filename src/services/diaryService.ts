@@ -6,11 +6,12 @@ const DIARY_STORAGE_KEY = 'ns_gb_diary';
 
 export const DiaryService = {
     // Get all entries with optional filtering (client-side filtering for simplicity first)
-    getEntries: async (): Promise<DiaryEntry[]> => {
+    getEntries: async (tenantId: string): Promise<DiaryEntry[]> => {
         try {
             const { data, error } = await supabase
                 .from('gb_diary')
                 .select('*')
+                .eq('tenant_id', tenantId) // Secured
                 .order('meeting_date', { ascending: false });
 
             if (error) {
@@ -39,7 +40,7 @@ export const DiaryService = {
         }
     },
 
-    addEntry: async (entry: Omit<DiaryEntry, 'id' | 'createdAt' | 'updatedAt'>): Promise<DiaryEntry | null> => {
+    addEntry: async (entry: Omit<DiaryEntry, 'id' | 'createdAt' | 'updatedAt'>, tenantId: string): Promise<DiaryEntry | null> => {
         try {
             const dbEntry = {
                 meeting_date: entry.meetingDate,
@@ -52,6 +53,7 @@ export const DiaryService = {
                 beneficiaries: entry.beneficiaries,
                 response: entry.response,
                 tags: entry.tags,
+                tenant_id: tenantId // Secured
             };
 
             const { data, error } = await supabase
@@ -97,9 +99,9 @@ export const DiaryService = {
         // Skipping detail for brevity in this step, focusing on List/Add first.
     },
 
-    deleteEntry: async (id: string): Promise<void> => {
+    deleteEntry: async (id: string, tenantId: string): Promise<void> => {
         try {
-            const { error } = await supabase.from('gb_diary').delete().eq('id', id);
+            const { error } = await supabase.from('gb_diary').delete().eq('id', id).eq('tenant_id', tenantId);
             if (error) throw error;
         } catch (e) {
             const current = JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY) || '[]');

@@ -7,6 +7,7 @@ export interface User {
   email: string; // acting as username for login
   avatar?: string;
   assignedWard?: string; // For staff restricted to specific wards
+  permissions?: string[];
 }
 
 export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified';

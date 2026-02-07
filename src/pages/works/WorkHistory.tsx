@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabaseClient';
 import { AIService } from '../../services/aiService';
 import { FeedbackService } from '../../services/feedbackService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -24,6 +25,7 @@ interface WorkItem {
 const WorkHistory = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const [items, setItems] = useState<WorkItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -54,10 +56,11 @@ const WorkHistory = () => {
         fetchData();
 
         // 1. Subscribe to Work/Complaint Changes
+        // 1. Subscribe to Work/Complaint Changes
         const workSubscription = supabase
             .channel('work_history_channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'works' }, () => fetchData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints' }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'works', filter: `tenant_id=eq.${tenantId}` }, () => fetchData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => fetchData())
             .subscribe();
 
         // 2. Subscribe to REAL-TIME Feedback
@@ -97,6 +100,7 @@ const WorkHistory = () => {
             const { data: works, error: worksError } = await supabase
                 .from('works')
                 .select('*')
+                .eq('tenant_id', tenantId) // Secured
                 .order('created_at', { ascending: false });
 
             if (worksError) throw worksError;
@@ -108,6 +112,7 @@ const WorkHistory = () => {
                     id, problem, location, status, category, created_at,
                     voter:voters (name_english, name_marathi)
                 `)
+                .eq('tenant_id', tenantId) // Secured
                 .in('status', ['Resolved', 'Closed'])
                 .order('created_at', { ascending: false });
 
@@ -188,7 +193,7 @@ const WorkHistory = () => {
 
             const { error: insertError } = await supabase
                 .from('works')
-                .insert([payload]);
+                .insert([{ ...payload, tenant_id: tenantId }]); // Secured
 
             if (insertError) throw insertError;
 

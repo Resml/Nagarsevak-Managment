@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { cn } from '../../utils/cn';
 import { type Language } from '../../utils/translations';
 import { supabase } from '../../services/supabaseClient';
@@ -164,6 +165,7 @@ function SidebarNavGroup({
 const AppLayout = () => {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const { tenant } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
@@ -177,25 +179,16 @@ const AppLayout = () => {
   } | null>(null);
 
   useEffect(() => {
-    const fetchBranding = async () => {
-      const { data } = await supabase
-        .from('app_settings')
-        .select('nagarsevak_name_english, nagarsevak_name_marathi, ward_name, party_name, profile_image_url')
-        .eq('id', 1) // Target the singleton row directly
-        .single();
-
-      if (data) {
-        setBranding({
-          name_english: data.nagarsevak_name_english,
-          name_marathi: data.nagarsevak_name_marathi,
-          ward_name: data.ward_name,
-          party_name: data.party_name,
-          profile_image: data.profile_image_url
-        });
-      }
-    };
-    fetchBranding();
-  }, []);
+    if (tenant && tenant.config) {
+      setBranding({
+        name_english: tenant.config.nagarsevak_name_english,
+        name_marathi: tenant.config.nagarsevak_name_marathi,
+        ward_name: tenant.config.ward_name,
+        party_name: tenant.config.party_name,
+        profile_image: tenant.config.profile_image_url
+      });
+    }
+  }, [tenant]);
 
   const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
   const isAdmin = user?.role === 'admin';

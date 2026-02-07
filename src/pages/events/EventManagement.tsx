@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 interface Event {
     id: string;
@@ -25,6 +26,7 @@ const EventManagement = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
     const { user } = useAuth();
+    const { tenantId } = useTenant(); // Added tenantId
     const isAdmin = user?.role === 'admin';
 
     const [events, setEvents] = useState<Event[]>([]);
@@ -58,7 +60,7 @@ const EventManagement = () => {
         // Subscribe to changes
         const subscription = supabase
             .channel('public:events')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchEvents();
             })
             .subscribe();
@@ -76,7 +78,7 @@ const EventManagement = () => {
             supabase.removeChannel(subscription);
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [tenantId]);
 
     const fetchEvents = async () => {
         setLoading(true);
@@ -86,6 +88,7 @@ const EventManagement = () => {
                 const { data, error } = await supabase
                     .from('events')
                     .select('*')
+                    .eq('tenant_id', tenantId) // Secured
                     .order('event_date', { ascending: false });
 
                 if (error) throw error;
@@ -130,7 +133,8 @@ const EventManagement = () => {
             const { error: mutationError } = await supabase.from('events').insert([{
                 ...newEvent,
                 status: 'Planned',
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                tenant_id: tenantId // Secured
             }]);
 
             if (mutationError) throw mutationError;

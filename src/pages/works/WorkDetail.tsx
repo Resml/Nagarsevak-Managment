@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 
 interface WorkItemDetail {
@@ -26,6 +27,7 @@ const WorkDetail = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
 
     const [work, setWork] = useState<WorkItemDetail | null>(null);
     const [loading, setLoading] = useState(true);
@@ -68,6 +70,7 @@ const WorkDetail = () => {
                 .from('works')
                 .select('*')
                 .eq('id', id)
+                .eq('tenant_id', tenantId) // Secured
                 .single();
 
             if (error) throw error;
@@ -105,7 +108,7 @@ const WorkDetail = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            const { error } = await supabase.from('works').delete().eq('id', id);
+            const { error } = await supabase.from('works').delete().eq('id', id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success('Work deleted successfully');
             navigate('/history');
@@ -136,7 +139,8 @@ const WorkDetail = () => {
                         people_benefited: editForm.peopleBenefited
                     })
                 })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
 

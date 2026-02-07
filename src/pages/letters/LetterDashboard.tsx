@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabaseClient';
 import { Link } from 'react-router-dom';
 import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 import IncomingLetterUpload from './IncomingLetterUpload';
@@ -36,6 +37,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 
 const LetterDashboard = () => {
     const { t, language } = useLanguage(); // Get language
+    const { tenantId } = useTenant();
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
@@ -86,6 +88,7 @@ const LetterDashboard = () => {
         const { data, error } = await supabase
             .from('letter_requests')
             .select('*')
+            .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false });
 
         if (data) setRequests(data);
@@ -96,6 +99,7 @@ const LetterDashboard = () => {
         const { data, error } = await supabase
             .from('incoming_letters')
             .select('*')
+            .eq('tenant_id', tenantId)
             .order('created_at', { ascending: false });
 
         if (data) setIncomingLetters(data);
@@ -250,7 +254,7 @@ const LetterDashboard = () => {
             }
         }
 
-        await supabase.from('letter_requests').update(updateData).eq('id', id);
+        await supabase.from('letter_requests').update(updateData).eq('id', id).eq('tenant_id', tenantId); // Secured
         fetchRequests();
         setSelectedRequest(null);
     };

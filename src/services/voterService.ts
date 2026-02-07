@@ -2,12 +2,13 @@ import { supabase } from './supabaseClient';
 import { type Voter } from '../types';
 
 export const VoterService = {
-    searchVoters: async (query: string): Promise<Voter[]> => {
+    searchVoters: async (query: string, tenantId: string): Promise<Voter[]> => {
         if (!query || query.length < 3) return [];
 
         const { data, error } = await supabase
             .from('voters')
             .select('*')
+            .eq('tenant_id', tenantId)
             .or(`name_english.ilike.%${query}%,epic_no.ilike.%${query}%,mobile.ilike.%${query}%`)
             .limit(20);
 
@@ -35,10 +36,11 @@ export const VoterService = {
     },
 
     // Fetch a few recent voters for default display
-    getRecentVoters: async (): Promise<Voter[]> => {
+    getRecentVoters: async (tenantId: string): Promise<Voter[]> => {
         const { data, error } = await supabase
             .from('voters')
             .select('*')
+            .eq('tenant_id', tenantId)
             .limit(5);
 
         if (error) {
@@ -64,10 +66,11 @@ export const VoterService = {
         }));
     },
 
-    getTotalCount: async (): Promise<number> => {
+    getTotalCount: async (tenantId: string): Promise<number> => {
         const { count, error } = await supabase
             .from('voters')
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId);
 
         if (error) {
             console.error('Error getting total voter count:', error);
@@ -77,10 +80,11 @@ export const VoterService = {
         return count || 0;
     },
 
-    getAllVoterPhones: async (): Promise<string[]> => {
+    getAllVoterPhones: async (tenantId: string): Promise<string[]> => {
         const { data, error } = await supabase
             .from('voters')
             .select('mobile')
+            .eq('tenant_id', tenantId)
             .not('mobile', 'is', null);
 
         if (error) {

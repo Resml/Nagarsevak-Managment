@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { DiaryService } from '../../services/diaryService';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
 
 const DiaryList = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [entries, setEntries] = useState<DiaryEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,17 +32,20 @@ const DiaryList = () => {
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, subject: string } | null>(null);
 
     useEffect(() => {
-        loadEntries();
-    }, []);
+        fetchEntries();
+    }, [tenantId]);
 
-    const loadEntries = async () => {
-        setLoading(true);
-        // Simulate network delay
-        setTimeout(async () => {
-            const data = await DiaryService.getEntries();
+    const fetchEntries = async () => {
+        if (!tenantId) return;
+        try {
+            setLoading(true);
+            const data = await DiaryService.getEntries(tenantId);
             setEntries(data);
             setLoading(false);
-        }, 800);
+        } catch (e) {
+            console.error(e);
+            setLoading(false);
+        }
     };
 
     const uniqueAreas = Array.from(new Set(entries.map(e => e.area).filter(Boolean)))
@@ -96,20 +101,20 @@ const DiaryList = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.subject || !formData.meetingDate) return;
+        if (!formData.subject || !formData.meetingDate || !tenantId) return;
 
         if (editingEntry) {
             // Update logic (simplified for now as service update is placeholder)
             // await DiaryService.updateEntry(editingEntry.id, formData);
             toast.info('Update feature coming in next iteration, creating new for now to demo.');
-            await DiaryService.addEntry(formData as any);
+            await DiaryService.addEntry(formData as any, tenantId);
         } else {
-            await DiaryService.addEntry(formData as any);
+            await DiaryService.addEntry(formData as any, tenantId);
             toast.success(t('Entry added successfully!') || 'Entry added successfully!');
         }
 
         setIsModalOpen(false);
-        loadEntries();
+        fetchEntries();
     };
 
     const handleDeleteClick = (entry: DiaryEntry) => {
@@ -117,11 +122,11 @@ const DiaryList = () => {
     };
 
     const confirmDelete = async () => {
-        if (!deleteTarget) return;
-        await DiaryService.deleteEntry(deleteTarget.id);
+        if (!deleteTarget || !tenantId) return;
+        await DiaryService.deleteEntry(deleteTarget.id, tenantId);
         toast.success('Entry deleted successfully');
         setDeleteTarget(null);
-        loadEntries();
+        fetchEntries();
     };
 
     const toggleExpand = (id: string) => {

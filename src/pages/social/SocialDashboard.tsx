@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Search, Facebook, Instagram, ThumbsUp, MessageCircle, Share2, TrendingUp, Users, Eye } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { supabase } from '../../services/supabaseClient';
 import { TranslatedText } from '../../components/TranslatedText';
 
@@ -51,6 +52,7 @@ const MOCK_POSTS = [
 
 const SocialDashboard = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const [posts, setPosts] = useState<typeof MOCK_POSTS>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [platformFilter, setPlatformFilter] = useState<'All' | 'Facebook' | 'Instagram'>('All');
@@ -85,7 +87,11 @@ const SocialDashboard = () => {
 
     const fetchBirthdays = async () => {
         // Simulate finding birthdays (random 3 voters for demo)
-        const { data } = await supabase.from('voters').select('id, name_english, mobile').limit(10);
+        const { data } = await supabase
+            .from('voters')
+            .select('id, name_english, mobile')
+            .eq('tenant_id', tenantId) // Secured
+            .limit(10);
         if (data && data.length > 0) {
             // Shuffle and pick 2-3
             const shuffled = data.sort(() => 0.5 - Math.random());

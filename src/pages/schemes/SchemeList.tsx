@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import SchemeMatcher from './SchemeMatcher';
 import SchemeApplicationModal from './SchemeApplicationModal';
 import SchemeBeneficiaryList from './SchemeBeneficiaryList';
@@ -21,6 +22,7 @@ interface Scheme {
 
 const SchemeList = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const navigate = useNavigate();
     const [schemes, setSchemes] = useState<Scheme[]>([]);
     const [loading, setLoading] = useState(true);
@@ -78,6 +80,7 @@ const SchemeList = () => {
                 const { data, error } = await supabase
                     .from('schemes')
                     .select('*')
+                    .eq('tenant_id', tenantId) // Secured
                     .order('created_at', { ascending: false });
 
                 if (error) throw error;
@@ -131,7 +134,8 @@ const SchemeList = () => {
             const { error } = await supabase
                 .from('schemes')
                 .delete()
-                .eq('id', deleteTarget.id);
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId); // Secured
 
             if (error) throw error;
 

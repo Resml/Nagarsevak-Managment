@@ -4,10 +4,13 @@ import { io } from 'socket.io-client';
 import { CheckCircle, RefreshCw, Smartphone } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
+import { useTenant } from '../../context/TenantContext';
+
 const SOCKET_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:4000';
 
 const BotDashboard = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [status, setStatus] = useState<string>('disconnected');
     const [qrCode, setQrCode] = useState<string>('');
     const [logs, setLogs] = useState<string[]>([]);
@@ -17,7 +20,9 @@ const BotDashboard = () => {
         // Initial simulated loading
         setTimeout(() => setLoading(false), 1000);
 
-        const socket = io(SOCKET_URL);
+        const socket = io(SOCKET_URL, {
+            query: { tenantIds: tenantId } // Passing tenant context
+        });
 
         socket.on('connect', () => {
             console.log('Connected to Bot Server');
@@ -42,7 +47,7 @@ const BotDashboard = () => {
         return () => {
             socket.disconnect();
         };
-    }, []);
+    }, [tenantId]);
 
     const getStatusColor = () => {
         switch (status) {

@@ -3,9 +3,9 @@ import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, PlusCircle, X, Tr
 import { toast } from 'sonner';
 import { MockService } from '../../services/mockData';
 import { CUSTOM_TRANSLATIONS } from '../../services/translationService';
-import { VoterService } from '../../services/voterService';
 import { type Voter, type Sadasya } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { supabase } from '../../services/supabaseClient';
 import { format } from 'date-fns';
 import { mr } from '../../utils/marathiLocale';
@@ -22,6 +22,7 @@ const getGenderDisplay = (gender: string) => {
 
 const SadasyaList = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [searchTerm, setSearchTerm] = useState('');
     const [areaSearch, setAreaSearch] = useState('');
     const [addressSearch, setAddressSearch] = useState('');
@@ -105,15 +106,36 @@ const SadasyaList = () => {
     useEffect(() => {
         if (!isModalOpen) return;
         const fetchStats = async () => {
-            const rpcName = language === 'mr' ? 'get_unique_addresses_marathi' : 'get_unique_addresses';
-            const { data: addrData } = await supabase.rpc(rpcName);
-            if (addrData) setAddressSuggestions(addrData);
+            try {
+                // FETCHING FROM VOTERS TABLE DIRECTLY TO ENSURE TENANT ISOLATION
+                // RPCs replaced to avoid cross-tenant leaks
+                const { data: votersData } = await supabase
+                    .from('voters')
+                    .select('address_english, address_marathi, house_no')
+                    .eq('tenant_id', tenantId)
+                    .limit(1000);
 
-            const { data: houseData } = await supabase.rpc('get_unique_house_numbers');
-            if (houseData) setHouseNoSuggestions(houseData);
+                if (votersData) {
+                    // Process Addresses
+                    const addrs = new Map<string, number>();
+                    const houses = new Map<string, number>();
+
+                    votersData.forEach(v => {
+                        const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                        if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
+
+                        if (v.house_no) houses.set(v.house_no, (houses.get(v.house_no) || 0) + 1);
+                    });
+
+                    setAddressSuggestions(Array.from(addrs).map(([address, count]) => ({ address, count })).sort((a, b) => b.count - a.count).slice(0, 50));
+                    setHouseNoSuggestions(Array.from(houses).map(([house_no, count]) => ({ house_no, count })).sort((a, b) => b.count - a.count).slice(0, 50));
+                }
+            } catch (err) {
+                console.error('Error fetching suggestions:', err);
+            }
         };
         fetchStats();
-    }, [isModalOpen, language]);
+    }, [isModalOpen, language, tenantId]);
 
     // Filter Suggestions based on input
     const filteredAddresses = addressSuggestions.filter(item =>
@@ -148,6 +170,7 @@ const SadasyaList = () => {
             let query = supabase
                 .from('voters')
                 .select('*')
+                .eq('tenant_id', tenantId)
                 .range(start, end);
 
             if (nameFilter) {

@@ -57,11 +57,12 @@ const DUMMY_BUDGET: BudgetRecord[] = [
 ];
 
 export const BudgetService = {
-    getBudgets: async (year?: string): Promise<BudgetRecord[]> => {
+    getBudgets: async (year: string | undefined, tenantId: string): Promise<BudgetRecord[]> => {
         try {
             let query = supabase
                 .from('ward_budget')
                 .select('*')
+                .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (year) {
@@ -98,7 +99,7 @@ export const BudgetService = {
         }
     },
 
-    addBudget: async (record: Omit<BudgetRecord, 'id' | 'createdAt' | 'updatedAt'>): Promise<BudgetRecord | null> => {
+    addBudget: async (record: Omit<BudgetRecord, 'id' | 'createdAt' | 'updatedAt'>, tenantId: string): Promise<BudgetRecord | null> => {
         try {
             const { data, error } = await supabase
                 .from('ward_budget')
@@ -108,7 +109,8 @@ export const BudgetService = {
                     total_allocation: record.totalAllocation,
                     utilized_amount: record.utilizedAmount,
                     area: record.area,
-                    status: record.status
+                    status: record.status,
+                    tenant_id: tenantId
                 })
                 .select()
                 .single();
@@ -141,12 +143,12 @@ export const BudgetService = {
         }
     },
 
-    updateUtilization: async (id: string, newAmount: number): Promise<void> => {
+    updateUtilization: async (id: string, newAmount: number, tenantId: string): Promise<void> => {
         try {
             // In real app, we might fetch first to add to existing, or just set absolute. 
             // Simplest is set absolute or we assume caller calculated it.
             // Let's assume we just update the total utilized amount.
-            await supabase.from('ward_budget').update({ utilized_amount: newAmount }).eq('id', id);
+            await supabase.from('ward_budget').update({ utilized_amount: newAmount }).eq('id', id).eq('tenant_id', tenantId);
         } catch (e) {
             const current = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY) || '[]');
             const idx = current.findIndex((b: BudgetRecord) => b.id === id);

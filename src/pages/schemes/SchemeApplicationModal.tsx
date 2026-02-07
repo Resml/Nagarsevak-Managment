@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { X, Search, User, Phone, MapPin, Loader2, CheckCircle, PlusCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 // Types
 interface Scheme {
@@ -32,6 +33,7 @@ interface SchemeApplicationModalProps {
 
 const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme, onClose, onSuccess }) => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
 
     // Form State
     const [applicantName, setApplicantName] = useState('');
@@ -57,48 +59,33 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
         const timer = setTimeout(async () => {
             setIsSearching(true);
             try {
-                let query = supabase.from('voters').select('*').limit(10);
+                let query = supabase.from('voters').select('*').eq('tenant_id', tenantId).limit(10); // Secured
 
                 if (/^\d+$/.test(nameFilter)) {
                     query = query.ilike('mobile', `%${nameFilter}%`);
                 } else {
                     query = query.or(`name_english.ilike.%${nameFilter}%,name_marathi.ilike.%${nameFilter}%,epic_no.ilike.%${nameFilter}%`);
                 }
-
-                const { data, error } = await query;
-                if (error) throw error;
-
-                const mapped: Voter[] = (data || []).map((row: any) => ({
-                    id: row.id.toString(),
-                    name: row.name_english || row.name_marathi,
-                    name_english: row.name_english,
-                    name_marathi: row.name_marathi,
-                    age: row.age,
-                    gender: row.gender,
-                    address: row.address_english || row.address_marathi,
-                    address_english: row.address_english,
-                    address_marathi: row.address_marathi,
-                    mobile: row.mobile,
-                    epicNo: row.epic_no
-                }));
-                setSearchResults(mapped);
+                const { data } = await query;
+                setSearchResults(data || []);
             } catch (err) {
                 console.error(err);
             } finally {
                 setIsSearching(false);
             }
-        }, 400);
+        }, 500);
 
         return () => clearTimeout(timer);
-    }, [nameFilter, isSearchMode]);
+    }, [nameFilter, tenantId, isSearchMode]); // Added tenantId
 
     const handleSelectVoter = (voter: Voter) => {
         setSelectedVoterId(voter.id);
-        setApplicantName(language === 'mr' ? (voter.name_marathi || voter.name) : (voter.name_english || voter.name));
+        const name = language === 'mr' ? (voter.name_marathi || voter.name) : voter.name; // Simple name handling
+        setApplicantName(name);
         setMobile(voter.mobile || '');
-        setAddress(language === 'mr' ? (voter.address_marathi || voter.address) : (voter.address_english || voter.address));
+        setAddress(language === 'mr' ? (voter.address_marathi || voter.address) : voter.address);
         setIsSearchMode(false);
-        toast.success('Voter details auto-filled');
+        toast.success('Voter linked successfully');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -112,7 +99,8 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
                 mobile: mobile,
                 address: address,
                 notes: notes,
-                status: 'Pending'
+                status: 'Pending',
+                tenant_id: tenantId // Secured
             }]);
 
             if (error) throw error;

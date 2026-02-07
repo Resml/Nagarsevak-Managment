@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { Save, Upload, User, Building2, Flag } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ProfileSettings = () => {
+    const { tenant, tenantId } = useTenant();
     const { t, language } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -20,29 +22,36 @@ const ProfileSettings = () => {
     });
 
     useEffect(() => {
-        fetchSettings();
-    }, []);
+        if (tenantId) {
+            fetchSettings();
+        }
+    }, [tenantId]);
 
     const fetchSettings = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('app_settings')
-            .select('*')
-            .eq('id', 1)
-            .single();
+        try {
+            const { data, error } = await supabase
+                .from('tenants')
+                .select('config')
+                .eq('id', tenantId)
+                .single();
 
-        if (data) {
-            setFormData({
-                nagarsevak_name_english: data.nagarsevak_name_english || '',
-                nagarsevak_name_marathi: data.nagarsevak_name_marathi || '',
-                ward_name: data.ward_name || '',
-                ward_number: data.ward_number || '',
-                party_name: data.party_name || '',
-                party_logo_url: data.party_logo_url || '',
-                profile_image_url: data.profile_image_url || ''
-            });
+            if (data && data.config) {
+                setFormData({
+                    nagarsevak_name_english: data.config.nagarsevak_name_english || '',
+                    nagarsevak_name_marathi: data.config.nagarsevak_name_marathi || '',
+                    ward_name: data.config.ward_name || '',
+                    ward_number: data.config.ward_number || '',
+                    party_name: data.config.party_name || '',
+                    party_logo_url: data.config.party_logo_url || '',
+                    profile_image_url: data.config.profile_image_url || ''
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching settings:", error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,14 +66,11 @@ const ProfileSettings = () => {
 
         const file = e.target.files[0];
         const fileExt = file.name.split('.').pop();
-        const fileName = `${type}_${Math.random()}.${fileExt}`;
+        const fileName = `${tenantId}_${type}_${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         try {
             setSaving(true);
-            // Upload to Supabase Storage (assuming bucket 'app-assets' exists, otherwise handled in catch)
-            // For now, let's assume public URL if bucket setup is complex, but standard is storage
-
             const { error: uploadError } = await supabase.storage
                 .from('app-assets')
                 .upload(filePath, file);
@@ -83,32 +89,30 @@ const ProfileSettings = () => {
             toast.success(t('sadasya.upload_success') || 'Upload successful');
         } catch (error: any) {
             console.error('Error uploading image:', error.message);
-            toast.error('Error uploading image. Make sure storage bucket "app-assets" exists.');
+            toast.error('Error uploading image.');
         } finally {
             setSaving(false);
         }
     };
 
     const handleSave = async () => {
+        if (!tenantId) return;
         setSaving(true);
 
         const { error } = await supabase
-            .from('app_settings')
-            .upsert({
-                id: 1, // FORCE SINGLETON ID
-                ...formData,
-                updated_at: new Date().toISOString()
+            .from('tenants')
+            .update({
+                config: formData,
+                updated_at: new Date().toISOString() // Assuming there is an updated_at column, else generic
             })
-            .select();
+            .eq('id', tenantId);
 
-        let operationError = error;
-
-        if (operationError) {
-            console.error('Error saving settings:', operationError);
+        if (error) {
+            console.error('Error saving settings:', error);
             toast.error(t('common.error') || 'Error saving settings');
         } else {
             toast.success(t('sadasya.update_success') || 'Settings updated successfully!');
-            // Force a hard reload
+            // Optional: refresh tenant context? For now reload page to update UI if it depends on tenant config
             window.location.reload();
         }
         setSaving(false);

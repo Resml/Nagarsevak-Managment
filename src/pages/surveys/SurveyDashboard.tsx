@@ -4,11 +4,13 @@ import { Plus, FileText, Users, Clock, Send, Loader2, Search } from 'lucide-reac
 import { useLanguage } from '../../context/LanguageContext';
 import { MockService } from '../../services/mockData';
 import { VoterService } from '../../services/voterService';
+import { useTenant } from '../../context/TenantContext';
 import type { Survey } from '../../types';
 import { toast } from 'sonner';
 
 const SurveyDashboard = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [surveys, setSurveys] = useState<Survey[]>([]);
     const [totalVoters, setTotalVoters] = useState(0);
@@ -36,7 +38,8 @@ const SurveyDashboard = () => {
     }, []);
 
     const fetchStats = async () => {
-        const count = await VoterService.getTotalCount();
+        if (!tenantId) return;
+        const count = await VoterService.getTotalCount(tenantId); // Modified this line
         setTotalVoters(count);
     };
 
@@ -45,8 +48,12 @@ const SurveyDashboard = () => {
         const toastId = toast.loading('Fetching voter contacts...');
 
         try {
+            if (!tenantId) {
+                toast.error("Tenant context missing");
+                return;
+            }
             // 1. Fetch all voter numbers
-            const phones = await VoterService.getAllVoterPhones();
+            const phones = await VoterService.getAllVoterPhones(tenantId); // Modified this line
 
             if (phones.length === 0) {
                 toast.dismiss(toastId);

@@ -6,9 +6,11 @@ import { type ComplaintType, type Voter } from '../../types';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 const ComplaintForm = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -64,14 +66,32 @@ const ComplaintForm = () => {
     // Fetch Stats for Suggestions
     useEffect(() => {
         if (!isSearchOpen) return;
+        if (!isSearchOpen) return;
         const fetchStats = async () => {
             try {
-                const rpcName = language === 'mr' ? 'get_unique_addresses_marathi' : 'get_unique_addresses';
-                const { data: addrData } = await supabase.rpc(rpcName);
-                if (addrData) setAddressSuggestions(addrData);
+                // FETCHING FROM VOTERS TABLE DIRECTLY TO ENSURE TENANT ISOLATION
+                // RPCs replaced to avoid cross-tenant leaks
+                const { data: votersData } = await supabase
+                    .from('voters')
+                    .select('address_english, address_marathi, house_no')
+                    .eq('tenant_id', tenantId)
+                    .limit(1000);
 
-                const { data: houseData } = await supabase.rpc('get_unique_house_numbers');
-                if (houseData) setHouseNoSuggestions(houseData);
+                if (votersData) {
+                    // Process Addresses
+                    const addrs = new Map<string, number>();
+                    const houses = new Map<string, number>();
+
+                    votersData.forEach(v => {
+                        const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                        if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
+
+                        if (v.house_no) houses.set(v.house_no, (houses.get(v.house_no) || 0) + 1);
+                    });
+
+                    setAddressSuggestions(Array.from(addrs).map(([address, count]) => ({ address, count })).sort((a, b) => b.count - a.count).slice(0, 50));
+                    setHouseNoSuggestions(Array.from(houses).map(([house_no, count]) => ({ house_no, count })).sort((a, b) => b.count - a.count).slice(0, 50));
+                }
             } catch (err) {
                 console.error('Error fetching suggestions:', err);
             }
@@ -143,6 +163,7 @@ const ComplaintForm = () => {
                 let query = supabase
                     .from('voters')
                     .select('*')
+                    .eq('tenant_id', tenantId) // Secured
                     .limit(20);
 
                 if (nameFilter) {
@@ -255,6 +276,7 @@ const ComplaintForm = () => {
                 area: area,
                 source: 'Website',
                 voter_id: selectedVoterId ? parseInt(selectedVoterId) : null,
+                tenant_id: tenantId,
                 description_meta: JSON.stringify({
                     submitter_name: fullName,
                     submitter_mobile: mobile,

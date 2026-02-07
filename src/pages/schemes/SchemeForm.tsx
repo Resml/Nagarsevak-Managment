@@ -4,9 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 const SchemeForm = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added tenantId
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState(false);
@@ -30,6 +32,7 @@ const SchemeForm = () => {
                 .from('schemes')
                 .select('*')
                 .eq('id', id)
+                .eq('tenant_id', tenantId) // Secured
                 .single();
 
             if (error) throw error;
@@ -62,13 +65,14 @@ const SchemeForm = () => {
                 const { error } = await supabase
                     .from('schemes')
                     .update(formData)
-                    .eq('id', id);
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId); // Secured
                 if (error) throw error;
                 toast.success('Scheme updated successfully!');
             } else {
                 const { error } = await supabase
                     .from('schemes')
-                    .insert([formData]);
+                    .insert([{ ...formData, tenant_id: tenantId }]); // Secured
                 if (error) throw error;
                 toast.success('Scheme added successfully!');
             }

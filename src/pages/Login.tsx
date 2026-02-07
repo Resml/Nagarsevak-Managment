@@ -1,37 +1,44 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Shield, User, Users } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Login = () => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email) return;
-        const success = await login(email);
+        if (!email || !password) {
+            setError('Please enter both email and password.');
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        const { success, error: authError } = await login(email, password);
+
         if (success) {
+            toast.success('Welcome back!');
             navigate('/');
         } else {
-            setError('Invalid email. Try admin@ns.com');
+            setError(authError || 'Invalid credentials.');
+            toast.error(authError || 'Login failed');
         }
-    };
-
-    const quickLogin = (email: string) => {
-        setEmail(email);
-        login(email).then((success) => {
-            if (success) navigate('/');
-        });
+        setLoading(false);
     };
 
     return (
         <div className="min-h-screen grid lg:grid-cols-2">
             {/* Brand / Info side */}
             <div className="hidden lg:flex relative overflow-hidden bg-brand-700">
-                <div className="p-12 flex flex-col justify-between w-full">
+                <div className="p-12 flex flex-col justify-between w-full z-10">
                     <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-2xl bg-white/10 border border-white/15 text-white flex items-center justify-center font-black">
                             N
@@ -47,32 +54,25 @@ const Login = () => {
                             One workspace for Nagarasevaks and staff.
                         </h1>
                         <p className="mt-3 text-white/70 leading-relaxed">
-                            Manage citizen requests, office work, media, and reporting with a clean dashboard and fast navigation.
+                            Secure, multi-tenant platform for managing citizen requests, office work, and reporting.
                         </p>
-                        <div className="mt-8 grid grid-cols-3 gap-3">
-                            {[
-                                { icon: Shield, label: 'Admin', hint: 'Full access', email: 'admin@ns.com' },
-                                { icon: Users, label: 'Staff', hint: 'Team workflows', email: 'staff@ns.com' },
-                                { icon: User, label: 'Citizen', hint: 'Limited access', email: 'voter@ns.com' },
-                            ].map((role) => (
-                                <button
-                                    key={role.label}
-                                    type="button"
-                                    onClick={() => quickLogin(role.email)}
-                                    className="text-left p-4 rounded-2xl border border-white/15 bg-white/10 hover:bg-white/15 transition"
-                                >
-                                    <role.icon className="h-5 w-5 text-white/80" />
-                                    <div className="mt-3 text-white font-semibold">{role.label}</div>
-                                    <div className="text-xs text-white/60">{role.hint}</div>
-                                </button>
-                            ))}
+                        <div className="mt-8 p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                            <Shield className="h-6 w-6 text-brand-200 mb-2" />
+                            <h3 className="text-white font-semibold">Strict Access Control</h3>
+                            <p className="text-brand-100 text-sm mt-1">
+                                This portal is restricted to authorized personnel only. Please contact your administrator for credentials.
+                            </p>
                         </div>
                     </div>
 
                     <div className="text-xs text-white/50">
-                        Demo accounts are enabled for preview.
+                        &copy; {new Date().getFullYear()} Nagarsevak Management System
                     </div>
                 </div>
+
+                {/* Background Pattern */}
+                <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-brand-600 rounded-full blur-3xl opacity-50"></div>
+                <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-80 h-80 bg-brand-800 rounded-full blur-3xl opacity-50"></div>
             </div>
 
             {/* Login side */}
@@ -85,7 +85,7 @@ const Login = () => {
                             </div>
                             <div>
                                 <div className="text-lg font-display font-bold text-slate-900">Sign in</div>
-                                <div className="text-sm text-slate-500">Use your email to continue</div>
+                                <div className="text-sm text-slate-500">Enter your credentials to continue</div>
                             </div>
                         </div>
 
@@ -97,8 +97,20 @@ const Login = () => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="ns-input mt-1"
-                                    placeholder="admin@ns.com"
-                                    autoComplete="email"
+                                    placeholder="your@email.com"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700">Password</label>
+                                <input
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="ns-input mt-1"
+                                    placeholder="••••••••"
+                                    required
                                 />
                             </div>
 
@@ -108,44 +120,22 @@ const Login = () => {
                                 </div>
                             ) : null}
 
-                            <button type="submit" className="ns-btn-primary w-full">
-                                Login
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="ns-btn-primary w-full flex justify-center items-center"
+                            >
+                                {loading ? (
+                                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    'Login'
+                                )}
                             </button>
                         </form>
 
-                        <div className="mt-6 lg:hidden">
-                            <div className="text-xs font-semibold text-slate-500 mb-3">DEMO LOGIN</div>
-                            <div className="grid grid-cols-3 gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => quickLogin('admin@ns.com')}
-                                    className="ns-btn-ghost border border-slate-200"
-                                >
-                                    <Shield className="h-4 w-4 text-purple-600" />
-                                    <span className="text-xs">Admin</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => quickLogin('staff@ns.com')}
-                                    className="ns-btn-ghost border border-slate-200"
-                                >
-                                    <Users className="h-4 w-4 text-blue-600" />
-                                    <span className="text-xs">Staff</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => quickLogin('voter@ns.com')}
-                                    className="ns-btn-ghost border border-slate-200"
-                                >
-                                    <User className="h-4 w-4 text-green-600" />
-                                    <span className="text-xs">Citizen</span>
-                                </button>
-                            </div>
+                        <div className="mt-6 text-center text-xs text-slate-400">
+                            Authorized access only. Public registration is disabled.
                         </div>
-                    </div>
-
-                    <div className="mt-6 text-center text-xs text-slate-500">
-                        Tip: try <span className="font-mono text-slate-700">admin@ns.com</span> for full access.
                     </div>
                 </div>
             </div>
