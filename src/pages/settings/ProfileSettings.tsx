@@ -96,26 +96,50 @@ const ProfileSettings = () => {
     };
 
     const handleSave = async () => {
-        if (!tenantId) return;
-        setSaving(true);
-
-        const { error } = await supabase
-            .from('tenants')
-            .update({
-                config: formData,
-                updated_at: new Date().toISOString() // Assuming there is an updated_at column, else generic
-            })
-            .eq('id', tenantId);
-
-        if (error) {
-            console.error('Error saving settings:', error);
-            toast.error(t('common.error') || 'Error saving settings');
-        } else {
-            toast.success(t('sadasya.update_success') || 'Settings updated successfully!');
-            // Optional: refresh tenant context? For now reload page to update UI if it depends on tenant config
-            window.location.reload();
+        if (!tenantId) {
+            toast.error("Tenant ID is missing");
+            return;
         }
-        setSaving(false);
+        setSaving(true);
+        console.log("Saving settings for tenant:", tenantId);
+        console.log("Data:", formData);
+
+        try {
+            // First try with updated_at
+            const { error } = await supabase
+                .from('tenants')
+                .update({
+                    config: formData,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', tenantId);
+
+            if (error) {
+                // If error is about missing column, try without updated_at
+                if (error.code === '42703' || error.message?.includes("updated_at")) {
+                    console.warn("updated_at column missing, retrying without it...");
+                    const { error: retryError } = await supabase
+                        .from('tenants')
+                        .update({
+                            config: formData
+                        })
+                        .eq('id', tenantId);
+
+                    if (retryError) throw retryError;
+                } else {
+                    throw error;
+                }
+            }
+
+            toast.success(t('sadasya.update_success') || 'Settings updated successfully!');
+            // Reload settings to ensure we have the latest
+            await fetchSettings();
+        } catch (error: any) {
+            console.error('Error saving settings:', error);
+            toast.error(error.message || t('common.error') || 'Error saving settings');
+        } finally {
+            setSaving(false);
+        }
     };
 
     if (loading) {
