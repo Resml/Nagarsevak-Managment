@@ -89,7 +89,6 @@ async function saveComplaint(complaint) {
             area: complaint.area,
             source: complaint.source || 'WhatsApp',
             voter_id: voterId, // Linked voter ID
-            photos: complaint.photos || [],
             tenant_id: complaint.tenantId,
             description_meta: JSON.stringify({
                 submitter_name: complaint.user_name,
