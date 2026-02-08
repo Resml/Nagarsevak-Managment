@@ -79,20 +79,24 @@ async function saveComplaint(complaint) {
             }
         }
 
-        // Prepare data for database
+        // Prepare data for database (matching website schema)
         const dbData = {
-            title: complaint.title,
-            description: complaint.description,
-            type: complaint.type,
+            problem: complaint.description,  // Website uses 'problem' not 'description'
+            category: complaint.type,        // Website uses 'category' not 'type'
             status: complaint.status || 'Pending',
-            ward: complaint.ward || '12',  // Default ward
+            priority: complaint.urgency || 'Medium',  // Website uses 'priority' not 'urgency'
+            location: complaint.location ? `Ward ${complaint.ward || '12'} - ${complaint.location}` : `Ward ${complaint.ward || '12'}`,
             area: complaint.area,
-            location: complaint.location,
-            voter_id: voterId, // Linked voter ID
             source: complaint.source || 'WhatsApp',
-            urgency: complaint.urgency || 'Medium',
+            voter_id: voterId, // Linked voter ID
             photos: complaint.photos || [],
             tenant_id: complaint.tenantId,
+            description_meta: JSON.stringify({
+                submitter_name: complaint.user_name,
+                title: complaint.title,  // Store original title in meta
+                full_description: complaint.description,
+                from_whatsapp: true
+            }),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         };
