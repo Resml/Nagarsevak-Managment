@@ -324,7 +324,30 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- Session Management ---
+async function restoreSessions() {
+    const authDir = 'auth_info_baileys';
+    if (!fs.existsSync(authDir)) return;
+
+    try {
+        const files = fs.readdirSync(authDir);
+        for (const file of files) {
+            // Check for session folders (format: session_{tenantId})
+            if (file.startsWith('session_') && fs.lstatSync(path.join(authDir, file)).isDirectory()) {
+                const tenantId = file.replace('session_', '');
+                console.log(`[Startup] Restoring session for tenant: ${tenantId}`);
+                await connectToWhatsApp(tenantId);
+            }
+        }
+    } catch (err) {
+        console.error('[Startup] Error restoring sessions:', err);
+    }
+}
+
 // Start server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     console.log(`Baileys Multi-Tenant Bot Server running on port ${PORT}`);
+
+    // Restore previous sessions
+    await restoreSessions();
 });
