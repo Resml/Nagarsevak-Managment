@@ -57,7 +57,9 @@ class MenuNavigator {
         const input = messageText.trim();
 
         // Check for global navigation commands
-        if (input === '0') {
+        // Check for global navigation commands
+        // Exception: 0 is used to skip photo in COMPLAINT_FORM_PHOTO
+        if (input === '0' && session.currentMenu !== MENU_STATES.COMPLAINT_FORM_PHOTO) {
             // Change language
             return await this.showLanguageMenu(sock, userId);
         }
@@ -331,15 +333,22 @@ class MenuNavigator {
     async handleComplaintFormPhoto(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
+        const cleanInput = input.trim();
+
+        console.log(`[DEBUG] handleComplaintFormPhoto input: '${input}', clean: '${cleanInput}'`);
 
         // Check if user wants to skip photo
-        if (input === '0') {
+        if (cleanInput === '0' || cleanInput.toLowerCase() === 'skip') {
             // No photo, proceed to save
+            console.log('[DEBUG] Skipping photo, saving complaint...');
             return await this.saveComplaint(sock, tenantId, userId);
         }
 
         // TODO: Handle actual photo message
-        // For now, just skip
+        // For now, just skip if it's not 0, but ideally we should handle image messages
+        // If it's text but not '0', we might want to say "Please send photo or 0 to skip"
+        // But for now let's be permissive and just save
+        console.log('[DEBUG] Input received (not 0), proceeding to save...');
         return await this.saveComplaint(sock, tenantId, userId);
     }
 
