@@ -124,7 +124,7 @@ const DiaryList = () => {
     const confirmDelete = async () => {
         if (!deleteTarget || !tenantId) return;
         await DiaryService.deleteEntry(deleteTarget.id, tenantId);
-        toast.success('Entry deleted successfully');
+        toast.success(t('diary.delete_success'));
         setDeleteTarget(null);
         fetchEntries();
     };
@@ -140,6 +140,16 @@ const DiaryList = () => {
             case 'Resolved': return 'bg-green-100 text-green-800';
             case 'Action Taken': return 'bg-purple-100 text-purple-800';
             default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const getStatusText = (status: DiaryStatus) => {
+        switch (status) {
+            case 'Raised': return t('diary.status_raised');
+            case 'In Discussion': return t('diary.status_discussion');
+            case 'Resolved': return t('diary.status_resolved');
+            case 'Action Taken': return t('diary.status_action');
+            default: return status;
         }
     };
 
@@ -279,12 +289,12 @@ const DiaryList = () => {
                                         </div>
                                         <h3 className="text-lg font-semibold text-slate-900">{entry.subject}</h3>
                                         {entry.department && (
-                                            <p className="text-sm text-brand-600 font-medium">{entry.department} Dept</p>
+                                            <p className="text-sm text-brand-600 font-medium">{entry.department} {t('diary.dept_label')}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(entry.status)}`}>
-                                            {entry.status}
+                                            {getStatusText(entry.status)}
                                         </span>
                                         <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${expandedId === entry.id ? 'rotate-90' : ''}`} />
                                     </div>
@@ -303,7 +313,7 @@ const DiaryList = () => {
 
                                 {entry.response && expandedId === entry.id && (
                                     <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                        <p className="text-xs font-semibold text-slate-600 uppercase mb-1">Official response</p>
+                                        <p className="text-xs font-semibold text-slate-600 uppercase mb-1">{t('diary.official_response')}</p>
                                         <p className="text-sm text-slate-700">{entry.response}</p>
                                     </div>
                                 )}
@@ -319,7 +329,7 @@ const DiaryList = () => {
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
                                         >
                                             <Edit2 className="w-4 h-4" />
-                                            Edit
+                                            {t('diary.edit')}
                                         </button>
                                         <button
                                             onClick={(e) => {
@@ -329,7 +339,7 @@ const DiaryList = () => {
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
                                         >
                                             <Trash2 className="w-4 h-4" />
-                                            Delete
+                                            {t('diary.delete')}
                                         </button>
                                     </div>
                                 )}
@@ -408,7 +418,7 @@ const DiaryList = () => {
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('diary.area') || 'Area'}</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('diary.area')}</label>
                                     <input
                                         type="text"
                                         placeholder={t('diary.area_placeholder')}
@@ -418,10 +428,10 @@ const DiaryList = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('diary.beneficiaries') || 'People Benefited'}</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('diary.beneficiaries')}</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g. 500+ residents"
+                                        placeholder={t('diary.beneficiaries_placeholder')}
                                         className="ns-input mt-1"
                                         value={formData.beneficiaries}
                                         onChange={e => setFormData({ ...formData, beneficiaries: e.target.value })}
@@ -472,7 +482,7 @@ const DiaryList = () => {
                                     onClick={() => setIsModalOpen(false)}
                                     className="ns-btn-ghost border border-slate-200"
                                 >
-                                    Cancel
+                                    {t('diary.cancel')}
                                 </button>
                                 <button
                                     type="submit"
@@ -495,9 +505,9 @@ const DiaryList = () => {
                             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Trash2 className="w-6 h-6 text-red-600" />
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900">Delete Entry?</h3>
+                            <h3 className="text-lg font-bold text-slate-900">{t('diary.delete_confirm_title')}</h3>
                             <p className="text-slate-500 mt-2 text-sm">
-                                Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.subject}</span>? This action cannot be undone.
+                                {t('diary.delete_confirm_msg')}
                             </p>
                         </div>
                         <div className="flex gap-3 pt-2">
@@ -505,13 +515,13 @@ const DiaryList = () => {
                                 onClick={() => setDeleteTarget(null)}
                                 className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
                             >
-                                Cancel
+                                {t('diary.cancel')}
                             </button>
                             <button
                                 onClick={confirmDelete}
                                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
                             >
-                                Delete
+                                {t('diary.delete')}
                             </button>
                         </div>
                     </div>

@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Link } from 'react-router-dom';
-import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
@@ -38,6 +39,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 const LetterDashboard = () => {
     const { t, language } = useLanguage(); // Get language
     const { tenantId } = useTenant();
+    const navigate = useNavigate();
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
@@ -59,6 +61,12 @@ const LetterDashboard = () => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [dateSearch, setDateSearch] = useState('');
     const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+    // Delete Modal State
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'outgoing' | 'incoming'; name: string } | null>(null);
+
+    // Edit State for Incoming
+    const [editingIncoming, setEditingIncoming] = useState<IncomingLetter | null>(null);
 
     useEffect(() => {
         fetchRequests();
@@ -301,7 +309,10 @@ const LetterDashboard = () => {
                             </>
                         ) : (
                             <button
-                                onClick={() => setShowUploadModal(true)}
+                                onClick={() => {
+                                    setEditingIncoming(null);
+                                    setShowUploadModal(true);
+                                }}
                                 className="ns-btn-primary"
                             >
                                 <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
@@ -441,7 +452,7 @@ const LetterDashboard = () => {
                                 <div
                                     key={req.id}
                                     onClick={() => setSelectedRequest(req)}
-                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
                                 >
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800">
@@ -459,7 +470,25 @@ const LetterDashboard = () => {
                                             <TranslatedText text={req.area} />
                                         </p>
                                     )}
-                                    <p className="text-xs text-slate-500 mt-1">{format(new Date(req.created_at), 'PP p')}</p>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <p className="text-xs text-slate-500">{format(new Date(req.created_at), 'PP p')}</p>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={() => navigate(`/letters/edit/${req.id}`)}
+                                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                                                title={t('common.edit')}
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteTarget({ id: req.id, type: 'outgoing', name: req.details?.name || 'Request' })}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                title={t('common.delete')}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                             {filteredRequests.length === 0 && !loading && (
@@ -483,7 +512,7 @@ const LetterDashboard = () => {
                                 <div
                                     key={letter.id}
                                     onClick={() => setSelectedIncoming(letter)}
-                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition ${selectedIncoming?.id === letter.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedIncoming?.id === letter.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
                                 >
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800">
@@ -503,7 +532,28 @@ const LetterDashboard = () => {
                                             <TranslatedText text={letter.area} />
                                         </p>
                                     )}
-                                    <p className="text-xs text-slate-500 mt-1">{format(new Date(letter.received_date), 'PP')}</p>
+                                    <div className="flex justify-between items-center mt-2">
+                                        <p className="text-xs text-slate-500">{format(new Date(letter.received_date), 'PP')}</p>
+                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingIncoming(letter);
+                                                    setShowUploadModal(true);
+                                                }}
+                                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                                                title={t('common.edit')}
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteTarget({ id: letter.id, type: 'incoming', name: letter.title })}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                title={t('common.delete')}
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                             {incomingLetters.length === 0 && (
@@ -513,7 +563,10 @@ const LetterDashboard = () => {
                                     </div>
                                     <p className="text-slate-500 mb-4">No incoming letters uploaded yet</p>
                                     <button
-                                        onClick={() => setShowUploadModal(true)}
+                                        onClick={() => {
+                                            setEditingIncoming(null);
+                                            setShowUploadModal(true);
+                                        }}
                                         className="ns-btn-primary"
                                     >
                                         <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
@@ -648,16 +701,80 @@ const LetterDashboard = () => {
             </div>
 
             {/* Upload Modal */}
-            {showUploadModal && (
-                <IncomingLetterUpload
-                    onClose={() => setShowUploadModal(false)}
-                    onSuccess={() => {
-                        fetchIncomingLetters();
-                        setShowUploadModal(false);
-                    }}
-                />
-            )}
-        </div>
+            {
+                showUploadModal && (
+                    <IncomingLetterUpload
+                        initialData={editingIncoming}
+                        onClose={() => {
+                            setShowUploadModal(false);
+                            setEditingIncoming(null);
+                        }}
+                        onSuccess={() => {
+                            fetchIncomingLetters();
+                            setShowUploadModal(false);
+                            setEditingIncoming(null);
+                        }}
+                    />
+                )
+            }
+
+            {/* Delete Confirmation Modal */}
+            {
+                deleteTarget && (
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-xl w-full max-w-sm overflow-hidden p-6 space-y-4 shadow-xl animate-in fade-in zoom-in duration-200">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">{t('letters.delete_confirm_title') || 'Are you sure?'}</h3>
+                                <p className="text-slate-500 mt-2 text-sm">
+                                    {t('letters.delete_confirm_msg') || 'This action cannot be undone. This will permanently delete'} <strong>{deleteTarget.name}</strong>.
+                                </p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition-colors"
+                                >
+                                    {t('common.cancel')}
+                                </button>
+                                <button
+                                    onClick={async () => {
+                                        /* Handle Delete */
+                                        const { id, type } = deleteTarget;
+                                        const isIncoming = type === 'incoming';
+                                        const table = isIncoming ? 'incoming_letters' : 'letter_requests';
+
+                                        try {
+                                            const { error } = await supabase.from(table).delete().eq('id', id);
+                                            if (error) throw error;
+
+                                            toast.success(`${isIncoming ? 'Incoming letter' : 'Request'} deleted successfully`);
+                                            if (isIncoming) {
+                                                fetchIncomingLetters();
+                                                setSelectedIncoming(null);
+                                            } else {
+                                                fetchRequests();
+                                                setSelectedRequest(null);
+                                            }
+                                        } catch (err) {
+                                            console.error(err);
+                                            toast.error('Failed to delete item');
+                                        } finally {
+                                            setDeleteTarget(null);
+                                        }
+                                    }}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors shadow-sm"
+                                >
+                                    {t('common.delete')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { type ComplaintType, type Voter } from '../../types';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
@@ -21,10 +21,14 @@ const ComplaintForm = () => {
     // State for linked voter
     const [selectedVoterId, setSelectedVoterId] = useState<string | null>(prefillVoterId || null);
 
+    // Get query params
+    const [searchParams] = useSearchParams();
+    const typeParam = searchParams.get('type');
+
     // Form State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [type, setType] = useState<ComplaintType>('Other');
+    const [type, setType] = useState<ComplaintType>((typeParam as ComplaintType) || 'Other');
     const [ward, setWard] = useState('12'); // Default to 12 for MVP
     const [area, setArea] = useState('');
     const [peopleAffected, setPeopleAffected] = useState('');

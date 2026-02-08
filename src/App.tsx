@@ -86,6 +86,7 @@ function App() {
           <Route path="staff" element={<StaffList />} />
           <Route path="letters" element={<LetterDashboard />} />
           <Route path="letters/new" element={<LetterForm />} />
+          <Route path="letters/edit/:id" element={<LetterForm />} />
           <Route path="letters/types" element={<LetterTypeManager />} />
           <Route path="visitors" element={<VisitorLog />} />
           <Route path="bot-dashboard" element={<BotDashboard />} />

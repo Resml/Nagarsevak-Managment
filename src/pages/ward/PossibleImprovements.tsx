@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Lightbulb, ThumbsUp, MapPin, Calendar, Wand2, User, X } from 'lucide-react';
+import { ArrowLeft, Plus, Lightbulb, ThumbsUp, MapPin, Calendar, Wand2, User, X, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { toast } from 'sonner';
@@ -20,8 +21,11 @@ interface ImprovementParam {
     created_at: string;
 }
 
+import { useTenant } from '../../context/TenantContext';
+
 const PossibleImprovements = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [improvements, setImprovements] = useState<ImprovementParam[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,19 +42,78 @@ const PossibleImprovements = () => {
         peopleBenefited: ''
     });
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [areaSearch, setAreaSearch] = useState('');
+    const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+    const [dateSearch, setDateSearch] = useState('');
+    const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+    // Helper: Get Unique Areas with Counts
+    const getAreaSuggestions = () => {
+        const stats: Record<string, number> = {};
+        improvements.forEach(item => {
+            if (item.area) {
+                stats[item.area] = (stats[item.area] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([area, count]) => ({ area, count }));
+    };
+
+    // Helper: Get Unique Dates with Counts
+    const getDateSuggestions = () => {
+        const stats: Record<string, number> = {};
+        improvements.forEach(item => {
+            if (item.created_at) {
+                const dateStr = format(new Date(item.created_at), 'MMM d, yyyy');
+                stats[dateStr] = (stats[dateStr] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([date, count]) => ({ date, count }));
+    };
+
+    const filteredImprovements = improvements.filter(item => {
+        const matchesSearch = !searchTerm || (() => {
+            const term = searchTerm.toLowerCase();
+            return (
+                item.title.toLowerCase().includes(term) ||
+                item.description.toLowerCase().includes(term) ||
+                item.location.toLowerCase().includes(term)
+            );
+        })();
+
+        const matchesArea = !areaSearch || (item.area && item.area.toLowerCase().includes(areaSearch.toLowerCase()));
+        const matchesDate = !dateSearch || (item.created_at && format(new Date(item.created_at), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase()));
+
+        return matchesSearch && matchesArea && matchesDate;
+    });
+
+    // Close dropdowns when clicking outside
     useEffect(() => {
-        fetchData();
-
-        // Subscribe to changes
-        const subscription = supabase
-            .channel('improvements_channel')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'improvements' }, () => fetchData())
-            .subscribe();
-
-        return () => {
-            subscription.unsubscribe();
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!(event.target as Element).closest('.dropdown-container')) {
+                setShowAreaDropdown(false);
+                setShowDateDropdown(false);
+            }
         };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (tenantId) {
+            fetchData();
+
+            // Subscribe to changes
+            const subscription = supabase
+                .channel('improvements_channel')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'improvements', filter: `tenant_id=eq.${tenantId}` }, () => fetchData())
+                .subscribe();
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        }
+    }, [tenantId]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -58,6 +121,7 @@ const PossibleImprovements = () => {
             const { data, error } = await supabase
                 .from('improvements')
                 .select('*')
+                .eq('tenant_id', tenantId)
                 .order('votes', { ascending: false });
 
             if (error) throw error;
@@ -93,6 +157,7 @@ const PossibleImprovements = () => {
                 area: newImprovement.area,
                 status: newImprovement.status,
                 completion_date: newImprovement.completion_date || null,
+                tenant_id: tenantId,
                 metadata: {
                     people_benefited: newImprovement.peopleBenefited
                 }
@@ -162,6 +227,82 @@ const PossibleImprovements = () => {
                 </button>
             </div>
 
+            {/* Filters Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                {/* Main Search */}
+                <div className="md:col-span-6 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                        type="text"
+                        placeholder={t('work_history.search_placeholder')}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="ns-input pl-10 w-full"
+                    />
+                </div>
+
+                {/* Area Search */}
+                <div className="md:col-span-3 relative dropdown-container">
+                    <input
+                        type="text"
+                        placeholder={t('work_history.search_area')}
+                        className="ns-input w-full bg-white shadow-sm"
+                        value={areaSearch}
+                        onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
+                        onChange={(e) => setAreaSearch(e.target.value)}
+                    />
+                    {showAreaDropdown && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).map((item) => (
+                                <div
+                                    key={item.area}
+                                    className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                    onClick={() => {
+                                        setAreaSearch(item.area);
+                                        setShowAreaDropdown(false);
+                                    }}
+                                >
+                                    <span className="text-sm text-slate-700">{item.area}</span>
+                                    <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                </div>
+                            ))}
+                            {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
+                                <div className="px-4 py-2 text-sm text-slate-500 italic">{t('work_history.no_areas')}</div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Date Search */}
+                <div className="md:col-span-3 relative dropdown-container">
+                    <input
+                        type="text"
+                        placeholder={t('work_history.filter_date')}
+                        className="ns-input w-full bg-white shadow-sm"
+                        value={dateSearch}
+                        onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
+                        onChange={(e) => setDateSearch(e.target.value)}
+                    />
+                    {showDateDropdown && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            {getDateSuggestions().filter(d => d.date.toLowerCase().includes(dateSearch.toLowerCase())).map((item) => (
+                                <div
+                                    key={item.date}
+                                    className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                    onClick={() => {
+                                        setDateSearch(item.date);
+                                        setShowDateDropdown(false);
+                                    }}
+                                >
+                                    <span className="text-sm text-slate-700">{item.date}</span>
+                                    <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {loading ? (
                     <>
@@ -174,7 +315,7 @@ const PossibleImprovements = () => {
                             </div>
                         ))}
                     </>
-                ) : improvements.map((item) => (
+                ) : filteredImprovements.map((item) => (
                     <div
                         key={item.id}
                         onClick={() => navigate(`/ward/improvements/${item.id}`)}

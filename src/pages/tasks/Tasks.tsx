@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, User, Calendar, X } from 'lucide-react';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, User, Calendar, X, Edit2, Trash2 } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 import { format } from 'date-fns';
 import clsx from 'clsx';
@@ -28,6 +28,8 @@ const Tasks = () => {
         assigned_to: '' // For MVP we might not list all staff, or just a text field
     });
     const [staffList, setStaffList] = useState<any[]>([]);
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchTasks();
@@ -95,9 +97,30 @@ const Tasks = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const { error } = await supabase.from('tasks').insert([{ ...newTask, tenant_id: tenantId }]); // Secured
+            const payload = {
+                ...newTask,
+                due_date: newTask.due_date || null,
+                due_time: newTask.due_time || null,
+                tenant_id: tenantId
+            };
+
+            let error;
+            if (editingId) {
+                const { error: updateError } = await supabase
+                    .from('tasks')
+                    .update(payload)
+                    .eq('id', editingId);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('tasks')
+                    .insert([payload]);
+                error = insertError;
+            }
+
             if (error) throw error;
 
+            toast.success(editingId ? t('common.save_changes') : t('tasks.save_task'));
             setShowForm(false);
             setNewTask({
                 title: '',
@@ -109,10 +132,48 @@ const Tasks = () => {
                 status: 'Pending',
                 assigned_to: ''
             });
+            setEditingId(null);
             fetchTasks();
         } catch (err) {
-            console.error('Error creating task:', err);
-            toast.error('Failed to create task');
+            console.error('Error saving task:', err);
+            toast.error('Failed to save task');
+        }
+    };
+
+    const handleEdit = (task: any) => {
+        setNewTask({
+            title: task.title,
+            description: task.description || '',
+            priority: task.priority || 'Medium',
+            due_date: task.due_date || '',
+            due_time: task.due_time || '',
+            address: task.address || '',
+            status: task.status || 'Pending',
+            assigned_to: task.assigned_to || ''
+        });
+        setEditingId(task.id);
+        setShowForm(true);
+    };
+
+    const handleDeleteClick = (task: any) => {
+        setDeleteTarget({ id: task.id, title: task.title });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .delete()
+                .eq('id', deleteTarget.id);
+
+            if (error) throw error;
+            toast.success(t('common.deleted'));
+            setDeleteTarget(null);
+            fetchTasks();
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            toast.error('Failed to delete task');
         }
     };
 
@@ -146,7 +207,7 @@ const Tasks = () => {
                     <div className="ns-card w-full max-w-lg overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-200/70 flex justify-between items-center bg-slate-50">
                             <h2 className="text-lg font-semibold text-slate-900">
-                                {newTask.title ? t('tasks.edit_scanned_task') : t('tasks.create_new_task')}
+                                {editingId ? t('tasks.edit_task') || 'Edit Task' : (newTask.title ? t('tasks.edit_scanned_task') : t('tasks.create_new_task'))}
                             </h2>
                             <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
                                 <X className="w-5 h-5" />
@@ -291,7 +352,22 @@ const Tasks = () => {
                             <span className="text-slate-500 flex items-center gap-1">
                                 <Clock className="w-3 h-3" /> {t('tasks.created')} {new Date(task.created_at).toLocaleDateString()}
                             </span>
-                            <button className="text-brand-700 font-semibold hover:underline">{t('tasks.view_details')}</button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleEdit(task)}
+                                    className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                    title={t('common.edit')}
+                                >
+                                    <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDeleteClick(task)}
+                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title={t('common.delete')}
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -303,6 +379,35 @@ const Tasks = () => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="ns-card max-w-sm w-full p-6 text-center">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
+                        <p className="text-slate-600 mb-6">
+                            {t('common.delete_warning_item').replace('{item}', deleteTarget.title)}
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="ns-btn-secondary"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                {t('common.delete')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

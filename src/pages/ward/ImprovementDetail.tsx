@@ -1,53 +1,138 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, Calendar, Clock, CheckCircle, XCircle, ThumbsUp, TrendingUp } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Clock, CheckCircle, XCircle, ThumbsUp, TrendingUp, Loader2, Edit, Trash2, X, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { TranslatedText } from '../../components/TranslatedText';
-
-// Mock Data (matches PossibleImprovements.tsx)
-const MOCK_DATA = [
-    {
-        id: 1,
-        title: 'New Garden in Sector 4',
-        description: 'Proposal to build a nano-park in the empty plot near Ganesh Mandir.',
-        votes: 45,
-        location: 'Sector 4',
-        status: 'Proposed',
-        date: '2025-10-15'
-    },
-    {
-        id: 2,
-        title: 'Street Light Upgrade',
-        description: 'Replace all sodium vapor lamps with LEDs in Lane 7.',
-        votes: 32,
-        location: 'Lane 7, Main Road',
-        status: 'Approved',
-        date: '2025-10-20'
-    }
-];
+import { supabase } from '../../services/supabaseClient';
 
 const ImprovementDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t } = useLanguage();
+    const { user } = useAuth();
     const [improvement, setImprovement] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [voting, setVoting] = useState(false);
+
+    // Actions State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [updating, setUpdating] = useState(false);
+
+    // Edit Form State
+    const [editForm, setEditForm] = useState({
+        title: '',
+        description: '',
+        location: '',
+        area: '',
+        status: '',
+        completion_date: ''
+    });
 
     useEffect(() => {
-        // Simulate fetch
-        setLoading(true);
-        setTimeout(() => {
-            const found = MOCK_DATA.find(i => i.id === Number(id));
-            setImprovement(found || null);
-            setLoading(false);
-        }, 600);
+        if (id) {
+            fetchImprovement();
+        }
     }, [id]);
 
-    const handleVote = () => {
+    const fetchImprovement = async () => {
+        setLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from('improvements')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) throw error;
+            setImprovement(data);
+
+            // Initialize Edit Form
+            setEditForm({
+                title: data.title,
+                description: data.description,
+                location: data.location,
+                area: data.area || '',
+                status: data.status,
+                completion_date: data.completion_date || ''
+            });
+        } catch (err) {
+            console.error('Error fetching improvement:', err);
+            toast.error(t('improvements.fetch_failed') || 'Failed to fetch improvement');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVote = async () => {
         if (!improvement) return;
-        setImprovement({ ...improvement, votes: improvement.votes + 1 });
-        toast.success(t('improvements.success_vote'));
+        setVoting(true);
+        try {
+            const { error } = await supabase
+                .from('improvements')
+                .update({ votes: improvement.votes + 1 })
+                .eq('id', improvement.id);
+
+            if (error) throw error;
+
+            setImprovement((prev: any) => ({ ...prev, votes: prev.votes + 1 }));
+            toast.success(t('improvements.success_vote'));
+        } catch (err) {
+            console.error('Error voting:', err);
+            toast.error('Failed to submit vote');
+        } finally {
+            setVoting(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!id) return;
+        setDeleting(true);
+        try {
+            const { error } = await supabase.from('improvements').delete().eq('id', id);
+            if (error) throw error;
+            toast.success('Improvement deleted successfully');
+            navigate('/ward/improvements');
+        } catch (err) {
+            console.error('Error deleting improvement:', err);
+            toast.error('Failed to delete improvement');
+        } finally {
+            setDeleting(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id) return;
+        setUpdating(true);
+        try {
+            const { error } = await supabase
+                .from('improvements')
+                .update({
+                    title: editForm.title,
+                    description: editForm.description,
+                    location: editForm.location,
+                    area: editForm.area,
+                    status: editForm.status,
+                    completion_date: editForm.completion_date || null
+                })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            setImprovement((prev: any) => prev ? ({ ...prev, ...editForm }) : null);
+            toast.success('Improvement updated successfully');
+            setIsEditModalOpen(false);
+        } catch (err) {
+            console.error('Error updating improvement:', err);
+            toast.error('Failed to update improvement');
+        } finally {
+            setUpdating(false);
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -101,6 +186,21 @@ const ImprovementDetail = () => {
                     </div>
                     <span>{t('improvements.back_to_list')}</span>
                 </button>
+
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setIsEditModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-sm transition-colors font-medium text-sm"
+                    >
+                        <Edit className="w-4 h-4" /> {t('work_history.edit')}
+                    </button>
+                    <button
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg border border-red-100 transition-colors font-medium text-sm"
+                    >
+                        <Trash2 className="w-4 h-4" /> {t('work_history.delete')}
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -124,19 +224,21 @@ const ImprovementDetail = () => {
                             </div>
 
                             <div className="flex flex-wrap gap-6 text-sm text-slate-500 pt-6 border-t border-slate-100">
-                                <div className="flex items-center gap-2">
-                                    <div className="p-2 bg-slate-50 rounded-full text-slate-400"><MapPin className="w-4 h-4" /></div>
-                                    <div>
-                                        <div className="text-xs uppercase font-semibold text-slate-400">{t('improvements.form_location')}</div>
-                                        <div className="font-medium text-slate-900"><TranslatedText text={improvement.location} /></div>
+                                {improvement.location && (
+                                    <div className="flex items-center gap-2">
+                                        <div className="p-2 bg-slate-50 rounded-full text-slate-400"><MapPin className="w-4 h-4" /></div>
+                                        <div>
+                                            <div className="text-xs uppercase font-semibold text-slate-400">{t('improvements.form_location')}</div>
+                                            <div className="font-medium text-slate-900"><TranslatedText text={improvement.location} /></div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                                 <div className="flex items-center gap-2">
                                     <div className="p-2 bg-slate-50 rounded-full text-slate-400"><Calendar className="w-4 h-4" /></div>
                                     <div>
                                         <div className="text-xs uppercase font-semibold text-slate-400">{t('improvements.date_prefix').replace(':', '')}</div>
                                         <div className="font-medium text-slate-900">
-                                            {new Date(improvement.date).toLocaleDateString()}
+                                            {improvement.created_at ? new Date(improvement.created_at).toLocaleDateString() : 'N/A'}
                                         </div>
                                     </div>
                                 </div>
@@ -156,9 +258,10 @@ const ImprovementDetail = () => {
 
                             <button
                                 onClick={handleVote}
-                                className="mt-6 flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-medium transition shadow-lg shadow-brand-200 mx-auto"
+                                disabled={voting}
+                                className="mt-6 flex items-center justify-center gap-2 px-6 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-medium transition shadow-lg shadow-brand-200 mx-auto disabled:opacity-70"
                             >
-                                <ThumbsUp className="w-4 h-4" />
+                                {voting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ThumbsUp className="w-4 h-4" />}
                                 {t('improvements.vote_btn')}
                             </button>
                         </div>
@@ -175,7 +278,139 @@ const ImprovementDetail = () => {
                     </div>
                 </div>
             </div>
-        </div>
+            {
+                isDeleteModalOpen && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden p-6 shadow-2xl">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">{t('work_history.delete_modal_title')}</h3>
+                                <p className="text-slate-500 mt-2 text-sm">
+                                    {t('work_history.delete_modal_text')}
+                                </p>
+                            </div>
+                            <div className="flex gap-3 pt-6">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    disabled={deleting}
+                                    className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition"
+                                >
+                                    {t('work_history.cancel')}
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={deleting}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 font-medium transition shadow-lg shadow-red-200 disabled:opacity-50"
+                                >
+                                    {deleting ? t('work_history.deleting') || 'Deleting...' : t('work_history.delete')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Edit Modal */}
+            {
+                isEditModalOpen && (
+                    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-xl font-bold text-slate-900">{t('work_history.edit_modal_title')}</h3>
+                                <button onClick={() => setIsEditModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleUpdate} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.project_title')}</label>
+                                    <input
+                                        type="text"
+                                        className="ns-input w-full"
+                                        value={editForm.title}
+                                        onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.description')}</label>
+                                    <textarea
+                                        className="ns-input w-full h-32"
+                                        value={editForm.description}
+                                        onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.location')}</label>
+                                        <input
+                                            type="text"
+                                            className="ns-input w-full"
+                                            value={editForm.location}
+                                            onChange={e => setEditForm({ ...editForm, location: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.area_locality')}</label>
+                                        <input
+                                            type="text"
+                                            className="ns-input w-full"
+                                            value={editForm.area}
+                                            onChange={e => setEditForm({ ...editForm, area: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.completion_date_label')}</label>
+                                        <input
+                                            type="date"
+                                            className="ns-input w-full"
+                                            value={editForm.completion_date}
+                                            onChange={e => setEditForm({ ...editForm, completion_date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.status')}</label>
+                                        <select
+                                            className="ns-input w-full"
+                                            value={editForm.status}
+                                            onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                        >
+                                            <option value="Proposed">{t('improvements.status_proposed')}</option>
+                                            <option value="Approved">{t('improvements.status_approved')}</option>
+                                            <option value="Rejected">{t('improvements.status_rejected')}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 pt-4 border-t border-slate-100 mt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditModalOpen(false)}
+                                        className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 hover:bg-slate-50 font-medium transition"
+                                    >
+                                        {t('work_history.cancel')}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updating}
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-medium transition shadow-lg shadow-brand-200 disabled:opacity-50"
+                                    >
+                                        <Save className="w-4 h-4" />
+                                        {updating ? t('work_history.saving') : t('work_history.save_changes')}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

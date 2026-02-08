@@ -7,6 +7,7 @@ export const translations = {
             welcome: "Welcome",
             save: "Save",
             cancel: "Cancel",
+            save_changes: "Save Changes",
             loading: "Loading...",
             logout: "Sign Out",
             dashboard: "Dashboard",
@@ -24,7 +25,9 @@ export const translations = {
             Farmer: "Farmer",
             Health: "Health",
             Youth: "Youth",
-            Housing: "Housing"
+            Housing: "Housing",
+            delete_confirm: "Delete Item?",
+            delete_warning_item: "Are you sure you want to delete '{item}'? This action cannot be undone."
         },
         complaints: {
             title: "Requests & Complaints",
@@ -92,7 +95,8 @@ export const translations = {
                     complaint: "Complaint",
                     help: "Help",
                     personal_help: "Personal Help",
-                    suggestion: "Suggestion"
+                    suggestion: "Suggestion",
+                    selfidentified: "Ward Problem"
                 },
                 wards: {
                     ward_12: "Ward 12",
@@ -579,7 +583,16 @@ export const translations = {
             status_discussion: "In Discussion",
             status_resolved: "Resolved",
             status_action: "Action Taken",
-            edit_entry_title: "Edit Diary Entry"
+            edit_entry_title: "Edit Diary Entry",
+            edit: "Edit",
+            delete: "Delete",
+            cancel: "Cancel",
+            delete_confirm_title: "Delete Entry?",
+            delete_confirm_msg: "Are you sure you want to delete this entry? This action cannot be undone.",
+            delete_success: "Entry deleted successfully",
+            beneficiaries_placeholder: "e.g. 500+ residents",
+            official_response: "Official Response",
+            dept_label: "Dept"
         },
         election: {
             title: "Election Result",
@@ -722,6 +735,7 @@ export const translations = {
             title: "Letters Dashboard",
             subtitle: "Track and manage official letter requests",
             new_request: "New Request",
+            edit_request: "Edit Request",
             manage_types: "Manage Types",
             search_placeholder: "Search by name, type, area...",
             no_letters: "No letter requests found.",
@@ -803,6 +817,7 @@ export const translations = {
             scan_doc: "Scan Doc",
             scanning: "Scanning...",
             edit_scanned_task: "Edit Scanned Task",
+            edit_task: "Edit Task",
             create_new_task: "Create New Task",
             task_title: "Task title",
             priority: "Priority",
@@ -1149,6 +1164,7 @@ export const translations = {
             welcome: "स्वागत आहे",
             save: "जतन करा",
             cancel: "रद्द करा",
+            save_changes: "बदल जतन करा",
             loading: "लोड होत आहे...",
             logout: "बाहेर पडणे",
             dashboard: "डॅशबोर्ड",
@@ -1166,7 +1182,9 @@ export const translations = {
             Farmer: "शेतकरी",
             Health: "आरोग्य",
             Youth: "युवक",
-            Housing: "घरकुल"
+            Housing: "घरकुल",
+            delete_confirm: "डिलीट करायचे आहे का?",
+            delete_warning_item: "तुम्ही नक्की '{item}' डिलीट करू इच्छिता का? ही क्रिया पूर्ववत करता येणार नाही."
         },
         complaints: {
             title: "तक्रारी आणि विनंती",
@@ -1234,7 +1252,8 @@ export const translations = {
                     complaint: "तक्रार",
                     help: "मदत",
                     personal_help: "वैयक्तिक मदत",
-                    suggestion: "सूचना"
+                    suggestion: "सूचना",
+                    selfidentified: "प्रभागातील समस्या"
                 },
                 wards: {
                     ward_12: "प्रभाग १२",
@@ -1740,7 +1759,16 @@ export const translations = {
             status_discussion: "चर्चेत",
             status_resolved: "सोडवले",
             status_action: "कार्यवाही केली",
-            edit_entry_title: "नोंद संपादित करा"
+            edit_entry_title: "नोंद संपादित करा",
+            edit: "संपादित करा",
+            delete: "हटवा",
+            cancel: "रद्द करा",
+            delete_confirm_title: "नोंद हटवायची आहे का?",
+            delete_confirm_msg: "तुम्हाला खात्री आहे की तुम्ही ही नोंद हटवू इच्छिता? ही कृती पूर्ववत केली जाऊ शकत नाही.",
+            delete_success: "नोंद यशस्वीरित्या हटविली",
+            beneficiaries_placeholder: "उदा. ५००+ रहिवासी",
+            official_response: "अधिकृत प्रतिसाद",
+            dept_label: "विभाग"
         },
         election: {
             title: "निवडणूक निकाल",
@@ -1882,6 +1910,7 @@ export const translations = {
             title: "पत्र व्यवहार - आवक - जावक",
             subtitle: "अधिकृत पत्र विनंत्यांचा मागोवा घ्या आणि व्यवस्थापित करा",
             new_request: "नवीन विनंती",
+            edit_request: "विनंती संपादित करा",
             manage_types: "प्रकार व्यवस्थापित करा",
             search_placeholder: "नाव, प्रकार, क्षेत्राद्वारे शोधा...",
             no_letters: "पत्र विनंतीआढळल्या नाहीत.",
@@ -1963,6 +1992,7 @@ export const translations = {
             scan_doc: "दस्तऐवज स्कॅन करा",
             scanning: "स्कॅनिंग...",
             edit_scanned_task: "स्कॅन केलेले कार्य संपादित करा",
+            edit_task: "कार्य संपादित करा",
             create_new_task: "नवीन कार्य तयार करा",
             task_title: "कार्याचे शीर्षक",
             priority: "प्राधान्यता",
@@ -2042,6 +2072,7 @@ export const translations = {
             status_approved: "मंजूर",
             status_rejected: "नाकारले",
             status_partial: "अंशत: मंजूर",
+            status_partially_approved: "अंशत: मंजूर",
             success_add: "तरतूद मागणी जोडली गेली!",
             success_update: "मंजूरीचा तपशील अपडेट केला!",
         },

@@ -38,7 +38,7 @@ export const ProvisionService = {
         }
     },
 
-    addProvision: async (record: Omit<ProvisionRecord, 'id' | 'createdAt'>): Promise<void> => {
+    addProvision: async (record: Omit<ProvisionRecord, 'id' | 'createdAt'> & { tenantId?: string | null }): Promise<void> => {
         try {
             const { error } = await supabase
                 .from('ward_provisions')
@@ -47,13 +47,14 @@ export const ProvisionService = {
                     description: record.description,
                     requested_amount: record.requestedAmount,
                     sanctioned_amount: record.sanctionedAmount,
-                    requested_date: record.requestedDate,
-                    sanctioned_date: record.sanctionedDate,
+                    requested_date: record.requestedDate ? record.requestedDate : null,
+                    sanctioned_date: record.sanctionedDate ? record.sanctionedDate : null,
                     status: record.status,
                     financial_year: record.financialYear,
                     category: record.category,
                     letter_reference: record.letterReference,
-                    metadata: record.metadata
+                    metadata: record.metadata,
+                    tenant_id: record.tenantId
                 });
 
             if (error) throw error;
@@ -70,8 +71,8 @@ export const ProvisionService = {
             if (updates.description) payload.description = updates.description;
             if (updates.requestedAmount !== undefined) payload.requested_amount = updates.requestedAmount;
             if (updates.sanctionedAmount !== undefined) payload.sanctioned_amount = updates.sanctionedAmount;
-            if (updates.requestedDate) payload.requested_date = updates.requestedDate;
-            if (updates.sanctionedDate !== undefined) payload.sanctioned_date = updates.sanctionedDate;
+            if (updates.requestedDate) payload.requested_date = updates.requestedDate ? updates.requestedDate : null;
+            if (updates.sanctionedDate !== undefined) payload.sanctioned_date = updates.sanctionedDate ? updates.sanctionedDate : null;
             if (updates.status) payload.status = updates.status;
             if (updates.financialYear) payload.financial_year = updates.financialYear;
             if (updates.category) payload.category = updates.category;

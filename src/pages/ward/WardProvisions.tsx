@@ -3,12 +3,14 @@ import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileTex
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTenant } from '../../context/TenantContext';
 import { ProvisionService } from '../../services/provisionService';
 import { type ProvisionRecord } from '../../types';
 import { toast } from 'sonner';
 
 const WardProvisions = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [year, setYear] = useState('2024-2025');
     const [provisions, setProvisions] = useState<ProvisionRecord[]>([]);
@@ -57,7 +59,7 @@ const WardProvisions = () => {
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await ProvisionService.addProvision(formData as any);
+            await ProvisionService.addProvision({ ...formData as any, tenantId });
             setIsAddModalOpen(false);
             setFormData({
                 title: '',

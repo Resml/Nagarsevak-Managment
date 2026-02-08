@@ -8,16 +8,17 @@ import { useTenant } from '../../context/TenantContext';
 interface IncomingLetterUploadProps {
     onClose: () => void;
     onSuccess: () => void;
+    initialData?: any;
 }
 
-const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps) => {
+const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLetterUploadProps) => {
     const { t } = useLanguage();
     const { tenantId } = useTenant();
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [area, setArea] = useState('');
+    const [title, setTitle] = useState(initialData?.title || '');
+    const [description, setDescription] = useState(initialData?.description || '');
+    const [area, setArea] = useState(initialData?.area || '');
     const [file, setFile] = useState<File | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
+    const [preview, setPreview] = useState<string | null>(initialData?.scanned_file_url || null);
     const [uploading, setUploading] = useState(false);
 
     // Bearer Details State
@@ -25,6 +26,11 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
     const [middleName, setMiddleName] = useState('');
     const [lastName, setLastName] = useState('');
     const [mobile, setMobile] = useState('');
+
+    // If editing, extract bearer details from description if possible (simple heuristic)
+    // This is optional and might be complex depending on how description is stored.
+    // For now, we'll just leave bearer details empty on edit unless we parse them back.
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -60,9 +66,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!title || !file) {
-            toast.error(t('common.loading')); // Fallback: "Loading" isn't right, but preventing crash. Logic checks title.
-            // Better:
+        if (!title || (!file && !initialData)) {
             toast.error('Please provide a title and select a file');
             return;
         }
@@ -70,22 +74,29 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
         setUploading(true);
 
         try {
-            // 1. Upload file to Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `incoming_letters/${Date.now()}_${title.replace(/\s+/g, '_').toLowerCase()}.${fileExt}`;
+            let publicUrl = initialData?.scanned_file_url;
+            let fileType = initialData?.file_type;
 
-            const { error: uploadError } = await supabase.storage
-                .from('documents')
-                .upload(fileName, file, {
-                    contentType: file.type
-                });
+            // 1. Upload file to Supabase Storage if new file selected
+            if (file) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `incoming_letters/${Date.now()}_${title.replace(/\s+/g, '_').toLowerCase()}.${fileExt}`;
 
-            if (uploadError) throw uploadError;
+                const { error: uploadError } = await supabase.storage
+                    .from('documents')
+                    .upload(fileName, file, {
+                        contentType: file.type
+                    });
 
-            // 2. Get public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('documents')
-                .getPublicUrl(fileName);
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage
+                    .from('documents')
+                    .getPublicUrl(fileName);
+
+                publicUrl = data.publicUrl;
+                fileType = file.type;
+            }
 
             // 3. Prepare Description with Bearer Details
             let finalDescription = description;
@@ -97,19 +108,32 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                 if (mobile) finalDescription += `${t('letters.mobile')}: ${mobile}`;
             }
 
-            // 4. Insert metadata into database
-            const { error: dbError } = await supabase
-                .from('incoming_letters')
-                .insert({
-                    title,
-                    description: finalDescription,
-                    area: area || null,
-                    scanned_file_url: publicUrl,
-                    file_type: file.type,
-                    tenant_id: tenantId
-                });
+            // 4. Upsert data
+            const payload: any = {
+                title,
+                description: finalDescription,
+                area: area || null,
+                scanned_file_url: publicUrl,
+                file_type: fileType,
+                tenant_id: tenantId
+            };
 
-            if (dbError) throw dbError;
+            let error;
+            if (initialData) {
+                const { error: updateError } = await supabase
+                    .from('incoming_letters')
+                    .update(payload)
+                    .eq('id', initialData.id);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('incoming_letters')
+                    .insert(payload);
+                error = insertError;
+            }
+
+
+            if (error) throw error;
 
             toast.success(t('letters.upload_incoming') + ' ' + t('complaints.status.resolved')); // "Upload Incoming Letter Resolved" - bit weird but indicates success. 
             // Better to just say "Success"
@@ -132,7 +156,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                     <div>
                         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             <Upload className="w-6 h-6 text-brand-600" />
-                            {t('letters.upload_incoming')}
+                            {initialData ? t('letters.edit_incoming') || 'Edit Incoming Letter' : t('letters.upload_incoming')}
                         </h2>
                         <p className="text-sm text-slate-500 mt-1">
                             {t('letters.subtitle')}
@@ -151,7 +175,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                     {/* File Upload */}
                     <div>
                         <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            {t('letters.scan_file')} *
+                            {t('letters.scan_file')} {initialData ? '' : '*'}
                         </label>
                         <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-brand-400 transition">
                             <input
@@ -318,7 +342,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                         <button
                             type="submit"
                             className="ns-btn-primary flex-1"
-                            disabled={uploading || !title || !file}
+                            disabled={uploading || !title || (!file && !initialData)}
                         >
                             {uploading ? (
                                 <span className="flex items-center gap-2">
@@ -328,7 +352,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess }: IncomingLetterUploadProps)
                             ) : (
                                 <span className="flex items-center gap-2">
                                     <Upload className="w-4 h-4" />
-                                    {t('letters.upload_incoming')}
+                                    {initialData ? t('common.save_changes') : t('letters.upload_incoming')}
                                 </span>
                             )}
                         </button>
