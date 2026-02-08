@@ -101,7 +101,9 @@ async function saveComplaint(complaint) {
             updated_at: new Date().toISOString()
         };
 
-        console.log('Inserting complaint data:', dbData);
+        console.log('--- DB INSERT DEBUG ---');
+        console.log('Tenant:', complaint.tenantId);
+        console.log('Data:', JSON.stringify(dbData, null, 2));
 
         const { data, error } = await supabase
             .from('complaints')

@@ -248,7 +248,7 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
 
             if (text) {
                 text = text.trim();
-                console.log(`[${tenantId}] [DEBUG] Message from ${from}: ${text}`);
+                console.log(`[${tenantId}] [DEBUG] Message from ${from} (Tenant: ${tenantId}): ${text}`);
                 await handleMessage(sock, tenantId, from, contactName, text);
             }
 
