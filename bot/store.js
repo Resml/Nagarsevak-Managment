@@ -96,8 +96,7 @@ async function saveComplaint(complaint) {
                 full_description: complaint.description,
                 from_whatsapp: true
             }),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            created_at: new Date().toISOString()
         };
 
         console.log('--- DB INSERT DEBUG ---');
