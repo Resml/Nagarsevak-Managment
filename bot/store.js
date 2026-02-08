@@ -50,66 +50,84 @@ async function getUser(userId) {
 }
 
 async function saveComplaint(complaint) {
-    console.log('Saving complaint to Supabase...');
+    console.log('Saving complaint to Supabase...', { tenantId: complaint.tenantId });
 
     // 1. Try Supabase
     try {
         let voterId = null;
 
         // --- VOTER LINKING LOGIC ---
-        // Try to find a matching voter
-        if (complaint.userId) { // userId is the phone number from WhatsApp (e.g., 919876543210)
-            const cleanMobile = complaint.userId.replace(/\D/g, '').slice(-10); // Last 10 digits
+        // Try to find a matching voter by mobile or name
+        if (complaint.mobile) {
+            const cleanMobile = complaint.mobile.replace(/\D/g, '').slice(-10); // Last 10 digits
 
-            // Search by Mobile OR Name
-            // Note: Fuzzy name search is hard in SQL without triggers, doing partial match
+            // Search by Mobile
             let query = supabase
                 .from('voters')
-                .select('id, name_english, name_marathi')
-                .or(`mobile.ilike.%${cleanMobile}%,name_english.ilike.%${complaint.userName}%,name_marathi.ilike.%${complaint.userName}%`)
+                .select('id, name_english, name_marathi, mobile')
+                .eq('tenant_id', complaint.tenantId)
+                .ilike('mobile', `%${cleanMobile}%`)
                 .limit(1);
 
             const { data: voters } = await query;
 
             if (voters && voters.length > 0) {
                 voterId = voters[0].id;
-                console.log(`Linked complaint to Voter ID: ${voterId} (${voters[0].name_english})`);
+                console.log(`Linked complaint to Voter ID: ${voterId} (${voters[0].name_english || voters[0].name_marathi})`);
             } else {
                 console.log('No matching voter found for linking.');
             }
         }
 
+        // Prepare data for database
+        const dbData = {
+            title: complaint.title,
+            description: complaint.description,
+            type: complaint.type,
+            status: complaint.status || 'Pending',
+            ward: complaint.ward || '12',  // Default ward
+            area: complaint.area,
+            location: complaint.location,
+            voter_id: voterId, // Linked voter ID
+            source: complaint.source || 'WhatsApp',
+            urgency: complaint.urgency || 'Medium',
+            photos: complaint.photos || [],
+            tenant_id: complaint.tenantId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        console.log('Inserting complaint data:', dbData);
+
         const { data, error } = await supabase
             .from('complaints')
-            .insert([
-                {
-                    user_id: complaint.userId,
-                    user_name: complaint.userName,
-                    problem: complaint.problem,
-                    location: complaint.location,
-                    audio_url: complaint.audioUrl,
-                    voter_id: voterId, // Linked ID
-                    status: 'Pending',
-                    source: 'WhatsApp',
-                    created_at: new Date().toISOString()
-                }
-            ]);
+            .insert([dbData])
+            .select('id')
+            .single();
 
         if (error) {
             console.error('Supabase Error:', error);
             throw error;
         }
-        console.log('Saved to Supabase successfully.');
-        return;
+
+        console.log('Saved to Supabase successfully. Complaint ID:', data?.id);
+        return data; // Return the inserted row with ID
+
     } catch (err) {
         console.log('Failed to save to Supabase, falling back to local file.', err);
-    }
 
-    // 2. Fallback to Local File
-    const data = fs.readFileSync(COMPLAINTS_FILE, 'utf8');
-    const complaints = JSON.parse(data);
-    complaints.push(complaint);
-    fs.writeFileSync(COMPLAINTS_FILE, JSON.stringify(complaints, null, 2));
+        // 2. Fallback to Local File
+        const data = fs.readFileSync(COMPLAINTS_FILE, 'utf8');
+        const complaints = JSON.parse(data);
+        const newComplaint = {
+            id: 'LOCAL_' + Date.now(),
+            ...complaint,
+            timestamp: new Date().toISOString()
+        };
+        complaints.push(newComplaint);
+        fs.writeFileSync(COMPLAINTS_FILE, JSON.stringify(complaints, null, 2));
+        return newComplaint; // Return with generated ID
+    }
 }
 
 async function getSchemes() {

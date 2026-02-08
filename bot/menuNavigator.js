@@ -20,9 +20,13 @@ const MENU_STATES = {
     WARD_PROBLEMS_MENU: 'WARD_PROBLEMS_MENU',
     CONTACT_MENU: 'CONTACT_MENU',
     OTHER_MENU: 'OTHER_MENU',
-    // Form states
+    // Complete Complaint Form states
     COMPLAINT_FORM_NAME: 'COMPLAINT_FORM_NAME',
-    COMPLAINT_FORM_PROBLEM: 'COMPLAINT_FORM_PROBLEM',
+    COMPLAINT_FORM_MOBILE: 'COMPLAINT_FORM_MOBILE',
+    COMPLAINT_FORM_TYPE: 'COMPLAINT_FORM_TYPE',
+    COMPLAINT_FORM_DESCRIPTION: 'COMPLAINT_FORM_DESCRIPTION',
+    COMPLAINT_FORM_LOCATION: 'COMPLAINT_FORM_LOCATION',
+    COMPLAINT_FORM_PHOTO: 'COMPLAINT_FORM_PHOTO',
 };
 
 class MenuNavigator {
@@ -99,8 +103,20 @@ class MenuNavigator {
             case MENU_STATES.COMPLAINT_FORM_NAME:
                 return await this.handleComplaintFormName(sock, tenantId, userId, input);
 
-            case MENU_STATES.COMPLAINT_FORM_PROBLEM:
-                return await this.handleComplaintFormProblem(sock, tenantId, userId, input);
+            case MENU_STATES.COMPLAINT_FORM_MOBILE:
+                return await this.handleComplaintFormMobile(sock, tenantId, userId, input);
+
+            case MENU_STATES.COMPLAINT_FORM_TYPE:
+                return await this.handleComplaintFormType(sock, tenantId, userId, input);
+
+            case MENU_STATES.COMPLAINT_FORM_DESCRIPTION:
+                return await this.handleComplaintFormDescription(sock, tenantId, userId, input);
+
+            case MENU_STATES.COMPLAINT_FORM_LOCATION:
+                return await this.handleComplaintFormLocation(sock, tenantId, userId, input);
+
+            case MENU_STATES.COMPLAINT_FORM_PHOTO:
+                return await this.handleComplaintFormPhoto(sock, tenantId, userId, input);
 
             default:
                 // Fallback to language selection
@@ -235,38 +251,145 @@ class MenuNavigator {
     }
 
     /**
-     * Complaint Form Handlers
+     * Complaint Form Handlers (Complete Multi-Step Form)
      */
     async handleComplaintFormName(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         session.formData.name = input;
-        session.currentMenu = MENU_STATES.COMPLAINT_FORM_PROBLEM;
+        session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
 
         const lang = session.language;
-        await sock.sendMessage(userId, { text: MESSAGES.complaint_problem_prompt[lang] });
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
     }
 
-    async handleComplaintFormProblem(sock, tenantId, userId, input) {
+    async handleComplaintFormMobile(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
-        session.formData.problem = input;
 
-        // Save complaint
-        const complaint = {
-            userId,
-            userName: session.formData.name,
-            problem: session.formData.problem,
-            timestamp: new Date().toISOString(),
-            tenantId
-        };
-        await this.store.saveComplaint(complaint);
+        // Simple validation: must be 10 digits
+        const cleanMobile = input.replace(/\D/g, '');
+        if (cleanMobile.length !== 10) {
+            const lang = session.language;
+            const errorMsg = lang === 'en' ? '❌ Please enter a valid 10-digit mobile number' :
+                lang === 'mr' ? '❌ कृपया वैध १० अंकी मोबाइल नंबर प्रविष्ट करा' :
+                    '❌ कृपया एक वैध 10 अंकों का मोबाइल नंबर दर्ज करें';
+            await sock.sendMessage(userId, { text: errorMsg + '\n\n' + MESSAGES.complaint_mobile_prompt[lang] });
+            return;
+        }
 
-        // Send confirmation
+        session.formData.mobile = cleanMobile;
+        session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
+
         const lang = session.language;
-        await sock.sendMessage(userId, { text: MESSAGES.complaint_registered[lang] });
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
+    }
 
-        // Reset and show main menu
-        session.formData = {};
-        return await this.showMainMenu(sock, userId, lang);
+    async handleComplaintFormType(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        // Map complaint types
+        const typeMap = {
+            '1': { en: 'Road', mr: 'रस्ते', hi: 'सड़कें', db: 'Road' },
+            '2': { en: 'Water', mr: 'पाणीपुरवठा', hi: 'पानी की आपूर्ति', db: 'Water' },
+            '3': { en: 'Electricity', mr: 'वीजपुरवठा', hi: 'बिजली', db: 'StreetLight' },
+            '4': { en: 'Waste', mr: 'कचरा/स्वच्छता', hi: 'कचरा/सफाई', db: 'Cleaning' },
+            '5': { en: 'Street Lights', mr: 'स्ट्रीट लाइट', hi: 'स्ट्रीट लाइट', db: 'StreetLight' },
+            '6': { en: 'Drainage', mr: 'गटार/ड्रेनेज', hi: 'नाली/ड्रेनेज', db: 'Drainage' },
+            '7': { en: 'Other', mr: 'इतर', hi: 'अन्य', db: 'Other' }
+        };
+
+        if (!typeMap[input]) {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] + '\n\n' + MESSAGES.complaint_type_prompt[lang] });
+            return;
+        }
+
+        session.formData.type = typeMap[input].db;
+        session.formData.typeDisplay = typeMap[input][lang];
+        session.currentMenu = MENU_STATES.COMPLAINT_FORM_DESCRIPTION;
+
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_description_prompt[lang] });
+    }
+
+    async handleComplaintFormDescription(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        session.formData.description = input;
+        session.currentMenu = MENU_STATES.COMPLAINT_FORM_LOCATION;
+
+        const lang = session.language;
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_location_prompt[lang] });
+    }
+
+    async handleComplaintFormLocation(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        session.formData.location = input;
+        session.currentMenu = MENU_STATES.COMPLAINT_FORM_PHOTO;
+
+        const lang = session.language;
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_photo_prompt[lang] });
+    }
+
+    async handleComplaintFormPhoto(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        // Check if user wants to skip photo
+        if (input === '0') {
+            // No photo, proceed to save
+            return await this.saveComplaint(sock, tenantId, userId);
+        }
+
+        // TODO: Handle actual photo message
+        // For now, just skip
+        return await this.saveComplaint(sock, tenantId, userId);
+    }
+
+    async saveComplaint(sock, tenantId, userId) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        try {
+            // Prepare complaint data
+            const complaint = {
+                user_name: session.formData.name,
+                user_id: userId,
+                mobile: session.formData.mobile,
+                title: `${session.formData.typeDisplay} - ${session.formData.location}`,
+                description: session.formData.description,
+                type: session.formData.type,
+                area: session.formData.location,
+                location: session.formData.location,
+                status: 'Pending',
+                source: 'WhatsApp',
+                urgency: 'Medium',
+                photos: [],
+                tenantId: tenantId
+            };
+
+            // Save to database
+            const result = await this.store.saveComplaint(complaint);
+
+            // Get the complaint ID from result
+            const complaintId = result?.id || 'XXXX';
+
+            // Send success message with ID
+            const successMsg = MESSAGES.complaint_registered[lang].replace('#{id}', complaintId);
+            await sock.sendMessage(userId, { text: successMsg });
+
+            // Reset form data and return to main menu
+            session.formData = {};
+            return await this.showMainMenu(sock, userId, lang);
+
+        } catch (error) {
+            console.error('Error saving complaint:', error);
+            const errorMsg = lang === 'en' ? '❌ Sorry, there was an error saving your complaint. Please try again later.' :
+                lang === 'mr' ? '❌ माफ करा, तुमची तक्रार जतन करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.' :
+                    '❌ क्षमा करें, आपकी शिकायत सहेजते समय त्रुटि हुई। कृपया बाद में पुनः प्रयास करें।';
+            await sock.sendMessage(userId, { text: errorMsg });
+
+            // Reset and show main menu
+            session.formData = {};
+            return await this.showMainMenu(sock, userId, lang);
+        }
     }
 
     /**
