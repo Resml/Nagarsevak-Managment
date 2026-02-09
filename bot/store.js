@@ -297,6 +297,49 @@ async function saveEventRSVP(rsvp) {
     }
 }
 
+async function getComplaintsByMobile(tenantId, mobile) {
+    try {
+        const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
+
+        // Search for voter by mobile to get voter_id
+        const { data: voters } = await supabase
+            .from('voters')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .ilike('mobile', `%${cleanMobile}%`)
+            .limit(1);
+
+        if (!voters || voters.length === 0) {
+            // No voter found, search complaints by description_meta
+            const { data, error } = await supabase
+                .from('complaints')
+                .select('id, problem, status, category, priority, created_at')
+                .eq('tenant_id', tenantId)
+                .ilike('description_meta', `%${cleanMobile}%`)
+                .order('created_at', { ascending: false })
+                .limit(10);
+
+            if (error) throw error;
+            return data || [];
+        }
+
+        // Search by voter_id
+        const { data, error } = await supabase
+            .from('complaints')
+            .select('id, problem, status, category, priority, created_at')
+            .eq('tenant_id', tenantId)
+            .eq('voter_id', voters[0].id)
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching complaints:', err);
+        return [];
+    }
+}
+
 module.exports = {
     saveComplaint,
     getSchemes,
@@ -306,6 +349,7 @@ module.exports = {
     getImprovements,
     saveSchemeApplication,
     saveEventRSVP,
+    getComplaintsByMobile,
     saveUser,
     getUser
 };
