@@ -134,11 +134,13 @@ async function saveComplaint(complaint) {
     }
 }
 
-async function getSchemes() {
+async function getSchemes(tenantId, limit = 10) {
     try {
         const { data, error } = await supabase
             .from('schemes')
-            .select('*');
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .limit(limit);
         if (error) throw error;
         return data || [];
     } catch (err) {
@@ -147,9 +149,163 @@ async function getSchemes() {
     }
 }
 
+async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
+    try {
+        let dbQuery = supabase
+            .from('voters')
+            .select('id, name_english, name_marathi, card_number, age, gender, polling_booth_name, ward, mobile')
+            .eq('tenant_id', tenantId);
+
+        if (searchType === 'name') {
+            dbQuery = dbQuery.or(`name_english.ilike.%${query}%,name_marathi.ilike.%${query}%`);
+        } else if (searchType === 'mobile') {
+            const cleanMobile = query.replace(/\D/g, '');
+            dbQuery = dbQuery.ilike('mobile', `%${cleanMobile}%`);
+        } else if (searchType === 'voter_id') {
+            dbQuery = dbQuery.ilike('card_number', `%${query}%`);
+        }
+
+        const { data, error } = await dbQuery.limit(limit);
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error searching voters:', err);
+        return [];
+    }
+}
+
+async function getEvents(tenantId, filter = 'upcoming', limit = 5) {
+    try {
+        let query = supabase
+            .from('events')
+            .select('*')
+            .eq('tenant_id', tenantId);
+
+        const now = new Date().toISOString();
+        if (filter === 'upcoming') {
+            query = query.gte('date', now);
+        } else if (filter === 'today') {
+            const today = new Date().toISOString().split('T')[0];
+            query = query.gte('date', today).lt('date', `${today}T23:59:59`);
+        } else if (filter === 'past') {
+            query = query.lt('date', now);
+        }
+
+        const { data, error } = await query
+            .order('date', { ascending: filter !== 'past' })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching events:', err);
+        return [];
+    }
+}
+
+async function getWorks(tenantId, status = 'all', limit = 5) {
+    try {
+        let query = supabase
+            .from('works')
+            .select('*')
+            .eq('tenant_id', tenantId);
+
+        if (status !== 'all') {
+            query = query.eq('status', status);
+        }
+
+        const { data, error } = await query
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching works:', err);
+        return [];
+    }
+}
+
+async function getImprovements(tenantId, limit = 5) {
+    try {
+        const { data, error } = await supabase
+            .from('improvements')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (err) {
+        console.error('Error fetching improvements:', err);
+        return [];
+    }
+}
+
+async function saveSchemeApplication(application) {
+    try {
+        const dbData = {
+            scheme_id: application.schemeId,
+            applicant_name: application.name,
+            mobile: application.mobile,
+            additional_info: application.additionalInfo || '',
+            status: 'Pending',
+            tenant_id: application.tenantId,
+            source: 'WhatsApp',
+            created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+            .from('scheme_beneficiaries')
+            .insert([dbData])
+            .select('id')
+            .single();
+
+        if (error) throw error;
+        console.log('Scheme application saved:', data?.id);
+        return data;
+    } catch (err) {
+        console.error('Error saving scheme application:', err);
+        throw err;
+    }
+}
+
+async function saveEventRSVP(rsvp) {
+    try {
+        const dbData = {
+            event_id: rsvp.eventId,
+            attendee_name: rsvp.name,
+            mobile: rsvp.mobile,
+            status: 'confirmed',
+            tenant_id: rsvp.tenantId,
+            created_at: new Date().toISOString()
+        };
+
+        const { data, error } = await supabase
+            .from('event_rsvps')
+            .insert([dbData])
+            .select('id')
+            .single();
+
+        if (error) throw error;
+        console.log('Event RSVP saved:', data?.id);
+        return data;
+    } catch (err) {
+        console.error('Error saving event RSVP:', err);
+        throw err;
+    }
+}
+
 module.exports = {
     saveComplaint,
     getSchemes,
+    searchVoters,
+    getEvents,
+    getWorks,
+    getImprovements,
+    saveSchemeApplication,
+    saveEventRSVP,
     saveUser,
     getUser
 };

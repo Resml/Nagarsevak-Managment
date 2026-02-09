@@ -120,6 +120,9 @@ class MenuNavigator {
             case MENU_STATES.COMPLAINT_FORM_PHOTO:
                 return await this.handleComplaintFormPhoto(sock, tenantId, userId, input);
 
+            case 'VOTER_SEARCH_PROMPT':
+                return await this.handleVoterSearch(sock, tenantId, userId, input);
+
             default:
                 // Fallback to language selection
                 return await this.showLanguageMenu(sock, userId);
@@ -412,15 +415,46 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.schemes[lang].text });
     }
 
-    async handleSchemesMenu(sock, userId, input) {
+    async handleSchemesMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement schemes functionality
-        const msg = lang === 'en' ? 'Schemes information coming soon!' :
-            lang === 'mr' ? 'योजनांची माहिती लवकरच!' : 'योजनाओं की जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
-        await this.showSchemesMenu(sock, userId, lang);
+        switch (input) {
+            case '1': // View All Schemes
+                const schemes = await this.store.getSchemes(tenantId);
+                if (!schemes || schemes.length === 0) {
+                    const noSchemes = lang === 'en' ? 'No schemes available at the moment.' :
+                        lang === 'mr' ? 'सध्या कोणत्याही योजना उपलब्ध नाहीत.' : 'फिलहाल कोई योजनाएं उपलब्ध नहीं हैं।';
+                    await sock.sendMessage(userId, { text: noSchemes });
+                } else {
+                    let schemeText = lang === 'en' ? `🏛️ *Government Schemes* (${schemes.length})\n\n` :
+                        lang === 'mr' ? `🏛️ *सरकारी योजना* (${schemes.length})\n\n` :
+                            `🏛️ *सरकारी योजनाएं* (${schemes.length})\n\n`;
+
+                    schemes.slice(0, 10).forEach((scheme, index) => {
+                        const name = lang === 'mr' ? (scheme.name_marathi || scheme.name_english) : scheme.name_english;
+                        const desc = lang === 'mr' ? (scheme.description_marathi || scheme.description_english) : scheme.description_english;
+                        schemeText += `${index + 1}. *${name}*\n   ${desc?.substring(0, 100)}...\n\n`;
+                    });
+
+                    await sock.sendMessage(userId, { text: schemeText });
+                }
+                await this.showSchemesMenu(sock, userId, lang);
+                break;
+
+            case '2': // Search Scheme
+            case '3': // Schemes For Me
+            case '4': // How to Apply
+                const comingSoon = lang === 'en' ? 'Coming soon!' :
+                    lang === 'mr' ? 'लवकरच येत आहे!' : 'जल्द आ रहा है!';
+                await sock.sendMessage(userId, { text: comingSoon });
+                await this.showSchemesMenu(sock, userId, lang);
+                break;
+
+            default:
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.schemes[lang].text;
+                await sock.sendMessage(userId, { text: errorMsg });
+        }
     }
 
     /**
@@ -434,14 +468,81 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.voter[lang].text });
     }
 
-    async handleVoterMenu(sock, userId, input) {
+    async handleVoterMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement voter info functionality
-        const msg = lang === 'en' ? 'Voter information coming soon!' :
-            lang === 'mr' ? 'मतदार माहिती लवकरच!' : 'मतदाता जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        switch (input) {
+            case '1': // Search Voter
+                session.currentMenu = 'VOTER_SEARCH_PROMPT';
+                const searchMsg = lang === 'en' ? '🔍 *Search Voter*\n\nEnter name, mobile number, or voter ID:' :
+                    lang === 'mr' ? '🔍 *मतदार शोधा*\n\nनाव, मोबाइल नंबर किंवा मतदार आयडी प्रविष्ट करा:' :
+                        '🔍 *मतदाता खोजें*\n\nनाम, मोबाइल नंबर या मतदाता ID दर्ज करें:';
+                await sock.sendMessage(userId, { text: searchMsg });
+                break;
+
+            case '2': // Voter Card Status
+            case '3': // Polling Booth
+            case '4': // Election Results
+                const comingSoon = lang === 'en' ? 'Coming soon!' :
+                    lang === 'mr' ? 'लवकरच येत आहे!' : 'जल्द आ रहा है!';
+                await sock.sendMessage(userId, { text: comingSoon });
+                await this.showVoterMenu(sock, userId, lang);
+                break;
+
+            default:
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.voter[lang].text;
+                await sock.sendMessage(userId, { text: errorMsg });
+        }
+    }
+
+    async handleVoterSearch(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        // Determine search type
+        let searchType = 'name';
+        if (/^\d{10}$/.test(input.replace(/\D/g, ''))) {
+            searchType = 'mobile';
+        } else if (/^[A-Z]{3}\d+/.test(input.toUpperCase())) {
+            searchType = 'voter_id';
+        }
+
+        const voters = await this.store.searchVoters(tenantId, input, searchType);
+
+        if (!voters || voters.length === 0) {
+            const noResults = lang === 'en' ? '❌ No voters found. Please try again with a different search term.' :
+                lang === 'mr' ? '❌ कोणतेही मतदार सापडले नाहीत. कृपया वेगळ्या शोध शब्दासह पुन्हा प्रयत्न करा.' :
+                    '❌ कोई मतदाता नहीं मिला। कृपया किसी अन्य खोज शब्द के साथ पुनः प्रयास करें।';
+            await sock.sendMessage(userId, { text: noResults });
+            session.currentMenu = MENU_STATES.VOTER_MENU;
+            await this.showVoterMenu(sock, userId, lang);
+            return;
+        }
+
+        // Format and send results
+        let resultText = lang === 'en' ? `✅ *Found ${voters.length} voter(s)*\n\n` :
+            lang === 'mr' ? `✅ *${voters.length} मतदार सापडले*\n\n` :
+                `✅ *${voters.length} मतदाता मिले*\n\n`;
+
+        voters.forEach((voter, index) => {
+            const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            const cardNum = voter.card_number || 'N/A';
+            const age = voter.age || 'N/A';
+            const booth = voter.polling_booth_name || 'N/A';
+            const ward = voter.ward || 'N/A';
+
+            resultText += lang === 'en' ?
+                `${index + 1}. *${name}*\n   Card: ${cardNum}\n   Age: ${age}, Ward: ${ward}\n   Booth: ${booth}\n\n` :
+                lang === 'mr' ?
+                    `${index + 1}. *${name}*\n   कार्ड: ${cardNum}\n   वय: ${age}, प्रभाग: ${ward}\n   बूथ: ${booth}\n\n` :
+                    `${index + 1}. *${name}*\n   कार्ड: ${cardNum}\n   उम्र: ${age}, वार्ड: ${ward}\n   बूथ: ${booth}\n\n`;
+        });
+
+        await sock.sendMessage(userId, { text: resultText });
+
+        // Return to menu
+        session.currentMenu = MENU_STATES.VOTER_MENU;
         await this.showVoterMenu(sock, userId, lang);
     }
 
@@ -456,14 +557,47 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.events[lang].text });
     }
 
-    async handleEventsMenu(sock, userId, input) {
+    async handleEventsMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement events functionality
-        const msg = lang === 'en' ? 'Events information coming soon!' :
-            lang === 'mr' ? 'कार्यक्रम माहिती लवकरच!' : 'कार्यक्रम जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        let filter = 'upcoming';
+        if (input === '1') filter = 'upcoming';
+        else if (input === '2') filter = 'today';
+        else if (input === '3') filter = 'past';
+        else if (input === '4') {
+            const comingSoon = lang === 'en' ? 'Event gallery coming soon!' :
+                lang === 'mr' ? 'इव्हेंट गॅलरी लवकरच!' : 'इवेंट गैलरी जल्द!';
+            await sock.sendMessage(userId, { text: comingSoon });
+            await this.showEventsMenu(sock, userId, lang);
+            return;
+        } else {
+            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.events[lang].text;
+            await sock.sendMessage(userId, { text: errorMsg });
+            return;
+        }
+
+        const events = await this.store.getEvents(tenantId, filter);
+
+        if (!events || events.length === 0) {
+            const noEvents = lang === 'en' ? `No ${filter} events found.` :
+                lang === 'mr' ? 'कोणतेही कार्यक्रम सापडले नाहीत.' : 'कोई कार्यक्रम नहीं मिले।';
+            await sock.sendMessage(userId, { text: noEvents });
+        } else {
+            let eventText = lang === 'en' ? `🎉 *${filter.toUpperCase()} Events* (${events.length})\n\n` :
+                lang === 'mr' ? `🎉 *कार्यक्रम* (${events.length})\n\n` :
+                    `🎉 *कार्यक्रम* (${events.length})\n\n`;
+
+            events.forEach((event, index) => {
+                const title = event.title || 'Untitled';
+                const date = new Date(event.date).toLocaleDateString(lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN');
+                const location = event.location || 'TBA';
+                eventText += `${index + 1}. *${title}*\n   📅 ${date}\n   📍 ${location}\n\n`;
+            });
+
+            await sock.sendMessage(userId, { text: eventText });
+        }
+
         await this.showEventsMenu(sock, userId, lang);
     }
 
@@ -478,14 +612,63 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.works[lang].text });
     }
 
-    async handleWorksMenu(sock, userId, input) {
+    async handleWorksMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement works functionality
-        const msg = lang === 'en' ? 'Development works info coming soon!' :
-            lang === 'mr' ? 'विकास कामांची माहिती लवकरच!' : 'विकास कार्य की जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        let status = 'all';
+        if (input === '1') status = 'In Progress';
+        else if (input === '2') status = 'Completed';
+        else if (input === '3') status = 'Planned';
+        else if (input === '4') {
+            // Show improvements
+            const improvements = await this.store.getImprovements(tenantId);
+            if (!improvements || improvements.length === 0) {
+                const noData = lang === 'en' ? 'No improvements found.' :
+                    lang === 'mr' ? 'कोणतेही सुधारणा सापडल्या नाहीत.' : 'कोई सुधार नहीं मिला।';
+                await sock.sendMessage(userId, { text: noData });
+            } else {
+                let impText = lang === 'en' ? `🏗️ *Improvements* (${improvements.length})\n\n` :
+                    lang === 'mr' ? `🏗️ *सुधारणा* (${improvements.length})\n\n` :
+                        `🏗️ *सुधार* (${improvements.length})\n\n`;
+
+                improvements.forEach((imp, index) => {
+                    const title = imp.title || 'Untitled';
+                    const desc = imp.description?.substring(0, 80) || '';
+                    impText += `${index + 1}. *${title}*\n   ${desc}...\n\n`;
+                });
+
+                await sock.sendMessage(userId, { text: impText });
+            }
+            await this.showWorksMenu(sock, userId, lang);
+            return;
+        } else {
+            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.works[lang].text;
+            await sock.sendMessage(userId, { text: errorMsg });
+            return;
+        }
+
+        const works = await this.store.getWorks(tenantId, status);
+
+        if (!works || works.length === 0) {
+            const noWorks = lang === 'en' ? `No ${status} works found.` :
+                lang === 'mr' ? 'कोणतीही कामे सापडली नाहीत.' : 'कोई कार्य नहीं मिला।';
+            await sock.sendMessage(userId, { text: noWorks });
+        } else {
+            let worksText = lang === 'en' ? `🏗️ *Development Works* (${works.length})\n\n` :
+                lang === 'mr' ? `🏗️ *विकास कामे* (${works.length})\n\n` :
+                    `🏗️ *विकास कार्य* (${works.length})\n\n`;
+
+            works.forEach((work, index) => {
+                const title = work.title || 'Untitled';
+                const status = work.status || 'Unknown';
+                const budget = work.budget || 'N/A';
+                worksText += `${index + 1}. *${title}*\n   Status: ${status}\n   Budget: ₹${budget}\n\n`;
+            });
+
+            await sock.sendMessage(userId, { text: worksText });
+        }
+
         await this.showWorksMenu(sock, userId, lang);
     }
 
@@ -500,14 +683,31 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.ward_problems[lang].text });
     }
 
-    async handleWardProblemsMenu(sock, userId, input) {
+    async handleWardProblemsMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement ward problems functionality
-        const msg = lang === 'en' ? 'Ward problems info coming soon!' :
-            lang === 'mr' ? 'प्रभाग समस्या माहिती लवकरच!' : 'वार्ड समस्याओं की जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        switch (input) {
+            case '1': // Report New Problem
+                const msg = lang === 'en' ? '📝 *Report Ward Problem*\n\nThis feature allows you to report civic issues in your ward.\n\nUse the "Submit Complaint" menu (Option 1 from Main Menu) to report problems.' :
+                    lang === 'mr' ? '📝 *प्रभाग समस्या नोंदवा*\n\nहे वैशिष्ट्य तुम्हाला तुमच्या प्रभागातील नागरी समस्या नोंदविण्याची परवानगी देते.\n\nसमस्या नोंदविण्यासाठी "तक्रार नोंदवा" मेनू (मुख्य मेनूमधून पर्याय 1) वापरा.' :
+                        '📝 *वार्ड समस्या दर्ज करें*\n\nयह सुविधा आपको अपने वार्ड में नागरिक समस्याओं की रिपोर्ट करने की अनुमति देती है।\n\nसमस्याओं की रिपोर्ट करने के लिए "शिकायत दर्ज करें" मेनू (मुख्य मेनू से विकल्प 1) का उपयोग करें।';
+                await sock.sendMessage(userId, { text: msg });
+                break;
+
+            case '2': // View Ward Issues
+            case '3': // Track Problem Status  
+            case '4': // Solved Problems
+                const comingSoon = lang === 'en' ? 'Coming soon!' :
+                    lang === 'mr' ? 'लवकरच येत आहे!' : 'जल्द आ रहा है!';
+                await sock.sendMessage(userId, { text: comingSoon });
+                break;
+
+            default:
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.ward_problems[lang].text;
+                await sock.sendMessage(userId, { text: errorMsg });
+        }
+
         await this.showWardProblemsMenu(sock, userId, lang);
     }
 
@@ -522,14 +722,45 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.contact[lang].text });
     }
 
-    async handleContactMenu(sock, userId, input) {
+    async handleContactMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement contact info functionality
-        const msg = lang === 'en' ? 'Contact information coming soon!' :
-            lang === 'mr' ? 'संपर्क माहिती लवकरच!' : 'संपर्क जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        let contactText = '';
+
+        switch (input) {
+            case '1': // Office Address
+                contactText = lang === 'en' ? '🏢 *Office Address*\n\nNagarsevak Office\nWard No. 12\nPune, Maharashtra' :
+                    lang === 'mr' ? '🏢 *कार्यालय पत्ता*\n\nनगरसेवक कार्यालय\nप्रभाग क्र. 12\nपुणे, महाराष्ट्र' :
+                        '🏢 *कार्यालय पता*\n\nनगरसेवक कार्यालय\nवार्ड नं. 12\nपुणे, महाराष्ट्र';
+                break;
+            case '2': // Office Hours
+                contactText = lang === 'en' ? '⏰ *Office Hours*\n\nMonday - Friday: 10:00 AM - 5:00 PM\nSaturday: 10:00 AM - 2:00 PM\nSunday: Closed' :
+                    lang === 'mr' ? '⏰ *कार्यालय वेळ*\n\nसोमवार - शुक्रवार: सकाळी 10:00 - संध्याकाळी 5:00\nशनिवार: सकाळी 10:00 - दुपारी 2:00\nरविवार: बंद' :
+                        '⏰ *कार्यालय समय*\n\nसोमवार - शुक्रवार: सुबह 10:00 - शाम 5:00\nशनिवार: सुबह 10:00 - दोपहर 2:00\nरविवार: बंद';
+                break;
+            case '3': // Phone Numbers
+                contactText = lang === 'en' ? '📞 *Contact Numbers*\n\nOffice: +91 020 1234 5678\nMobile: +91 98765 43210' :
+                    lang === 'mr' ? '📞 *संपर्क क्रमांक*\n\nकार्यालय: +91 020 1234 5678\nमोबाइल: +91 98765 43210' :
+                        '📞 *संपर्क नंबर*\n\nकार्यालय: +91 020 1234 5678\nमोबाइल: +91 98765 43210';
+                break;
+            case '4': // Email
+                contactText = lang === 'en' ? '📧 *Email Address*\n\nofficial@nagarsevak.com' :
+                    lang === 'mr' ? '📧 *ईमेल पत्ता*\n\nofficial@nagarsevak.com' :
+                        '📧 *ईमेल पता*\n\nofficial@nagarsevak.com';
+                break;
+            case '5': // Social Media
+                contactText = lang === 'en' ? '📱 *Follow Us*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12' :
+                    lang === 'mr' ? '📱 *आम्हाला फॉलो करा*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12' :
+                        '📱 *हमें फॉलो करें*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12';
+                break;
+            default:
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.contact[lang].text;
+                await sock.sendMessage(userId, { text: errorMsg });
+                return;
+        }
+
+        await sock.sendMessage(userId, { text: contactText });
         await this.showContactMenu(sock, userId, lang);
     }
 
@@ -544,14 +775,45 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MENUS.other[lang].text });
     }
 
-    async handleOtherMenu(sock, userId, input) {
+    async handleOtherMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // TODO: Implement other services functionality
-        const msg = lang === 'en' ? 'Other services info coming soon!' :
-            lang === 'mr' ? 'इतर सेवा माहिती लवकरच!' : 'अन्य सेवाओं की जानकारी जल्द!';
-        await sock.sendMessage(userId, { text: msg });
+        let response = '';
+
+        switch (input) {
+            case '1': // Letters/Documents
+                response = lang === 'en' ? '📄 *Letters & Documents*\n\nFor official letters and documents, please visit our office during working hours or check the website.' :
+                    lang === 'mr' ? '📄 *पत्रे/कागदपत्रे*\n\nअधिकृत पत्रे आणि कागदपत्रांसाठी, कृपया कामकाजाच्या वेळेत आमच्या कार्यालयात भेट द्या किंवा वेबसाइट तपासा.' :
+                        '📄 *पत्र/दस्तावेज़*\n\nआधिकारिक पत्रों और दस्तावेजों के लिए, कृपया कार्य समय के दौरान हमारे कार्यालय में जाएं या वेबसाइट देखें।';
+                break;
+            case '2': // Meeting Diary
+                response = lang === 'en' ? '📅 *Meeting Diary*\n\nUpcoming meetings and minutes are available on the website.' :
+                    lang === 'mr' ? '📅 *मीटिंग डायरी*\n\nआगामी सभा आणि कार्यवृत्त वेबसाइटवर उपलब्ध आहेत.' :
+                        '📅 *मीटिंग डायरी*\n\nआगामी बैठकें और कार्यवृत्त वेबसाइट पर उपलब्ध हैं।';
+                break;
+            case '3': // Photo Gallery
+                response = lang === 'en' ? '📸 *Photo Gallery*\n\nView photos of events and development works on our website.' :
+                    lang === 'mr' ? '📸 *फोटो गॅलरी*\n\nआमच्या वेबसाइटवर कार्यक्रम आणि विकास कार्यांचे फोटो पहा.' :
+                        '📸 *फोटो गैलरी*\n\nहमारी वेबसाइट पर आयोजनों और विकास कार्यों की तस्वीरें देखें।';
+                break;
+            case '4': // Newspaper Clippings
+                response = lang === 'en' ? '📰 *Newspaper Clippings*\n\nLatest news coverage is available on the website.' :
+                    lang === 'mr' ? '📰 *वृत्तपत्र कात्रणे*\n\nनवीनतम बातम्यांचा संग्रह वेबसाइटवर उपलब्ध आहे.' :
+                        '📰 *अखबार की कतरनें*\n\nनवीनतम समाचार कवरेज वेबसाइट पर उपलब्ध है।';
+                break;
+            case '5': // Ward Budget Info
+                response = lang === 'en' ? '💰 *Ward Budget Information*\n\nDetailed budget allocation and spending reports are available on the website.' :
+                    lang === 'mr' ? '💰 *प्रभाग अर्थसंकल्प*\n\nतपशीलवार अर्थसंकल्प वाटप आणि खर्च अहवाल वेबसाइटवर उपलब्ध आहेत.' :
+                        '💰 *वार्ड बजट जानकारी*\n\nविस्तृत बजट आवंटन और खर्च रिपोर्ट वेबसाइट पर उपलब्ध हैं।';
+                break;
+            default:
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.other[lang].text;
+                await sock.sendMessage(userId, { text: errorMsg });
+                return;
+        }
+
+        await sock.sendMessage(userId, { text: response });
         await this.showOtherMenu(sock, userId, lang);
     }
 }
