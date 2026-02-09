@@ -454,6 +454,7 @@ class MenuNavigator {
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.schemes[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
+                return;
         }
     }
 
@@ -493,6 +494,7 @@ class MenuNavigator {
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.voter[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
+                return;
         }
     }
 
