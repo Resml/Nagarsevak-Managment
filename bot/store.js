@@ -311,12 +311,13 @@ async function getComplaintsByMobile(tenantId, mobile) {
             .limit(1);
 
         if (!voters || voters.length === 0) {
-            // No voter found, search complaints by description_meta
+            // No voter found, search complaints by description_meta->mobile
+            // Use filter with JSONB path operator
             const { data, error } = await supabase
                 .from('complaints')
                 .select('id, problem, status, category, priority, created_at')
                 .eq('tenant_id', tenantId)
-                .ilike('description_meta', `%${cleanMobile}%`)
+                .filter('description_meta->>mobile', 'ilike', `%${cleanMobile}%`)
                 .order('created_at', { ascending: false })
                 .limit(10);
 
