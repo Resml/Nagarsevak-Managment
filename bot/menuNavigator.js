@@ -432,8 +432,8 @@ class MenuNavigator {
                             `🏛️ *सरकारी योजनाएं* (${schemes.length})\n\n`;
 
                     schemes.slice(0, 10).forEach((scheme, index) => {
-                        const name = lang === 'mr' ? (scheme.name_marathi || scheme.name_english) : scheme.name_english;
-                        const desc = lang === 'mr' ? (scheme.description_marathi || scheme.description_english) : scheme.description_english;
+                        const name = scheme.name || 'Untitled';
+                        const desc = scheme.description || 'No description';
                         schemeText += `${index + 1}. *${name}*\n   ${desc?.substring(0, 100)}...\n\n`;
                     });
 
