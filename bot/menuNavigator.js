@@ -29,6 +29,8 @@ const MENU_STATES = {
     COMPLAINT_FORM_PHOTO: 'COMPLAINT_FORM_PHOTO',
     COMPLAINT_STATUS_MOBILE: 'COMPLAINT_STATUS_MOBILE',
     VIEW_COMPLAINTS_MOBILE: 'VIEW_COMPLAINTS_MOBILE',
+    SCHEME_SEARCH_PROMPT: 'SCHEME_SEARCH_PROMPT',
+    SCHEME_VIEW_MORE: 'SCHEME_VIEW_MORE',
 };
 
 class MenuNavigator {
@@ -130,6 +132,12 @@ class MenuNavigator {
 
             case MENU_STATES.VIEW_COMPLAINTS_MOBILE:
                 return await this.handleViewComplaintsMobile(sock, tenantId, userId, input);
+
+            case MENU_STATES.SCHEME_SEARCH_PROMPT:
+                return await this.handleSchemeSearch(sock, tenantId, userId, input);
+
+            case MENU_STATES.SCHEME_VIEW_MORE:
+                return await this.handleSchemeViewMore(sock, tenantId, userId, input);
 
             default:
                 // Fallback to language selection

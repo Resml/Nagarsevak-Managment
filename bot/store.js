@@ -135,13 +135,24 @@ async function saveComplaint(complaint) {
     }
 }
 
-async function getSchemes(tenantId, limit = 10) {
+async function getSchemes(tenantId, options = {}) {
     try {
-        const { data, error } = await supabase
+        const { limit = 10, offset = 0, searchQuery = '', lang = 'en' } = options;
+
+        let query = supabase
             .from('schemes')
             .select('*')
-            .eq('tenant_id', tenantId)
-            .limit(limit);
+            .eq('tenant_id', tenantId);
+
+        // Search functionality
+        if (searchQuery) {
+            query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,name_mr.ilike.%${searchQuery}%,description_mr.ilike.%${searchQuery}%`);
+        }
+
+        const { data, error } = await query
+            .order('id', { ascending: true })
+            .range(offset, offset + limit - 1);
+
         if (error) throw error;
         return data || [];
     } catch (err) {
