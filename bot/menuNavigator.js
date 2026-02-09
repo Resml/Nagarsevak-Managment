@@ -81,25 +81,25 @@ class MenuNavigator {
                 return await this.handleComplaintsMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.SCHEMES_MENU:
-                return await this.handleSchemesMenu(sock, userId, input);
+                return await this.handleSchemesMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.VOTER_MENU:
-                return await this.handleVoterMenu(sock, userId, input);
+                return await this.handleVoterMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.EVENTS_MENU:
-                return await this.handleEventsMenu(sock, userId, input);
+                return await this.handleEventsMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.WORKS_MENU:
-                return await this.handleWorksMenu(sock, userId, input);
+                return await this.handleWorksMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.WARD_PROBLEMS_MENU:
-                return await this.handleWardProblemsMenu(sock, userId, input);
+                return await this.handleWardProblemsMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.CONTACT_MENU:
-                return await this.handleContactMenu(sock, userId, input);
+                return await this.handleContactMenu(sock, tenantId, userId, input);
 
             case MENU_STATES.OTHER_MENU:
-                return await this.handleOtherMenu(sock, userId, input);
+                return await this.handleOtherMenu(sock, tenantId, userId, input);
 
             // Form states
             case MENU_STATES.COMPLAINT_FORM_NAME:
