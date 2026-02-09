@@ -92,6 +92,7 @@ async function saveComplaint(complaint) {
             tenant_id: complaint.tenantId,
             description_meta: JSON.stringify({
                 submitter_name: complaint.user_name,
+                mobile: complaint.mobile,  // Add mobile for lookup
                 title: complaint.title,  // Store original title in meta
                 full_description: complaint.description,
                 from_whatsapp: true
