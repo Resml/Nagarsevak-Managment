@@ -1116,13 +1116,13 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.letterTypes = letterTypes;
 
         // Build menu text
-        let menuText = lang === 'en' ? '\ud83d\udcc4 *Letter Request*\\n\\nSelect the type of letter you need:\\n\\n' :
-            lang === 'mr' ? '\ud83d\udcc4 *\u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940*\\n\\n\u0924\u0941\u092e\u094d\u0939\u093e\u0932\u093e \u0906\u0935\u0936\u094d\u092f\u0915 \u0905\u0938\u0932\u0947\u0932\u0947 \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u0928\u093f\u0935\u0921\u093e:\\n\\n' :
-                '\ud83d\udcc4 *\u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927*\\n\\n\u0906\u0935\u0936\u094d\u092f\u0915 \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u091a\u0941\u0928\u0947\u0902:\\n\\n';
+        let menuText = lang === 'en' ? '📄 *Letter Request*\n\nSelect the type of letter you need:\n\n' :
+            lang === 'mr' ? '📄 *पत्र विनंती*\n\nतुम्हाला आवश्यक असलेले पत्र प्रकार निवडा:\n\n' :
+                '📄 *पत्र अनुरोध*\n\nआवश्यक पत्र प्रकार चुनें:\n\n';
 
         letterTypes.forEach((type, index) => {
             const displayName = (lang === 'mr' && type.name_marathi) ? type.name_marathi : type.name;
-            menuText += `${index + 1}\ufe0f\u20e3 ${displayName}\\n`;
+            menuText += `${index + 1}️⃣ ${displayName}\n`;
         });
 
         menuText += lang === 'en' ? '\n0️⃣ Main Menu\n\n_Reply with a number_' :
