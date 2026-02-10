@@ -371,12 +371,16 @@ async function getComplaintsByMobile(tenantId, mobile) {
 // Letter Functions
 async function getLetterTypes(tenantId) {
     try {
+        console.log('[getLetterTypes] Querying for tenantId:', tenantId);
+
         const { data, error } = await supabase
             .from('letter_types')
             .select('*')
             .eq('tenant_id', tenantId)
             .eq('is_active', true)
             .order('name');
+
+        console.log('[getLetterTypes] Query result - data:', data, 'error:', error);
 
         if (error) throw error;
         return data || [];
