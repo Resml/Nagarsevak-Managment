@@ -194,25 +194,40 @@ async function getEvents(tenantId, filter = 'upcoming', limit = 5) {
             .eq('tenant_id', tenantId);
 
         const now = new Date().toISOString();
+
         if (filter === 'upcoming') {
-            query = query.gte('date', now);
-        } else if (filter === 'today') {
-            const today = new Date().toISOString().split('T')[0];
-            query = query.gte('date', today).lt('date', `${today}T23:59:59`);
+            query = query.gte('event_date', now);
         } else if (filter === 'past') {
-            query = query.lt('date', now);
+            query = query.lt('event_date', now);
+        } else if (filter === 'today') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            query = query.gte('event_date', today.toISOString()).lt('event_date', tomorrow.toISOString());
         }
 
-        const { data, error } = await query
-            .order('date', { ascending: filter !== 'past' })
-            .limit(limit);
+        query = query.order('event_date', { ascending: filter !== 'past' }).limit(limit);
 
+        const { data, error } = await query;
         if (error) throw error;
         return data || [];
     } catch (err) {
         console.error('Error fetching events:', err);
         return [];
     }
+}
+
+async function getUpcomingEvents(tenantId, limit = 5) {
+    return await getEvents(tenantId, 'upcoming', limit);
+}
+
+async function getTodaysEvents(tenantId, limit = 5) {
+    return await getEvents(tenantId, 'today', limit);
+}
+
+async function getPastEvents(tenantId, limit = 5) {
+    return await getEvents(tenantId, 'past', limit);
 }
 
 async function getWorks(tenantId, status = 'all', limit = 5) {
