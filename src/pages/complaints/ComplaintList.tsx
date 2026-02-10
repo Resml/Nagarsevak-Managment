@@ -322,11 +322,19 @@ const ComplaintList = () => {
                     </div>
                     <div className="flex gap-2">
                         <Link
-                            to="/complaints/new"
+                            to={activeTab === 'Personal Help' ? '/personal-requests/new' : '/complaints/new'}
                             className="ns-btn-primary"
                         >
                             <Plus className="w-4 h-4" />
-                            <span>{isTranslated ? <span className="notranslate">नवीन तक्रार</span> : t('complaints.new_request')}</span>
+                            <span>
+                                {isTranslated ? (
+                                    <span className="notranslate">
+                                        {activeTab === 'Personal Help' ? 'नवीन विनंती' : 'नवीन तक्रार'}
+                                    </span>
+                                ) : (
+                                    activeTab === 'Personal Help' ? t('complaints.new_personal_request') : t('complaints.new_request')
+                                )}
+                            </span>
                         </Link>
                     </div>
                 </div>

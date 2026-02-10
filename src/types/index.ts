@@ -10,7 +10,8 @@ export interface User {
   permissions?: string[];
 }
 
-export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified';
+export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified' | 'Admission' | 'Medical' | 'Financial';
+export const PERSONAL_REQUEST_TYPES: ComplaintType[] = ['Personal Help', 'Help', 'Admission', 'Medical', 'Financial'];
 export type ComplaintStatus = 'Pending' | 'Assigned' | 'InProgress' | 'Resolved' | 'Closed';
 
 export interface Complaint {

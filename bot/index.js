@@ -332,20 +332,25 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
             let text = '';
             if (msg.message.conversation) text = msg.message.conversation;
             else if (msg.message.extendedTextMessage) text = msg.message.extendedTextMessage.text;
+            else if (msg.message.imageMessage) text = msg.message.imageMessage.caption || '';
+            else if (msg.message.videoMessage) text = msg.message.videoMessage.caption || '';
+            else if (msg.message.audioMessage) text = ''; // Audio has no text
 
-            // Allow text fallback for languages
-            if (!text && !msg.message.pollUpdateMessage) return; // Skip if empty and not a poll
+            // Handle media messages (image, video, audio) even if text is empty
+            const isMedia = !!(msg.message.imageMessage || msg.message.videoMessage || msg.message.audioMessage);
 
-            if (text) {
-                text = text.trim();
-                console.log(`[${tenantId}] [DEBUG] Message from ${from} (Tenant: ${tenantId}): ${text}`);
+            if (!text && !msg.message.pollUpdateMessage && !isMedia) return; // Skip if empty and not a poll/media
+
+            if (text || isMedia) {
+                const cleanText = (text || '').trim();
+                console.log(`[${tenantId}] [DEBUG] Message from ${from} (Tenant: ${tenantId}) | Media: ${isMedia} | Text: ${cleanText}`);
 
                 // If we receive a message, we are clearly connected
                 if (sessions.get(tenantId)?.status !== 'connected') {
                     updateSessionStatus(tenantId, 'connected');
                 }
 
-                await handleMessage(sock, tenantId, from, contactName, text);
+                await handleMessage(sock, tenantId, from, contactName, cleanText, msg);
             }
 
         } catch (err) {
@@ -364,14 +369,14 @@ function updateSessionStatus(tenantId, status) {
 }
 
 // Handler - Route to MenuNavigator
-async function handleMessage(sock, tenantId, userId, userName, text) {
+async function handleMessage(sock, tenantId, userId, userName, text, msg = null) {
     try {
         const session = sessions.get(tenantId);
         if (!session || !session.menuNavigator) {
             console.error(`[${tenantId}] No MenuNavigator found for tenant`);
             return;
         }
-        await session.menuNavigator.handleMessage(sock, tenantId, userId, userName, text);
+        await session.menuNavigator.handleMessage(sock, tenantId, userId, userName, text, msg);
     } catch (error) {
         console.error(`[${tenantId}] Error in menu navigation:`, error);
         // Fallback: show language menu

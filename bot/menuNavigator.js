@@ -1,9 +1,6 @@
-/**
- * Menu Navigator - Handles all menu navigation logic
- * No AI, pure menu-driven system
- */
-
 const { MENUS, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
+const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { createClient } = require('@supabase/supabase-js');
 
 // Session storage for each user
 const userSessions = {};
@@ -93,7 +90,7 @@ class MenuNavigator {
     /**
      * Main message handler
      */
-    async handleMessage(sock, tenantId, userId, userName, messageText) {
+    async handleMessage(sock, tenantId, userId, userName, messageText, msg = null) {
         const session = this.getSession(userId);
         const input = messageText.trim();
 
@@ -174,7 +171,7 @@ class MenuNavigator {
                 return await this.handleComplaintFormLocation(sock, tenantId, userId, input);
 
             case MENU_STATES.COMPLAINT_FORM_PHOTO:
-                return await this.handleComplaintFormPhoto(sock, tenantId, userId, input);
+                return await this.handleComplaintFormPhoto(sock, tenantId, userId, input, msg);
 
             case 'VOTER_SEARCH_PROMPT':
                 return await this.handleVoterSearch(sock, tenantId, userId, input);
@@ -446,26 +443,77 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: MESSAGES.complaint_photo_prompt[lang] });
     }
 
-    async handleComplaintFormPhoto(sock, tenantId, userId, input) {
+    async handleComplaintFormPhoto(sock, tenantId, userId, input, msg = null) {
         const session = this.getSession(userId);
         const lang = session.language;
         const cleanInput = input.trim();
 
-        console.log(`[DEBUG] handleComplaintFormPhoto input: '${input}', clean: '${cleanInput}'`);
+        console.log(`[DEBUG] handleComplaintFormPhoto input: '${input}', clean: '${cleanInput}', media: ${!!(msg?.message?.imageMessage)}`);
 
-        // Check if user wants to skip photo
+        // 1. Check if user wants to skip photo
         if (cleanInput === '0' || cleanInput.toLowerCase() === 'skip') {
-            // No photo, proceed to save
             console.log('[DEBUG] Skipping photo, saving complaint...');
             return await this.saveComplaint(sock, tenantId, userId);
         }
 
-        // TODO: Handle actual photo message
-        // For now, just skip if it's not 0, but ideally we should handle image messages
-        // If it's text but not '0', we might want to say "Please send photo or 0 to skip"
-        // But for now let's be permissive and just save
-        console.log('[DEBUG] Input received (not 0), proceeding to save...');
-        return await this.saveComplaint(sock, tenantId, userId);
+        // 2. Check if the message contains an image
+        if (msg?.message?.imageMessage) {
+            try {
+                console.log('[DEBUG] Sending "Uploading..." notification');
+                await sock.sendMessage(userId, { text: lang === 'mr' ? '📸 फोटो अपलोड होत आहे, कृपया प्रतीक्षा करा...' : '📸 Uploading photo, please wait...' });
+
+                // Download media
+                const buffer = await downloadMediaMessage(
+                    msg,
+                    'buffer',
+                    {},
+                    {
+                        logger: console,
+                        reEntrant: true
+                    }
+                );
+
+                if (!buffer) throw new Error('Failed to download media buffer');
+
+                // Initialize Supabase (we need the client here)
+                const supabaseUrl = process.env.VITE_SUPABASE_URL;
+                const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+                const supabase = createClient(supabaseUrl, supabaseKey);
+
+                const fileName = `${tenantId}/${Date.now()}_${msg.key.id}.jpg`;
+
+                // Upload to Supabase Storage (bucket named 'complaints')
+                const { data, error } = await supabase.storage
+                    .from('complaints')
+                    .upload(fileName, buffer, {
+                        contentType: 'image/jpeg',
+                        upsert: true
+                    });
+
+                if (error) throw error;
+
+                // Get Public URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('complaints')
+                    .getPublicUrl(fileName);
+
+                console.log(`[DEBUG] Photo uploaded successfully: ${publicUrl}`);
+                session.formData.image_url = publicUrl;
+
+                return await this.saveComplaint(sock, tenantId, userId);
+
+            } catch (err) {
+                console.error('Error uploading bot photo:', err);
+                const errorMsg = lang === 'mr' ? '❌ फोटो अपलोड करण्यात अडचण आली. फोटोशिवाय तक्रार जतन करत आहोत...' : '❌ Error uploading photo. Saving complaint without photo...';
+                await sock.sendMessage(userId, { text: errorMsg });
+                return await this.saveComplaint(sock, tenantId, userId);
+            }
+        }
+
+        // 3. Fallback: If it's text but not 0, and not an image
+        console.log('[DEBUG] Input received (not 0 and no image), asking again or saving...');
+        const promptAgain = lang === 'mr' ? '📸 कृपया फोटो पाठवा किंवा वगळण्यासाठी 0 टाइप करा.' : '📸 Please send a photo or type 0 to skip.';
+        await sock.sendMessage(userId, { text: promptAgain });
     }
 
     async saveComplaint(sock, tenantId, userId) {

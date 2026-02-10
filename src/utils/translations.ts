@@ -33,6 +33,7 @@ export const translations = {
             title: "Requests & Complaints",
             subtitle: "Manage citizen issues and help requests",
             new_request: "New Request",
+            new_personal_request: "New Request",
             tabs: {
                 area: "Area Complaints",
                 personal: "Personal Requests",
@@ -95,6 +96,9 @@ export const translations = {
                     complaint: "Complaint",
                     help: "Help",
                     personal_help: "Personal Help",
+                    admission: "Education / Admission",
+                    medical: "Medical Help",
+                    financial: "Financial Help",
                     suggestion: "Suggestion",
                     selfidentified: "Ward Problem"
                 },
@@ -1196,6 +1200,7 @@ export const translations = {
             title: "तक्रारी आणि विनंती",
             subtitle: "नागरिकांच्या समस्या आणि विनंती व्यवस्थापित करा",
             new_request: "नवीन तक्रार",
+            new_personal_request: "नवीन विनंती",
             tabs: {
                 area: "परिसरातील तक्रारी",
                 personal: "वैयक्तिक विनंत्या",
@@ -1258,6 +1263,9 @@ export const translations = {
                     complaint: "तक्रार",
                     help: "मदत",
                     personal_help: "वैयक्तिक मदत",
+                    admission: "शिक्षण / प्रवेश मदत",
+                    medical: "वैद्यकीय मदत",
+                    financial: "आर्थिक मदत",
                     suggestion: "सूचना",
                     selfidentified: "प्रभागातील समस्या"
                 },

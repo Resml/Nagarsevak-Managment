@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { type ComplaintType, type Voter } from '../../types';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
@@ -21,14 +21,10 @@ const ComplaintForm = () => {
     // State for linked voter
     const [selectedVoterId, setSelectedVoterId] = useState<string | null>(prefillVoterId || null);
 
-    // Get query params
-    const [searchParams] = useSearchParams();
-    const typeParam = searchParams.get('type');
-
     // Form State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [type, setType] = useState<ComplaintType>((typeParam as ComplaintType) || 'Other');
+    const [type, setType] = useState<ComplaintType>('Other');
     const [ward, setWard] = useState('12'); // Default to 12 for MVP
     const [area, setArea] = useState('');
     const [peopleAffected, setPeopleAffected] = useState('');
@@ -70,11 +66,8 @@ const ComplaintForm = () => {
     // Fetch Stats for Suggestions
     useEffect(() => {
         if (!isSearchOpen) return;
-        if (!isSearchOpen) return;
         const fetchStats = async () => {
             try {
-                // FETCHING FROM VOTERS TABLE DIRECTLY TO ENSURE TENANT ISOLATION
-                // RPCs replaced to avoid cross-tenant leaks
                 const { data: votersData } = await supabase
                     .from('voters')
                     .select('address_english, address_marathi, house_no')
@@ -82,7 +75,6 @@ const ComplaintForm = () => {
                     .limit(1000);
 
                 if (votersData) {
-                    // Process Addresses
                     const addrs = new Map<string, number>();
                     const houses = new Map<string, number>();
 
@@ -103,7 +95,6 @@ const ComplaintForm = () => {
         fetchStats();
     }, [isSearchOpen, language]);
 
-    // Close suggestions on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (addressWrapperRef.current && !addressWrapperRef.current.contains(event.target as Node)) {
@@ -117,7 +108,6 @@ const ComplaintForm = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Filter Suggestions based on input
     const filteredHouseNos = houseNoSuggestions.filter(item =>
         item.house_no.toLowerCase().includes(houseNoFilter.toLowerCase())
     ).slice(0, 50);
@@ -126,7 +116,6 @@ const ComplaintForm = () => {
         item.address.toLowerCase().includes(addressFilter.toLowerCase())
     ).slice(0, 50);
 
-    // Smart AI Auto-Categorization & Urgency
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (title.length > 5 || description.length > 10) {
@@ -134,11 +123,14 @@ const ComplaintForm = () => {
                 const result = await AIAnalysisService.analyzeComplaint(title, description);
 
                 if (result.category && result.category !== 'Other') {
-                    setType(result.category as ComplaintType);
+                    // Only auto-categorize if it's not a personal help type (which shouldn't be here anyway now)
+                    const allowedTypes: ComplaintType[] = ['Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'SelfIdentified', 'Other'];
+                    if (allowedTypes.includes(result.category as ComplaintType)) {
+                        setType(result.category as ComplaintType);
+                    }
                 }
                 setUrgency(result.urgency);
 
-                // Store translation data
                 setTranslationData({
                     en: {
                         title: result.translated_title_en,
@@ -153,25 +145,23 @@ const ComplaintForm = () => {
 
                 setIsAnalyzing(false);
             }
-        }, 1500); // 1.5s debounce
+        }, 1500);
 
         return () => clearTimeout(timer);
     }, [title, description]);
 
-    // Handle Voter Search
     useEffect(() => {
-        // Initial fetch or filter change
         const timer = setTimeout(async () => {
+            if (!isSearchOpen) return;
             setIsSearching(true);
             try {
                 let query = supabase
                     .from('voters')
                     .select('*')
-                    .eq('tenant_id', tenantId) // Secured
+                    .eq('tenant_id', tenantId)
                     .limit(20);
 
                 if (nameFilter) {
-                    // Check if numeric (Mobile search) or text (Name/EPIC)
                     if (/^\d+$/.test(nameFilter)) {
                         query = query.ilike('mobile', `%${nameFilter}%`);
                     } else {
@@ -206,7 +196,6 @@ const ComplaintForm = () => {
                 }
 
                 const { data, error } = await query;
-
                 if (error) throw error;
 
                 const mappedVoters: Voter[] = (data || []).map((row: any) => ({
@@ -236,11 +225,10 @@ const ComplaintForm = () => {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [nameFilter, houseNoFilter, ageFilter, genderFilter, addressFilter]);
+    }, [nameFilter, houseNoFilter, ageFilter, genderFilter, addressFilter, isSearchOpen]);
 
     const handleVoterSelect = (voter: Voter) => {
-        setSelectedVoterId(voter.id); // Set linked voter ID
-        // Split name into First, Middle, Last logic
+        setSelectedVoterId(voter.id);
         const fullName = voter.name_english || voter.name_marathi || '';
         const parts = fullName.trim().split(/\s+/);
 
@@ -305,7 +293,6 @@ const ComplaintForm = () => {
         }
     };
 
-    // Prevent Google Translate on this page
     useEffect(() => {
         const cookies = document.cookie.split(';');
         const transCookie = cookies.find(c => c.trim().startsWith('googtrans='));
@@ -336,8 +323,6 @@ const ComplaintForm = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-8">
-
-                    {/* Voter Details Section */}
                     <div className="space-y-4">
                         <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                             <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
@@ -401,7 +386,6 @@ const ComplaintForm = () => {
                         </div>
                     </div>
 
-                    {/* Complaint Details Section */}
                     <div className="space-y-4">
                         <div className="flex border-b border-slate-100 pb-2">
                             <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
@@ -532,7 +516,6 @@ const ComplaintForm = () => {
                 </form>
             </div>
 
-            {/* Advanced Voter Search Modal */}
             {isSearchOpen && (
                 <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="ns-card w-full max-w-lg overflow-hidden flex flex-col max-h-[85vh]">
@@ -542,9 +525,7 @@ const ComplaintForm = () => {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-
                         <div className="p-5 bg-slate-50 border-b border-slate-200/70 space-y-3">
-                            {/* Advanced Search Inputs */}
                             <div className="grid grid-cols-2 gap-3">
                                 <input
                                     type="text"
@@ -586,7 +567,6 @@ const ComplaintForm = () => {
                                     )}
                                 </div>
                             </div>
-
                             <div className="grid grid-cols-2 gap-3">
                                 <input
                                     type="text"
@@ -606,7 +586,6 @@ const ComplaintForm = () => {
                                     <option value="O">Other</option>
                                 </select>
                             </div>
-
                             <div>
                                 <div className="relative" ref={addressWrapperRef}>
                                     <input
@@ -641,7 +620,6 @@ const ComplaintForm = () => {
                                 </div>
                             </div>
                         </div>
-
                         <div className="flex-1 overflow-y-auto bg-white min-h-[300px]">
                             {isSearching ? (
                                 <div className="h-full flex flex-col items-center justify-center text-slate-400">

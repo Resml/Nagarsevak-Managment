@@ -97,6 +97,7 @@ async function saveComplaint(complaint) {
                 full_description: complaint.description,
                 from_whatsapp: true
             }),
+            image_url: complaint.image_url,
             created_at: new Date().toISOString()
         };
 

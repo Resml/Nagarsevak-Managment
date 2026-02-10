@@ -11,6 +11,7 @@ import Tasks from './pages/tasks/Tasks';
 import VoterProfile from './pages/voters/VoterProfile';
 import ComplaintForm from './pages/complaints/ComplaintForm';
 import ComplaintDetail from './pages/complaints/ComplaintDetail';
+import PersonalRequestForm from './pages/complaints/PersonalRequestForm';
 
 import BotDashboard from './pages/admin/BotDashboard';
 
@@ -76,6 +77,7 @@ function App() {
           <Route path="voters/:id" element={<VoterProfile />} />
           <Route path="complaints" element={<ComplaintList />} />
           <Route path="complaints/new" element={<ComplaintForm />} />
+          <Route path="personal-requests/new" element={<PersonalRequestForm />} />
           <Route path="complaints/:id" element={<ComplaintDetail />} />
           <Route path="schemes" element={<SchemeList />} />
           <Route path="schemes/new" element={<SchemeForm />} />
