@@ -353,16 +353,54 @@ async function getComplaintsByMobile(tenantId, mobile) {
     }
 }
 
+// Letter Functions
+async function getLetterTypes(tenantId) {
+    try {
+        const { data, error } = await supabase
+            .from('letter_types')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true)
+            .order('name');
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching letter types:', error);
+        return [];
+    }
+}
+
+async function saveLetterRequest(letterRequest) {
+    try {
+        const { data, error } = await supabase
+            .from('letter_requests')
+            .insert([letterRequest])
+            .select();
+
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (error) {
+        console.error('Error saving letter request:', error);
+        throw error;
+    }
+}
+
 module.exports = {
+    saveUser,
+    getUser,
     saveComplaint,
     getSchemes,
     searchVoters,
     getEvents,
+    getUpcomingEvents,
+    getTodaysEvents,
+    getPastEvents,
     getWorks,
     getImprovements,
     saveSchemeApplication,
     saveEventRSVP,
     getComplaintsByMobile,
-    saveUser,
-    getUser
+    getLetterTypes,
+    saveLetterRequest
 };
