@@ -212,26 +212,24 @@ class MenuNavigator {
         const lang = session.language;
 
         switch (input) {
-            case '1':
+            case '1': // Complaints
                 return await this.showComplaintsMenu(sock, userId, lang);
-            case '2':
+            case '2': // Government Schemes
                 return await this.showSchemesMenu(sock, userId, lang);
-            case '3':
-                return await this.showVoterMenu(sock, userId, lang);
-            case '4':
+            case '3': // Events & Programs (was 4)
                 return await this.showEventsMenu(sock, userId, lang);
-            case '5':
+            case '4': // Development Works (was 5)
                 return await this.showWorksMenu(sock, userId, lang);
-            case '6':
+            case '5': // Ward Problems (was 6)
                 return await this.showWardProblemsMenu(sock, userId, lang);
-            case '7':
+            case '6': // Letters/Documents (NEW - from Other Services)
+                return await this.showLettersMenu(sock, userId, lang);
+            case '7': // Contact Information (was 7)
                 return await this.showContactMenu(sock, userId, lang);
-            case '8':
-                return await this.showOtherMenu(sock, userId, lang);
             default:
-                // Invalid option
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
+                return;
         }
     }
 
@@ -794,13 +792,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         if (input === '1') filter = 'upcoming';
         else if (input === '2') filter = 'today';
         else if (input === '3') filter = 'past';
-        else if (input === '4') {
-            const comingSoon = lang === 'en' ? 'Event gallery coming soon!' :
-                lang === 'mr' ? 'इव्हेंट गॅलरी लवकरच!' : 'इवेंट गैलरी जल्द!';
-            await sock.sendMessage(userId, { text: comingSoon });
-            await this.showEventsMenu(sock, userId, lang);
-            return;
-        } else {
+        else {
             const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.events[lang].text;
             await sock.sendMessage(userId, { text: errorMsg });
             return;
@@ -991,6 +983,24 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         await sock.sendMessage(userId, { text: contactText });
         await this.showContactMenu(sock, userId, lang);
+    }
+
+    /**
+     * Other Services Menu
+     */
+    /**
+     * Letters/Documents Menu
+     */
+    async showLettersMenu(sock, userId, lang) {
+        const session = this.getSession(userId);
+        session.currentMenu = MENU_STATES.MAIN_MENU; // Direct response, return to main
+
+        const response = lang === 'en' ? '\ud83d\udcc4 *Letters & Documents*\\n\\nFor official letters and documents, please visit our office during working hours or check the website for more information.' :
+            lang === 'mr' ? '\ud83d\udcc4 *\u092a\u0924\u094d\u0930\u0947/\u0915\u093e\u0917\u0926\u092a\u0924\u094d\u0930\u0947*\\n\\n\u0905\u0927\u093f\u0915\u0943\u0924 \u092a\u0924\u094d\u0930\u0947 \u0906\u0923\u093f \u0915\u093e\u0917\u0926\u092a\u0924\u094d\u0930\u093e\u0902\u0938\u093e\u0920\u0940, \u0915\u0943\u092a\u092f\u093e \u0915\u093e\u092e\u0915\u093e\u091c\u093e\u091a\u094d\u092f\u093e \u0935\u0947\u0933\u0947\u0924 \u0906\u092e\u091a\u094d\u092f\u093e \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f\u093e\u0924 \u092d\u0947\u091f \u0926\u094d\u092f\u093e \u0915\u093f\u0902\u0935\u093e \u0905\u0927\u093f\u0915 \u092e\u093e\u0939\u093f\u0924\u0940\u0938\u093e\u0920\u0940 \u0935\u0947\u092c\u0938\u093e\u0907\u091f \u0924\u092a\u093e\u0938\u093e.' :
+                '\ud83d\udcc4 *\u092a\u0924\u094d\u0930/\u0926\u0938\u094d\u0924\u093e\u0935\u0947\u091c\u093c*\\n\\n\u0906\u0927\u093f\u0915\u093e\u0930\u093f\u0915 \u092a\u0924\u094d\u0930\u094b\u0902 \u0914\u0930 \u0926\u0938\u094d\u0924\u093e\u0935\u0947\u091c\u093c\u094b\u0902 \u0915\u0947 \u0932\u093f\u090f, \u0915\u0943\u092a\u092f\u093e \u0915\u093e\u0930\u094d\u092f \u0938\u092e\u092f \u0915\u0947 \u0926\u094c\u0930\u093e\u0928 \u0939\u092e\u093e\u0930\u0947 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u092e\u0947\u0902 \u091c\u093e\u090f\u0902 \u092f\u093e \u0905\u0927\u093f\u0915 \u091c\u093e\u0928\u0915\u093e\u0930\u0940 \u0915\u0947 \u0932\u093f\u090f \u0935\u0947\u092c\u0938\u093e\u0907\u091f \u0926\u0947\u0916\u0947\u0902\u0964';
+
+        await sock.sendMessage(userId, { text: response });
+        await this.showMainMenu(sock, userId, lang);
     }
 
     /**
