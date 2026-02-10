@@ -146,7 +146,19 @@ async function getSchemes(tenantId, options = {}) {
 
         // Search functionality
         if (searchQuery) {
-            query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,name_mr.ilike.%${searchQuery}%,description_mr.ilike.%${searchQuery}%`);
+            const keywords = searchQuery.split(/\s+/).filter(k => k.length > 0);
+            if (keywords.length > 0) {
+                // For multiple keywords, we search if ANY keyword matches ANY field
+                // This is a simple but effective way for WhatsApp bot searches
+                const orConditions = [];
+                keywords.forEach(keyword => {
+                    orConditions.push(`name.ilike.%${keyword}%`);
+                    orConditions.push(`description.ilike.%${keyword}%`);
+                    orConditions.push(`name_mr.ilike.%${keyword}%`);
+                    orConditions.push(`description_mr.ilike.%${keyword}%`);
+                });
+                query = query.or(orConditions.join(','));
+            }
         }
 
         const { data, error } = await query

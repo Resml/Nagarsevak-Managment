@@ -42,6 +42,9 @@ const MENU_STATES = {
     VIEW_COMPLAINTS_MOBILE: 'VIEW_COMPLAINTS_MOBILE',
     SCHEME_SEARCH_PROMPT: 'SCHEME_SEARCH_PROMPT',
     SCHEME_VIEW_MORE: 'SCHEME_VIEW_MORE',
+    SCHEME_QUESTION_AGE: 'SCHEME_QUESTION_AGE',
+    SCHEME_QUESTION_GENDER: 'SCHEME_QUESTION_GENDER',
+    SCHEME_QUESTION_CATEGORY: 'SCHEME_QUESTION_CATEGORY',
 };
 
 class MenuNavigator {
@@ -149,6 +152,15 @@ class MenuNavigator {
 
             case MENU_STATES.SCHEME_VIEW_MORE:
                 return await this.handleSchemeViewMore(sock, tenantId, userId, input);
+
+            case MENU_STATES.SCHEME_QUESTION_AGE:
+                return await this.handleSchemeQuestionAge(sock, tenantId, userId, input);
+
+            case MENU_STATES.SCHEME_QUESTION_GENDER:
+                return await this.handleSchemeQuestionGender(sock, tenantId, userId, input);
+
+            case MENU_STATES.SCHEME_QUESTION_CATEGORY:
+                return await this.handleSchemeQuestionCategory(sock, tenantId, userId, input);
 
             case MENU_STATES.LETTER_TYPE_SELECT:
                 return await this.handleLetterTypeSelect(sock, tenantId, userId, input);
@@ -633,13 +645,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 break;
 
             case '3': // Schemes For Me
-                const personalizedMsg = lang === 'en' ? `👤 *Personalized Recommendations*\n\nShowing all available schemes. Please check eligibility for each scheme:\n` : lang === 'mr' ? `👤 *वैयक्तिक शिफारसी*\n\nसर्व उपलब्ध योजना दर्शविल्या जात आहेत. कृपया प्रत्येक योजनेसाठी पात्रता तपासा:\n` : `👤 *व्यक्तिगत सिफारिशें*\n\nसभी उपलब्ध योजनाएं दिखाई जा रही हैं। कृपया प्रत्येक योजना के लिए पात्रता जांचें:\n`;
-                await sock.sendMessage(userId, { text: personalizedMsg });
-                const allSchemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0 });
-                if (allSchemes && allSchemes.length > 0) {
-                    await this.displaySchemes(sock, userId, allSchemes, lang, 0);
-                }
-                await this.showSchemesMenu(sock, userId, lang);
+                session.currentMenu = MENU_STATES.SCHEME_QUESTION_AGE;
+                session.formData = session.formData || {};
+                await sock.sendMessage(userId, { text: MESSAGES.scheme_question_age[lang] });
                 break;
 
             case '4': // How to Apply
@@ -656,17 +664,109 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
     }
 
     async displaySchemes(sock, userId, schemes, lang, offset) {
-        let schemeText = lang === 'en' ? `🏛️ *Government Schemes* (Showing ${schemes.length} schemes)\n\n` : lang === 'mr' ? `🏛️ *सरकारी योजना* (${schemes.length} योजना दर्शवित)\n\n` : `🏛️ *सरकारी योजनाएं* (${schemes.length} योजनाएं दिखा रहे हैं)\n\n`;
+        let title = lang === 'en' ? `🏛️ *Government Schemes* (Showing ${schemes.length} schemes)\n\n` :
+            lang === 'mr' ? `🏛️ *सरकारी योजना* (${schemes.length} योजना दर्शवित)\n\n` :
+                `🏛️ *सरकारी योजनाएं* (${schemes.length} योजनाएं दिखा रहे हैं)\n\n`;
+
+        let schemeText = title;
         schemes.forEach((scheme, index) => {
-            const name = (lang === 'mr' && scheme.name_mr) ? scheme.name_mr : scheme.name;
-            const desc = (lang === 'mr' && scheme.description_mr) ? scheme.description_mr : scheme.description;
-            const benefits = (lang === 'mr' && scheme.benefits_mr) ? scheme.benefits_mr : scheme.benefits;
-            schemeText += `${offset + index + 1}. *${name}*\n`;
-            if (desc) schemeText += `   ${desc.substring(0, 100)}...\n`;
+            // Favor Marathi content if language is Marathi, otherwise fall back to English
+            let name = scheme.name;
+            let desc = scheme.description;
+            let benefits = scheme.benefits;
+
+            if (lang === 'mr') {
+                name = scheme.name_mr || scheme.name;
+                desc = scheme.description_mr || scheme.description;
+                benefits = scheme.benefits_mr || scheme.benefits;
+            } else if (lang === 'hi') {
+                name = scheme.name_hi || scheme.name;
+                desc = scheme.description_hi || scheme.description;
+                benefits = scheme.benefits_hi || scheme.benefits;
+            }
+
+            // Remove existing multi-language separators if they exist in the text itself (e.g. "English / Marathi")
+            const cleanName = name.split(' / ')[lang === 'mr' ? 1 : 0] || name;
+            const cleanDesc = desc ? (desc.split(' / ')[lang === 'mr' ? 1 : 0] || desc) : '';
+
+            schemeText += `${offset + index + 1}. *${cleanName.trim()}*\n`;
+            if (cleanDesc) {
+                schemeText += `   ${cleanDesc.trim().substring(0, 150)}...\n`;
+            }
             if (benefits) schemeText += `   💰 ${benefits}\n`;
             schemeText += `\n`;
         });
         await sock.sendMessage(userId, { text: schemeText });
+    }
+
+    async handleSchemeQuestionAge(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const age = parseInt(input.trim());
+        if (isNaN(age) || age < 1 || age > 120) {
+            const errorMsg = lang === 'en' ? '❌ Please enter a valid age number.' : lang === 'mr' ? '❌ कृपया वैध वय प्रविष्ट करा.' : '❌ कृपया एक वैध आयु दर्ज करें।';
+            await sock.sendMessage(userId, { text: errorMsg + '\n\n' + MESSAGES.scheme_question_age[lang] });
+            return;
+        }
+
+        session.formData.age = age;
+        session.currentMenu = MENU_STATES.SCHEME_QUESTION_GENDER;
+        await sock.sendMessage(userId, { text: MESSAGES.scheme_question_gender[lang] });
+    }
+
+    async handleSchemeQuestionGender(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const genderMap = { '1': 'Male', '2': 'Female', '3': 'Other' };
+        if (!genderMap[input]) {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] + '\n\n' + MESSAGES.scheme_question_gender[lang] });
+            return;
+        }
+
+        session.formData.gender = genderMap[input];
+        session.currentMenu = MENU_STATES.SCHEME_QUESTION_CATEGORY;
+        await sock.sendMessage(userId, { text: MESSAGES.scheme_question_category[lang] });
+    }
+
+    async handleSchemeQuestionCategory(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const categoryMap = { '1': 'SC/ST', '2': 'OBC', '3': 'General', '4': 'EWS', '5': 'VJNT' };
+        if (!categoryMap[input]) {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] + '\n\n' + MESSAGES.scheme_question_category[lang] });
+            return;
+        }
+
+        session.formData.category = categoryMap[input];
+
+        const recommendationMsg = lang === 'en' ? `✅ *Information Received*\n\nFinding the best schemes for a ${session.formData.age} year old ${session.formData.gender} (${session.formData.category})...` :
+            lang === 'mr' ? `✅ *माहिती प्राप्त झाली*\n\n${session.formData.age} वर्षीय ${session.formData.gender === 'Female' ? 'स्त्री' : 'पुरुष'} (${session.formData.category}) साठी सर्वोत्तम योजना शोधत आहोत...` :
+                `✅ *जानकारी प्राप्त हुई*\n\n${session.formData.age} वर्षीय ${session.formData.gender} (${session.formData.category}) के लिए सर्वोत्तम योजनाएं खोज रहे हैं...`;
+
+        await sock.sendMessage(userId, { text: recommendationMsg });
+
+        // Build search query based on profile
+        let searchQuery = session.formData.gender === 'Female' ? 'महिला' : '';
+        if (session.formData.category !== 'General') {
+            searchQuery += (searchQuery ? ' ' : '') + session.formData.category;
+        }
+
+        // Fetch schemes
+        const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0, searchQuery });
+
+        if (!schemes || schemes.length === 0) {
+            // Fallback to showing all if no specific match
+            const allSchemes = await this.store.getSchemes(tenantId, { limit: 5, offset: 0 });
+            await this.displaySchemes(sock, userId, allSchemes, lang, 0);
+        } else {
+            await this.displaySchemes(sock, userId, schemes, lang, 0);
+        }
+
+        session.currentMenu = MENU_STATES.SCHEMES_MENU;
+        await this.showSchemesMenu(sock, userId, lang);
     }
 
     async handleSchemeSearch(sock, tenantId, userId, input) {
