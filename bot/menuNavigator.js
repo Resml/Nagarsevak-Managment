@@ -1211,27 +1211,19 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         // Submit the letter request
         try {
-            // Clean user ID: remove WhatsApp suffix and country code prefix
-            // Input examples: 7058731515@s.whatsapp.net, 917058731515@lid, 7058731515@lid
-            // Output: 7058731515 (10 digits only)
-            let cleanUserId = userId
-                .replace('@s.whatsapp.net', '')
-                .replace('@lid', '')
-                .replace(/[^0-9]/g, ''); // Remove any non-numeric characters
-
-            // Remove country code prefix (91) if present
-            if (cleanUserId.startsWith('91') && cleanUserId.length > 10) {
-                cleanUserId = cleanUserId.substring(2);
-            }
+            // IMPORTANT: Store the FULL WhatsApp ID for notifications
+            // Examples: 105029583282256@lid, 917058731515@s.whatsapp.net
+            // We need the exact WhatsApp ID to send messages, not a cleaned phone number
+            // The mobile number in details is just for display/reference
 
             const letterRequest = {
-                user_id: cleanUserId,
+                user_id: userId, // Store full WhatsApp ID: "105029583282256@lid"
                 tenant_id: tenantId,
                 type: session.letterFormData.type,
                 area: '', // Optional
                 details: {
                     name: session.letterFormData.name,
-                    mobile: session.letterFormData.mobile,
+                    mobile: session.letterFormData.mobile, // Display number: "7058731515"
                     text: session.letterFormData.address,
                     purpose: session.letterFormData.purpose
                 },
