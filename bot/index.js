@@ -16,6 +16,7 @@ const store = require('./store');
 const broadcastService = require('./broadcast');
 // AI Service removed - using menu-driven navigation instead
 const MenuNavigator = require('./menuNavigator');
+const { sendLetterStatusNotification } = require('./notifications');
 
 // --- Custom Simple Store for Polls ---
 class SimpleStore {
@@ -97,6 +98,66 @@ app.post('/api/broadcast', async (req, res) => {
     res.json({ success: true, message: 'Broadcast started in background' });
 });
 
+// --- Webhook endpoint for letter status updates ---
+app.post('/webhook/letter-status', async (req, res) => {
+    try {
+        // Validate webhook secret for security
+        const webhookSecret = process.env.WEBHOOK_SECRET;
+        const authHeader = req.headers['x-webhook-secret'];
+
+        if (webhookSecret && authHeader !== webhookSecret) {
+            console.warn('Unauthorized webhook attempt');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { type, letter_id, user_id, status, letter_type, tenant_id } = req.body;
+
+        if (type !== 'letter_status_change') {
+            return res.status(400).json({ error: 'Invalid webhook type' });
+        }
+
+        console.log(`[${tenant_id}] Letter status webhook: ${status} for user ${user_id}`);
+
+        // Get bot connection for this tenant
+        const session = sessions.get(tenant_id);
+        if (!session || session.status !== 'connected') {
+            console.error(`No bot connection for tenant ${tenant_id}`);
+            return res.status(404).json({ error: 'Bot not connected for this tenant' });
+        }
+
+        // Get MenuNavigator for this tenant to access user sessions
+        const menuNav = session.menuNavigator;
+        if (!menuNav) {
+            console.error(`No MenuNavigator found for tenant ${tenant_id}`);
+            return res.status(500).json({ error: 'MenuNavigator not initialized' });
+        }
+
+        // Get user's language preference from session
+        const userSession = menuNav.getSession(`${user_id}@s.whatsapp.net`);
+        const lang = userSession?.language || 'mr'; // Default to Marathi
+
+        // Send notification
+        const success = await sendLetterStatusNotification(
+            session.sock,
+            user_id,
+            status,
+            letter_type,
+            lang,
+            tenant_id
+        );
+
+        if (success) {
+            console.log(`[${tenant_id}] Letter status notification sent to ${user_id}`);
+            res.json({ success: true, message: 'Notification sent' });
+        } else {
+            res.status(500).json({ error: 'Failed to send notification' });
+        }
+    } catch (error) {
+        console.error('Webhook error:', error);
+        res.status(500).json({ error: 'Internal server error', details: error.message });
+    }
+});
+
 // --- Baileys Connection Logic (Per Tenant) ---
 async function connectToWhatsApp(tenantId, socketToEmit = null) {
     if (!tenantId) return;
@@ -131,11 +192,15 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
     });
 
     // Save session to map
+    // Create menu navigator instance for this tenant
+    const menuNavigator = new MenuNavigator(store);
+
     sessions.set(tenantId, {
         sock,
         status: 'connecting',
         qr: '',
-        store: baileysStore
+        store: baileysStore,
+        menuNavigator  // Store MenuNavigator for webhook access
     });
 
     // Bind Store (Global store for now)
@@ -267,17 +332,22 @@ function updateSessionStatus(tenantId, status) {
     io.to(tenantId).emit('status', status);
 }
 
-// --- Menu-Driven Bot Logic (No AI) ---
-const menuNavigator = new MenuNavigator(store);
-
 // Handler - Route to MenuNavigator
 async function handleMessage(sock, tenantId, userId, userName, text) {
     try {
-        await menuNavigator.handleMessage(sock, tenantId, userId, userName, text);
+        const session = sessions.get(tenantId);
+        if (!session || !session.menuNavigator) {
+            console.error(`[${tenantId}] No MenuNavigator found for tenant`);
+            return;
+        }
+        await session.menuNavigator.handleMessage(sock, tenantId, userId, userName, text);
     } catch (error) {
         console.error(`[${tenantId}] Error in menu navigation:`, error);
         // Fallback: show language menu
-        await menuNavigator.showLanguageMenu(sock, userId);
+        const session = sessions.get(tenantId);
+        if (session?.menuNavigator) {
+            await session.menuNavigator.showLanguageMenu(sock, userId);
+        }
     }
 }
 
