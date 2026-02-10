@@ -1241,9 +1241,8 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const nameEn = config.nagarsevak_name_english || 'Nagarsevak';
         const nameMr = config.nagarsevak_name_marathi || 'नगरसेवक';
         const ward = config.ward_name || config.ward_number || 'N/A';
-        const office_phone = config.office_phone || 'Not Available';
-        const mobile = config.mobile || 'Not Available';
-        const email = config.email || 'Not Available';
+        const phone_number = config.phone_number || 'Not Available';
+        const email = config.email_address || config.email || 'Not Available';
         const office_address = config.office_address || 'Ward Office';
         const office_hours = config.office_hours || 'Monday - Friday: 10 AM - 5 PM';
 
@@ -1261,9 +1260,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                         `⏰ *कार्यालय समय*\n\n${office_hours}`;
                 break;
             case '3': // Phone Numbers
-                contactText = lang === 'en' ? `📞 *Contact Numbers*\n\nNagarsevak: ${nameEn}\nMobile: ${mobile}\nOffice: ${office_phone}` :
-                    lang === 'mr' ? `📞 *संपर्क क्रमांक*\n\nनगरसेवक: ${nameMr}\nमोबाइल: ${mobile}\nकार्यालय: ${office_phone}` :
-                        `📞 *संपर्क नंबर*\n\nनगरसेवक: ${nameEn}\nमोबाइल: ${mobile}\nकार्यालय: ${office_phone}`;
+                contactText = lang === 'en' ? `📞 *Contact Numbers*\n\nNagarsevak: ${nameEn}\nPhone: ${phone_number}` :
+                    lang === 'mr' ? `📞 *संपर्क क्रमांक*\n\nनगरसेवक: ${nameMr}\nफोन: ${phone_number}` :
+                        `📞 *संपर्क नंबर*\n\nनगरसेवक: ${nameEn}\nफोन: ${phone_number}`;
                 break;
             case '4': // Email
                 contactText = lang === 'en' ? `📧 *Email Address*\n\n${email}` :
@@ -1271,12 +1270,10 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                         `📧 *ईमेल पता*\n\n${email}`;
                 break;
             case '5': // Social Media
-                const facebook = config.facebook || '/NagarsevakOfficial';
-                const twitter = config.twitter || '@nagarsevak';
-                const instagram = config.instagram || '@nagarsevak';
-                contactText = lang === 'en' ? `📱 *Follow Us*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}` :
-                    lang === 'mr' ? `📱 *आम्हाला फॉलो करा*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}` :
-                        `📱 *हमें फॉलो करें*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}`;
+                const social = config.social_media_link || 'Not Available';
+                contactText = lang === 'en' ? `📱 *Follow Us*\n\nSocial Media: ${social}` :
+                    lang === 'mr' ? `📱 *आम्हाला फॉलो करा*\n\nसोशल मीडिया: ${social}` :
+                        `📱 *हमें फॉलो करें*\n\nसोशल मीडिया: ${social}`;
                 break;
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.contact[lang].text;

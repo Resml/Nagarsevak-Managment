@@ -6,11 +6,13 @@ import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { translateText } from '../../services/aiTranslation';
 import { TranslatedText } from '../../components/TranslatedText';
 
 const WardWiseProblem = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
@@ -56,11 +58,23 @@ const WardWiseProblem = () => {
                 area: string | null;
                 voter_id: string | number | null;
                 created_at: string;
+                description_meta?: string | null;
                 voter?: {
                     name_english?: string | null;
                     name_marathi?: string | null;
                     mobile?: string | null;
                 } | null;
+            };
+
+            type AreaProblemRow = {
+                id: string | number;
+                title: string;
+                description: string;
+                location: string | null;
+                status: ComplaintStatus;
+                reporter_name: string | null;
+                reporter_mobile: string | null;
+                created_at: string;
             };
 
             const allowedTypes: readonly ComplaintType[] = [
@@ -79,6 +93,17 @@ const WardWiseProblem = () => {
             const isComplaintType = (value: string): value is ComplaintType =>
                 (allowedTypes as readonly string[]).includes(value);
 
+            // Fetch area_problems
+            const { data: areaData, error: areaError } = await supabase
+                .from('area_problems')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('created_at', { ascending: false });
+
+            if (areaError) {
+                console.error('Error fetching area problems:', areaError);
+            }
+
             // Map Supabase data to App Type
             const mappedComplaints: Complaint[] = (data || []).map((row: ComplaintRow) => ({
                 id: row.id.toString(),
@@ -96,13 +121,46 @@ const WardWiseProblem = () => {
                         name_marathi: row.voter.name_marathi ?? undefined,
                         mobile: row.voter.mobile ?? undefined,
                     }
-                    : undefined,
+                    : (() => {
+                        try {
+                            const meta = row.description_meta ? JSON.parse(row.description_meta) : null;
+                            if (meta?.submitter_name) {
+                                return {
+                                    name_english: meta.submitter_name,
+                                    mobile: meta.submitter_mobile
+                                };
+                            }
+                        } catch (e) { }
+                        return undefined;
+                    })(),
                 createdAt: row.created_at,
                 photos: [],
                 updatedAt: row.created_at
             }));
 
-            setComplaints(mappedComplaints);
+            const mappedAreaProblems: Complaint[] = (areaData || []).map((row: AreaProblemRow) => ({
+                id: `ap-${row.id}`,
+                title: row.title,
+                description: row.description,
+                type: 'SelfIdentified',
+                status: row.status,
+                ward: 'Ward Problems',
+                location: row.location ?? undefined,
+                voter: {
+                    name_english: row.reporter_name ?? 'Bot User',
+                    mobile: row.reporter_mobile ?? undefined
+                },
+                createdAt: row.created_at,
+                photos: [],
+                updatedAt: row.created_at
+            }));
+
+            // Merge and sort
+            const merged = [...mappedComplaints, ...mappedAreaProblems].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            setComplaints(merged);
         } catch (err) {
             console.error(err);
         } finally {
@@ -116,10 +174,10 @@ const WardWiseProblem = () => {
         // Real-time Subscription
         const subscription = supabase
             .channel('ward_wise_problems_channel')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'complaints', filter: 'category=eq.SelfIdentified' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'complaints', filter: 'category=eq.SelfIdentified' }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .subscribe();
@@ -127,7 +185,7 @@ const WardWiseProblem = () => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [tenantId]);
 
 
 

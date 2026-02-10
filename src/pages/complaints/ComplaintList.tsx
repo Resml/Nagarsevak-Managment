@@ -75,6 +75,7 @@ const ComplaintList = () => {
                     name_marathi?: string | null;
                     mobile?: string | null;
                 } | null;
+                description_meta?: string | null;
             };
 
             type PersonalRequestRow = {
@@ -120,7 +121,20 @@ const ComplaintList = () => {
                         name_marathi: row.voter.name_marathi ?? undefined,
                         mobile: row.voter.mobile ?? undefined,
                     }
-                    : undefined,
+                    : (() => {
+                        try {
+                            const meta = row.description_meta ? JSON.parse(row.description_meta) : null;
+                            if (meta?.submitter_name) {
+                                return {
+                                    name_english: meta.submitter_name,
+                                    mobile: meta.submitter_mobile
+                                };
+                            }
+                        } catch (e) {
+                            console.error("Error parsing meta", e);
+                        }
+                        return undefined;
+                    })(),
                 createdAt: row.created_at,
                 photos: [],
                 updatedAt: row.created_at

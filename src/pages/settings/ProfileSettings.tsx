@@ -18,7 +18,12 @@ const ProfileSettings = () => {
         ward_number: '',
         party_name: '',
         party_logo_url: '',
-        profile_image_url: ''
+        profile_image_url: '',
+        office_address: '',
+        office_hours: '',
+        phone_number: '',
+        email_address: '',
+        social_media_link: ''
     });
 
     useEffect(() => {
@@ -44,7 +49,12 @@ const ProfileSettings = () => {
                     ward_number: data.config.ward_number || '',
                     party_name: data.config.party_name || '',
                     party_logo_url: data.config.party_logo_url || '',
-                    profile_image_url: data.config.profile_image_url || ''
+                    profile_image_url: data.config.profile_image_url || '',
+                    office_address: data.config.office_address || '',
+                    office_hours: data.config.office_hours || '',
+                    phone_number: data.config.phone_number || '',
+                    email_address: data.config.email_address || '',
+                    social_media_link: data.config.social_media_link || ''
                 });
             }
         } catch (error) {
@@ -264,6 +274,72 @@ const ProfileSettings = () => {
                                 onChange={handleInputChange}
                                 className="ns-input w-full"
                                 placeholder="e.g. 10"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Office & Contact Details */}
+                <div className="ns-card p-6 space-y-4">
+                    <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                        <Building2 className="w-5 h-5 text-brand-600" />
+                        {t('sadasya.office_details') || 'Office & Contact Information'}
+                    </h3>
+
+                    <div className="space-y-3">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Office Address</label>
+                            <input
+                                type="text"
+                                name="office_address"
+                                value={formData.office_address}
+                                onChange={handleInputChange}
+                                className="ns-input w-full"
+                                placeholder="e.g. 123 Main St, Pune"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Office Hours</label>
+                            <input
+                                type="text"
+                                name="office_hours"
+                                value={formData.office_hours}
+                                onChange={handleInputChange}
+                                className="ns-input w-full"
+                                placeholder="e.g. 10 AM - 6 PM"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                            <input
+                                type="tel"
+                                name="phone_number"
+                                value={formData.phone_number}
+                                onChange={handleInputChange}
+                                className="ns-input w-full"
+                                placeholder="e.g. +91 9876543210"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                            <input
+                                type="email"
+                                name="email_address"
+                                value={formData.email_address}
+                                onChange={handleInputChange}
+                                className="ns-input w-full"
+                                placeholder="e.g. contact@nagar.in"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Social Media (FB/IG)</label>
+                            <input
+                                type="text"
+                                name="social_media_link"
+                                value={formData.social_media_link}
+                                onChange={handleInputChange}
+                                className="ns-input w-full"
+                                placeholder="e.g. fb.com/rahulpatil"
                             />
                         </div>
                     </div>
