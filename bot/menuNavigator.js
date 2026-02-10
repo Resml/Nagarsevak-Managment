@@ -1184,9 +1184,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.letterFormData.mobile = mobile;
         session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
 
-        const addressPrompt = lang === 'en' ? '\ud83c\udfe0 Please enter your full address:' :
-            lang === 'mr' ? '\ud83c\udfe0 \u0915\u0943\u092a\u092f\u093e \u0924\u0941\u092e\u091a\u093e \u092a\u0942\u0930\u094d\u0923 \u092a\u0924\u094d\u0924\u093e \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e:' :
-                '\ud83c\udfe0 \u0915\u0943\u092a\u092f\u093e \u0905\u092a\u0928\u093e \u092p\u0942\u0930\u093e \u092a\u0924\u093e \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902:';
+        const addressPrompt = lang === 'en' ? '🏠 Please enter your full address:' :
+            lang === 'mr' ? '🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:' :
+                '🏠 कृपया अपना पूरा पता दर्ज करें:';
         await sock.sendMessage(userId, { text: addressPrompt });
     }
 
