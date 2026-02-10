@@ -504,6 +504,21 @@ async function getAreaProblemsByUser(userId, limit = 10) {
     }
 }
 
+async function savePersonalRequest(request) {
+    try {
+        const { data, error } = await supabase
+            .from('personal_requests')
+            .insert([request])
+            .select();
+
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (error) {
+        console.error('Error saving personal request:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     saveUser,
     getUser,
@@ -524,5 +539,6 @@ module.exports = {
     getContactInfo,
     reportAreaProblem,
     getAreaProblems,
-    getAreaProblemsByUser
+    getAreaProblemsByUser,
+    savePersonalRequest
 };

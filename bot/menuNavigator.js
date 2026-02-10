@@ -3,7 +3,7 @@
  * No AI, pure menu-driven system
  */
 
-const { MENUS, MESSAGES } = require('./menus');
+const { MENUS, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
 
 // Session storage for each user
 const userSessions = {};
@@ -47,6 +47,10 @@ const MENU_STATES = {
     SCHEME_QUESTION_AGE: 'SCHEME_QUESTION_AGE',
     SCHEME_QUESTION_GENDER: 'SCHEME_QUESTION_GENDER',
     SCHEME_QUESTION_CATEGORY: 'SCHEME_QUESTION_CATEGORY',
+    PERSONAL_REQUEST_MENU: 'PERSONAL_REQUEST_MENU',
+    PERSONAL_REQUEST_FORM_NAME: 'PERSONAL_REQUEST_FORM_NAME',
+    PERSONAL_REQUEST_FORM_MOBILE: 'PERSONAL_REQUEST_FORM_MOBILE',
+    PERSONAL_REQUEST_FORM_DESC: 'PERSONAL_REQUEST_FORM_DESC'
 };
 
 class MenuNavigator {
@@ -147,6 +151,18 @@ class MenuNavigator {
             case MENU_STATES.COMPLAINT_FORM_TYPE:
                 return await this.handleComplaintFormType(sock, tenantId, userId, input);
 
+            case MENU_STATES.PERSONAL_REQUEST_MENU:
+                return await this.handlePersonalRequestMenu(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_NAME:
+                return await this.handlePersonalRequestName(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE:
+                return await this.handlePersonalRequestMobile(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_DESC:
+                return await this.handlePersonalRequestDesc(sock, tenantId, userId, input);
+
             case MENU_STATES.COMPLAINT_FORM_DESCRIPTION:
                 return await this.handleComplaintFormDescription(sock, tenantId, userId, input);
 
@@ -197,6 +213,19 @@ class MenuNavigator {
 
             case MENU_STATES.AREA_PROBLEM_REPORT:
                 return await this.handleAreaProblemReport(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_MENU:
+                return await this.handlePersonalRequestMenu(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_NAME:
+                return await this.handlePersonalRequestName(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE:
+                return await this.handlePersonalRequestMobile(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_FORM_DESC:
+                return await this.handlePersonalRequestDesc(sock, tenantId, userId, input);
+
 
             case MENU_STATES.AREA_PROBLEM_FORM_NAME:
                 return await this.handleAreaProblemName(sock, tenantId, userId, input);
@@ -288,18 +317,17 @@ class MenuNavigator {
         switch (input) {
             case '1': // Complaints
                 return await this.showComplaintsMenu(sock, userId, lang);
-            case '2': // Government Schemes
-                return await this.showSchemesMenu(sock, userId, lang);
-            case '3': // Events & Programs (was 4)
-                return await this.showEventsMenu(sock, userId, lang);
-            case '4': // Development Works (was 5)
-                return await this.showWorksMenu(sock, userId, lang);
-            case '5': // Ward Problems (was 6)
-                return await this.showWardProblemsMenu(sock, userId, lang);
-            case '6': // Letters/Documents (NEW - from Other Services)
+            case '2': // Letters/Documents
                 return await this.showLettersMenu(sock, userId, lang, tenantId);
-            case '7': // Contact Information (was 7)
-                return await this.showContactMenu(sock, userId, lang);
+            case '3': // Government Schemes
+                return await this.showSchemesMenu(sock, userId, lang);
+            case '4': // Ward Problems
+                return await this.showWardProblemsMenu(sock, userId, lang);
+            case '5': // Personal Request
+                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_MENU;
+                return await sock.sendMessage(userId, { text: PERSONAL_REQUEST_MENU[lang].text });
+            case '6': // Other Services
+                return await this.showOtherMenu(sock, userId, lang);
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
@@ -1570,27 +1598,28 @@ Your request has been sent to the office for approval. You will be notified once
         let response = '';
 
         switch (input) {
-            case '1': // Letters/Documents
-                response = lang === 'en' ? '📄 *Letters & Documents*\n\nFor official letters and documents, please visit our office during working hours or check the website.' :
-                    lang === 'mr' ? '📄 *पत्रे/कागदपत्रे*\n\nअधिकृत पत्रे आणि कागदपत्रांसाठी, कृपया कामकाजाच्या वेळेत आमच्या कार्यालयात भेट द्या किंवा वेबसाइट तपासा.' :
-                        '📄 *पत्र/दस्तावेज़*\n\nआधिकारिक पत्रों और दस्तावेजों के लिए, कृपया कार्य समय के दौरान हमारे कार्यालय में जाएं या वेबसाइट देखें।';
-                break;
-            case '2': // Meeting Diary
+            case '1': // Events & Programs
+                return await this.showEventsMenu(sock, userId, lang);
+            case '2': // Development Works
+                return await this.showWorksMenu(sock, userId, lang);
+            case '3': // Contact Information
+                return await this.showContactMenu(sock, userId, lang);
+            case '4': // Meeting Diary
                 response = lang === 'en' ? '📅 *Meeting Diary*\n\nUpcoming meetings and minutes are available on the website.' :
                     lang === 'mr' ? '📅 *मीटिंग डायरी*\n\nआगामी सभा आणि कार्यवृत्त वेबसाइटवर उपलब्ध आहेत.' :
                         '📅 *मीटिंग डायरी*\n\nआगामी बैठकें और कार्यवृत्त वेबसाइट पर उपलब्ध हैं।';
                 break;
-            case '3': // Photo Gallery
+            case '5': // Photo Gallery
                 response = lang === 'en' ? '📸 *Photo Gallery*\n\nView photos of events and development works on our website.' :
                     lang === 'mr' ? '📸 *फोटो गॅलरी*\n\nआमच्या वेबसाइटवर कार्यक्रम आणि विकास कार्यांचे फोटो पहा.' :
                         '📸 *फोटो गैलरी*\n\nहमारी वेबसाइट पर आयोजनों और विकास कार्यों की तस्वीरें देखें।';
                 break;
-            case '4': // Newspaper Clippings
+            case '6': // Newspaper Clippings
                 response = lang === 'en' ? '📰 *Newspaper Clippings*\n\nLatest news coverage is available on the website.' :
                     lang === 'mr' ? '📰 *वृत्तपत्र कात्रणे*\n\nनवीनतम बातम्यांचा संग्रह वेबसाइटवर उपलब्ध आहे.' :
                         '📰 *अखबार की कतरनें*\n\nनवीनतम समाचार कवरेज वेबसाइट पर उपलब्ध है।';
                 break;
-            case '5': // Ward Budget Info
+            case '7': // Ward Budget Info
                 response = lang === 'en' ? '💰 *Ward Budget Information*\n\nDetailed budget allocation and spending reports are available on the website.' :
                     lang === 'mr' ? '💰 *प्रभाग अर्थसंकल्प*\n\nतपशीलवार अर्थसंकल्प वाटप आणि खर्च अहवाल वेबसाइटवर उपलब्ध आहेत.' :
                         '💰 *वार्ड बजट जानकारी*\n\nविस्तृत बजट आवंटन और खर्च रिपोर्ट वेबसाइट पर उपलब्ध हैं।';
@@ -1603,6 +1632,81 @@ Your request has been sent to the office for approval. You will be notified once
 
         await sock.sendMessage(userId, { text: response });
         await this.showOtherMenu(sock, userId, lang);
+    }
+
+    /**
+     * Personal Request Flow Handlers
+     */
+    async handlePersonalRequestMenu(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const categories = {
+            '1': 'Education/Admission',
+            '2': 'Medical Help/Hospital',
+            '3': 'Financial Assistance',
+            '4': 'General Help'
+        };
+
+        if (categories[input]) {
+            session.personalFormData = { category: categories[input] };
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_NAME;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_name_prompt[lang] });
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] + '\n\n' + PERSONAL_REQUEST_MENU[lang].text });
+        }
+    }
+
+    async handlePersonalRequestName(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        session.personalFormData.reporter_name = input.trim();
+        session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+        await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+    }
+
+    async handlePersonalRequestMobile(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const mobile = input.trim().replace(/\D/g, '');
+        if (mobile.length !== 10) {
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            return;
+        }
+        session.personalFormData.reporter_mobile = mobile;
+        session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_DESC;
+        await sock.sendMessage(userId, { text: MESSAGES.personal_request_desc_prompt[lang] });
+    }
+
+    async handlePersonalRequestDesc(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        session.personalFormData.description = input.trim();
+
+        try {
+            const requestData = {
+                tenant_id: tenantId,
+                user_id: userId,
+                reporter_name: session.personalFormData.reporter_name,
+                reporter_mobile: session.personalFormData.reporter_mobile,
+                request_type: session.personalFormData.category,
+                description: session.personalFormData.description,
+                status: 'Pending'
+            };
+
+            await this.store.savePersonalRequest(requestData);
+
+            const successMsg = lang === 'en' ? '✅ *Personal Request Submitted!*\n\nOur team will contact you soon.' :
+                lang === 'mr' ? '✅ *वैयक्तिक विनंती यशस्वीरित्या नोंदवली!*\n\nआमची टीम लवकरच तुमच्याशी संपर्क साधेल.' :
+                    '✅ *व्यक्तिगत अनुरोध सफलतापूर्वक सबमिट किया गया!*\n\nहमारी टीम जल्द ही आपसे संपर्क करेगी।';
+
+            await sock.sendMessage(userId, { text: successMsg });
+            await this.showMainMenu(sock, userId, lang);
+        } catch (error) {
+            console.error('Error saving personal request:', error);
+            const errMsg = lang === 'en' ? 'Error submitting request.' : 'त्रुटी.';
+            await sock.sendMessage(userId, { text: errMsg });
+        }
     }
 }
 
