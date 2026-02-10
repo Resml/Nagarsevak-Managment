@@ -1,7 +1,7 @@
 // Notification functions for letter status updates
 async function sendLetterStatusNotification(sock, userId, status, letterType, lang, tenantId) {
     try {
-        const whatsappId = `${userId}@s.whatsapp.net`;
+        const whatsappId = userId.includes('@') ? userId : `${userId}@s.whatsapp.net`;
 
         let message;
         if (status === 'Approved') {

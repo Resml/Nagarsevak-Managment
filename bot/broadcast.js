@@ -63,7 +63,7 @@ async function broadcastEvent(sock, eventId) {
                 // Format Number (Assume IN +91 if missing)
                 let number = mobile.replace(/\D/g, '');
                 if (number.length === 10) number = '91' + number;
-                const jid = number + "@s.whatsapp.net";
+                const jid = number.includes('@') ? number : number + "@s.whatsapp.net";
 
                 console.log(`Sending to ${name} (${number})...`);
                 await sock.sendMessage(jid, { text: messageText });
