@@ -386,6 +386,65 @@ async function saveLetterRequest(letterRequest) {
     }
 }
 
+// Contact Info Functions
+async function getContactInfo(tenantId) {
+    try {
+        const { data, error } = await supabase
+            .from('tenants')
+            .select('config')
+            .eq('id', tenantId)
+            .single();
+
+        if (error) throw error;
+        return data?.config || {};
+    } catch (error) {
+        console.error('Error fetching contact info:', error);
+        return {};
+    }
+}
+
+// Area Problems Functions
+async function reportAreaProblem(problem) {
+    try {
+        const { data, error } = await supabase
+            .from('area_problems')
+            .insert([problem])
+            .select();
+
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (error) {
+        console.error('Error reporting area problem:', error);
+        throw error;
+    }
+}
+
+async function getAreaProblems(tenantId, status = 'all', limit = 10) {
+    try {
+        let query = supabase
+            .from('area_problems')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('created_at', { ascending: false });
+
+        if (status !== 'all') {
+            query = query.eq('status', status);
+        }
+
+        if (limit) {
+            query = query.limit(limit);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching area problems:', error);
+        return [];
+    }
+}
+
 module.exports = {
     saveUser,
     getUser,
@@ -402,5 +461,8 @@ module.exports = {
     saveEventRSVP,
     getComplaintsByMobile,
     getLetterTypes,
-    saveLetterRequest
+    saveLetterRequest,
+    getContactInfo,
+    reportAreaProblem,
+    getAreaProblems
 };

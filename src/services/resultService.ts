@@ -1,119 +1,71 @@
 import { supabase } from './supabaseClient';
 import { type ElectionResult } from '../types';
-import electionData from '../data/election_data.json';
 
 const RESULT_STORAGE_KEY = 'ns_election_results';
-
-// Simulated Data for Prabhag 5 (A, B, C, D) based on common election structures
-// Candidate: Mamit Chougale
-const CANDIDATE_NAME = "Mamit Chougale";
-const OPPONENT_1 = "Ramesh Patil"; // Dummy Opponent
-const OPPONENT_2 = "Suresh Shinde"; // Dummy Opponent
-
-const generateDummyData = (): ElectionResult[] => {
-    const wards = ['Prabhag 5 A', 'Prabhag 5 B', 'Prabhag 5 C', 'Prabhag 5 D'];
-    const results: ElectionResult[] = [];
-
-    let idCounter = 1;
-
-    wards.forEach(ward => {
-        // Generate ~10 booths per ward
-        for (let i = 1; i <= 10; i++) {
-            const totalVoters = Math.floor(Math.random() * (1200 - 800) + 800); // 800-1200 voters
-            const turnout = Math.floor(Math.random() * (0.7 - 0.5) + 0.5 * totalVoters); // 50-70% turnout
-
-            // Randomly decide if Mamit wins or loses slightly in this booth
-            // Let's make him win generally in A and B, mixed in C, lose in D for analysis variety
-            let votesMamit = 0;
-            if (ward.includes('A') || ward.includes('B')) {
-                votesMamit = Math.floor(turnout * (Math.random() * (0.6 - 0.45) + 0.45)); // 45-60% votes
-            } else {
-                votesMamit = Math.floor(turnout * (Math.random() * (0.45 - 0.3) + 0.3)); // 30-45% votes
-            }
-
-            const remaining = turnout - votesMamit;
-            const votesOpp1 = Math.floor(remaining * 0.7);
-            const votesOpp2 = remaining - votesOpp1;
-
-            const winner = votesMamit > votesOpp1 ? CANDIDATE_NAME : OPPONENT_1;
-            const margin = Math.abs(votesMamit - votesOpp1);
-
-            results.push({
-                id: `res_${idCounter++}`,
-                wardName: ward,
-                boothNumber: `${i + (wards.indexOf(ward) * 100)}`, // 101, 201 etc logic roughly
-                boothName: `Booth ${i} - School No ${i}`,
-                totalVoters: totalVoters,
-                totalVotesCasted: turnout,
-                candidateVotes: {
-                    [CANDIDATE_NAME]: votesMamit,
-                    [OPPONENT_1]: votesOpp1,
-                    [OPPONENT_2]: votesOpp2
-                },
-                winner: winner,
-                margin: margin,
-                createdAt: new Date().toISOString()
-            });
-        }
-    });
-
-    return results;
-};
-
-const DUMMY_RESULTS = generateDummyData();
 
 export const ResultService = {
     getResults: async (ward?: string): Promise<ElectionResult[]> => {
         try {
+            console.log('[ResultService] Fetching election results from database...');
             let query = supabase.from('election_results').select('*');
             if (ward) {
                 query = query.eq('ward_name', ward);
+                console.log(`[ResultService] Filtering by ward: ${ward}`);
             }
 
             const { data, error } = await query;
 
-            if (error) throw error;
-
-            if (!data || data.length === 0) {
-                // Use imported real data
-                if (electionData && electionData.length > 0) {
-                    // Cast to any first to avoid type mismatch on 'candidateVotes' if strict
-                    return filterResults(electionData as any[], ward);
-                }
-
-                const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
-                if (stored.length > 0) return filterResults(stored, ward);
-
-                // Fallback to dummy results (if needed, but we should have real data now)
-                return filterResults(DUMMY_RESULTS, ward);
+            if (error) {
+                console.error('[ResultService] Database error:', error);
+                throw error;
             }
 
-            return data.map((row: any) => ({
-                id: row.id,
-                wardName: row.ward_name,
-                boothNumber: row.booth_number,
-                boothName: row.booth_name,
-                totalVoters: row.total_voters,
-                totalVotesCasted: row.total_votes_casted,
-                candidateVotes: row.candidate_votes,
-                winner: row.winner,
-                margin: row.margin,
-                createdAt: row.created_at
-            }));
+            console.log(`[ResultService] Database returned ${data?.length || 0} results`);
+
+            // If we got data from the database, use it!
+            if (data && data.length > 0) {
+                console.log('[ResultService] Using database results');
+                return data.map((row: any) => ({
+                    id: row.id,
+                    wardName: row.ward_name,
+                    boothNumber: row.booth_number,
+                    boothName: row.booth_name,
+                    totalVoters: row.total_voters,
+                    totalVotesCasted: row.total_votes_casted,
+                    candidateVotes: row.candidate_votes,
+                    winner: row.winner,
+                    margin: row.margin,
+                    createdAt: row.created_at
+                }));
+            }
+
+            // Only check localStorage if database is empty
+            console.log('[ResultService] No database results, checking localStorage...');
+            const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
+            if (stored.length > 0) {
+                console.log('[ResultService] Using localStorage data');
+                return filterResults(stored, ward);
+            }
+
+            // No data available
+            console.log('[ResultService] No data available anywhere');
+            return [];
 
         } catch (e) {
-            const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
-            if (stored.length > 0) return filterResults(stored, ward);
+            console.error('[ResultService] Exception in getResults:', e);
 
-            if (electionData && electionData.length > 0) {
-                return filterResults(electionData as any[], ward);
+            // Try localStorage as last resort
+            const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
+            if (stored.length > 0) {
+                console.log('[ResultService] Exception - using localStorage data');
+                return filterResults(stored, ward);
             }
 
-            return filterResults(DUMMY_RESULTS, ward);
+            // Return empty array instead of dummy data
+            console.log('[ResultService] Exception - returning empty array');
+            return [];
         }
     },
-
-    // Helper to allow user to adding real data later (skipped for now as we just need analysis view)
 };
 
 const filterResults = (items: ElectionResult[], ward?: string) => {

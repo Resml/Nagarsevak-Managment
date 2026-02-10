@@ -1,0 +1,72 @@
+// Area Problem Form Handlers - Add before the "Other Services Menu" section
+
+    /**
+     * Area Problem Report Form Handlers
+     */
+    async handleAreaProblemTitle(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        session.areaFormData.title = input.trim();
+        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_DESCRIPTION;
+
+        const descPrompt = lang === 'en' ? '📄 Please describe the problem in detail:' :
+            lang === 'mr' ? '📄 कृपया समस्याचे तपशीलवार वर्णन करा:' :
+                '📄 कृपया समस्या का विस्तार से वर्णन करें:';
+        await sock.sendMessage(userId, { text: descPrompt });
+    }
+
+    async handleAreaProblemDescription(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        session.areaFormData.description = input.trim();
+        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_LOCATION;
+
+        const locPrompt = lang === 'en' ? '📍 Where is this problem located?\n\n_Example: Near bus stand, Main road, etc._' :
+            lang === 'mr' ? '📍 ही समस्या कुठे आहे?\n\n_उदाहरण: बस स्थानकाजवळ, मुख्य रस्ता, इ._' :
+                '📍 यह समस्या कहाँ है?\n\n_उदाहरण: बस स्टैंड के पास, मुख्य सड़क, आदि।_';
+        await sock.sendMessage(userId, { text: locPrompt });
+    }
+
+    async handleAreaProblemLocation(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        session.areaFormData.location = input.trim();
+
+        // Submit the area problem
+        try {
+            const problemData = {
+                tenant_id: tenantId,
+                user_id: userId.replace('@s.whatsapp.net', ''),
+                title: session.areaFormData.title,
+                description: session.areaFormData.description,
+                location: session.areaFormData.location,
+                status: 'Pending'
+            };
+
+            const result = await this.store.reportAreaProblem(problemData);
+
+            if (result) {
+                const successMsg = lang === 'en' ? `✅ *Area Problem Reported!*\n\nTitle: ${session.areaFormData.title}\nLocation: ${session.areaFormData.location}\n\nYour report has been submitted and will be reviewed by the office. Thank you for helping improve our ward!` :
+                    lang === 'mr' ? `✅ *क्षेत्र समस्या नोंदविली!*\n\nशीर्षक: ${session.areaFormData.title}\nस्थान: ${session.areaFormData.location}\n\nतुमचा अहवाल सादर करण्यात आला आहे आणि कार्यालयाद्वारे त्याचे पुनरावलोकन केले जाईल. आमच्या प्रभागाला सुधारण्यात मदत केल्याबद्दल धन्यवाद!` :
+                        `✅ *क्षेत्र समस्या रिपोर्ट की गई!*\n\nशीर्षक: ${session.areaFormData.title}\nस्थान: ${session.areaFormData.location}\n\nआपकी रिपोर्ट जमा कर दी गई है और कार्यालय द्वारा इसकी समीक्षा की जाएगी। हमारे वार्ड को बेहतर बनाने में मदद के लिए धन्यवाद!`;
+                await sock.sendMessage(userId, { text: successMsg });
+            }
+
+            // Clear form data
+            delete session.areaFormData;
+
+            // Return to main menu
+            await this.showMainMenu(sock, userId, lang);
+
+        } catch (error) {
+            console.error('Error reporting area problem:', error);
+            const errorMsg = lang === 'en' ? '❌ Failed to submit report. Please try again later.' :
+                lang === 'mr' ? '❌ अहवाल सादर करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.' :
+                    '❌ रिपोर्ट जमा करने में विफल। कृपया बाद में पुनः प्रयास करें।';
+            await sock.sendMessage(userId, { text: errorMsg });
+            await this.showMainMenu(sock, userId, lang);
+        }
+    }

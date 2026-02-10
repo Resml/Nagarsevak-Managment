@@ -20,17 +20,6 @@ const MENU_STATES = {
     WARD_PROBLEMS_MENU: 'WARD_PROBLEMS_MENU',
     CONTACT_MENU: 'CONTACT_MENU',
     OTHER_MENU: 'OTHER_MENU',
-    LETTERS_MENU: 'LETTERS_MENU',
-    LETTER_TYPE_SELECT: 'LETTER_TYPE_SELECT',
-    LETTER_FORM_NAME: 'LETTER_FORM_NAME',
-    LETTER_FORM_MOBILE: 'LETTER_FORM_MOBILE',
-    LETTER_FORM_ADDRESS: 'LETTER_FORM_ADDRESS',
-    LETTER_FORM_PURPOSE: 'LETTER_FORM_PURPOSE',
-    AREA_PROBLEM_MENU: 'AREA_PROBLEM_MENU',
-    AREA_PROBLEM_REPORT: 'AREA_PROBLEM_REPORT',
-    AREA_PROBLEM_FORM_TITLE: 'AREA_PROBLEM_FORM_TITLE',
-    AREA_PROBLEM_FORM_DESCRIPTION: 'AREA_PROBLEM_FORM_DESCRIPTION',
-    AREA_PROBLEM_FORM_LOCATION: 'AREA_PROBLEM_FORM_LOCATION',
     // Complete Complaint Form states
     COMPLAINT_FORM_NAME: 'COMPLAINT_FORM_NAME',
     COMPLAINT_FORM_MOBILE: 'COMPLAINT_FORM_MOBILE',
@@ -150,33 +139,6 @@ class MenuNavigator {
             case MENU_STATES.SCHEME_VIEW_MORE:
                 return await this.handleSchemeViewMore(sock, tenantId, userId, input);
 
-            case MENU_STATES.LETTER_TYPE_SELECT:
-                return await this.handleLetterTypeSelect(sock, tenantId, userId, input);
-
-            case MENU_STATES.LETTER_FORM_NAME:
-                return await this.handleLetterFormName(sock, tenantId, userId, input);
-
-            case MENU_STATES.LETTER_FORM_MOBILE:
-                return await this.handleLetterFormMobile(sock, tenantId, userId, input);
-
-            case MENU_STATES.LETTER_FORM_ADDRESS:
-                return await this.handleLetterFormAddress(sock, tenantId, userId, input);
-
-            case MENU_STATES.LETTER_FORM_PURPOSE:
-                return await this.handleLetterFormPurpose(sock, tenantId, userId, input);
-
-            case MENU_STATES.AREA_PROBLEM_REPORT:
-                return await this.handleAreaProblemReport(sock, tenantId, userId, input);
-
-            case MENU_STATES.AREA_PROBLEM_FORM_TITLE:
-                return await this.handleAreaProblemTitle(sock, tenantId, userId, input);
-
-            case MENU_STATES.AREA_PROBLEM_FORM_DESCRIPTION:
-                return await this.handleAreaProblemDescription(sock, tenantId, userId, input);
-
-            case MENU_STATES.AREA_PROBLEM_FORM_LOCATION:
-                return await this.handleAreaProblemLocation(sock, tenantId, userId, input);
-
             default:
                 // Fallback to language selection
                 return await this.showLanguageMenu(sock, userId);
@@ -250,24 +212,26 @@ class MenuNavigator {
         const lang = session.language;
 
         switch (input) {
-            case '1': // Complaints
+            case '1':
                 return await this.showComplaintsMenu(sock, userId, lang);
-            case '2': // Government Schemes
+            case '2':
                 return await this.showSchemesMenu(sock, userId, lang);
-            case '3': // Events & Programs (was 4)
+            case '3':
+                return await this.showVoterMenu(sock, userId, lang);
+            case '4':
                 return await this.showEventsMenu(sock, userId, lang);
-            case '4': // Development Works (was 5)
+            case '5':
                 return await this.showWorksMenu(sock, userId, lang);
-            case '5': // Ward Problems (was 6)
+            case '6':
                 return await this.showWardProblemsMenu(sock, userId, lang);
-            case '6': // Letters/Documents (NEW - from Other Services)
-                return await this.showLettersMenu(sock, userId, lang, tenantId);
-            case '7': // Contact Information (was 7)
+            case '7':
                 return await this.showContactMenu(sock, userId, lang);
+            case '8':
+                return await this.showOtherMenu(sock, userId, lang);
             default:
+                // Invalid option
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
-                return;
         }
     }
 
@@ -606,7 +570,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         switch (input) {
             case '1': // View All Schemes
-                session.schemeOffset = 0;
+                session.schemeOffset = 0; // Reset offset
                 const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0 });
                 if (!schemes || schemes.length === 0) {
                     const noSchemes = lang === 'en' ? 'No schemes available at the moment.' :
@@ -614,13 +578,17 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                     await sock.sendMessage(userId, { text: noSchemes });
                 } else {
                     await this.displaySchemes(sock, userId, schemes, lang, 0);
+
+                    // Check if there are more schemes
                     const moreSchemes = await this.store.getSchemes(tenantId, { limit: 1, offset: 10 });
                     if (moreSchemes && moreSchemes.length > 0) {
-                        const moreMsg = lang === 'en' ? '\n📄 Send *MORE* to see more schemes or press 9 for menu' : lang === 'mr' ? '\n📄 अधिक योजना पाहण्यासाठी *MORE* पाठवा किंवा मेनूसाठी 9 दाबा' : '\n📄 अधिक योजनाएं देखने के लिए *MORE* भेजें या मेनू के लिए 9 दबाएं';
+                        const moreMsg = lang === 'en' ? '\n📄 Send *MORE* to see more schemes or press 9 for menu' :
+                            lang === 'mr' ? '\n📄 अधिक योजना पाहण्यासाठी *MORE* पाठवा किंवा मेनूसाठी 9 दाबा' :
+                                '\n📄 अधिक योजनाएं देखने के लिए *MORE* भेजें या मेनू के लिए 9 दबाएं';
                         await sock.sendMessage(userId, { text: moreMsg });
                         session.currentMenu = MENU_STATES.SCHEME_VIEW_MORE;
                         session.schemeOffset = 10;
-                        return;
+                        return; // Don't show menu again yet
                     }
                 }
                 await this.showSchemesMenu(sock, userId, lang);
@@ -628,13 +596,29 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             case '2': // Search Scheme
                 session.currentMenu = MENU_STATES.SCHEME_SEARCH_PROMPT;
-                const searchMsg = lang === 'en' ? '🔍 Enter scheme name or keyword to search:' : lang === 'mr' ? '🔍 शोध करण्यासाठी योजनेचे नाव किंवा मुख्य शब्द प्रविष्ट करा:' : '🔍 खोजने के लिए योजना का नाम या कीवर्ड दर्ज करें:';
+                const searchMsg = lang === 'en' ? '🔍 Enter scheme name or keyword to search:' :
+                    lang === 'mr' ? '🔍 शोध करण्यासाठी योजनेचे नाव किंवा मुख्य शब्द प्रविष्ट करा:' :
+                        '🔍 खोजने के लिए योजना का नाम या कीवर्ड दर्ज करें:';
                 await sock.sendMessage(userId, { text: searchMsg });
                 break;
 
-            case '3': // Schemes For Me
-                const personalizedMsg = lang === 'en' ? `👤 *Personalized Recommendations*\n\nShowing all available schemes. Please check eligibility for each scheme:\n` : lang === 'mr' ? `👤 *वैयक्तिक शिफारसी*\n\nसर्व उपलब्ध योजना दर्शविल्या जात आहेत. कृपया प्रत्येक योजनेसाठी पात्रता तपासा:\n` : `👤 *व्यक्तिगत सिफारिशें*\n\nसभी उपलब्ध योजनाएं दिखाई जा रही हैं। कृपया प्रत्येक योजना के लिए पात्रता जांचें:\n`;
+            case '3': // Schemes For Me (Basic - show all for now)
+                const personalizedMsg = lang === 'en' ?
+                    `👤 *Personalized Recommendations*
+
+Showing all available schemes. Please check eligibility for each scheme:
+` :
+                    lang === 'mr' ?
+                        `👤 *वैयक्तिक शिफारसी*
+
+सर्व उपलब्ध योजना दर्शविल्या जात आहेत. कृपया प्रत्येक योजनेसाठी पात्रता तपासा:
+` :
+                        `👤 *व्यक्तिगत सिफारिशें*
+
+सभी उपलब्ध योजनाएं दिखाई जा रही हैं। कृपया प्रत्येक योजना के लिए पात्रता जांचें:
+`;
                 await sock.sendMessage(userId, { text: personalizedMsg });
+
                 const allSchemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0 });
                 if (allSchemes && allSchemes.length > 0) {
                     await this.displaySchemes(sock, userId, allSchemes, lang, 0);
@@ -643,29 +627,113 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 break;
 
             case '4': // How to Apply
-                const applyGuide = lang === 'en' ? `📝 *How to Apply for Schemes*\n\n1️⃣ *Check Eligibility*\n   Read scheme details carefully and verify you meet all criteria\n\n2️⃣ *Prepare Documents*\n   Gather required documents (usually Aadhar, Income Certificate, etc.)\n\n3️⃣ *Visit Office or Apply Online*\n   • Visit our office during working hours\n   • Or check if online application is available\n   • Call for more details: See Contact section\n\n4️⃣ *Submit Application*\n   Fill form completely with correct details\n\n5️⃣ *Follow Up*\n   Track your application status\n   Contact office if needed\n\n💡 *Tip*: Keep photocopies of all documents` : lang === 'mr' ? `📝 *योजनांसाठी अर्ज कसा करावा*\n\n1️⃣ *पात्रता तपासा*\n   योजनेचे तपशील काळजीपूर्वक वाचा आणि तुम्ही सर्व निकषांची पूर्तता करता याची पडताळणी करा\n\n2️⃣ *कागदपत्रे तयार करा*\n   आवश्यक कागदपत्रे गोळा करा (सामान्यतः आधार, उत्पन्न प्रमाणपत्र इ.)\n\n3️⃣ *कार्यालयात भेट द्या किंवा ऑनलाइन अर्ज करा*\n   • कामकाजाच्या वेळेत आमच्या कार्यालयाला भेट द्या\n   • किंवा ऑनलाइन अर्ज उपलब्ध आहे का ते तपासा\n   • अधिक माहितीसाठी कॉल करा: संपर्क विभाग पहा\n\n4️⃣ *अर्ज सादर करा*\n   योग्य तपशीलांसह फॉर्म पूर्णपणे भरा\n\n5️⃣ *पाठपुरावा करा*\n   तुमच्या अर्जाची स्थिती ट्रॅक करा\n   आवश्यक असल्यास कार्यालयाशी संपर्क साधा\n\n💡 *टीप*: सर्व कागदपत्रांच्या फोटोकॉपी ठेवा` : `📝 *योजनाओं के लिए आवेदन कैसे करें*\n\n1️⃣ *पात्रता जांचें*\n   योजना विवरण ध्यान से पढ़ें और सत्यापित करें कि आप सभी मानदंडों को पूरा करते हैं\n\n2️⃣ *दस्तावेज़ तैयार करें*\n   आवश्यक दस्तावेज़ इकट्ठा करें (आमतौर पर आधार, आय प्रमाण पत्र आदि)\n\n3️⃣ *कार्यालय जाएँ या ऑनलाइन आवेदन करें*\n   • कार्य घंटों के दौरान हमारे कार्यालय जाएँ\n   • या जांचें कि ऑनलाइन आवेदन उपलब्ध है या नहीं\n   • अधिक जानकारी के लिए कॉल करें: संपर्क अनुभाग देखें\n\n4️⃣ *आवेदन जमा करें*\n   सही विवरण के साथ फॉर्म पूरी तरह भरें\n\n5️⃣ *फॉलो अप करें*\n   अपने आवेदन की स्थिति ट्रैक करें\n   आवश्यकता पड़ने पर कार्यालय से संपर्क करें\n\n💡 *सुझाव*: सभी दस्तावेज़ों की फोटोकॉपी रखें`;
+                const applyGuide = lang === 'en' ?
+                    `📝 *How to Apply for Schemes*
+
+1️⃣ *Check Eligibility*
+   Read scheme details carefully and verify you meet all criteria
+
+2️⃣ *Prepare Documents*
+   Gather required documents (usually Aadhar, Income Certificate, etc.)
+
+3️⃣ *Visit Office or Apply Online*
+   • Visit our office during working hours
+   • Or check if online application is available
+   • Call for more details: See Contact section
+
+4️⃣ *Submit Application*
+   Fill form completely with correct details
+
+5️⃣ *Follow Up*
+   Track your application status
+   Contact office if needed
+
+💡 *Tip*: Keep photocopies of all documents` :
+                    lang === 'mr' ?
+                        `📝 *योजनांसाठी अर्ज कसा करावा*
+
+1️⃣ *पात्रता तपासा*
+   योजनेचे तपशील काळजीपूर्वक वाचा आणि तुम्ही सर्व निकषांची पूर्तता करता याची पडताळणी करा
+
+2️⃣ *कागदपत्रे तयार करा*
+   आवश्यक कागदपत्रे गोळा करा (सामान्यतः आधार, उत्पन्न प्रमाणपत्र इ.)
+
+3️⃣ *कार्यालयात भेट द्या किंवा ऑनलाइन अर्ज करा*
+   • कामकाजाच्या वेळेत आमच्या कार्यालयाला भेट द्या
+   • किंवा ऑनलाइन अर्ज उपलब्ध आहे का ते तपासा
+   • अधिक माहितीसाठी कॉल करा: संपर्क विभाग पहा
+
+4️⃣ *अर्ज सादर करा*
+   योग्य तपशीलांसह फॉर्म पूर्णपणे भरा
+
+5️⃣ *पाठपुरावा करा*
+   तुमच्या अर्जाची स्थिती ट्रॅक करा
+   आवश्यक असल्यास कार्यालयाशी संपर्क साधा
+
+💡 *टीप*: सर्व कागदपत्रांच्या फोटोकॉपी ठेवा` :
+                        `📝 *योजनाओं के लिए आवेदन कैसे करें*
+
+1️⃣ *पात्रता जांचें*
+   योजना विवरण ध्यान से पढ़ें और सत्यापित करें कि आप सभी मानदंडों को पूरा करते हैं
+
+2️⃣ *दस्तावेज़ तैयार करें*
+   आवश्यक दस्तावेज़ इकट्ठा करें (आमतौर पर आधार, आय प्रमाण पत्र आदि)
+
+3️⃣ *कार्यालय जाएँ या ऑनलाइन आवेदन करें*
+   • कार्य घंटों के दौरान हमारे कार्यालय जाएँ
+   • या जांचें कि ऑनलाइन आवेदन उपलब्ध है या नहीं
+   • अधिक जानकारी के लिए कॉल करें: संपर्क अनुभाग देखें
+
+4️⃣ *आवेदन जमा करें*
+   सही विवरण के साथ फॉर्म पूरी तरह भरें
+
+5️⃣ *फॉलो अप करें*
+   अपने आवेदन की स्थिति ट्रैक करें
+   आवश्यकता पड़ने पर कार्यालय से संपर्क करें
+
+💡 *सुझाव*: सभी दस्तावेज़ों की फोटोकॉपी रखें`;
+
                 await sock.sendMessage(userId, { text: applyGuide });
                 await this.showSchemesMenu(sock, userId, lang);
                 break;
 
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.schemes[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '
+
+                ' + MENUS.schemes[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
     }
 
+    // ADD THESE 3 NEW FUNCTIONS AFTER handleSchemesMenu():
+
     async displaySchemes(sock, userId, schemes, lang, offset) {
-        let schemeText = lang === 'en' ? `🏛️ *Government Schemes* (Showing ${schemes.length} schemes)\n\n` : lang === 'mr' ? `🏛️ *सरकारी योजना* (${schemes.length} योजना दर्शवित)\n\n` : `🏛️ *सरकारी योजनाएं* (${schemes.length} योजनाएं दिखा रहे हैं)\n\n`;
+        let schemeText = lang === 'en' ? `🏛️ *Government Schemes* (Showing ${schemes.length} schemes)
+
+` :
+            lang === 'mr' ? `🏛️ *सरकारी योजना* (${schemes.length} योजना दर्शवित)
+
+` :
+                `🏛️ *सरकारी योजनाएं* (${schemes.length} योजनाएं दिखा रहे हैं)
+
+`;
+
         schemes.forEach((scheme, index) => {
             const name = (lang === 'mr' && scheme.name_mr) ? scheme.name_mr : scheme.name;
             const desc = (lang === 'mr' && scheme.description_mr) ? scheme.description_mr : scheme.description;
             const benefits = (lang === 'mr' && scheme.benefits_mr) ? scheme.benefits_mr : scheme.benefits;
-            schemeText += `${offset + index + 1}. *${name}*\n`;
-            if (desc) schemeText += `   ${desc.substring(0, 100)}...\n`;
-            if (benefits) schemeText += `   💰 ${benefits}\n`;
-            schemeText += `\n`;
+
+            schemeText += `${offset + index + 1}. *${name}*
+`;
+            if (desc) schemeText += `   ${desc.substring(0, 100)}...
+`;
+            if (benefits) schemeText += `   💰 ${benefits}
+`;
+            schemeText += `
+`;
         });
+
         await sock.sendMessage(userId, { text: schemeText });
     }
 
@@ -673,20 +741,37 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const session = this.getSession(userId);
         const lang = session.language;
         const searchQuery = input.trim();
+
         if (searchQuery.length < 2) {
-            const tooShort = lang === 'en' ? 'Please enter at least 2 characters to search.' : lang === 'mr' ? 'कृपया शोधण्यासाठी किमान २ वर्ण प्रविष्ट करा.' : 'कृपया खोजने के लिए कम से कम 2 अक्षर दर्ज करें।';
+            const tooShort = lang === 'en' ? 'Please enter at least 2 characters to search.' :
+                lang === 'mr' ? 'कृपया शोधण्यासाठी किमान २ वर्ण प्रविष्ट करा.' :
+                    'कृपया खोजने के लिए कम से कम 2 अक्षर दर्ज करें।';
             await sock.sendMessage(userId, { text: tooShort });
             return;
         }
+
         const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0, searchQuery });
+
         if (!schemes || schemes.length === 0) {
-            const noResults = lang === 'en' ? `❌ No schemes found for "${searchQuery}"` : lang === 'mr' ? `❌ "${searchQuery}" साठी कोणत्याही योजना सापडल्या नाहीत` : `❌ "${searchQuery}" के लिए कोई योजना नहीं मिली`;
+            const noResults = lang === 'en' ? `❌ No schemes found for "${searchQuery}"` :
+                lang === 'mr' ? `❌ "${searchQuery}" साठी कोणत्याही योजना सापडल्या नाहीत` :
+                    `❌ "${searchQuery}" के लिए कोई योजना नहीं मिली`;
             await sock.sendMessage(userId, { text: noResults });
         } else {
-            const resultsMsg = lang === 'en' ? `🔍 *Search Results for "${searchQuery}"*\n\n` : lang === 'mr' ? `🔍 *"${searchQuery}" साठी शोध परिणाम*\n\n` : `🔍 *"${searchQuery}" के लिए खोज परिणाम*\n\n`;
+            const resultsMsg = lang === 'en' ? `🔍 *Search Results for "${searchQuery}"*
+
+` :
+                lang === 'mr' ? `🔍 *"${searchQuery}" साठी शोध परिणाम*
+
+` :
+                    `🔍 *"${searchQuery}" के लिए खोज परिणाम*
+
+`;
+
             await sock.sendMessage(userId, { text: resultsMsg });
             await this.displaySchemes(sock, userId, schemes, lang, 0);
         }
+
         session.currentMenu = MENU_STATES.SCHEMES_MENU;
         await this.showSchemesMenu(sock, userId, lang);
     }
@@ -694,32 +779,46 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
     async handleSchemeViewMore(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
+
         if (input.toLowerCase() === 'more' || input === '1') {
             const offset = session.schemeOffset || 10;
             const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset });
+
             if (!schemes || schemes.length === 0) {
-                const noMore = lang === 'en' ? '✅ No more schemes to display.' : lang === 'mr' ? '✅ दर्शविण्यासाठी आणखी योजना नाहीत.' : '✅ प्रदर्शित करने के लिए और योजनाएं नहीं हैं।';
+                const noMore = lang === 'en' ? '✅ No more schemes to display.' :
+                    lang === 'mr' ? '✅ दर्शविण्यासाठी आणखी योजना नाहीत.' :
+                        '✅ प्रदर्शित करने के लिए और योजनाएं नहीं हैं।';
                 await sock.sendMessage(userId, { text: noMore });
                 session.currentMenu = MENU_STATES.SCHEMES_MENU;
                 await this.showSchemesMenu(sock, userId, lang);
                 return;
             }
+
             await this.displaySchemes(sock, userId, schemes, lang, offset);
+
+            // Check if there are even more schemes
             const moreSchemes = await this.store.getSchemes(tenantId, { limit: 1, offset: offset + 10 });
             if (moreSchemes && moreSchemes.length > 0) {
-                const moreMsg = lang === 'en' ? '\n📄 Send *MORE* to see more schemes or press 9 for menu' : lang === 'mr' ? '\n📄 अधिक योजना पाहण्यासाठी *MORE* पाठवा किंवा मेनूसाठी 9 दाबा' : '\n📄 अधिक योजनाएं देखने के लिए *MORE* भेजें या मेनू के लिए 9 दबाएं';
+                const moreMsg = lang === 'en' ? '
+📄 Send * MORE * to see more schemes or press 9 for menu' :
+                lang === 'mr' ? '
+📄 अधिक योजना पाहण्यासाठी * MORE * पाठवा किंवा मेनूसाठी 9 दाबा' :
+                '
+📄 अधिक योजनाएं देखने के लिए * MORE * भेजें या मेनू के लिए 9 दबाएं';
                 await sock.sendMessage(userId, { text: moreMsg });
                 session.schemeOffset = offset + 10;
-                return;
+                return; // Stay in SCHEME_VIEW_MORE state
             } else {
                 session.currentMenu = MENU_STATES.SCHEMES_MENU;
                 await this.showSchemesMenu(sock, userId, lang);
             }
         } else {
+            // User entered something else, go back to schemes menu
             session.currentMenu = MENU_STATES.SCHEMES_MENU;
             await this.showSchemesMenu(sock, userId, lang);
         }
     }
+
 
     /**
      * Voter Menu
@@ -830,7 +929,13 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         if (input === '1') filter = 'upcoming';
         else if (input === '2') filter = 'today';
         else if (input === '3') filter = 'past';
-        else {
+        else if (input === '4') {
+            const comingSoon = lang === 'en' ? 'Event gallery coming soon!' :
+                lang === 'mr' ? 'इव्हेंट गॅलरी लवकरच!' : 'इवेंट गैलरी जल्द!';
+            await sock.sendMessage(userId, { text: comingSoon });
+            await this.showEventsMenu(sock, userId, lang);
+            return;
+        } else {
             const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.events[lang].text;
             await sock.sendMessage(userId, { text: errorMsg });
             return;
@@ -948,66 +1053,18 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         switch (input) {
             case '1': // Report New Problem
-                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
-                session.areaFormData = {};
-                const titlePrompt = lang === 'en' ? '📝 *Report Area Problem*\n\nWhat is the problem title?\n\n_Example: Broken streetlight, road damage, etc._' :
-                    lang === 'mr' ? '📝 *क्षेत्र समस्या नोंदवा*\n\nसमस्याचे शीर्षक काय आहे?\n\n_उदाहरण: तुटलेला रस्ता दिवा, रस्त्याचे नुकसान, इ._' :
-                        '📝 *क्षेत्र समस्या रिपोर्ट करें*\n\nसमस्या का शीर्षक क्या है?\n\n_उदाहरण: टूटी हुई स्ट्रीटलाइट, सड़क क्षति, आदि।_';
-                await sock.sendMessage(userId, { text: titlePrompt });
-                return;
-
-            case '2': // View Ward Issues
-                try {
-                    const problems = await this.store.getAreaProblems(tenantId, 'Pending', 5);
-                    let problemsText = lang === 'en' ? '🚨 *Area Problems (Pending)*\n\n' :
-                        lang === 'mr' ? '🚨 *क्षेत्र समस्या (प्रलंबित)*\n\n' :
-                            '🚨 *क्षेत्र समस्याएं (लंबित)*\n\n';
-
-                    if (problems.length === 0) {
-                        problemsText += lang === 'en' ? 'No pending problems reported.' :
-                            lang === 'mr' ? 'कोणत्याही प्रलंबित समस्या नोंदविल्या नाहीत.' :
-                                'कोई लंबित समस्या नहीं';
-                    } else {
-                        problems.forEach((problem, idx) => {
-                            const date = new Date(problem.created_at).toLocaleDateString();
-                            problemsText += `${idx + 1}. *${problem.title}*\n`;
-                            problemsText += `   ${problem.description.substring(0, 60)}...\n`;
-                            problemsText += `   📅 ${date} | 📍 ${problem.location || 'N/A'}\n\n`;
-                        });
-                    }
-
-                    await sock.sendMessage(userId, { text: problemsText });
-                } catch (error) {
-                    console.error('Error fetching area problems:', error);
-                    const errMsg = lang === 'en' ? 'Error fetching problems.' :
-                        lang === 'mr' ? 'समस्या आणण्यात त्रुटी.' : 'समस्याएं प्राप्त करने में त्रुटि।';
-                    await sock.sendMessage(userId, { text: errMsg });
-                }
+                const msg = lang === 'en' ? '📝 *Report Ward Problem*\n\nThis feature allows you to report civic issues in your ward.\n\nUse the "Submit Complaint" menu (Option 1 from Main Menu) to report problems.' :
+                    lang === 'mr' ? '📝 *प्रभाग समस्या नोंदवा*\n\nहे वैशिष्ट्य तुम्हाला तुमच्या प्रभागातील नागरी समस्या नोंदविण्याची परवानगी देते.\n\nसमस्या नोंदविण्यासाठी "तक्रार नोंदवा" मेनू (मुख्य मेनूमधून पर्याय 1) वापरा.' :
+                        '📝 *वार्ड समस्या दर्ज करें*\n\nयह सुविधा आपको अपने वार्ड में नागरिक समस्याओं की रिपोर्ट करने की अनुमति देती है।\n\nसमस्याओं की रिपोर्ट करने के लिए "शिकायत दर्ज करें" मेनू (मुख्य मेनू से विकल्प 1) का उपयोग करें।';
+                await sock.sendMessage(userId, { text: msg });
                 break;
 
-            case '3': // Resolved Problems  
-                try {
-                    const resolved = await this.store.getAreaProblems(tenantId, 'Resolved', 5);
-                    let resolvedText = lang === 'en' ? '✅ *Resolved Area Problems*\n\n' :
-                        lang === 'mr' ? '✅ *निराकरण झालेल्या समस्या*\n\n' :
-                            '✅ *हल की गई समस्याएं*\n\n';
-
-                    if (resolved.length === 0) {
-                        resolvedText += lang === 'en' ? 'No resolved problems yet.' :
-                            lang === 'mr' ? 'अद्याप कोणत्याही समस्या सोडवल्या नाहीत.' :
-                                'अभी तक कोई समस्या हल नहीं हुई।';
-                    } else {
-                        resolved.forEach((problem, idx) => {
-                            const date = new Date(problem.resolved_at).toLocaleDateString();
-                            resolvedText += `${idx + 1}. *${problem.title}*\n`;
-                            resolvedText += `   ✓ Resolved on ${date}\n\n`;
-                        });
-                    }
-
-                    await sock.sendMessage(userId, { text: resolvedText });
-                } catch (error) {
-                    console.error('Error fetching resolved problems:', error);
-                }
+            case '2': // View Ward Issues
+            case '3': // Track Problem Status  
+            case '4': // Solved Problems
+                const comingSoon = lang === 'en' ? 'Coming soon!' :
+                    lang === 'mr' ? 'लवकरच येत आहे!' : 'जल्द आ रहा है!';
+                await sock.sendMessage(userId, { text: comingSoon });
                 break;
 
             default:
@@ -1033,49 +1090,33 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const session = this.getSession(userId);
         const lang = session.language;
 
-        // Fetch contact info from database
-        const config = await this.store.getContactInfo(tenantId);
-
-        // Extract data with fallbacks
-        const nameEn = config.nagarsevak_name_english || 'Nagarsevak';
-        const nameMr = config.nagarsevak_name_marathi || 'नगरसेवक';
-        const ward = config.ward_name || config.ward_number || 'N/A';
-        const office_phone = config.office_phone || 'Not Available';
-        const mobile = config.mobile || 'Not Available';
-        const email = config.email || 'Not Available';
-        const office_address = config.office_address || 'Ward Office';
-        const office_hours = config.office_hours || 'Monday - Friday: 10 AM - 5 PM';
-
         let contactText = '';
 
         switch (input) {
             case '1': // Office Address
-                contactText = lang === 'en' ? `🏢 *Office Address*\n\n${office_address}\nWard: ${ward}` :
-                    lang === 'mr' ? `🏢 *कार्यालय पत्ता*\n\n${office_address}\nप्रभाग: ${ward}` :
-                        `🏢 *कार्यालय पता*\n\n${office_address}\nवार्ड: ${ward}`;
+                contactText = lang === 'en' ? '🏢 *Office Address*\n\nNagarsevak Office\nWard No. 12\nPune, Maharashtra' :
+                    lang === 'mr' ? '🏢 *कार्यालय पत्ता*\n\nनगरसेवक कार्यालय\nप्रभाग क्र. 12\nपुणे, महाराष्ट्र' :
+                        '🏢 *कार्यालय पता*\n\nनगरसेवक कार्यालय\nवार्ड नं. 12\nपुणे, महाराष्ट्र';
                 break;
             case '2': // Office Hours
-                contactText = lang === 'en' ? `⏰ *Office Hours*\n\n${office_hours}` :
-                    lang === 'mr' ? `⏰ *कार्यालय वेळ*\n\n${office_hours}` :
-                        `⏰ *कार्यालय समय*\n\n${office_hours}`;
+                contactText = lang === 'en' ? '⏰ *Office Hours*\n\nMonday - Friday: 10:00 AM - 5:00 PM\nSaturday: 10:00 AM - 2:00 PM\nSunday: Closed' :
+                    lang === 'mr' ? '⏰ *कार्यालय वेळ*\n\nसोमवार - शुक्रवार: सकाळी 10:00 - संध्याकाळी 5:00\nशनिवार: सकाळी 10:00 - दुपारी 2:00\nरविवार: बंद' :
+                        '⏰ *कार्यालय समय*\n\nसोमवार - शुक्रवार: सुबह 10:00 - शाम 5:00\nशनिवार: सुबह 10:00 - दोपहर 2:00\nरविवार: बंद';
                 break;
             case '3': // Phone Numbers
-                contactText = lang === 'en' ? `📞 *Contact Numbers*\n\nNagarsevak: ${nameEn}\nMobile: ${mobile}\nOffice: ${office_phone}` :
-                    lang === 'mr' ? `📞 *संपर्क क्रमांक*\n\nनगरसेवक: ${nameMr}\nमोबाइल: ${mobile}\nकार्यालय: ${office_phone}` :
-                        `📞 *संपर्क नंबर*\n\nनगरसेवक: ${nameEn}\nमोबाइल: ${mobile}\nकार्यालय: ${office_phone}`;
+                contactText = lang === 'en' ? '📞 *Contact Numbers*\n\nOffice: +91 020 1234 5678\nMobile: +91 98765 43210' :
+                    lang === 'mr' ? '📞 *संपर्क क्रमांक*\n\nकार्यालय: +91 020 1234 5678\nमोबाइल: +91 98765 43210' :
+                        '📞 *संपर्क नंबर*\n\nकार्यालय: +91 020 1234 5678\nमोबाइल: +91 98765 43210';
                 break;
             case '4': // Email
-                contactText = lang === 'en' ? `📧 *Email Address*\n\n${email}` :
-                    lang === 'mr' ? `📧 *ईमेल पत्ता*\n\n${email}` :
-                        `📧 *ईमेल पता*\n\n${email}`;
+                contactText = lang === 'en' ? '📧 *Email Address*\n\nofficial@nagarsevak.com' :
+                    lang === 'mr' ? '📧 *ईमेल पत्ता*\n\nofficial@nagarsevak.com' :
+                        '📧 *ईमेल पता*\n\nofficial@nagarsevak.com';
                 break;
             case '5': // Social Media
-                const facebook = config.facebook || '/NagarsevakOfficial';
-                const twitter = config.twitter || '@nagarsevak';
-                const instagram = config.instagram || '@nagarsevak';
-                contactText = lang === 'en' ? `📱 *Follow Us*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}` :
-                    lang === 'mr' ? `📱 *आम्हाला फॉलो करा*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}` :
-                        `📱 *हमें फॉलो करें*\n\nFacebook: ${facebook}\nTwitter: ${twitter}\nInstagram: ${instagram}`;
+                contactText = lang === 'en' ? '📱 *Follow Us*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12' :
+                    lang === 'mr' ? '📱 *आम्हाला फॉलो करा*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12' :
+                        '📱 *हमें फॉलो करें*\n\nFacebook: /NagarsevakWard12\nTwitter: @NagarsevakW12\nInstagram: @nagarsevak_w12';
                 break;
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.contact[lang].text;
@@ -1083,243 +1124,8 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 return;
         }
 
-        if (contactText) {
-            await sock.sendMessage(userId, { text: contactText });
-        }
-
+        await sock.sendMessage(userId, { text: contactText });
         await this.showContactMenu(sock, userId, lang);
-    }
-
-    /**
-     * Other Services Menu
-     */
-    /**
-     * Letters/Documents Menu
-     */
-    async showLettersMenu(sock, userId, lang, tenantId) {
-        const session = this.getSession(userId);
-        session.currentMenu = MENU_STATES.LETTER_TYPE_SELECT;
-
-        // Fetch letter types from database
-        const letterTypes = await this.store.getLetterTypes(tenantId);
-
-        if (!letterTypes || letterTypes.length === 0) {
-            const noTypes = lang === 'en' ? '\u274c No letter types configured. Please contact the office.' :
-                lang === 'mr' ? '\u274c \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u0938\u0902\u0930\u091a\u093f\u0924 \u0928\u093e\u0939\u0940\u0924. \u0915\u0943\u092a\u092f\u093e \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f\u093e\u0936\u0940 \u0938\u0902\u092a\u0930\u094d\u0915 \u0938\u093e\u0927\u093e.' :
-                    '\u274c \u0915\u094b\u0908 \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u0915\u0949\u0928\u094d\u092b\u093c\u093f\u0917\u0930 \u0928\u0939\u0940\u0902 \u0939\u0948\u0964 \u0915\u0943\u092a\u092f\u093e \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u0938\u0947 \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930\u0947\u0902\u0964';
-            await sock.sendMessage(userId, { text: noTypes });
-            await this.showMainMenu(sock, userId, lang);
-            return;
-        }
-
-        // Store letter types in session for later reference
-        session.letterTypes = letterTypes;
-
-        // Build menu text
-        let menuText = lang === 'en' ? '\ud83d\udcc4 *Letter Request*\\n\\nSelect the type of letter you need:\\n\\n' :
-            lang === 'mr' ? '\ud83d\udcc4 *\u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940*\\n\\n\u0924\u0941\u092e\u094d\u0939\u093e\u0932\u093e \u0906\u0935\u0936\u094d\u092f\u0915 \u0905\u0938\u0932\u0947\u0932\u0947 \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u0928\u093f\u0935\u0921\u093e:\\n\\n' :
-                '\ud83d\udcc4 *\u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927*\\n\\n\u0906\u0935\u0936\u094d\u092f\u0915 \u092a\u0924\u094d\u0930 \u092a\u094d\u0930\u0915\u093e\u0930 \u091a\u0941\u0928\u0947\u0902:\\n\\n';
-
-        letterTypes.forEach((type, index) => {
-            const displayName = (lang === 'mr' && type.name_marathi) ? type.name_marathi : type.name;
-            menuText += `${index + 1}\ufe0f\u20e3 ${displayName}\\n`;
-        });
-
-        menuText += lang === 'en' ? '\\n9\ufe0f\u20e3 Main Menu\\n\\n_Reply with a number_' :
-            lang === 'mr' ? '\\n9\ufe0f\u20e3 \u092e\u0941\u0916\u094d\u092f \u092e\u0947\u0928\u0942\\n\\n_\u0915\u0943\u092a\u092f\u093e \u0915\u094d\u0930\u092e\u093e\u0902\u0915 \u0928\u093f\u0935\u0921\u093e_' :
-                '\\n9\ufe0f\u20e3 \u092e\u0941\u0916\u094d\u092f \u092e\u0947\u0928\u0942\\n\\n_\u0915\u0943\u092a\u092f\u093e \u0928\u0902\u092c\u0930 \u091a\u0941\u0928\u0947\u0902_';
-
-        await sock.sendMessage(userId, { text: menuText });
-    }
-
-    async handleLetterTypeSelect(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        const index = parseInt(input) - 1;
-        if (index >= 0 && index < session.letterTypes.length) {
-            const selectedType = session.letterTypes[index];
-            session.letterFormData = {
-                type: selectedType.name,
-                typeName: (lang === 'mr' && selectedType.name_marathi) ? selectedType.name_marathi : selectedType.name
-            };
-
-            session.currentMenu = MENU_STATES.LETTER_FORM_NAME;
-            const namePrompt = lang === 'en' ? '\ud83d\udcdd Please enter your full name (First Middle Last):' :
-                lang === 'mr' ? '\ud83d\udcdd\u0915\u0943\u092a\u092f\u093e \u0924\u0941\u092e\u091a\u0947 \u092a\u0942\u0930\u094d\u0923 \u0928\u093e\u0935 \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e (\u0928\u093e\u0935 \u092e\u0927\u094d\u092f\u0932\u0947 \u0928\u093e\u0935 \u0906\u0921\u0928\u093e\u0935):' :
-                    '\ud83d\udcdd \u0915\u0943\u092a\u092f\u093e \u0905\u092a\u0928\u093e \u092a\u0942\u0930\u093e \u0928\u093e\u092e \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902 (\u092a\u0939\u0932\u093e \u092e\u0927\u094d\u092f \u0905\u0902\u0924\u093f\u092e):';
-            await sock.sendMessage(userId, { text: namePrompt });
-        } else {
-            const errorMsg = MESSAGES.invalid_option[lang];
-            await sock.sendMessage(userId, { text: errorMsg });
-        }
-    }
-
-    async handleLetterFormName(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.letterFormData.name = input.trim();
-        session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
-
-        const mobilePrompt = lang === 'en' ? '\ud83d\udcf1 Please enter your mobile number (10 digits):' :
-            lang === 'mr' ? '\ud83d\udcf1 \u0915\u0943\u092a\u092f\u093e \u0924\u0941\u092e\u091a\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e (\u0967\u0966 \u0905\u0902\u0915):' :
-                '\ud83d\udcf1 \u0915\u0943\u092a\u092f\u093e \u0905\u092a\u0928\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902 (10 \u0905\u0902\u0915):';
-        await sock.sendMessage(userId, { text: mobilePrompt });
-    }
-
-    async handleLetterFormMobile(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        const mobile = input.trim().replace(/\D/g, '');
-        if (mobile.length !== 10) {
-            const invalidMsg = lang === 'en' ? '\u274c Invalid mobile number. Please enter 10 digits.' :
-                lang === 'mr' ? '\u274c \u091a\u0941\u0915\u0940\u091a\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930. \u0915\u0943\u092a\u092f\u093e \u0967\u0966 \u0905\u0902\u0915 \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e.' :
-                    '\u274c \u0905\u092e\u093e\u0928\u094d\u092f \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930\u0964 \u0915\u0943\u092a\u092f\u093e 10 \u0905\u0902\u0915 \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902\u0964';
-            await sock.sendMessage(userId, { text: invalidMsg });
-            return;
-        }
-
-        session.letterFormData.mobile = mobile;
-        session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
-
-        const addressPrompt = lang === 'en' ? '\ud83c\udfe0 Please enter your full address:' :
-            lang === 'mr' ? '\ud83c\udfe0 \u0915\u0943\u092a\u092f\u093e \u0924\u0941\u092e\u091a\u093e \u092a\u0942\u0930\u094d\u0923 \u092a\u0924\u094d\u0924\u093e \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e:' :
-                '\ud83c\udfe0 \u0915\u0943\u092a\u092f\u093e \u0905\u092a\u0928\u093e \u092p\u0942\u0930\u093e \u092a\u0924\u093e \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902:';
-        await sock.sendMessage(userId, { text: addressPrompt });
-    }
-
-    async handleLetterFormAddress(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.letterFormData.address = input.trim();
-        session.currentMenu = MENU_STATES.LETTER_FORM_PURPOSE;
-
-        const purposePrompt = lang === 'en' ? '\ud83c\udfaf What is the purpose of this letter?\\n\\n_Example: For bank loan, school admission, etc._' :
-            lang === 'mr' ? '\ud83c\udfaf \u092f\u093e \u092a\u0924\u094d\u0930\u093e\u091a\u093e \u0909\u0926\u094d\u0926\u0947\u0936 \u0915\u093e\u092f?\\n\\n_\u0909\u0926\u093e\u0939\u0930\u0923: \u092c\u0901\u0915 \u0915\u0930\u094d\u091c, \u0936\u093e\u0933\u093e \u092a\u094d\u0930\u0935\u0947\u0936 \u0907._' :
-                '\ud83c\udfaf \u0907\u0938 \u092a\u0924\u094d\u0930 \u0915\u093e \u0909\u0926\u094d\u0926\u0947\u0936\u094d\u092f \u0915\u094d\u092f\u093e \u0939\u0948?\\n\\n_\u0909\u0926\u093e\u0939\u0930\u0923: \u092c\u0948\u0902\u0915 \u0932\u094b\u0928, \u0938\u094d\u0915\u0942\u0932 \u092a\u094d\u0930\u0935\u0947\u0936 \u0906\u0926\u093f\u0964_';
-        await sock.sendMessage(userId, { text: purposePrompt });
-    }
-
-    async handleLetterFormPurpose(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.letterFormData.purpose = input.trim();
-
-        // Submit the letter request
-        try {
-            const letterRequest = {
-                user_id: userId.replace('@s.whatsapp.net', ''),
-                tenant_id: tenantId,
-                type: session.letterFormData.type,
-                area: '', // Optional
-                details: {
-                    name: session.letterFormData.name,
-                    mobile: session.letterFormData.mobile,
-                    text: session.letterFormData.address,
-                    purpose: session.letterFormData.purpose
-                },
-                status: 'Pending'
-            };
-
-            const result = await this.store.saveLetterRequest(letterRequest);
-
-            if (result) {
-                const successMsg = lang === 'en' ? `\u2705 *Letter Request Submitted!*\\n\\nType: ${session.letterFormData.typeName}\\nName: ${session.letterFormData.name}\\nMobile: ${session.letterFormData.mobile}\\n\\nYour request has been sent to the office for approval. You will be notified once it's ready.` :
-                    lang === 'mr' ? `\u2705 *\u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940 \u0938\u093e\u0926\u0930 \u0915\u0947\u0932\u0940!*\\n\\n\u092a\u094d\u0930\u0915\u093e\u0930: ${session.letterFormData.typeName}\\n\u0928\u093e\u0935: ${session.letterFormData.name}\\n\u092e\u094b\u092c\u093e\u0907\u0932: ${session.letterFormData.mobile}\\n\\n\u0924\u0941\u092e\u091a\u0940 \u0935\u093f\u0928\u0902\u0924\u0940 \u092e\u0902\u091c\u0942\u0930\u0940\u0938\u093e\u0920\u0940 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f\u093e\u0924 \u092a\u093e\u0920\u0935\u0932\u0940 \u0906\u0939\u0947. \u0924\u092f\u093e\u0930 \u091d\u093e\u0932\u094d\u092f\u093e\u0935\u0930 \u0924\u0941\u092e\u094d\u0939\u093e\u0932\u093e \u0938\u0942\u091a\u093f\u0924 \u0915\u0947\u0932\u0947 \u091c\u093e\u0908\u0932.` :
-                        `\u2705 *\u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927 \u091c\u092e\u093e \u0915\u093f\u092f\u093e \u0917\u092f\u093e!*\\n\\n\u092a\u094d\u0930\u0915\u093e\u0930: ${session.letterFormData.typeName}\\n\u0928\u093e\u092e: ${session.letterFormData.name}\\n\u092e\u094b\u092c\u093e\u0907\u0932: ${session.letterFormData.mobile}\\n\\n\u0906\u092a\u0915\u093e \u0905\u0928\u0941\u0930\u094b\u0927 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u0915\u094b \u092e\u0902\u091c\u0942\u0930\u0940 \u0915\u0947 \u0932\u093f\u090f \u092d\u0947\u091c\u093e \u0917\u092f\u093e \u0939\u0948\u0964 \u0924\u0948\u092f\u093e\u0930 \u0939\u094b\u0928\u0947 \u092a\u0930 \u0906\u092a\u0915\u094b \u0938\u0942\u091a\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u090f\u0917\u093e\u0964`;
-                await sock.sendMessage(userId, { text: successMsg });
-            }
-
-            // Clear form data
-            delete session.letterFormData;
-            delete session.letterTypes;
-
-            // Return to main menu
-            await this.showMainMenu(sock, userId, lang);
-
-        } catch (error) {
-            console.error('Error saving letter request:', error);
-            const errorMsg = lang === 'en' ? '\u274c Failed to submit letter request. Please try again later.' :
-                lang === 'mr' ? '\u274c \u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940 \u0938\u093e\u0926\u0930 \u0915\u0930\u0923\u094d\u092f\u093e\u0924 \u0905\u092f\u0936\u0938\u094d\u0935\u0940. \u0915\u0943\u092a\u092f\u093e \u092a\u0941\u0928\u094d\u0939\u093e \u092a\u094d\u0930\u092f\u0924\u094d\u0928 \u0915\u0930\u093e.' :
-                    '\u274c \u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927 \u091c\u092e\u093e \u0915\u0930\u0928\u0947 \u092e\u0947\u0902 \u0935\u093f\u092b\u0932\u0964 \u0915\u0943\u092a\u092f\u093e \u092c\u093e\u0926 \u092e\u0947\u0902 \u092a\u0941\u0928: \u092a\u094d\u0930\u092f\u093e\u0938 \u0915\u0930\u0947\u0902\u0964';
-            await sock.sendMessage(userId, { text: errorMsg });
-            await this.showMainMenu(sock, userId, lang);
-        }
-    }
-
-    /**
-     * Area Problem Report Form Handlers
-     */
-    async handleAreaProblemTitle(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.areaFormData.title = input.trim();
-        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_DESCRIPTION;
-
-        const descPrompt = lang === 'en' ? '📄 Please describe the problem in detail:' :
-            lang === 'mr' ? '📄 कृपया समस्याचे तपशीलवार वर्णन करा:' :
-                '📄 कृपया समस्या का विस्तार से वर्णन करें:';
-        await sock.sendMessage(userId, { text: descPrompt });
-    }
-
-    async handleAreaProblemDescription(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.areaFormData.description = input.trim();
-        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_LOCATION;
-
-        const locPrompt = lang === 'en' ? '📍 Where is this problem located?\n\n_Example: Near bus stand, Main road, etc._' :
-            lang === 'mr' ? '📍 ही समस्या कुठे आहे?\n\n_उदाहरण: बस स्थानकाजवळ, मुख्य रस्ता, इ._' :
-                '📍 यह समस्या कहाँ है?\n\n_उदाहरण: बस स्टैंड के पास, मुख्य सड़क, आदि।_';
-        await sock.sendMessage(userId, { text: locPrompt });
-    }
-
-    async handleAreaProblemLocation(sock, tenantId, userId, input) {
-        const session = this.getSession(userId);
-        const lang = session.language;
-
-        session.areaFormData.location = input.trim();
-
-        // Submit the area problem
-        try {
-            const problemData = {
-                tenant_id: tenantId,
-                user_id: userId.replace('@s.whatsapp.net', ''),
-                title: session.areaFormData.title,
-                description: session.areaFormData.description,
-                location: session.areaFormData.location,
-                status: 'Pending'
-            };
-
-            const result = await this.store.reportAreaProblem(problemData);
-
-            if (result) {
-                const successMsg = lang === 'en' ? `✅ *Area Problem Reported!*\n\nTitle: ${session.areaFormData.title}\nLocation: ${session.areaFormData.location}\n\nYour report has been submitted and will be reviewed by the office. Thank you for helping improve our ward!` :
-                    lang === 'mr' ? `✅ *क्षेत्र समस्या नोंदविली!*\n\nशीर्षक: ${session.areaFormData.title}\nस्थान: ${session.areaFormData.location}\n\nतुमचा अहवाल सादर करण्यात आला आहे आणि कार्यालयाद्वारे त्याचे पुनरावलोकन केले जाईल. आमच्या प्रभागाला सुधारण्यात मदत केल्याबद्दल धन्यवाद!` :
-                        `✅ *क्षेत्र समस्या रिपोर्ट की गई!*\n\nशीर्षक: ${session.areaFormData.title}\nस्थान: ${session.areaFormData.location}\n\nआपकी रिपोर्ट जमा कर दी गई है और कार्यालय द्वारा इसकी समीक्षा की जाएगी। हमारे वार्ड को बेहतर बनाने में मदद के लिए धन्यवाद!`;
-                await sock.sendMessage(userId, { text: successMsg });
-            }
-
-            // Clear form data
-            delete session.areaFormData;
-
-            // Return to main menu
-            await this.showMainMenu(sock, userId, lang);
-
-        } catch (error) {
-            console.error('Error reporting area problem:', error);
-            const errorMsg = lang === 'en' ? '❌ Failed to submit report. Please try again later.' :
-                lang === 'mr' ? '❌ अहवाल सादर करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.' :
-                    '❌ रिपोर्ट जमा करने में विफल। कृपया बाद में पुनः प्रयास करें।';
-            await sock.sendMessage(userId, { text: errorMsg });
-            await this.showMainMenu(sock, userId, lang);
-        }
     }
 
     /**

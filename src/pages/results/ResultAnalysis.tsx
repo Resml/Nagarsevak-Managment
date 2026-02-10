@@ -5,18 +5,24 @@ import { type ElectionResult } from '../../types';
 
 import { useLanguage } from '../../context/LanguageContext';
 
-const CANDIDATE_NAME = "Mamit Chougale";
-
 const ResultAnalysis = () => {
     const { t } = useLanguage();
-    const [ward, setWard] = useState('Prabhag 5 A');
+    const [ward, setWard] = useState('');
+    const [availableWards, setAvailableWards] = useState<string[]>([]);
     const [results, setResults] = useState<ElectionResult[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedCandidate, setSelectedCandidate] = useState(CANDIDATE_NAME);
+    const [selectedCandidate, setSelectedCandidate] = useState('');
     const [availableCandidates, setAvailableCandidates] = useState<string[]>([]);
 
+    // Fetch all wards on mount
     useEffect(() => {
-        loadResults();
+        loadAllWards();
+    }, []);
+
+    useEffect(() => {
+        if (ward) {
+            loadResults();
+        }
     }, [ward]);
 
     // Update available candidates and default selection when results change
@@ -25,49 +31,33 @@ const ResultAnalysis = () => {
             const candidates = Object.keys(results[0].candidateVotes);
             setAvailableCandidates(candidates);
 
-            // Try to find Mamit first, else default to winner or first candidate
-            const mamit = candidates.find(k => k.includes('ममित') || k.includes('Mamit') || k.includes('Chougale'));
-
-            // If the currently selected candidate is NOT in the new list, switch.
+            // If the currently selected candidate is NOT in the new list, switch to winner
             if (!candidates.includes(selectedCandidate)) {
-                if (mamit) {
-                    setSelectedCandidate(mamit);
-                } else {
-                    // Default to the candidate with max total votes to show winning party stats
-                    let maxVotes = -1;
-                    let bestCand = candidates[0];
-                    candidates.forEach(c => {
-                        const total = results.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0);
-                        if (total > maxVotes) {
-                            maxVotes = total;
-                            bestCand = c;
-                        }
-                    });
-                    setSelectedCandidate(bestCand);
-                }
-            } else {
-                // If current selection is still valid, do nothing (keep selection)
-                // UNLESS we just switched wards and Mamit exists here, we might want to prefer Mamit?
-                // Actually sticking to user choice is usually better, but if we switch wards, maybe reset?
-                // Let's reset to "Smart Default" on ward change.
-                if (mamit) {
-                    setSelectedCandidate(mamit);
-                } else {
-                    // Default to max votes
-                    let maxVotes = -1;
-                    let bestCand = candidates[0];
-                    candidates.forEach(c => {
-                        const total = results.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0);
-                        if (total > maxVotes) {
-                            maxVotes = total;
-                            bestCand = c;
-                        }
-                    });
-                    setSelectedCandidate(bestCand);
-                }
+                // Default to the candidate with max total votes
+                let maxVotes = -1;
+                let bestCand = candidates[0];
+                candidates.forEach(c => {
+                    const total = results.reduce((sum, r) => sum + (r.candidateVotes[c] || 0), 0);
+                    if (total > maxVotes) {
+                        maxVotes = total;
+                        bestCand = c;
+                    }
+                });
+                setSelectedCandidate(bestCand);
             }
         }
     }, [results]);
+
+    const loadAllWards = async () => {
+        const allResults = await ResultService.getResults();
+        const uniqueWards = [...new Set(allResults.map(r => r.wardName))].filter(Boolean);
+        setAvailableWards(uniqueWards);
+
+        // Auto-select first ward if available
+        if (uniqueWards.length > 0 && !ward) {
+            setWard(uniqueWards[0]);
+        }
+    };
 
     const loadResults = async () => {
         setLoading(true);
@@ -85,14 +75,15 @@ const ResultAnalysis = () => {
     const winningBooths = results.filter(r => r.winner === selectedCandidate).length;
     const losingBooths = results.length - winningBooths;
 
-    // Sort booths by margin (Losses first to analyze weak points, or Wins to celebrate?)
-    // Let's sort by booth number for standard view
-    const sortedResults = [...results].sort((a, b) => Number(a.boothNumber) - Number(b.boothNumber));
-
-    const getBarWidth = (votes: number, total: number) => {
-        if (total === 0) return '0%';
-        return `${(votes / total) * 100}%`;
-    };
+    // Sort booths by booth number
+    const sortedResults = [...results].sort((a, b) => {
+        const aNum = a.boothNumber.match(/\d+/);
+        const bNum = b.boothNumber.match(/\d+/);
+        if (aNum && bNum) {
+            return Number(aNum[0]) - Number(bNum[0]);
+        }
+        return a.boothNumber.localeCompare(b.boothNumber);
+    });
 
     return (
         <div className="space-y-6">
@@ -107,21 +98,20 @@ const ResultAnalysis = () => {
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('voters.ward')}:</span>
                             <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 max-w-[120px]"
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 min-w-[140px]"
                                 value={ward}
                                 onChange={(e) => setWard(e.target.value)}
                             >
-                                <option value="Prabhag 5 A">Prabhag 5 A</option>
-                                <option value="Prabhag 5 B">Prabhag 5 B</option>
-                                <option value="Prabhag 5 C">Prabhag 5 C</option>
-                                <option value="Prabhag 5 D">Prabhag 5 D</option>
+                                {availableWards.map(w => (
+                                    <option key={w} value={w}>{w}</option>
+                                ))}
                             </select>
                         </div>
 
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('election.analyze_for')}</span>
                             <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 max-w-[200px]"
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 min-w-[200px]"
                                 value={selectedCandidate}
                                 onChange={(e) => setSelectedCandidate(e.target.value)}
                             >
@@ -182,29 +172,27 @@ const ResultAnalysis = () => {
                     <table className="min-w-full divide-y divide-slate-200/70">
                         <thead className="bg-slate-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">{t('election.booth_no')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider sticky left-0 bg-slate-50">केंद्र क्र.</th>
                                 {sortedResults.length > 0 && Object.keys(sortedResults[0].candidateVotes).map(candidate => (
                                     <th key={candidate} className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-32">
                                         <span className="line-clamp-2" title={candidate}>{candidate}</span>
                                     </th>
                                 ))}
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.total')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.winner')}</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('election.margin')}</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">एकूण</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">विजयी</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">फरक</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200/70">
-                            {/* Filter out summary rows except "एकूण मत" */}
+                            {/* Filter out summary rows */}
                             {loading ? (
-                                <tr><td colSpan={10} className="px-6 py-4 text-center">Loading...</td></tr>
+                                <tr><td colSpan={20} className="px-6 py-4 text-center">Loading...</td></tr>
                             ) : sortedResults.filter(r => !['सर्व मतदान केंद्र नोंदवण्यात आलेली मते', 'टपाल मतदान'].includes(r.boothNumber)).map((r) => {
                                 const candidates = Object.keys(r.candidateVotes);
-                                const ourV = r.candidateVotes[selectedCandidate] || 0;
                                 return (
                                     <tr key={r.id} className="hover:bg-slate-50">
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-900 sticky left-0 bg-white">
                                             {r.boothNumber}
-                                            {/* <span className="block text-xs text-gray-500 font-normal">{r.boothName}</span> */}
                                         </td>
                                         {candidates.map(c => {
                                             const votes = r.candidateVotes[c];
@@ -226,8 +214,6 @@ const ResultAnalysis = () => {
                                     </tr>
                                 );
                             })}
-
-                            {/* Removed Totals Row as per user request */}
                         </tbody>
                     </table>
                 </div>
