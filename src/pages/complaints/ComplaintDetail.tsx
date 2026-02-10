@@ -65,46 +65,83 @@ const ComplaintDetail = () => {
 
     const fetchComplaint = async () => {
         try {
-            const { data, error } = await supabase
-                .from('complaints')
-                .select(`
-                    *,
-                    voter:voters (name_english, name_marathi, mobile),
-                    staff:assigned_to (name, mobile)
-                `)
-                .eq('id', id)
-                .eq('tenant_id', tenantId) // Secured
-                .single();
+            const isPersonal = id?.startsWith('pr-');
+            const actualId = isPersonal ? id?.replace('pr-', '') : id;
 
-            if (error) throw error;
+            if (isPersonal) {
+                const { data, error } = await supabase
+                    .from('personal_requests')
+                    .select('*')
+                    .eq('id', actualId)
+                    .eq('tenant_id', tenantId)
+                    .single();
 
-            if (data) {
-                // Map to App Type
-                const mapped: Complaint = {
-                    id: data.id.toString(),
-                    title: data.problem || 'Request',
-                    description: data.problem,
-                    type: data.category || 'Complaint',
-                    status: data.status,
-                    ward: data.location || 'N/A',
-                    location: data.location,
-                    voter: data.voter,
-                    createdAt: data.created_at,
-                    updatedAt: data.created_at,
-                    photos: [],
-                    imageUrl: data.image_url,
-                    videoUrl: data.video_url,
-                    audioUrl: data.audio_url,
-                    voterId: data.voter_id,
-                    assignedTo: data.assigned_to
-                };
-                setComplaint(mapped);
-                setAssignee(data.assigned_to || '');
-                // Initialize edit form
-                setEditForm({
-                    problem: data.problem || '',
-                    category: data.category || 'Complaint'
-                });
+                if (error) throw error;
+
+                if (data) {
+                    const mapped: Complaint = {
+                        id: `pr-${data.id}`,
+                        title: data.request_type || 'Personal Request',
+                        description: data.description,
+                        type: 'Personal Help',
+                        status: data.status,
+                        ward: 'WhatsApp',
+                        location: 'WhatsApp',
+                        voter: {
+                            name_english: data.reporter_name,
+                            mobile: data.reporter_mobile
+                        },
+                        createdAt: data.created_at,
+                        updatedAt: data.created_at,
+                        photos: []
+                    };
+                    setComplaint(mapped);
+                    // Initialize edit form
+                    setEditForm({
+                        problem: data.description || '',
+                        category: 'Personal Help'
+                    });
+                }
+            } else {
+                const { data, error } = await supabase
+                    .from('complaints')
+                    .select(`
+                        *,
+                        voter:voters (name_english, name_marathi, mobile),
+                        staff:assigned_to (name, mobile)
+                    `)
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    const mapped: Complaint = {
+                        id: data.id.toString(),
+                        title: data.problem || 'Request',
+                        description: data.problem,
+                        type: data.category || 'Complaint',
+                        status: data.status,
+                        ward: data.location || 'N/A',
+                        location: data.location,
+                        voter: data.voter,
+                        createdAt: data.created_at,
+                        updatedAt: data.created_at,
+                        photos: [],
+                        imageUrl: data.image_url,
+                        videoUrl: data.video_url,
+                        audioUrl: data.audio_url,
+                        voterId: data.voter_id,
+                        assignedTo: data.assigned_to
+                    };
+                    setComplaint(mapped);
+                    setAssignee(data.assigned_to || '');
+                    setEditForm({
+                        problem: data.problem || '',
+                        category: data.category || 'Complaint'
+                    });
+                }
             }
         } catch (err) {
             console.error('Error fetching complaint:', err);
@@ -116,11 +153,15 @@ const ComplaintDetail = () => {
     const handleStatusUpdate = async (newStatus: string) => {
         if (!complaint) return;
         try {
+            const isPersonal = complaint.id.startsWith('pr-');
+            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : 'complaints';
+
             const { error } = await supabase
-                .from('complaints')
+                .from(table)
                 .update({ status: newStatus })
-                .eq('id', complaint.id)
-                .eq('tenant_id', tenantId); // Secured
+                .eq('id', actualId)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
             setComplaint({ ...complaint, status: newStatus as any });
@@ -137,27 +178,31 @@ const ComplaintDetail = () => {
 
         setUpdating(true);
         try {
+            const isPersonal = complaint.id.startsWith('pr-');
+            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : 'complaints';
+            const updateData = isPersonal
+                ? { description: editForm.problem }
+                : { problem: editForm.problem, category: editForm.category };
+
             const { error } = await supabase
-                .from('complaints')
-                .update({
-                    problem: editForm.problem,
-                    category: editForm.category
-                })
-                .eq('id', complaint.id);
+                .from(table)
+                .update(updateData)
+                .eq('id', actualId);
 
             if (error) throw error;
 
             setComplaint({
                 ...complaint,
-                title: editForm.problem,
+                title: isPersonal ? complaint.title : editForm.problem,
                 description: editForm.problem,
-                type: editForm.category as any
+                type: (isPersonal ? 'Personal Help' : editForm.category) as any
             });
-            toast.success('Complaint updated successfully');
+            toast.success('Updated successfully');
             setIsEditModalOpen(false);
         } catch (err) {
-            console.error('Error updating complaint:', err);
-            toast.error('Failed to update complaint');
+            console.error('Error updating:', err);
+            toast.error('Failed to update');
         } finally {
             setUpdating(false);
         }
@@ -167,24 +212,28 @@ const ComplaintDetail = () => {
         if (!complaint) return;
         setDeleting(true);
         try {
+            const isPersonal = complaint.id.startsWith('pr-');
+            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : 'complaints';
+
             const { error, count } = await supabase
-                .from('complaints')
+                .from(table)
                 .delete({ count: 'exact' })
-                .eq('id', complaint.id)
-                .eq('tenant_id', tenantId); // Secured
+                .eq('id', actualId)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
             if (count === 0) {
-                toast.error('Could not delete complaint. You may not have permission.');
+                toast.error('Could not delete. You may not have permission.');
                 return;
             }
 
-            toast.success('Complaint deleted successfully');
+            toast.success('Deleted successfully');
             navigate('/complaints');
         } catch (err) {
-            console.error('Error deleting complaint:', err);
-            toast.error('Failed to delete complaint');
+            console.error('Error deleting:', err);
+            toast.error('Failed to delete');
         } finally {
             setDeleting(false);
             setIsDeleteModalOpen(false);
