@@ -1197,9 +1197,15 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.letterFormData.address = input.trim();
         session.currentMenu = MENU_STATES.LETTER_FORM_PURPOSE;
 
-        const purposePrompt = lang === 'en' ? '\ud83c\udfaf What is the purpose of this letter?\\n\\n_Example: For bank loan, school admission, etc._' :
-            lang === 'mr' ? '\ud83c\udfaf \u092f\u093e \u092a\u0924\u094d\u0930\u093e\u091a\u093e \u0909\u0926\u094d\u0926\u0947\u0936 \u0915\u093e\u092f?\\n\\n_\u0909\u0926\u093e\u0939\u0930\u0923: \u092c\u0901\u0915 \u0915\u0930\u094d\u091c, \u0936\u093e\u0933\u093e \u092a\u094d\u0930\u0935\u0947\u0936 \u0907._' :
-                '\ud83c\udfaf \u0907\u0938 \u092a\u0924\u094d\u0930 \u0915\u093e \u0909\u0926\u094d\u0926\u0947\u0936\u094d\u092f \u0915\u094d\u092f\u093e \u0939\u0948?\\n\\n_\u0909\u0926\u093e\u0939\u0930\u0923: \u092c\u0948\u0902\u0915 \u0932\u094b\u0928, \u0938\u094d\u0915\u0942\u0932 \u092a\u094d\u0930\u0935\u0947\u0936 \u0906\u0926\u093f\u0964_';
+        const purposePrompt = lang === 'en' ? '🎯 What is the purpose of this letter?
+
+_Example: For bank loan, school admission, etc._' :
+        lang === 'mr' ? '🎯 या पत्राचा उद्देश काय?
+
+_उदाहरण: बँक कर्ज, शाळा प्रवेश इ._' :
+        '🎯 इस पत्र का उद्देश्य क्या है?
+
+        _उदाहरण: बैंक लोन, स्कूल प्रवेश आदि।_';
         await sock.sendMessage(userId, { text: purposePrompt });
     }
 
@@ -1228,9 +1234,27 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             const result = await this.store.saveLetterRequest(letterRequest);
 
             if (result) {
-                const successMsg = lang === 'en' ? `\u2705 *Letter Request Submitted!*\\n\\nType: ${session.letterFormData.typeName}\\nName: ${session.letterFormData.name}\\nMobile: ${session.letterFormData.mobile}\\n\\nYour request has been sent to the office for approval. You will be notified once it's ready.` :
-                    lang === 'mr' ? `\u2705 *\u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940 \u0938\u093e\u0926\u0930 \u0915\u0947\u0932\u0940!*\\n\\n\u092a\u094d\u0930\u0915\u093e\u0930: ${session.letterFormData.typeName}\\n\u0928\u093e\u0935: ${session.letterFormData.name}\\n\u092e\u094b\u092c\u093e\u0907\u0932: ${session.letterFormData.mobile}\\n\\n\u0924\u0941\u092e\u091a\u0940 \u0935\u093f\u0928\u0902\u0924\u0940 \u092e\u0902\u091c\u0942\u0930\u0940\u0938\u093e\u0920\u0940 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f\u093e\u0924 \u092a\u093e\u0920\u0935\u0932\u0940 \u0906\u0939\u0947. \u0924\u092f\u093e\u0930 \u091d\u093e\u0932\u094d\u092f\u093e\u0935\u0930 \u0924\u0941\u092e\u094d\u0939\u093e\u0932\u093e \u0938\u0942\u091a\u093f\u0924 \u0915\u0947\u0932\u0947 \u091c\u093e\u0908\u0932.` :
-                        `\u2705 *\u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927 \u091c\u092e\u093e \u0915\u093f\u092f\u093e \u0917\u092f\u093e!*\\n\\n\u092a\u094d\u0930\u0915\u093e\u0930: ${session.letterFormData.typeName}\\n\u0928\u093e\u092e: ${session.letterFormData.name}\\n\u092e\u094b\u092c\u093e\u0907\u0932: ${session.letterFormData.mobile}\\n\\n\u0906\u092a\u0915\u093e \u0905\u0928\u0941\u0930\u094b\u0927 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u0915\u094b \u092e\u0902\u091c\u0942\u0930\u0940 \u0915\u0947 \u0932\u093f\u090f \u092d\u0947\u091c\u093e \u0917\u092f\u093e \u0939\u0948\u0964 \u0924\u0948\u092f\u093e\u0930 \u0939\u094b\u0928\u0947 \u092a\u0930 \u0906\u092a\u0915\u094b \u0938\u0942\u091a\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u090f\u0917\u093e\u0964`;
+                const successMsg = lang === 'en' ? `✅ *Letter Request Submitted!*
+
+Type: ${session.letterFormData.typeName}
+Name: ${session.letterFormData.name}
+Mobile: ${session.letterFormData.mobile}
+
+Your request has been sent to the office for approval. You will be notified once it's ready.` :
+                    lang === 'mr' ? `✅ *पत्र विनंती सादर केली!*
+
+प्रकार: ${session.letterFormData.typeName}
+नाव: ${session.letterFormData.name}
+मोबाइल: ${session.letterFormData.mobile}
+
+तुमची विनंती मंजूरीसाठी कार्यालयात पाठवली आहे. तयार झाल्यावर तुम्हाला सूचित केले जाईल.` :
+                        `✅ *पत्र अनुरोध जमा किया गया!*
+
+प्रकार: ${session.letterFormData.typeName}
+नाम: ${session.letterFormData.name}
+मोबाइल: ${session.letterFormData.mobile}
+
+आपका अनुरोध कार्यालय को मंजूरी के लिए भेजा गया है। तैयार होने पर आपको सूचित किया जाएगा।`;
                 await sock.sendMessage(userId, { text: successMsg });
             }
 
