@@ -1125,9 +1125,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             menuText += `${index + 1}\ufe0f\u20e3 ${displayName}\\n`;
         });
 
-        menuText += lang === 'en' ? '\\n9\ufe0f\u20e3 Main Menu\\n\\n_Reply with a number_' :
-            lang === 'mr' ? '\\n9\ufe0f\u20e3 \u092e\u0941\u0916\u094d\u092f \u092e\u0947\u0928\u0942\\n\\n_\u0915\u0943\u092a\u092f\u093e \u0915\u094d\u0930\u092e\u093e\u0902\u0915 \u0928\u093f\u0935\u0921\u093e_' :
-                '\\n9\ufe0f\u20e3 \u092e\u0941\u0916\u094d\u092f \u092e\u0947\u0928\u0942\\n\\n_\u0915\u0943\u092a\u092f\u093e \u0928\u0902\u092c\u0930 \u091a\u0941\u0928\u0947\u0902_';
+        menuText += lang === 'en' ? '\n0️⃣ Main Menu\n\n_Reply with a number_' :
+            lang === 'mr' ? '\n0️⃣ मुख्य मेनू\n\n_कृपया क्रमांक निवडा_' :
+                '\n0️⃣ मुख्य मेनू\n\n_कृपया नंबर चुनें_';
 
         await sock.sendMessage(userId, { text: menuText });
     }
