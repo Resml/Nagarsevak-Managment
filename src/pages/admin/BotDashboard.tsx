@@ -65,11 +65,11 @@ const BotDashboard = () => {
 
     const getStatusText = () => {
         switch (status) {
-            case 'connected': return t('whatsapp_bot.status.online');
-            case 'scanning': return t('whatsapp_bot.status.scan_qr');
-            case 'authenticated': return t('whatsapp_bot.status.auth');
-            case 'disconnected': return t('whatsapp_bot.status.disconnected');
-            case 'connected_to_server': return t('whatsapp_bot.status.waiting');
+            case 'connected': return t('whatsapp_bot.status_online');
+            case 'scanning': return t('whatsapp_bot.status_scan_qr');
+            case 'authenticated': return t('whatsapp_bot.status_auth');
+            case 'disconnected': return t('whatsapp_bot.status_disconnected');
+            case 'connected_to_server': return t('whatsapp_bot.status_waiting');
             default: return status;
         }
     };

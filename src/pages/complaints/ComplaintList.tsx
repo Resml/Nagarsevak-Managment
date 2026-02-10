@@ -75,6 +75,8 @@ const ComplaintList = () => {
                     name_marathi?: string | null;
                     mobile?: string | null;
                 } | null;
+                user_id?: string | null;
+                user_name?: string | null;
                 description_meta?: string | null;
             };
 
@@ -123,32 +125,45 @@ const ComplaintList = () => {
                         mobile: row.voter.mobile ?? undefined,
                     }
                     : (() => {
+                        // Priority 1: Use user_id and user_name if available (from new fixes)
+                        if (row.user_id || row.user_name) {
+                            return {
+                                name_english: row.user_name ?? undefined,
+                                mobile: row.user_id ?? undefined
+                            };
+                        }
+
+                        // Priority 2: Try to parse metadata for older entries
                         try {
                             if (!row.description_meta) return undefined;
 
-                            // Check if it's a plain mobile number (10 digits)
                             const cleanMeta = row.description_meta.trim();
                             if (/^\d{10}$/.test(cleanMeta)) {
                                 return { mobile: cleanMeta };
                             }
 
                             const meta = JSON.parse(row.description_meta);
-                            if (meta?.submitter_name || meta?.submitter_mobile) {
+
+                            // Check for various keys found in historical bot data
+                            const name = meta.submitter_name || meta.userName;
+                            const mobile = meta.mobile || meta.submitter_mobile || meta.userMobile;
+
+                            if (name || mobile) {
                                 return {
-                                    name_english: meta.submitter_name,
-                                    mobile: meta.submitter_mobile
+                                    name_english: name,
+                                    mobile: mobile
                                 };
                             }
                         } catch (e) {
-                            // If parsing fails but it looks like a mobile number or has info, maybe we can extract
                             const cleanMeta = row.description_meta?.trim();
                             if (cleanMeta && /^\d{10}$/.test(cleanMeta)) {
                                 return { mobile: cleanMeta };
                             }
-                            console.error("Error parsing meta", e);
                         }
                         return undefined;
                     })(),
+                user_id: row.user_id ?? undefined,
+                user_name: row.user_name ?? undefined,
                 createdAt: row.created_at,
                 photos: [],
                 updatedAt: row.created_at

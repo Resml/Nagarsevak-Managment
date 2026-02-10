@@ -35,6 +35,8 @@ export interface Complaint {
   imageUrl?: string;
   videoUrl?: string;
   audioUrl?: string;
+  user_id?: string;
+  user_name?: string;
   createdAt: string; // ISO Date
   updatedAt: string;
   resolvedAt?: string;

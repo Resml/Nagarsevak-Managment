@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit } from 'lucide-react';
+import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -151,12 +151,15 @@ const SchemeList = () => {
     return (
         <div className="space-y-6">
             {/* Sticky Header Section */}
-            <div className="sticky top-0 z-10 bg-white pt-2 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-y-4 border-b border-slate-100">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('schemes.title')}</h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-slate-500">{t('schemes.subtitle')}</p>
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 -mx-4 px-4 sm:-mx-8 sm:px-8 border-b border-slate-200/60 space-y-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-brand-50 rounded-xl border border-brand-100 hidden sm:flex">
+                            <Newspaper className="w-6 h-6 text-brand-700" />
+                        </div>
+                        <div className="border-l-4 border-brand-600 pl-3 md:border-l-0 md:pl-0">
+                            <h1 className="text-2xl font-bold text-slate-900 leading-tight">{t('schemes.title')}</h1>
+                            <p className="text-sm text-slate-500 mt-0.5">{t('schemes.subtitle')}</p>
                         </div>
                     </div>
                 </div>

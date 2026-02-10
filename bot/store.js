@@ -90,6 +90,8 @@ async function saveComplaint(complaint) {
             source: complaint.source || 'WhatsApp',
             voter_id: voterId, // Linked voter ID
             tenant_id: complaint.tenantId,
+            user_id: complaint.mobile,
+            user_name: complaint.user_name,
             description_meta: JSON.stringify({
                 submitter_name: complaint.user_name,
                 mobile: complaint.mobile,  // Add mobile for lookup
