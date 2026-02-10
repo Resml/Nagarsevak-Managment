@@ -120,9 +120,15 @@ app.post('/webhook/letter-status', async (req, res) => {
 
         // Get bot connection for this tenant
         const session = sessions.get(tenant_id);
-        if (!session || session.status !== 'connected') {
+        if (!session || !session.sock) {
             console.error(`No bot connection for tenant ${tenant_id}`);
             return res.status(404).json({ error: 'Bot not connected for this tenant' });
+        }
+
+        // If not explicitly connected but we have a session, it might be in 'connecting' state
+        // but still functional (as seen in logs where messages are being handled).
+        if (session.status !== 'connected' && session.status !== 'connecting') {
+            console.warn(`Bot status is ${session.status} for tenant ${tenant_id}, notification might fail`);
         }
 
         // Get MenuNavigator for this tenant to access user sessions
@@ -136,6 +142,24 @@ app.post('/webhook/letter-status', async (req, res) => {
         const userSession = menuNav.getSession(`${user_id}@s.whatsapp.net`);
         const lang = userSession?.language || 'mr'; // Default to Marathi
 
+        // Fallback: If pdf_url is missing (e.g. Edge Function not redeployed), try to fetch it from DB
+        let finalPdfUrl = pdf_url;
+        if (!finalPdfUrl && status === 'Approved') {
+            try {
+                const { data } = await supabase
+                    .from('letter_requests')
+                    .select('pdf_url')
+                    .eq('id', letter_id)
+                    .single();
+                if (data?.pdf_url) {
+                    finalPdfUrl = data.pdf_url;
+                    console.log(`[${tenant_id}] Retrieved missing PDF URL from DB: ${finalPdfUrl}`);
+                }
+            } catch (dbErr) {
+                console.warn(`[${tenant_id}] Failed to fetch missing PDF URL:`, dbErr.message);
+            }
+        }
+
         // Send notification
         const success = await sendLetterStatusNotification(
             session.sock,
@@ -144,7 +168,7 @@ app.post('/webhook/letter-status', async (req, res) => {
             letter_type,
             lang,
             tenant_id,
-            pdf_url
+            finalPdfUrl
         );
 
         if (success) {
