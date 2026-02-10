@@ -9,6 +9,7 @@ interface LetterStatusWebhookPayload {
         tenant_id: string
         type: string
         status: string
+        pdf_url?: string
     }
     old_record: {
         status: string
@@ -51,7 +52,8 @@ serve(async (req) => {
                     user_id: payload.record.user_id,
                     status: payload.record.status,
                     letter_type: payload.record.type,
-                    tenant_id: payload.record.tenant_id
+                    tenant_id: payload.record.tenant_id,
+                    pdf_url: payload.record.pdf_url
                 })
             })
 

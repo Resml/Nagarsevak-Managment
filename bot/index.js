@@ -110,7 +110,7 @@ app.post('/webhook/letter-status', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
 
-        const { type, letter_id, user_id, status, letter_type, tenant_id } = req.body;
+        const { type, letter_id, user_id, status, letter_type, tenant_id, pdf_url } = req.body;
 
         if (type !== 'letter_status_change') {
             return res.status(400).json({ error: 'Invalid webhook type' });
@@ -143,7 +143,8 @@ app.post('/webhook/letter-status', async (req, res) => {
             status,
             letter_type,
             lang,
-            tenant_id
+            tenant_id,
+            pdf_url
         );
 
         if (success) {

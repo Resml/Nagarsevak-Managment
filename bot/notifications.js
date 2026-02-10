@@ -1,5 +1,5 @@
 // Notification functions for letter status updates
-async function sendLetterStatusNotification(sock, userId, status, letterType, lang, tenantId) {
+async function sendLetterStatusNotification(sock, userId, status, letterType, lang, tenantId, pdfUrl) {
     try {
         const whatsappId = userId.includes('@') ? userId : `${userId}@s.whatsapp.net`;
 
@@ -20,6 +20,16 @@ async function sendLetterStatusNotification(sock, userId, status, letterType, la
 
         console.log(`[${tenantId}] Sending letter status notification to ${userId}: ${status}`);
         await sock.sendMessage(whatsappId, { text: message });
+
+        if (status === 'Approved' && pdfUrl) {
+            console.log(`[${tenantId}] Sending PDF for letter ${letterType} to ${userId}`);
+            await sock.sendMessage(whatsappId, {
+                document: { url: pdfUrl },
+                mimetype: 'application/pdf',
+                fileName: `${letterType}.pdf`
+            });
+        }
+
         return true;
     } catch (error) {
         console.error(`Error sending letter status notification:`, error);
