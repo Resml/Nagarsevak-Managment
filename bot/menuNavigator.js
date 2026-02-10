@@ -31,6 +31,8 @@ const MENU_STATES = {
     AREA_PROBLEM_FORM_TITLE: 'AREA_PROBLEM_FORM_TITLE',
     AREA_PROBLEM_FORM_DESCRIPTION: 'AREA_PROBLEM_FORM_DESCRIPTION',
     AREA_PROBLEM_FORM_LOCATION: 'AREA_PROBLEM_FORM_LOCATION',
+    AREA_PROBLEM_FORM_NAME: 'AREA_PROBLEM_FORM_NAME',
+    AREA_PROBLEM_FORM_MOBILE: 'AREA_PROBLEM_FORM_MOBILE',
     // Complete Complaint Form states
     COMPLAINT_FORM_NAME: 'COMPLAINT_FORM_NAME',
     COMPLAINT_FORM_MOBILE: 'COMPLAINT_FORM_MOBILE',
@@ -179,6 +181,12 @@ class MenuNavigator {
 
             case MENU_STATES.AREA_PROBLEM_REPORT:
                 return await this.handleAreaProblemReport(sock, tenantId, userId, input);
+
+            case MENU_STATES.AREA_PROBLEM_FORM_NAME:
+                return await this.handleAreaProblemName(sock, tenantId, userId, input);
+
+            case MENU_STATES.AREA_PROBLEM_FORM_MOBILE:
+                return await this.handleAreaProblemMobile(sock, tenantId, userId, input);
 
             case MENU_STATES.AREA_PROBLEM_FORM_TITLE:
                 return await this.handleAreaProblemTitle(sock, tenantId, userId, input);
@@ -995,9 +1003,13 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             events.forEach((event, index) => {
                 const title = event.title || 'Untitled';
-                const date = new Date(event.date).toLocaleDateString(lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN');
+                // Correct column name is likely event_date
+                const dateStr = event.event_date || event.date;
+                const d = new Date(dateStr);
+                const date = isNaN(d.getTime()) ? 'TBA' : d.toLocaleDateString(lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN');
+                const time = event.event_time ? ` | 🕒 ${event.event_time}` : '';
                 const location = event.location || 'TBA';
-                eventText += `${index + 1}. *${title}*\n   📅 ${date}\n   📍 ${location}\n\n`;
+                eventText += `${index + 1}. *${title}*\n   📅 ${date}${time}\n   📍 ${location}\n\n`;
             });
 
             await sock.sendMessage(userId, { text: eventText });
@@ -1094,12 +1106,12 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         switch (input) {
             case '1': // Report New Problem
-                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
                 session.areaFormData = {};
-                const titlePrompt = lang === 'en' ? '📝 *Report Area Problem*\n\nWhat is the problem title?\n\n_Example: Broken streetlight, road damage, etc._' :
-                    lang === 'mr' ? '📝 *क्षेत्र समस्या नोंदवा*\n\nसमस्याचे शीर्षक काय आहे?\n\n_उदाहरण: तुटलेला रस्ता दिवा, रस्त्याचे नुकसान, इ._' :
-                        '📝 *क्षेत्र समस्या रिपोर्ट करें*\n\nसमस्या का शीर्षक क्या है?\n\n_उदाहरण: टूटी हुई स्ट्रीटलाइट, सड़क क्षति, आदि।_';
-                await sock.sendMessage(userId, { text: titlePrompt });
+                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_NAME;
+                const namePrompt = lang === 'en' ? '👤 Please enter your full name:' :
+                    lang === 'mr' ? '👤 कृपया तुमचे पूर्ण नाव प्रविष्ट करा:' :
+                        '👤 कृपया अपना पूरा नाम दर्ज करें:';
+                await sock.sendMessage(userId, { text: namePrompt });
                 return;
 
             case '2': // View Ward Issues
@@ -1420,9 +1432,41 @@ Your request has been sent to the office for approval. You will be notified once
         }
     }
 
-    /**
-     * Area Problem Report Form Handlers
-     */
+    async handleAreaProblemName(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        session.areaFormData.reporter_name = input.trim();
+        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+
+        const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+            lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+        await sock.sendMessage(userId, { text: mobilePrompt });
+    }
+
+    async handleAreaProblemMobile(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const mobile = input.trim().replace(/\D/g, '');
+        if (mobile.length !== 10) {
+            const invalidMsg = lang === 'en' ? '❌ Invalid mobile number. Please enter 10 digits:' :
+                lang === 'mr' ? '❌ अवैध मोबाइल नंबर. कृपया 10 अंकी नंबर प्रविष्ट करा:' :
+                    '❌ अमान्य मोबाइल नंबर। कृपया 10 अंकों का नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: invalidMsg });
+            return;
+        }
+
+        session.areaFormData.reporter_mobile = mobile;
+        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
+
+        const titlePrompt = lang === 'en' ? '📝 What is the title of the problem?\n\n_Example: Broken street light, Road damage, etc._' :
+            lang === 'mr' ? '📝 समस्याचे शीर्षक काय आहे?\n\n_उदाहरण: तुटलेला रस्ता दिवा, रस्त्याचे नुकसान, इ._' :
+                '📝 समस्या का शीर्षक क्या है?\n\n_उदाहरण: टूटी हुई स्ट्रीटलाइट, सड़क क्षति, आदि।_';
+        await sock.sendMessage(userId, { text: titlePrompt });
+    }
+
     async handleAreaProblemTitle(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
@@ -1459,7 +1503,9 @@ Your request has been sent to the office for approval. You will be notified once
         try {
             const problemData = {
                 tenant_id: tenantId,
-                user_id: userId.replace('@s.whatsapp.net', ''),
+                user_id: userId, // Use full ID for robustness
+                reporter_name: session.areaFormData.reporter_name,
+                reporter_mobile: session.areaFormData.reporter_mobile,
                 title: session.areaFormData.title,
                 description: session.areaFormData.description,
                 location: session.areaFormData.location,
