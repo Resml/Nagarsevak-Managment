@@ -137,7 +137,7 @@ async function saveComplaint(complaint) {
 
 async function getSchemes(tenantId, options = {}) {
     try {
-        const { limit = 10, offset = 0, searchQuery = '', lang = 'en' } = options;
+        const { limit = 10, offset = 0, searchQuery = '', excludeKeywords = [], lang = 'en' } = options;
 
         let query = supabase
             .from('schemes')
@@ -159,6 +159,17 @@ async function getSchemes(tenantId, options = {}) {
                 });
                 query = query.or(orConditions.join(','));
             }
+        }
+
+        // Exclusion functionality
+        if (excludeKeywords && excludeKeywords.length > 0) {
+            excludeKeywords.forEach(keyword => {
+                query = query.not('name', 'ilike', `%${keyword}%`)
+                    .not('description', 'ilike', `%${keyword}%`);
+                // Also check MR columns if they exist
+                query = query.not('name_mr', 'ilike', `%${keyword}%`)
+                    .not('description_mr', 'ilike', `%${keyword}%`);
+            });
         }
 
         const { data, error } = await query

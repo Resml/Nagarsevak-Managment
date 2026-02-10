@@ -685,9 +685,46 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 benefits = scheme.benefits_hi || scheme.benefits;
             }
 
-            // Remove existing multi-language separators if they exist in the text itself (e.g. "English / Marathi")
-            const cleanName = name.split(' / ')[lang === 'mr' ? 1 : 0] || name;
-            const cleanDesc = desc ? (desc.split(' / ')[lang === 'mr' ? 1 : 0] || desc) : '';
+            // --- Robust Split Logic ---
+            // Helper to extract the correct language part from a dual-lang string
+            const getLangPart = (text, targetLang) => {
+                if (!text) return '';
+
+                // 1. Try common separators: " / ", " | ", or ". " (if dot is followed by a space and it's not an abbreviation)
+                let parts = [];
+                if (text.includes(' / ')) parts = text.split(' / ');
+                else if (text.includes(' | ')) parts = text.split(' | ');
+                else if (text.includes('. ') && text.match(/[a-zA-Z]\. [अ-ज्ञ]/)) parts = text.split('. '); // Split if dot space followed by Marathi
+
+                if (parts.length >= 2) {
+                    // Usually English is first, Marathi is second in this DB
+                    return targetLang === 'mr' ? parts[parts.length - 1] : parts[0];
+                }
+
+                // 2. Character Set Detection (Look for Marathi characters)
+                const hasMarathi = /[अ-ज्ञ]/.test(text);
+                const hasEnglish = /[a-zA-Z]/.test(text);
+
+                if (hasMarathi && hasEnglish) {
+                    // Try to finding the boundary where characters change from Latn to Deva or vice versa
+                    // This is complex, but often there's a dot or specific word boundary.
+                    // For now, let's use a simpler approach: if it has both, and we want MR, 
+                    // we try to keep only the part starting from the first Marathi character.
+                    if (targetLang === 'mr') {
+                        const firstMr = text.search(/[अ-ज्ञ]/);
+                        return firstMr !== -1 ? text.substring(firstMr) : text;
+                    } else {
+                        // For English, we want to strip the Marathi part
+                        const firstMr = text.search(/[अ-ज्ञ]/);
+                        return firstMr !== -1 ? text.substring(0, firstMr) : text;
+                    }
+                }
+
+                return text;
+            };
+
+            const cleanName = getLangPart(name, lang);
+            const cleanDesc = getLangPart(desc, lang);
 
             schemeText += `${offset + index + 1}. *${cleanName.trim()}*\n`;
             if (cleanDesc) {
@@ -749,13 +786,22 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         await sock.sendMessage(userId, { text: recommendationMsg });
 
         // Build search query based on profile
-        let searchQuery = session.formData.gender === 'Female' ? 'महिला' : '';
+        let searchQuery = '';
+        let excludeKeywords = [];
+
+        if (session.formData.gender === 'Female') {
+            searchQuery = 'महिला';
+        } else if (session.formData.gender === 'Male') {
+            // EXCLUDE Women-centric schemes for men
+            excludeKeywords = ["महिला", "मुलगी", "स्री", "विधवा", "बहीण", "women", "lady", "girl", "sister", "widow", "female"];
+        }
+
         if (session.formData.category !== 'General') {
             searchQuery += (searchQuery ? ' ' : '') + session.formData.category;
         }
 
-        // Fetch schemes
-        const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0, searchQuery });
+        // Fetch schemes with exclusions
+        const schemes = await this.store.getSchemes(tenantId, { limit: 10, offset: 0, searchQuery, excludeKeywords });
 
         if (!schemes || schemes.length === 0) {
             // Fallback to showing all if no specific match
