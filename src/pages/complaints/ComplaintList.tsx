@@ -197,6 +197,9 @@ const ComplaintList = () => {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchComplaints();
+            })
             .subscribe();
 
         return () => {

@@ -71,7 +71,22 @@ const LetterDashboard = () => {
     useEffect(() => {
         fetchRequests();
         fetchIncomingLetters();
-    }, []);
+
+        // Real-time Subscriptions
+        const subscription = supabase
+            .channel('letter-dashboard-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'letter_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchRequests();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'incoming_letters', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchIncomingLetters();
+            })
+            .subscribe();
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [tenantId]);
 
     // Translate types when language matches Marathi
     useEffect(() => {

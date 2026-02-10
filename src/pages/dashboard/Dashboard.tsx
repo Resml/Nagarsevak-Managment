@@ -48,7 +48,13 @@ const Dashboard = () => {
         const subscription = supabase
             .channel('dashboard-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
-                fetchDashboardData(); // Refresh on any change
+                fetchDashboardData();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchDashboardData();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchDashboardData();
             })
             .subscribe();
 
