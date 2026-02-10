@@ -519,6 +519,25 @@ async function savePersonalRequest(request) {
     }
 }
 
+async function getPersonalRequestsByMobile(tenantId, mobile, limit = 10) {
+    try {
+        const cleanMobile = mobile.replace(/\D/g, '').slice(-10);
+        const { data, error } = await supabase
+            .from('personal_requests')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .ilike('reporter_mobile', `%${cleanMobile}%`)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching personal requests by mobile:', error);
+        return [];
+    }
+}
+
 module.exports = {
     saveUser,
     getUser,
@@ -540,5 +559,6 @@ module.exports = {
     reportAreaProblem,
     getAreaProblems,
     getAreaProblemsByUser,
-    savePersonalRequest
+    savePersonalRequest,
+    getPersonalRequestsByMobile
 };

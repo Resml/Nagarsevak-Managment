@@ -66,7 +66,8 @@ const ComplaintDetail = () => {
     const fetchComplaint = async () => {
         try {
             const isPersonal = id?.startsWith('pr-');
-            const actualId = isPersonal ? id?.replace('pr-', '') : id;
+            const isAreaProblem = id?.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? id?.split('-').slice(1).join('-') : id;
 
             if (isPersonal) {
                 const { data, error } = await supabase
@@ -102,6 +103,39 @@ const ComplaintDetail = () => {
                         category: 'Personal Help'
                     });
                 }
+            } else if (isAreaProblem) {
+                const { data, error } = await supabase
+                    .from('area_problems')
+                    .select('*')
+                    .eq('id', actualId)
+                    .eq('tenant_id', tenantId)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    const mapped: Complaint = {
+                        id: `ap-${data.id}`,
+                        title: data.title || 'Area Problem',
+                        description: data.description,
+                        type: 'SelfIdentified',
+                        status: data.status,
+                        ward: data.location || 'N/A',
+                        location: data.location,
+                        voter: {
+                            name_english: data.reporter_name || 'Anonymous',
+                            mobile: data.reporter_mobile || undefined
+                        },
+                        createdAt: data.created_at,
+                        updatedAt: data.created_at,
+                        photos: []
+                    };
+                    setComplaint(mapped);
+                    setEditForm({
+                        problem: data.description || '',
+                        category: 'SelfIdentified'
+                    });
+                }
             } else {
                 const { data, error } = await supabase
                     .from('complaints')
@@ -125,7 +159,26 @@ const ComplaintDetail = () => {
                         status: data.status,
                         ward: data.location || 'N/A',
                         location: data.location,
-                        voter: data.voter,
+                        voter: data.voter
+                            ? {
+                                name_english: data.voter.name_english ?? undefined,
+                                name_marathi: data.voter.name_marathi ?? undefined,
+                                mobile: data.voter.mobile ?? undefined,
+                            }
+                            : (() => {
+                                try {
+                                    const meta = data.description_meta ? JSON.parse(data.description_meta) : null;
+                                    if (meta?.submitter_name) {
+                                        return {
+                                            name_english: meta.submitter_name,
+                                            mobile: meta.submitter_mobile
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing meta", e);
+                                }
+                                return undefined;
+                            })(),
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
                         photos: [],
@@ -154,8 +207,9 @@ const ComplaintDetail = () => {
         if (!complaint) return;
         try {
             const isPersonal = complaint.id.startsWith('pr-');
-            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
-            const table = isPersonal ? 'personal_requests' : 'complaints';
+            const isAreaProblem = complaint.id.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
 
             const { error } = await supabase
                 .from(table)
@@ -179,11 +233,14 @@ const ComplaintDetail = () => {
         setUpdating(true);
         try {
             const isPersonal = complaint.id.startsWith('pr-');
-            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
-            const table = isPersonal ? 'personal_requests' : 'complaints';
+            const isAreaProblem = complaint.id.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
             const updateData = isPersonal
                 ? { description: editForm.problem }
-                : { problem: editForm.problem, category: editForm.category };
+                : isAreaProblem
+                    ? { description: editForm.problem }
+                    : { problem: editForm.problem, category: editForm.category };
 
             const { error } = await supabase
                 .from(table)
@@ -213,8 +270,9 @@ const ComplaintDetail = () => {
         setDeleting(true);
         try {
             const isPersonal = complaint.id.startsWith('pr-');
-            const actualId = isPersonal ? complaint.id.replace('pr-', '') : complaint.id;
-            const table = isPersonal ? 'personal_requests' : 'complaints';
+            const isAreaProblem = complaint.id.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
 
             const { error, count } = await supabase
                 .from(table)
@@ -230,7 +288,11 @@ const ComplaintDetail = () => {
             }
 
             toast.success('Deleted successfully');
-            navigate('/complaints');
+            if (isAreaProblem) {
+                navigate('/ward/problems');
+            } else {
+                navigate('/complaints');
+            }
         } catch (err) {
             console.error('Error deleting:', err);
             toast.error('Failed to delete');
@@ -309,7 +371,13 @@ const ComplaintDetail = () => {
             {/* Enhanced Header with Back and Delete */}
             <div className="flex items-center justify-between notranslate">
                 <button
-                    onClick={() => navigate('/complaints')}
+                    onClick={() => {
+                        if (complaint?.id.startsWith('ap-')) {
+                            navigate('/ward/problems');
+                        } else {
+                            navigate('/complaints');
+                        }
+                    }}
                     className="group flex items-center gap-2 text-slate-600 hover:text-brand-700 transition-colors font-medium"
                 >
                     <div className="p-2 bg-white rounded-full border border-slate-200 shadow-sm group-hover:border-brand-200 group-hover:shadow transition-all">
@@ -510,12 +578,12 @@ const ComplaintDetail = () => {
                             <li className="flex justify-between border-b border-slate-100 pb-2">
                                 <span className="text-slate-500">{t('complaints.form.detail.citizen')}</span>
                                 <span className="font-medium text-blue-600">
-                                    {language === 'mr' && complaint.voter?.name_marathi
+                                    {(language === 'mr' && complaint.voter?.name_marathi)
                                         ? complaint.voter.name_marathi
-                                        : (complaint.voter?.name_english || t('complaints.form.detail.anonymous'))}
+                                        : (complaint.voter?.name_english || complaint.voter?.name_marathi || t('complaints.form.detail.anonymous'))}
                                 </span>
                             </li>
-                            {complaint.voter?.mobile && (
+                            {(complaint.voter?.mobile) && (
                                 <li className="flex justify-between border-b border-slate-100 pb-2">
                                     <span className="text-slate-500">{t('complaints.form.detail.mobile')}</span>
                                     <span className="font-medium text-slate-700">{complaint.voter.mobile}</span>

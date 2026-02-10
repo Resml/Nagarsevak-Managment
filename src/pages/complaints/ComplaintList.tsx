@@ -88,6 +88,7 @@ const ComplaintList = () => {
                 created_at: string;
             };
 
+
             const allowedTypes: readonly ComplaintType[] = [
                 'Cleaning',
                 'Water',
@@ -123,14 +124,27 @@ const ComplaintList = () => {
                     }
                     : (() => {
                         try {
-                            const meta = row.description_meta ? JSON.parse(row.description_meta) : null;
-                            if (meta?.submitter_name) {
+                            if (!row.description_meta) return undefined;
+
+                            // Check if it's a plain mobile number (10 digits)
+                            const cleanMeta = row.description_meta.trim();
+                            if (/^\d{10}$/.test(cleanMeta)) {
+                                return { mobile: cleanMeta };
+                            }
+
+                            const meta = JSON.parse(row.description_meta);
+                            if (meta?.submitter_name || meta?.submitter_mobile) {
                                 return {
                                     name_english: meta.submitter_name,
                                     mobile: meta.submitter_mobile
                                 };
                             }
                         } catch (e) {
+                            // If parsing fails but it looks like a mobile number or has info, maybe we can extract
+                            const cleanMeta = row.description_meta?.trim();
+                            if (cleanMeta && /^\d{10}$/.test(cleanMeta)) {
+                                return { mobile: cleanMeta };
+                            }
                             console.error("Error parsing meta", e);
                         }
                         return undefined;
@@ -221,10 +235,11 @@ const ComplaintList = () => {
         let typeMatch = false;
 
         if (activeTab === 'Complaints') {
-            // Area Complaints: Exclude Personal Help and Self Identified
-            typeMatch = c.type !== 'Personal Help' && c.type !== 'SelfIdentified';
+            // Area Complaints: Exclude Personal Help, Help, and SelfIdentified (Ward Problems)
+            typeMatch = c.type !== 'Personal Help' && c.type !== 'Help' && c.type !== 'SelfIdentified';
         } else if (activeTab === 'Personal Help') {
-            typeMatch = c.type === 'Personal Help';
+            // Personal Help: Include personal_requests table AND regular Help complaints
+            typeMatch = c.type === 'Personal Help' || c.type === 'Help';
         }
 
         return statusMatch && typeMatch && matchesSearch && matchesArea && matchesDate;
@@ -336,7 +351,7 @@ const ComplaintList = () => {
                                 'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
                             )}
                         >
-                            {isTranslated ? <span className="notranslate">वैयक्तिक विनंत्या</span> : t('complaints.tabs.personal')}
+                            {isTranslated ? <span className="notranslate">वैयक्तिक विनंती</span> : t('complaints.tabs.personal')}
                         </button>
 
                     </nav>
@@ -506,6 +521,7 @@ const ComplaintList = () => {
                                     {language === 'mr' && complaint.voter.name_marathi
                                         ? complaint.voter.name_marathi
                                         : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                    {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
                                 </div>
                             )}
 

@@ -435,8 +435,10 @@ const WardWiseProblem = () => {
 
                             {complaint.voter && (
                                 <div className="mb-2 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded flex items-center gap-1 w-fit">
-                                    <User className="w-3 h-3" />
-                                    {complaint.voter.name_english || complaint.voter.name_marathi}
+                                    {language === 'mr' && complaint.voter.name_marathi
+                                        ? complaint.voter.name_marathi
+                                        : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                    {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
                                 </div>
                             )}
 

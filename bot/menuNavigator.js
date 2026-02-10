@@ -50,7 +50,8 @@ const MENU_STATES = {
     PERSONAL_REQUEST_MENU: 'PERSONAL_REQUEST_MENU',
     PERSONAL_REQUEST_FORM_NAME: 'PERSONAL_REQUEST_FORM_NAME',
     PERSONAL_REQUEST_FORM_MOBILE: 'PERSONAL_REQUEST_FORM_MOBILE',
-    PERSONAL_REQUEST_FORM_DESC: 'PERSONAL_REQUEST_FORM_DESC'
+    PERSONAL_REQUEST_FORM_DESC: 'PERSONAL_REQUEST_FORM_DESC',
+    PERSONAL_REQUEST_TRACK_MOBILE: 'PERSONAL_REQUEST_TRACK_MOBILE'
 };
 
 class MenuNavigator {
@@ -163,6 +164,9 @@ class MenuNavigator {
             case MENU_STATES.PERSONAL_REQUEST_FORM_DESC:
                 return await this.handlePersonalRequestDesc(sock, tenantId, userId, input);
 
+            case MENU_STATES.PERSONAL_REQUEST_TRACK_MOBILE:
+                return await this.handlePersonalRequestTrackMobile(sock, tenantId, userId, input);
+
             case MENU_STATES.COMPLAINT_FORM_DESCRIPTION:
                 return await this.handleComplaintFormDescription(sock, tenantId, userId, input);
 
@@ -210,21 +214,6 @@ class MenuNavigator {
 
             case MENU_STATES.LETTER_FORM_PURPOSE:
                 return await this.handleLetterFormPurpose(sock, tenantId, userId, input);
-
-            case MENU_STATES.AREA_PROBLEM_REPORT:
-                return await this.handleAreaProblemReport(sock, tenantId, userId, input);
-
-            case MENU_STATES.PERSONAL_REQUEST_MENU:
-                return await this.handlePersonalRequestMenu(sock, tenantId, userId, input);
-
-            case MENU_STATES.PERSONAL_REQUEST_FORM_NAME:
-                return await this.handlePersonalRequestName(sock, tenantId, userId, input);
-
-            case MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE:
-                return await this.handlePersonalRequestMobile(sock, tenantId, userId, input);
-
-            case MENU_STATES.PERSONAL_REQUEST_FORM_DESC:
-                return await this.handlePersonalRequestDesc(sock, tenantId, userId, input);
 
 
             case MENU_STATES.AREA_PROBLEM_FORM_NAME:
@@ -1634,6 +1623,9 @@ Your request has been sent to the office for approval. You will be notified once
             session.personalFormData = { category: categories[input] };
             session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_NAME;
             await sock.sendMessage(userId, { text: MESSAGES.complaint_name_prompt[lang] });
+        } else if (input === '6') {
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_TRACK_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.personal_request_track_prompt[lang] });
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] + '\n\n' + PERSONAL_REQUEST_MENU[lang].text });
         }
@@ -1689,6 +1681,44 @@ Your request has been sent to the office for approval. You will be notified once
             const errMsg = lang === 'en' ? 'Error submitting request.' : 'त्रुटी.';
             await sock.sendMessage(userId, { text: errMsg });
         }
+    }
+
+    async handlePersonalRequestTrackMobile(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const mobile = input.trim().replace(/\D/g, '');
+
+        if (mobile.length !== 10) {
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            return;
+        }
+
+        const requests = await this.store.getPersonalRequestsByMobile(tenantId, mobile);
+
+        if (!requests || requests.length === 0) {
+            const noRequests = lang === 'en' ? '❌ No personal requests found linked to this mobile number.' :
+                lang === 'mr' ? '❌ या मोबाईल नंबरवर कोणत्याही वैयक्तिक विनंत्या सापडल्या नाहीत.' :
+                    '❌ इस मोबाइल नंबर से जुड़ा कोई व्यक्तिगत अनुरोध नहीं मिला।';
+            await sock.sendMessage(userId, { text: noRequests });
+        } else {
+            let listText = lang === 'en' ? `📋 *Your Personal Requests* (${requests.length}) \n\n` :
+                lang === 'mr' ? `📋 *तुमच्या वैयक्तिक विनंत्या* (${requests.length})\n\n` :
+                    `📋 *आपके व्यक्तिगत अनुरोध* (${requests.length})\n\n`;
+
+            requests.forEach((req, index) => {
+                const statusEmoji = req.status === 'Resolved' ? '✅' : req.status === 'In Progress' ? '⏳' : '🔴';
+                const date = new Date(req.created_at).toLocaleDateString(lang === 'mr' ? 'mr-IN' : 'en-IN');
+
+                listText += `${index + 1}. ${statusEmoji} *${req.request_type}*\n`;
+                listText += `   Status: ${req.status}\n`;
+                listText += `   Date: ${date}\n\n`;
+            });
+
+            await sock.sendMessage(userId, { text: listText });
+        }
+
+        session.currentMenu = MENU_STATES.PERSONAL_REQUEST_MENU;
+        await sock.sendMessage(userId, { text: PERSONAL_REQUEST_MENU[lang].text });
     }
 }
 

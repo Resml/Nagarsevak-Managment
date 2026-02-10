@@ -283,12 +283,12 @@ const ProfileSettings = () => {
                 <div className="ns-card p-6 space-y-4">
                     <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
                         <Building2 className="w-5 h-5 text-brand-600" />
-                        {t('sadasya.office_details') || 'Office & Contact Information'}
+                        {t('sadasya.office_details')}
                     </h3>
 
                     <div className="space-y-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Office Address</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_address')}</label>
                             <input
                                 type="text"
                                 name="office_address"
@@ -299,7 +299,7 @@ const ProfileSettings = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Office Hours</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_hours')}</label>
                             <input
                                 type="text"
                                 name="office_hours"
@@ -310,9 +310,9 @@ const ProfileSettings = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.phone_number')}</label>
                             <input
-                                type="tel"
+                                type="text"
                                 name="phone_number"
                                 value={formData.phone_number}
                                 onChange={handleInputChange}
@@ -321,7 +321,7 @@ const ProfileSettings = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.email_address')}</label>
                             <input
                                 type="email"
                                 name="email_address"
@@ -332,7 +332,7 @@ const ProfileSettings = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Social Media (FB/IG)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.social_media_link')}</label>
                             <input
                                 type="text"
                                 name="social_media_link"
