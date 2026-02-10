@@ -487,6 +487,23 @@ async function getAreaProblems(tenantId, status = 'all', limit = 10) {
     }
 }
 
+async function getAreaProblemsByUser(userId, limit = 10) {
+    try {
+        const { data, error } = await supabase
+            .from('area_problems')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching area problems by user:', error);
+        return [];
+    }
+}
+
 module.exports = {
     saveUser,
     getUser,
@@ -506,5 +523,6 @@ module.exports = {
     saveLetterRequest,
     getContactInfo,
     reportAreaProblem,
-    getAreaProblems
+    getAreaProblems,
+    getAreaProblemsByUser
 };

@@ -69,6 +69,22 @@ class MenuNavigator {
         return userSessions[userId];
     }
 
+    formatTimeTo12hr(timeStr) {
+        if (!timeStr) return '';
+        try {
+            const parts = timeStr.split(':');
+            if (parts.length < 2) return timeStr;
+            let h = parseInt(parts[0]);
+            const m = parts[1];
+            const ampm = h >= 12 ? ' PM' : ' AM';
+            h = h % 12;
+            h = h ? h : 12;
+            return `${h}:${m}${ampm}`;
+        } catch (e) {
+            return timeStr;
+        }
+    }
+
     /**
      * Main message handler
      */
@@ -1007,7 +1023,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 const dateStr = event.event_date || event.date;
                 const d = new Date(dateStr);
                 const date = isNaN(d.getTime()) ? 'TBA' : d.toLocaleDateString(lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-IN');
-                const time = event.event_time ? ` | 🕒 ${event.event_time}` : '';
+                const time = event.event_time ? ` | 🕒 ${this.formatTimeTo12hr(event.event_time)}` : '';
                 const location = event.location || 'TBA';
                 eventText += `${index + 1}. *${title}*\n   📅 ${date}${time}\n   📍 ${location}\n\n`;
             });
@@ -1114,63 +1130,62 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 await sock.sendMessage(userId, { text: namePrompt });
                 return;
 
-            case '2': // View Ward Issues
+            case '2': // My Problems
                 try {
-                    const problems = await this.store.getAreaProblems(tenantId, 'Pending', 5);
-                    let problemsText = lang === 'en' ? '🚨 *Area Problems (Pending)*\n\n' :
-                        lang === 'mr' ? '🚨 *क्षेत्र समस्या (प्रलंबित)*\n\n' :
-                            '🚨 *क्षेत्र समस्याएं (लंबित)*\n\n';
+                    const problems = await this.store.getAreaProblemsByUser(userId, 5);
+                    let problemsText = lang === 'en' ? '🚨 *My Reported Problems*\n\n' :
+                        lang === 'mr' ? '🚨 *माझ्या नोंदवलेल्या समस्या*\n\n' :
+                            '🚨 *मेरी दर्ज की गई समस्याएं*\n\n';
 
-                    if (problems.length === 0) {
-                        problemsText += lang === 'en' ? 'No pending problems reported.' :
-                            lang === 'mr' ? 'कोणत्याही प्रलंबित समस्या नोंदविल्या नाहीत.' :
-                                'कोई लंबित समस्या नहीं';
+                    if (!problems || problems.length === 0) {
+                        problemsText += lang === 'en' ? 'You haven\'t reported any problems yet.' :
+                            lang === 'mr' ? 'तुम्ही अद्याप कोणतीही समस्या नोंदवलेली नाही.' :
+                                'आपने अभी तक कोई समस्या दर्ज नहीं की है।';
                     } else {
                         problems.forEach((problem, idx) => {
                             const date = new Date(problem.created_at).toLocaleDateString();
-                            problemsText += `${idx + 1}. *${problem.title}*\n`;
-                            problemsText += `   ${problem.description.substring(0, 60)}...\n`;
+                            const statusEmoji = problem.status === 'Resolved' ? '✅' : '🔴';
+                            problemsText += `${idx + 1}. ${statusEmoji} *${problem.title}*\n`;
+                            problemsText += `   Status: ${problem.status}\n`;
                             problemsText += `   📅 ${date} | 📍 ${problem.location || 'N/A'}\n\n`;
                         });
                     }
 
                     await sock.sendMessage(userId, { text: problemsText });
                 } catch (error) {
-                    console.error('Error fetching area problems:', error);
-                    const errMsg = lang === 'en' ? 'Error fetching problems.' :
-                        lang === 'mr' ? 'समस्या आणण्यात त्रुटी.' : 'समस्याएं प्राप्त करने में त्रुटि।';
-                    await sock.sendMessage(userId, { text: errMsg });
+                    console.error('Error fetching user problems:', error);
                 }
                 break;
 
-            case '3': // Resolved Problems  
+            case '3': // Solved Problems (Ward-wide)
                 try {
-                    const resolved = await this.store.getAreaProblems(tenantId, 'Resolved', 5);
-                    let resolvedText = lang === 'en' ? '✅ *Resolved Area Problems*\n\n' :
-                        lang === 'mr' ? '✅ *निराकरण झालेल्या समस्या*\n\n' :
-                            '✅ *हल की गई समस्याएं*\n\n';
+                    const resolved = await this.store.getAreaProblems(tenantId, 'Resolved', 10);
+                    let resolvedText = lang === 'en' ? '✅ *Solved Ward Problems*\n\n' :
+                        lang === 'mr' ? '✅ *सोडवलेल्या समस्या (प्रभाग)*\n\n' :
+                            '✅ *हल की गई समस्याएं (वार्ड)*\n\n';
 
-                    if (resolved.length === 0) {
-                        resolvedText += lang === 'en' ? 'No resolved problems yet.' :
-                            lang === 'mr' ? 'अद्याप कोणत्याही समस्या सोडवल्या नाहीत.' :
-                                'अभी तक कोई समस्या हल नहीं हुई।';
+                    if (!resolved || resolved.length === 0) {
+                        resolvedText += lang === 'en' ? 'No resolved problems to show.' :
+                            lang === 'mr' ? 'दर्शवण्यासाठी कोणत्याही सोडवलेल्या समस्या नाहीत.' :
+                                'दिखाने के लिए कोई हल की गई समस्या नहीं है।';
                     } else {
                         resolved.forEach((problem, idx) => {
-                            const date = new Date(problem.resolved_at).toLocaleDateString();
+                            const date = problem.resolved_at ? new Date(problem.resolved_at).toLocaleDateString() : 'N/A';
                             resolvedText += `${idx + 1}. *${problem.title}*\n`;
-                            resolvedText += `   ✓ Resolved on ${date}\n\n`;
+                            resolvedText += `   ✓ Resolved on ${date}\n   📍 ${problem.location || 'N/A'}\n\n`;
                         });
                     }
 
                     await sock.sendMessage(userId, { text: resolvedText });
                 } catch (error) {
-                    console.error('Error fetching resolved problems:', error);
+                    console.error('Error fetching resolved area problems:', error);
                 }
                 break;
 
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.ward_problems[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
+                return;
         }
 
         await this.showWardProblemsMenu(sock, userId, lang);
