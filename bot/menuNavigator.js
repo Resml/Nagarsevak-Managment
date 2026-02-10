@@ -1605,25 +1605,9 @@ Your request has been sent to the office for approval. You will be notified once
             case '3': // Contact Information
                 return await this.showContactMenu(sock, userId, lang);
             case '4': // Meeting Diary
-                response = lang === 'en' ? '📅 *Meeting Diary*\n\nUpcoming meetings and minutes are available on the website.' :
-                    lang === 'mr' ? '📅 *मीटिंग डायरी*\n\nआगामी सभा आणि कार्यवृत्त वेबसाइटवर उपलब्ध आहेत.' :
-                        '📅 *मीटिंग डायरी*\n\nआगामी बैठकें और कार्यवृत्त वेबसाइट पर उपलब्ध हैं।';
-                break;
             case '5': // Photo Gallery
-                response = lang === 'en' ? '📸 *Photo Gallery*\n\nView photos of events and development works on our website.' :
-                    lang === 'mr' ? '📸 *फोटो गॅलरी*\n\nआमच्या वेबसाइटवर कार्यक्रम आणि विकास कार्यांचे फोटो पहा.' :
-                        '📸 *फोटो गैलरी*\n\nहमारी वेबसाइट पर आयोजनों और विकास कार्यों की तस्वीरें देखें।';
-                break;
             case '6': // Newspaper Clippings
-                response = lang === 'en' ? '📰 *Newspaper Clippings*\n\nLatest news coverage is available on the website.' :
-                    lang === 'mr' ? '📰 *वृत्तपत्र कात्रणे*\n\nनवीनतम बातम्यांचा संग्रह वेबसाइटवर उपलब्ध आहे.' :
-                        '📰 *अखबार की कतरनें*\n\nनवीनतम समाचार कवरेज वेबसाइट पर उपलब्ध है।';
-                break;
             case '7': // Ward Budget Info
-                response = lang === 'en' ? '💰 *Ward Budget Information*\n\nDetailed budget allocation and spending reports are available on the website.' :
-                    lang === 'mr' ? '💰 *प्रभाग अर्थसंकल्प*\n\nतपशीलवार अर्थसंकल्प वाटप आणि खर्च अहवाल वेबसाइटवर उपलब्ध आहेत.' :
-                        '💰 *वार्ड बजट जानकारी*\n\nविस्तृत बजट आवंटन और खर्च रिपोर्ट वेबसाइट पर उपलब्ध हैं।';
-                break;
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.other[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
@@ -1645,7 +1629,8 @@ Your request has been sent to the office for approval. You will be notified once
             '1': 'Education/Admission',
             '2': 'Medical Help/Hospital',
             '3': 'Financial Assistance',
-            '4': 'General Help'
+            '4': 'General Help',
+            '5': 'Other Help'
         };
 
         if (categories[input]) {

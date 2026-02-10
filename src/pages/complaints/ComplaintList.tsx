@@ -32,7 +32,7 @@ const ComplaintList = () => {
     const fetchComplaints = async () => {
         try {
             // Select complaints and join with voters table
-            const { data, error } = await supabase
+            const { data: complaintsData, error: complaintsError } = await supabase
                 .from('complaints')
                 .select(`
                     *,
@@ -45,9 +45,20 @@ const ComplaintList = () => {
                 .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching complaints:', error);
+            if (complaintsError) {
+                console.error('Error fetching complaints:', complaintsError);
                 return;
+            }
+
+            // Fetch personal requests
+            const { data: personalRequestsData, error: personalError } = await supabase
+                .from('personal_requests')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('created_at', { ascending: false });
+
+            if (personalError) {
+                console.error('Error fetching personal requests:', personalError);
             }
 
             type ComplaintRow = {
@@ -66,6 +77,16 @@ const ComplaintList = () => {
                 } | null;
             };
 
+            type PersonalRequestRow = {
+                id: string | number;
+                reporter_name: string;
+                reporter_mobile: string;
+                request_type: string;
+                description: string;
+                status: ComplaintStatus;
+                created_at: string;
+            };
+
             const allowedTypes: readonly ComplaintType[] = [
                 'Cleaning',
                 'Water',
@@ -82,12 +103,12 @@ const ComplaintList = () => {
             const isComplaintType = (value: string): value is ComplaintType =>
                 (allowedTypes as readonly string[]).includes(value);
 
-            // Map Supabase data to App Type
-            const mappedComplaints: Complaint[] = (data || []).map((row: ComplaintRow) => ({
+            // Map complaints
+            const mappedComplaints: Complaint[] = (complaintsData || []).map((row: ComplaintRow) => ({
                 id: row.id.toString(),
                 title: row.problem ?? 'Request',
                 description: row.problem ?? '',
-                type: row.category && isComplaintType(row.category) ? row.category : 'Complaint', // Use DB category safely
+                type: row.category && isComplaintType(row.category) ? row.category : 'Complaint',
                 status: row.status,
                 ward: row.location || 'N/A',
                 location: row.location ?? undefined,
@@ -105,7 +126,29 @@ const ComplaintList = () => {
                 updatedAt: row.created_at
             }));
 
-            setComplaints(mappedComplaints);
+            // Map personal requests to Complaint type
+            const mappedPersonalRequests: Complaint[] = (personalRequestsData || []).map((row: PersonalRequestRow) => ({
+                id: `pr-${row.id}`,
+                title: row.request_type,
+                description: row.description,
+                type: 'Personal Help',
+                status: row.status,
+                ward: 'WhatsApp',
+                createdAt: row.created_at,
+                voter: {
+                    name_english: row.reporter_name,
+                    mobile: row.reporter_mobile
+                },
+                photos: [],
+                updatedAt: row.created_at
+            }));
+
+            // Merge and sort
+            const merged = [...mappedComplaints, ...mappedPersonalRequests].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+
+            setComplaints(merged);
         } catch (err) {
             console.error(err);
         } finally {
@@ -119,14 +162,11 @@ const ComplaintList = () => {
         // Real-time Subscription
         // Real-time Subscription
         const subscription = supabase
-            .channel('complaints_channel')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+            .channel('complaints_personal_channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
-                fetchComplaints();
-            })
-            .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .subscribe();
