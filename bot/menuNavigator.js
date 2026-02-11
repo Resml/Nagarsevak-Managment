@@ -52,7 +52,9 @@ const MENU_STATES = {
     VOTER_VERIFY_NAME_PROMPT: 'VOTER_VERIFY_NAME_PROMPT',
     VOTER_VERIFY_CONFIRM: 'VOTER_VERIFY_CONFIRM',
     VOTER_REGISTER_NAME: 'VOTER_REGISTER_NAME',
-    VOTER_REGISTER_WARD: 'VOTER_REGISTER_WARD'
+    VOTER_REGISTER_WARD: 'VOTER_REGISTER_WARD',
+    COMPLAINT_VOTER_VERIFY: 'COMPLAINT_VOTER_VERIFY',
+    PERSONAL_REQUEST_VOTER_VERIFY: 'PERSONAL_REQUEST_VOTER_VERIFY'
 };
 
 class MenuNavigator {
@@ -244,6 +246,12 @@ class MenuNavigator {
             case MENU_STATES.VOTER_REGISTER_WARD:
                 return await this.handleVoterRegisterWard(sock, tenantId, userId, input);
 
+            case MENU_STATES.COMPLAINT_VOTER_VERIFY:
+                return await this.handleComplaintVoterVerify(sock, tenantId, userId, input);
+
+            case MENU_STATES.PERSONAL_REQUEST_VOTER_VERIFY:
+                return await this.handlePersonalRequestVoterVerify(sock, tenantId, userId, input);
+
             default:
                 // Fallback to language selection
                 return await this.showLanguageMenu(sock, userId);
@@ -388,11 +396,73 @@ class MenuNavigator {
      */
     async handleComplaintFormName(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
-        session.formData.name = input;
-        session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
-
         const lang = session.language;
-        await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+        const nameQuery = input.trim();
+        session.formData.name = nameQuery;
+
+        const voters = await this.store.searchVoters(tenantId, nameQuery, 'name', 5);
+
+        if (voters && voters.length > 0) {
+            session.votersFound = voters;
+            session.currentMenu = MENU_STATES.COMPLAINT_VOTER_VERIFY;
+
+            let listMsg = lang === 'en' ? `🔍 *Is this you?*\n\nPlease select (1-${voters.length}):\n\n` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\nकृपया निवडा (१-${voters.length}):\n\n` :
+                    `🔍 *क्या यह आप हैं?*\n\nकृपया चुनें (1-${voters.length}):\n\n`;
+
+            voters.forEach((v, i) => {
+                const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+            });
+            listMsg += `\n0️⃣ None of these (New Voter)`;
+            await sock.sendMessage(userId, { text: listMsg });
+        } else {
+            // Not found
+            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your complaint." :
+                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या तक्रारीसह पुढे जात आहोत." :
+                    "नये मतदाता का स्वागत है! आपकी शिकायत के साथ आगे बढ़ रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+        }
+    }
+
+    async handleComplaintVoterVerify(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (input === '0') {
+            const msg = lang === 'en' ? "Okay, registering as a new voter." :
+                lang === 'mr' ? "ठीक आहे, नवीन मतदार म्हणून नोंदणी करत आहोत." :
+                    "ठीक है, नए मतदाता के रूप में पंजीकरण कर रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            delete session.votersFound;
+            session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            return;
+        }
+
+        const idx = parseInt(input) - 1;
+        if (idx >= 0 && idx < (session.votersFound?.length || 0)) {
+            const voter = session.votersFound[idx];
+            session.formData.voter_id = voter.id;
+            session.formData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            session.formData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+            session.formData.ward = voter.ward;
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            await sock.sendMessage(userId, { text: successMsg });
+
+            delete session.votersFound;
+
+            // Skip mobile prompt if we have a valid mobile, or just ask to confirm
+            session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] + ` (linked: ${session.formData.mobile})` });
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
     }
 
     async handleComplaintFormMobile(sock, tenantId, userId, input) {
@@ -553,7 +623,8 @@ class MenuNavigator {
                 source: 'WhatsApp',
                 urgency: 'Medium',
                 photos: [],
-                tenantId: tenantId
+                tenantId: tenantId,
+                voter_id: session.formData.voter_id
             };
 
             // Save to database
@@ -1858,9 +1929,70 @@ Your request has been sent to the office for approval. You will be notified once
     async handlePersonalRequestName(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
-        session.personalFormData.reporter_name = input.trim();
-        session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
-        await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+        const nameQuery = input.trim();
+        session.personalFormData.reporter_name = nameQuery;
+
+        const voters = await this.store.searchVoters(tenantId, nameQuery, 'name', 5);
+
+        if (voters && voters.length > 0) {
+            session.votersFound = voters;
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_VOTER_VERIFY;
+
+            let listMsg = lang === 'en' ? `🔍 *Is this you?*\n\nPlease select (1-${voters.length}):\n\n` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\nकृपया निवडा (१-${voters.length}):\n\n` :
+                    `🔍 *क्या यह आप हैं?*\n\nकृपया चुनें (1-${voters.length}):\n\n`;
+
+            voters.forEach((v, i) => {
+                const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+            });
+            listMsg += `\n0️⃣ None of these (New Voter)`;
+            await sock.sendMessage(userId, { text: listMsg });
+        } else {
+            // Not found
+            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your request." :
+                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या विनंतीसह पुढे जात आहोत." :
+                    "नये मतदाता का स्वागत है! आपकी शिकायत के साथ आगे बढ़ रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+        }
+    }
+
+    async handlePersonalRequestVoterVerify(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (input === '0') {
+            const msg = lang === 'en' ? "Okay, registering as a new voter." :
+                lang === 'mr' ? "ठीक आहे, नवीन मतदार म्हणून नोंदणी करत आहोत." :
+                    "ठीक है, नए मतदाता के रूप में पंजीकरण कर रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            delete session.votersFound;
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            return;
+        }
+
+        const idx = parseInt(input) - 1;
+        if (idx >= 0 && idx < (session.votersFound?.length || 0)) {
+            const voter = session.votersFound[idx];
+            session.personalFormData.voter_id = voter.id;
+            session.personalFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            session.personalFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            await sock.sendMessage(userId, { text: successMsg });
+
+            delete session.votersFound;
+
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] + ` (linked: ${session.personalFormData.reporter_mobile})` });
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
     }
 
     async handlePersonalRequestMobile(sock, tenantId, userId, input) {
@@ -1889,7 +2021,8 @@ Your request has been sent to the office for approval. You will be notified once
                 reporter_mobile: session.personalFormData.reporter_mobile,
                 request_type: session.personalFormData.category,
                 description: session.personalFormData.description,
-                status: 'Pending'
+                status: 'Pending',
+                voter_id: session.personalFormData.voter_id
             };
 
             await this.store.savePersonalRequest(requestData);

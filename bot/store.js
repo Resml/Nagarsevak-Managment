@@ -54,11 +54,11 @@ async function saveComplaint(complaint) {
 
     // 1. Try Supabase
     try {
-        let voterId = null;
+        let voterId = complaint.voter_id || null;
 
         // --- VOTER LINKING LOGIC ---
-        // Try to find a matching voter by mobile or name
-        if (complaint.mobile) {
+        // Try to find a matching voter by mobile if not already linked
+        if (!voterId && complaint.mobile) {
             const cleanMobile = complaint.mobile.replace(/\D/g, '').slice(-10); // Last 10 digits
 
             // Search by Mobile
@@ -75,7 +75,7 @@ async function saveComplaint(complaint) {
                 voterId = voters[0].id;
                 console.log(`Linked complaint to Voter ID: ${voterId} (${voters[0].name_english || voters[0].name_marathi})`);
             } else {
-                console.log('No matching voter found for linking.');
+                console.log('No matching voter found for linking by mobile.');
             }
         }
 
@@ -195,9 +195,24 @@ async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
             .eq('tenant_id', tenantId);
 
         if (searchType === 'name') {
-            dbQuery = dbQuery.or(`name_english.ilike.%${query}%,name_marathi.ilike.%${query}%`);
+            const parts = query.trim().split(/\s+/);
+            if (parts.length > 1) {
+                // Search for all parts in either English or Marathi name
+                let conditions = [];
+                parts.forEach(part => {
+                    conditions.push(`name_english.ilike.%${part}%`);
+                    conditions.push(`name_marathi.ilike.%${part}%`);
+                });
+
+                // Constructing a complex OR/AND is tricky with JS client .or()
+                // Better: if multiple words, use ilike with %between%words%
+                const joinedQuery = `%${parts.join('%')}%`;
+                dbQuery = dbQuery.or(`name_english.ilike.${joinedQuery},name_marathi.ilike.${joinedQuery}`);
+            } else {
+                dbQuery = dbQuery.or(`name_english.ilike.%${query}%,name_marathi.ilike.%${query}%`);
+            }
         } else if (searchType === 'mobile') {
-            const cleanMobile = query.replace(/\D/g, '');
+            const cleanMobile = query.replace(/\D/g, '').slice(-10);
             dbQuery = dbQuery.ilike('mobile', `%${cleanMobile}%`);
         } else if (searchType === 'voter_id') {
             dbQuery = dbQuery.ilike('card_number', `%${query}%`);
@@ -205,6 +220,15 @@ async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
 
         const { data, error } = await dbQuery.limit(limit);
         if (error) throw error;
+
+        // If no results for name, and query looks like mobile, try mobile search
+        if (data.length === 0 && searchType === 'name') {
+            const clean = query.replace(/\D/g, '');
+            if (clean.length >= 10) {
+                return await searchVoters(tenantId, clean, 'mobile', limit);
+            }
+        }
+
         return data || [];
     } catch (err) {
         console.error('Error searching voters:', err);
