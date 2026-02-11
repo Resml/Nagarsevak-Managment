@@ -463,7 +463,6 @@ class MenuNavigator {
             const voter = session.votersFound[idx];
             session.formData.voter_id = voter.id;
             session.formData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            session.formData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
             session.formData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
             let info = lang === 'mr' ?
@@ -479,11 +478,14 @@ class MenuNavigator {
 
             delete session.votersFound;
 
-            // Auto-skip mobile if already in database
+            // Mobile Confirmation Prompt
             if (voter.mobile) {
-                session.formData.mobile = voter.mobile;
-                session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
-                await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
+                session.tempVoterMobile = voter.mobile;
+                session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
+                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
+                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
+                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
+                await sock.sendMessage(userId, { text: confirmPrompt });
             } else {
                 session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
                 await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
@@ -495,22 +497,35 @@ class MenuNavigator {
 
     async handleComplaintFormMobile(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
+        const lang = session.language;
 
-        // Simple validation: must be 10 digits
-        const cleanMobile = input.replace(/\D/g, '');
-        if (cleanMobile.length !== 10) {
-            const lang = session.language;
-            const errorMsg = lang === 'en' ? '❌ Please enter a valid 10-digit mobile number' :
-                lang === 'mr' ? '❌ कृपया वैध १० अंकी मोबाइल नंबर प्रविष्ट करा' :
-                    '❌ कृपया एक वैध 10 अंकों का मोबाइल नंबर दर्ज करें';
-            await sock.sendMessage(userId, { text: errorMsg + '\n\n' + MESSAGES.complaint_mobile_prompt[lang] });
-            return;
+        let cleanMobile = input.replace(/\D/g, '');
+
+        // Check if user selected '1' for confirmed mobile
+        if (input === '1' && session.tempVoterMobile) {
+            cleanMobile = session.tempVoterMobile;
+            delete session.tempVoterMobile;
+        } else {
+            if (cleanMobile.length !== 10) {
+                const errorMsg = lang === 'en' ? '❌ Please enter a valid 10-digit mobile number' :
+                    lang === 'mr' ? '❌ कृपया वैध १० अंकी मोबाइल नंबर प्रविष्ट करा' :
+                        '❌ कृपया एक वैध 10 अंकों का मोबाइल नंबर दर्ज करें';
+                await sock.sendMessage(userId, { text: errorMsg + '\n\n' + MESSAGES.complaint_mobile_prompt[lang] });
+                return;
+            }
+            // Update voter in DB if linked and number changed
+            if (session.formData.voter_id && cleanMobile !== session.tempVoterMobile) {
+                try {
+                    await this.store.updateVoter(session.formData.voter_id, { mobile: cleanMobile });
+                } catch (error) {
+                    console.error('Failed to update voter mobile:', error);
+                }
+            }
+            delete session.tempVoterMobile;
         }
 
         session.formData.mobile = cleanMobile;
         session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
-
-        const lang = session.language;
         await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
     }
 
@@ -558,14 +573,28 @@ class MenuNavigator {
 
     async handleComplaintFormLocation(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
+        const lang = session.language;
+
         if (input === '1' && session.formData.original_address) {
             session.formData.location = session.formData.original_address;
         } else {
-            session.formData.location = input;
+            session.formData.location = input.trim();
+            // Update voter address in DB if linked and changed
+            if (session.formData.voter_id && session.formData.location !== session.formData.original_address) {
+                try {
+                    const updateData = {};
+                    if (lang === 'mr') {
+                        updateData.address_marathi = session.formData.location;
+                    } else {
+                        updateData.address_english = session.formData.location;
+                    }
+                    await this.store.updateVoter(session.formData.voter_id, updateData);
+                } catch (error) {
+                    console.error('Failed to update voter address:', error);
+                }
+            }
         }
         session.currentMenu = MENU_STATES.COMPLAINT_FORM_PHOTO;
-
-        const lang = session.language;
         await sock.sendMessage(userId, { text: MESSAGES.complaint_photo_prompt[lang] });
     }
 
@@ -1766,15 +1795,15 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             delete session.votersFound;
 
-            // Auto-skip mobile if already in database
+            // Mobile Confirmation Prompt
             if (voter.mobile) {
-                session.letterFormData.mobile = voter.mobile;
-                session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
+                session.tempVoterMobile = voter.mobile;
+                session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
 
-                let addrPrompt = lang === 'en' ? `🏠 Please enter your full address:\n\n1️⃣ Use Linked Address: ${session.letterFormData.original_address}\n\n_Or enter a new address:_` :
-                    lang === 'mr' ? `🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.letterFormData.original_address}\n\n_किंवा नवीन पत्ता प्रविष्ट करा:_` :
-                        `🏠 कृपया अपना पूरा पता दर्ज करें:\n\n1️⃣ लिंक किया गया पता उपयोग करें: ${session.letterFormData.original_address}\n\n_या नया पता दर्ज करें:_`;
-                await sock.sendMessage(userId, { text: addrPrompt });
+                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
+                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
+                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
+                await sock.sendMessage(userId, { text: confirmPrompt });
             } else {
                 session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
                 const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
@@ -1791,16 +1820,31 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const session = this.getSession(userId);
         const lang = session.language;
 
-        const mobile = input.trim().replace(/\D/g, '');
-        if (mobile.length !== 10) {
-            const invalidMsg = lang === 'en' ? '\u274c Invalid mobile number. Please enter 10 digits.' :
-                lang === 'mr' ? '\u274c \u091a\u0941\u0915\u0940\u091a\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930. \u0915\u0943\u092a\u092f\u093e \u0967\u0966 \u0905\u0902\u0915 \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e.' :
-                    '\u274c \u0905\u092e\u093e\u0928\u094d\u092f \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930\u0964 \u0915\u0943\u092a\u092f\u093e 10 \u0905\u0902\u0915 \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902\u0964';
-            await sock.sendMessage(userId, { text: invalidMsg });
-            return;
+        let cleanMobile = input.trim().replace(/\D/g, '');
+
+        if (input === '1' && session.tempVoterMobile) {
+            cleanMobile = session.tempVoterMobile;
+            delete session.tempVoterMobile;
+        } else {
+            if (cleanMobile.length !== 10) {
+                const invalidMsg = lang === 'en' ? '❌ Invalid mobile number. Please enter 10 digits.' :
+                    lang === 'mr' ? '❌ चुकीचा मोबाईल नंबर. कृपया १० अंक प्रविष्ट करा.' :
+                        '❌ अमान्य मोबाइल नंबर। कृपया 10 अंक दर्ज करें।';
+                await sock.sendMessage(userId, { text: invalidMsg });
+                return;
+            }
+            // Update voter in DB if linked and changed
+            if (session.letterFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
+                try {
+                    await this.store.updateVoter(session.letterFormData.voter_id, { mobile: cleanMobile });
+                } catch (error) {
+                    console.error('Failed to update voter mobile:', error);
+                }
+            }
+            delete session.tempVoterMobile;
         }
 
-        session.letterFormData.mobile = mobile;
+        session.letterFormData.mobile = cleanMobile;
         session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
 
         let addressPrompt = lang === 'en' ? '🏠 Please enter your full address:' :
@@ -1823,6 +1867,20 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.letterFormData.address = session.letterFormData.original_address;
         } else {
             session.letterFormData.address = input.trim();
+            // Update voter address in DB if linked and changed
+            if (session.letterFormData.voter_id && session.letterFormData.address !== session.letterFormData.original_address) {
+                try {
+                    const updateData = {};
+                    if (lang === 'mr') {
+                        updateData.address_marathi = session.letterFormData.address;
+                    } else {
+                        updateData.address_english = session.letterFormData.address;
+                    }
+                    await this.store.updateVoter(session.letterFormData.voter_id, updateData);
+                } catch (error) {
+                    console.error('Failed to update voter address:', error);
+                }
+            }
         }
         session.currentMenu = MENU_STATES.LETTER_FORM_PURPOSE;
 
@@ -1972,7 +2030,6 @@ Your request has been sent to the office for approval. You will be notified once
             const voter = session.votersFound[idx];
             session.areaFormData.voter_id = voter.id;
             session.areaFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            session.areaFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
             session.areaFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
             let info = lang === 'mr' ?
@@ -1988,14 +2045,14 @@ Your request has been sent to the office for approval. You will be notified once
 
             delete session.votersFound;
 
-            // Auto-skip mobile if already in database
+            // Mobile Confirmation Prompt
             if (voter.mobile) {
-                session.areaFormData.reporter_mobile = voter.mobile;
-                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
-                const titlePrompt = lang === 'en' ? '📝 What is the title of the problem?\n\n_Example: Broken street light, Road damage, etc._' :
-                    lang === 'mr' ? '📝 समस्याचे शीर्षक काय आहे?\n\n_उदाहरण: तुटलेला रस्ता दिवा, रस्त्याचे नुकसान, इ._' :
-                        '📝 समस्या का शीर्षक क्या है?\n\n_उदाहरण: टूटी हुई स्ट्रीटलाइट, सड़क क्षति, आदि।_';
-                await sock.sendMessage(userId, { text: titlePrompt });
+                session.tempVoterMobile = voter.mobile;
+                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
+                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
+                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
+                await sock.sendMessage(userId, { text: confirmPrompt });
             } else {
                 session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
                 const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
@@ -2012,16 +2069,31 @@ Your request has been sent to the office for approval. You will be notified once
         const session = this.getSession(userId);
         const lang = session.language;
 
-        const mobile = input.trim().replace(/\D/g, '');
-        if (mobile.length !== 10) {
-            const invalidMsg = lang === 'en' ? '❌ Invalid mobile number. Please enter 10 digits:' :
-                lang === 'mr' ? '❌ अवैध मोबाइल नंबर. कृपया 10 अंकी नंबर प्रविष्ट करा:' :
-                    '❌ अमान्य मोबाइल नंबर। कृपया 10 अंकों का नंबर दर्ज करें:';
-            await sock.sendMessage(userId, { text: invalidMsg });
-            return;
+        let cleanMobile = input.trim().replace(/\D/g, '');
+
+        if (input === '1' && session.tempVoterMobile) {
+            cleanMobile = session.tempVoterMobile;
+            delete session.tempVoterMobile;
+        } else {
+            if (cleanMobile.length !== 10) {
+                const invalidMsg = lang === 'en' ? '❌ Invalid mobile number. Please enter 10 digits:' :
+                    lang === 'mr' ? '❌ अवैध मोबाइल नंबर. कृपया 10 अंकी नंबर प्रविष्ट करा:' :
+                        '❌ अमान्य मोबाइल नंबर। कृपया 10 अंकों का नंबर दर्ज करें:';
+                await sock.sendMessage(userId, { text: invalidMsg });
+                return;
+            }
+            // Update voter in DB if linked and changed
+            if (session.areaFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
+                try {
+                    await this.store.updateVoter(session.areaFormData.voter_id, { mobile: cleanMobile });
+                } catch (error) {
+                    console.error('Failed to update voter mobile:', error);
+                }
+            }
+            delete session.tempVoterMobile;
         }
 
-        session.areaFormData.reporter_mobile = mobile;
+        session.areaFormData.reporter_mobile = cleanMobile;
         session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
 
         const titlePrompt = lang === 'en' ? '📝 What is the title of the problem?\n\n_Example: Broken street light, Road damage, etc._' :
@@ -2070,6 +2142,20 @@ Your request has been sent to the office for approval. You will be notified once
             session.areaFormData.location = session.areaFormData.original_address;
         } else {
             session.areaFormData.location = input.trim();
+            // Update voter address in DB if linked and changed
+            if (session.areaFormData.voter_id && session.areaFormData.location !== session.areaFormData.original_address) {
+                try {
+                    const updateData = {};
+                    if (lang === 'mr') {
+                        updateData.address_marathi = session.areaFormData.location;
+                    } else {
+                        updateData.address_english = session.areaFormData.location;
+                    }
+                    await this.store.updateVoter(session.areaFormData.voter_id, updateData);
+                } catch (error) {
+                    console.error('Failed to update voter address:', error);
+                }
+            }
         }
 
         // Submit the area problem
@@ -2238,7 +2324,6 @@ Your request has been sent to the office for approval. You will be notified once
             const voter = session.votersFound[idx];
             session.personalFormData.voter_id = voter.id;
             session.personalFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            session.personalFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
             session.personalFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
             let info = lang === 'mr' ?
@@ -2254,11 +2339,14 @@ Your request has been sent to the office for approval. You will be notified once
 
             delete session.votersFound;
 
-            // Auto-skip mobile if already in database
+            // Mobile Confirmation Prompt
             if (voter.mobile) {
-                session.personalFormData.reporter_mobile = voter.mobile;
-                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_DESC;
-                await sock.sendMessage(userId, { text: MESSAGES.personal_request_desc_prompt[lang] });
+                session.tempVoterMobile = voter.mobile;
+                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
+                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
+                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
+                await sock.sendMessage(userId, { text: confirmPrompt });
             } else {
                 session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
                 await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
@@ -2271,12 +2359,29 @@ Your request has been sent to the office for approval. You will be notified once
     async handlePersonalRequestMobile(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
-        const mobile = input.trim().replace(/\D/g, '');
-        if (mobile.length !== 10) {
-            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
-            return;
+
+        let cleanMobile = input.trim().replace(/\D/g, '');
+
+        if (input === '1' && session.tempVoterMobile) {
+            cleanMobile = session.tempVoterMobile;
+            delete session.tempVoterMobile;
+        } else {
+            if (cleanMobile.length !== 10) {
+                await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+                return;
+            }
+            // Update voter in DB if linked and changed
+            if (session.personalFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
+                try {
+                    await this.store.updateVoter(session.personalFormData.voter_id, { mobile: cleanMobile });
+                } catch (error) {
+                    console.error('Failed to update voter mobile:', error);
+                }
+            }
+            delete session.tempVoterMobile;
         }
-        session.personalFormData.reporter_mobile = mobile;
+
+        session.personalFormData.reporter_mobile = cleanMobile;
         session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_DESC;
         await sock.sendMessage(userId, { text: MESSAGES.personal_request_desc_prompt[lang] });
     }
