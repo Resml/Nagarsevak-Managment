@@ -1,4 +1,4 @@
-const { makeWASocket, useMultiFileAuthState, DisconnectReason, getAggregateVotesInPollMessage, delay } = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, getAggregateVotesInPollMessage, delay } = require('@whiskeysockets/baileys');
 // const makeInMemoryStore = require('@whiskeysockets/baileys').makeInMemoryStore; // Removed as it is missing
 
 const pino = require('pino');
@@ -17,6 +17,7 @@ const broadcastService = require('./broadcast');
 // AI Service removed - using menu-driven navigation instead
 const MenuNavigator = require('./menuNavigator');
 const { sendLetterStatusNotification } = require('./notifications');
+const supabaseAuthState = require('./supabaseAuthState');
 
 // --- Custom Simple Store for Polls ---
 class SimpleStore {
@@ -109,11 +110,16 @@ async function logoutSession(tenantId) {
         // Clear session data
         sessions.delete(tenantId);
 
-        // Delete auth folder to force fresh QR scan on next login
-        const authPath = path.join('auth_info_baileys', `session_${tenantId}`);
-        if (fs.existsSync(authPath)) {
-            fs.rmSync(authPath, { recursive: true, force: true });
-            console.log(`[${tenantId}] Auth folder deleted for fresh login`);
+        // Clear session from Supabase
+        const { error } = await supabase
+            .from('whatsapp_sessions')
+            .delete()
+            .eq('session_id', tenantId);
+
+        if (error) {
+            console.error(`[${tenantId}] Error deleting session from Supabase:`, error);
+        } else {
+            console.log(`[${tenantId}] Session deleted from Supabase`);
         }
 
         // Emit logout status to frontend
@@ -245,20 +251,13 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         return;
     }
 
-    // specific auth folder for this tenant
-    const authPath = path.join('auth_info_baileys', `session_${tenantId}`);
-
-    // Create folder if it doesn't exist
-    if (!fs.existsSync(authPath)) {
-        fs.mkdirSync(authPath, { recursive: true });
-    }
-
     console.log(`[${tenantId}] Initializing Baileys connection... ${isRetry ? `(Retry attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})` : ''}`);
 
     // Update status to connecting
     updateSessionStatus(tenantId, 'connecting');
 
-    const { state, saveCreds } = await useMultiFileAuthState(authPath);
+    // Use Supabase Auth State
+    const { state, saveCreds } = await supabaseAuthState(supabase, tenantId);
 
     const sock = makeWASocket({
         auth: state,
@@ -335,15 +334,17 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 // Calculate delay and retry
                 const delay = getRetryDelay(retryCount);
                 console.log(`[${tenantId}] Retrying connection in ${delay / 1000} seconds...`);
-                
+
                 setTimeout(() => {
                     connectToWhatsApp(tenantId, socketToEmit, true);
                 }, delay);
             } else {
                 console.log(`[${tenantId}] Logged out. Cleaning up session.`);
                 sessions.delete(tenantId);
-                // Optionally delete auth folder
-                // fs.rmSync(authPath, { recursive: true, force: true });
+                // Also remove from Supabase (already done in logout, but good for safety)
+                supabase.from('whatsapp_sessions').delete().eq('session_id', tenantId).then(() => {
+                    console.log(`[${tenantId}] Session cleaned from DB after logout/disconnect`);
+                });
             }
         } else if (connection === 'open') {
             console.log(`[${tenantId}] ✅ Connection opened! Bot is ready.`);
@@ -366,12 +367,12 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         if (session && session.status === 'connecting') {
             console.log(`[${tenantId}] Connection timeout, retrying...`);
             sock.end();
-            
+
             const retryCount = session.retryCount || 0;
             if (retryCount < MAX_RETRY_ATTEMPTS) {
                 session.retryCount = retryCount + 1;
                 sessions.set(tenantId, session);
-                
+
                 const delay = getRetryDelay(retryCount);
                 setTimeout(() => {
                     connectToWhatsApp(tenantId, socketToEmit, true);
@@ -527,7 +528,7 @@ io.on('connection', (socket) => {
 
     socket.on('logout_session', ({ tenantId }) => {
         if (!tenantId) return;
-        
+
         console.log(`[${tenantId}] Manual logout requested by user`);
         logoutSession(tenantId);
     });
@@ -539,18 +540,26 @@ io.on('connection', (socket) => {
 
 // --- Session Management ---
 async function restoreSessions() {
-    const authDir = 'auth_info_baileys';
-    if (!fs.existsSync(authDir)) return;
-
     try {
-        const files = fs.readdirSync(authDir);
-        for (const file of files) {
-            // Check for session folders (format: session_{tenantId})
-            if (file.startsWith('session_') && fs.lstatSync(path.join(authDir, file)).isDirectory()) {
-                const tenantId = file.replace('session_', '');
-                console.log(`[Startup] Restoring session for tenant: ${tenantId}`);
-                await connectToWhatsApp(tenantId);
-            }
+        // Use a Set to retrieve unique session IDs
+        const { data, error } = await supabase
+            .from('whatsapp_sessions')
+            .select('session_id');
+
+        if (error) {
+            console.error('[Startup] Error fetching sessions from Supabase:', error);
+            return;
+        }
+
+        // De-duplicate session IDs
+        const uniqueSessionIds = [...new Set(data.map(item => item.session_id))];
+
+        console.log(`[Startup] Found ${uniqueSessionIds.length} sessions to restore:`, uniqueSessionIds);
+
+        for (const tenantId of uniqueSessionIds) {
+            console.log(`[Startup] Restoring session for tenant: ${tenantId}`);
+            // Force connection, which will use existing creds from DB
+            await connectToWhatsApp(tenantId);
         }
     } catch (err) {
         console.error('[Startup] Error restoring sessions:', err);
