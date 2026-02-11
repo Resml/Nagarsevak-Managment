@@ -191,7 +191,7 @@ async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
     try {
         let dbQuery = supabase
             .from('voters')
-            .select('id, name_english, name_marathi, card_number, age, gender, polling_booth_name, ward, mobile')
+            .select('id, name_english, name_marathi, epic_no, age, gender, part_no, ward_no, mobile')
             .eq('tenant_id', tenantId);
 
         if (searchType === 'name') {
@@ -215,7 +215,7 @@ async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
             const cleanMobile = query.replace(/\D/g, '').slice(-10);
             dbQuery = dbQuery.ilike('mobile', `%${cleanMobile}%`);
         } else if (searchType === 'voter_id') {
-            dbQuery = dbQuery.ilike('card_number', `%${query}%`);
+            dbQuery = dbQuery.ilike('epic_no', `%${query}%`);
         }
 
         const { data, error } = await dbQuery.limit(limit);

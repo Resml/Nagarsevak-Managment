@@ -420,7 +420,7 @@ class MenuNavigator {
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -458,9 +458,9 @@ class MenuNavigator {
             session.formData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
             session.formData.ward = voter.ward;
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
@@ -1128,10 +1128,10 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         voters.forEach((voter, index) => {
             const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            const cardNum = voter.card_number || 'N/A';
+            const cardNum = voter.epic_no || 'N/A';
             const age = voter.age || 'N/A';
-            const booth = voter.polling_booth_name || 'N/A';
-            const ward = voter.ward || 'N/A';
+            const booth = voter.part_no || 'N/A';
+            const ward = voter.ward_no || 'N/A';
 
             resultText += lang === 'en' ?
                 `${index + 1}. *${name}*\n   Card: ${cardNum}\n   Age: ${age}, Ward: ${ward}\n   Booth: ${booth}\n\n` :
@@ -1178,9 +1178,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.currentMenu = MENU_STATES.VOTER_VERIFY_CONFIRM;
 
             const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward}\n📍 Booth: ${voter.polling_booth_name}\n\n1️⃣ Yes, this is me\n2️⃣ No, search again\n9️⃣ Main Menu` :
-                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward}\n📍 बूथ: ${voter.polling_booth_name}\n\n1️⃣ हो, हे मीच आहे\n2️⃣ नाही, पुन्हा शोधा\n9️⃣ मुख्य मेनू` :
-                    `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward}\n📍 बूथ: ${voter.polling_booth_name}\n\n1️⃣ हाँ, यह मैं हूँ\n2️⃣ नहीं, फिर से खोजें\n9️⃣ मुख्य मेनू`;
+            const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward_no}\n📍 Booth: ${voter.part_no}\n\n1️⃣ Yes, this is me\n2️⃣ No, search again\n9️⃣ Main Menu` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward_no}\n📍 बूथ: ${voter.part_no}\n\n1️⃣ हो, हे मीच आहे\n2️⃣ नाही, पुन्हा शोधा\n9️⃣ मुख्य मेनू` :
+                    `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward_no}\n📍 बूथ: ${voter.part_no}\n\n1️⃣ हाँ, यह मैं हूँ\n2️⃣ नहीं, फिर से खोजें\n9️⃣ मुख्य मेनू`;
             await sock.sendMessage(userId, { text: confirmMsg });
         } else {
             // Multiple matches
@@ -1191,7 +1191,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (${v.age} yr, Ward ${v.ward})\n`;
+                listMsg += `${i + 1}️⃣ ${n} (${v.age} yr, Ward ${v.ward_no})\n`;
             });
             listMsg += `\n0️⃣ None of these (Register New)\n9️⃣ Main Menu`;
 
@@ -1225,9 +1225,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 // Ask for final confirmation
                 const voter = session.voterMatch;
                 const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-                const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward}\n\n1️⃣ Yes, confirm linking\n2️⃣ No, search again` :
-                    lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward}\n\n1️⃣ हो, लिंक करा\n2️⃣ नाही, पुन्हा शोधा` :
-                        `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward}\n\n1️⃣ हाँ, लिंकिंग की पुष्टि करें\n2️⃣ नहीं, फिर से खोजें`;
+                const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward_no}\n\n1️⃣ Yes, confirm linking\n2️⃣ No, search again` :
+                    lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward_no}\n\n1️⃣ हो, लिंक करा\n2️⃣ नाही, पुन्हा शोधा` :
+                        `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward_no}\n\n1️⃣ हाँ, लिंकिंग की पुष्टि करें\n2️⃣ नहीं, फिर से खोजें`;
                 await sock.sendMessage(userId, { text: confirmMsg });
                 return;
             } else {
@@ -1663,7 +1663,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -1708,9 +1708,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.letterFormData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.letterFormData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
@@ -1850,7 +1850,7 @@ Your request has been sent to the office for approval. You will be notified once
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -1895,9 +1895,9 @@ Your request has been sent to the office for approval. You will be notified once
             session.areaFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.areaFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
@@ -2089,7 +2089,7 @@ Your request has been sent to the office for approval. You will be notified once
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -2126,9 +2126,9 @@ Your request has been sent to the office for approval. You will be notified once
             session.personalFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.personalFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
