@@ -420,7 +420,15 @@ class MenuNavigator {
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
+                const addr = lang === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                const epic = v.epic_no || 'N/A';
+                const house = v.house_no || '';
+                const ward = v.ward_no || 'N/A';
+                const mobile = v.mobile ? `\n   📱 Mobile: ${v.mobile}` : '';
+
+                listMsg += `${i + 1}️⃣ *${n}*\n`;
+                listMsg += `   🆔 EPIC: ${epic} (Ward: ${ward})\n`;
+                listMsg += `   📍 Address: ${house ? house + ', ' : ''}${addr ? addr.substring(0, 60) : 'N/A'}${mobile}\n\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -456,18 +464,30 @@ class MenuNavigator {
             session.formData.voter_id = voter.id;
             session.formData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.formData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
-            session.formData.ward = voter.ward;
+            session.formData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            let info = lang === 'mr' ?
+                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
+                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
+
+            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
 
-            // Skip mobile prompt if we have a valid mobile, or just ask to confirm
-            session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
-            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] + ` (linked: ${session.formData.mobile})` });
+            // Auto-skip mobile if already in database
+            if (voter.mobile) {
+                session.formData.mobile = voter.mobile;
+                session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
+                await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
+            } else {
+                session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
+                await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            }
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -527,12 +547,22 @@ class MenuNavigator {
         session.currentMenu = MENU_STATES.COMPLAINT_FORM_LOCATION;
 
         const lang = session.language;
-        await sock.sendMessage(userId, { text: MESSAGES.complaint_location_prompt[lang] });
+        let prompt = MESSAGES.complaint_location_prompt[lang];
+        if (session.formData.original_address) {
+            prompt = lang === 'en' ? `📍 Please provide the location/area:\n\n1️⃣ Use Linked Address: ${session.formData.original_address}\n\n_Or enter a new location:_` :
+                lang === 'mr' ? `📍 कृपया ठिकाण/भाग सांगा:\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.formData.original_address}\n\n_किंवा नवीन ठिकाण प्रविष्ट करा:_` :
+                    `📍 कृपया स्थान/क्षेत्र बताएं:\n\n1️⃣ लिंक किया गया पता उपयोग करें: ${session.formData.original_address}\n\n_या नया स्थान दर्ज करें:_`;
+        }
+        await sock.sendMessage(userId, { text: prompt });
     }
 
     async handleComplaintFormLocation(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
-        session.formData.location = input;
+        if (input === '1' && session.formData.original_address) {
+            session.formData.location = session.formData.original_address;
+        } else {
+            session.formData.location = input;
+        }
         session.currentMenu = MENU_STATES.COMPLAINT_FORM_PHOTO;
 
         const lang = session.language;
@@ -1191,7 +1221,15 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (${v.age} yr, Ward ${v.ward_no})\n`;
+                const addr = lang === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                const epic = v.epic_no || 'N/A';
+                const house = v.house_no || '';
+                const ward = v.ward_no || 'N/A';
+                const mobile = v.mobile ? `\n   📱 Mobile: ${v.mobile}` : '';
+
+                listMsg += `${i + 1}️⃣ *${n}*\n`;
+                listMsg += `   🆔 EPIC: ${epic} (Ward: ${ward})\n`;
+                listMsg += `   📍 Address: ${house ? house + ', ' : ''}${addr ? addr.substring(0, 60) : 'N/A'}${mobile}\n\n`;
             });
             listMsg += `\n0️⃣ None of these (Register New)\n9️⃣ Main Menu`;
 
@@ -1223,11 +1261,9 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 session.voterMatch = session.votersFound[idx];
                 delete session.votersFound;
                 // Ask for final confirmation
-                const voter = session.voterMatch;
-                const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-                const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward_no}\n\n1️⃣ Yes, confirm linking\n2️⃣ No, search again` :
-                    lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward_no}\n\n1️⃣ हो, लिंक करा\n2️⃣ नाही, पुन्हा शोधा` :
-                        `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward_no}\n\n1️⃣ हाँ, लिंकिंग की पुष्टि करें\n2️⃣ नहीं, फिर से खोजें`;
+                const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward_no}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}\n${voter.mobile ? '📱 Mobile: ' + voter.mobile + '\n' : ''}\n1️⃣ Yes, confirm linking\n2️⃣ No, search again` :
+                    lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward_no}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}\n${voter.mobile ? '📱 मोबाईल: ' + voter.mobile + '\n' : ''}\n1️⃣ हो, लिंक करा\n2️⃣ नाही, पुन्हा शोधा` :
+                        `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward_no}\n📍 पता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}\n${voter.mobile ? '📱 मोबाइल: ' + voter.mobile + '\n' : ''}\n1️⃣ हाँ, लिंकिंग की पुष्टि करें\n2️⃣ नहीं, फिर से खोजें`;
                 await sock.sendMessage(userId, { text: confirmMsg });
                 return;
             } else {
@@ -1663,7 +1699,15 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
+                const addr = lang === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                const epic = v.epic_no || 'N/A';
+                const house = v.house_no || '';
+                const ward = v.ward_no || 'N/A';
+                const mobile = v.mobile ? `\n   📱 Mobile: ${v.mobile}` : '';
+
+                listMsg += `${i + 1}️⃣ *${n}*\n`;
+                listMsg += `   🆔 EPIC: ${epic} (Ward: ${ward})\n`;
+                listMsg += `   📍 Address: ${house ? house + ', ' : ''}${addr ? addr.substring(0, 60) : 'N/A'}${mobile}\n\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -1707,19 +1751,37 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.letterFormData.voter_id = voter.id;
             session.letterFormData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.letterFormData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+            session.letterFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            let info = lang === 'mr' ?
+                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
+                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
+
+            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
 
-            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
-            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
-                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
-                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
-            await sock.sendMessage(userId, { text: mobilePrompt + ` (linked: ${session.letterFormData.mobile})` });
+            // Auto-skip mobile if already in database
+            if (voter.mobile) {
+                session.letterFormData.mobile = voter.mobile;
+                session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
+
+                let addrPrompt = lang === 'en' ? `🏠 Please enter your full address:\n\n1️⃣ Use Linked Address: ${session.letterFormData.original_address}\n\n_Or enter a new address:_` :
+                    lang === 'mr' ? `🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.letterFormData.original_address}\n\n_किंवा नवीन पत्ता प्रविष्ट करा:_` :
+                        `🏠 कृपया अपना पूरा पता दर्ज करें:\n\n1️⃣ लिंक किया गया पता उपयोग करें: ${session.letterFormData.original_address}\n\n_या नया पता दर्ज करें:_`;
+                await sock.sendMessage(userId, { text: addrPrompt });
+            } else {
+                session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+                const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                    lang === 'mr' ? '📱 कृपया तुमचा मोबाइल number प्रविष्ट करा (१० अंक):' :
+                        '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+                await sock.sendMessage(userId, { text: mobilePrompt });
+            }
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -1741,9 +1803,15 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.letterFormData.mobile = mobile;
         session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
 
-        const addressPrompt = lang === 'en' ? '🏠 Please enter your full address:' :
+        let addressPrompt = lang === 'en' ? '🏠 Please enter your full address:' :
             lang === 'mr' ? '🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:' :
                 '🏠 कृपया अपना पूरा पता दर्ज करें:';
+
+        if (session.letterFormData.original_address) {
+            addressPrompt = lang === 'en' ? `🏠 Please enter your full address:\n\n1️⃣ Use Linked Address: ${session.letterFormData.original_address}\n\n_Or enter a new address:_` :
+                lang === 'mr' ? `🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.letterFormData.original_address}\n\n_किंवा नवीन पत्ता प्रविष्ट करा:_` :
+                    `🏠 कृपया अपना पूरा पता दर्ज करें:\n\n1️⃣ लिंक किया गया पता उपयोग करें: ${session.letterFormData.original_address}\n\n_या नया पता दर्ज करें:_`;
+        }
         await sock.sendMessage(userId, { text: addressPrompt });
     }
 
@@ -1751,7 +1819,11 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const session = this.getSession(userId);
         const lang = session.language;
 
-        session.letterFormData.address = input.trim();
+        if (input === '1' && session.letterFormData.original_address) {
+            session.letterFormData.address = session.letterFormData.original_address;
+        } else {
+            session.letterFormData.address = input.trim();
+        }
         session.currentMenu = MENU_STATES.LETTER_FORM_PURPOSE;
 
         const purposePrompt = lang === 'en' ? '🎯 What is the purpose of this letter?\n\n_Example: For bank loan, school admission, etc._' :
@@ -1850,14 +1922,22 @@ Your request has been sent to the office for approval. You will be notified once
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
+                const addr = lang === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                const epic = v.epic_no || 'N/A';
+                const house = v.house_no || '';
+                const ward = v.ward_no || 'N/A';
+                const mobile = v.mobile ? `\n   📱 Mobile: ${v.mobile}` : '';
+
+                listMsg += `${i + 1}️⃣ *${n}*\n`;
+                listMsg += `   🆔 EPIC: ${epic} (Ward: ${ward})\n`;
+                listMsg += `   📍 Address: ${house ? house + ', ' : ''}${addr ? addr.substring(0, 60) : 'N/A'}${mobile}\n\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
         } else {
             // Not found
-            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your report." :
-                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या तक्रारीसह पुढे जात आहोत." :
+            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your request." :
+                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या विनंतीसह पुढे जात आहोत." :
                     "नये मतदाता का स्वागत है! आपकी शिकायत के साथ आगे बढ़ रहे हैं।";
             await sock.sendMessage(userId, { text: msg });
             session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
@@ -1880,7 +1960,6 @@ Your request has been sent to the office for approval. You will be notified once
             await sock.sendMessage(userId, { text: msg });
             delete session.votersFound;
             session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
-
             const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
                 lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
                     '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
@@ -1894,19 +1973,36 @@ Your request has been sent to the office for approval. You will be notified once
             session.areaFormData.voter_id = voter.id;
             session.areaFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.areaFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+            session.areaFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            let info = lang === 'mr' ?
+                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
+                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
+
+            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
 
-            session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
-            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
-                lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
-                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
-            await sock.sendMessage(userId, { text: mobilePrompt + ` (linked: ${session.areaFormData.reporter_mobile})` });
+            // Auto-skip mobile if already in database
+            if (voter.mobile) {
+                session.areaFormData.reporter_mobile = voter.mobile;
+                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_TITLE;
+                const titlePrompt = lang === 'en' ? '📝 What is the title of the problem?\n\n_Example: Broken street light, Road damage, etc._' :
+                    lang === 'mr' ? '📝 समस्याचे शीर्षक काय आहे?\n\n_उदाहरण: तुटलेला रस्ता दिवा, रस्त्याचे नुकसान, इ._' :
+                        '📝 समस्या का शीर्षक क्या है?\n\n_उदाहरण: टूटी हुई स्ट्रीटलाइट, सड़क क्षति, आदि।_';
+                await sock.sendMessage(userId, { text: titlePrompt });
+            } else {
+                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+                const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+                    lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                        '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+                await sock.sendMessage(userId, { text: mobilePrompt });
+            }
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -1954,9 +2050,15 @@ Your request has been sent to the office for approval. You will be notified once
         session.areaFormData.description = input.trim();
         session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_LOCATION;
 
-        const locPrompt = lang === 'en' ? '📍 Where is this problem located?\n\n_Example: Near bus stand, Main road, etc._' :
+        let locPrompt = lang === 'en' ? '📍 Where is this problem located?\n\n_Example: Near bus stand, Main road, etc._' :
             lang === 'mr' ? '📍 ही समस्या कुठे आहे?\n\n_उदाहरण: बस स्थानकाजवळ, मुख्य रस्ता, इ._' :
                 '📍 यह समस्या कहाँ है?\n\n_उदाहरण: बस स्टैंड के पास, मुख्य सड़क, आदि।_';
+
+        if (session.areaFormData.original_address) {
+            locPrompt = lang === 'en' ? `📍 Where is this problem located?\n\n1️⃣ Use Linked Address: ${session.areaFormData.original_address}\n\n_Or enter a new location (e.g., Near bus stand):_` :
+                lang === 'mr' ? `📍 ही समस्या कुठे आहे?\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.areaFormData.original_address}\n\n_किंवा नवीन ठिकाण प्रविष्ट करा (उदा. बस स्थानकाजवळ):_` :
+                    `📍 यह समस्या कहाँ है?\n\n1️⃣ लिंक किया गया पता उपयोग करें: ${session.areaFormData.original_address}\n\n_या नया स्थान दर्ज करें (जैसे बस स्टैंड के पास):_`;
+        }
         await sock.sendMessage(userId, { text: locPrompt });
     }
 
@@ -1964,7 +2066,11 @@ Your request has been sent to the office for approval. You will be notified once
         const session = this.getSession(userId);
         const lang = session.language;
 
-        session.areaFormData.location = input.trim();
+        if (input === '1' && session.areaFormData.original_address) {
+            session.areaFormData.location = session.areaFormData.original_address;
+        } else {
+            session.areaFormData.location = input.trim();
+        }
 
         // Submit the area problem
         try {
@@ -2089,7 +2195,15 @@ Your request has been sent to the office for approval. You will be notified once
 
             voters.forEach((v, i) => {
                 const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
-                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward_no})\n`;
+                const addr = lang === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
+                const epic = v.epic_no || 'N/A';
+                const house = v.house_no || '';
+                const ward = v.ward_no || 'N/A';
+                const mobile = v.mobile ? `\n   📱 Mobile: ${v.mobile}` : '';
+
+                listMsg += `${i + 1}️⃣ *${n}*\n`;
+                listMsg += `   🆔 EPIC: ${epic} (Ward: ${ward})\n`;
+                listMsg += `   📍 Address: ${house ? house + ', ' : ''}${addr ? addr.substring(0, 60) : 'N/A'}${mobile}\n\n`;
             });
             listMsg += `\n0️⃣ None of these (New Voter)`;
             await sock.sendMessage(userId, { text: listMsg });
@@ -2125,16 +2239,30 @@ Your request has been sent to the office for approval. You will be notified once
             session.personalFormData.voter_id = voter.id;
             session.personalFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.personalFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+            session.personalFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
 
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward_no})\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward_no})\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward_no})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            let info = lang === 'mr' ?
+                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
+                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
+
+            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
             await sock.sendMessage(userId, { text: successMsg });
 
             delete session.votersFound;
 
-            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
-            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] + ` (linked: ${session.personalFormData.reporter_mobile})` });
+            // Auto-skip mobile if already in database
+            if (voter.mobile) {
+                session.personalFormData.reporter_mobile = voter.mobile;
+                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_DESC;
+                await sock.sendMessage(userId, { text: MESSAGES.personal_request_desc_prompt[lang] });
+            } else {
+                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+                await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+            }
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }

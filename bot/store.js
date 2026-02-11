@@ -191,7 +191,7 @@ async function searchVoters(tenantId, query, searchType = 'name', limit = 5) {
     try {
         let dbQuery = supabase
             .from('voters')
-            .select('id, name_english, name_marathi, epic_no, age, gender, part_no, ward_no, mobile')
+            .select('id, name_english, name_marathi, epic_no, age, gender, part_no, ward_no, mobile, address_marathi, address_english, house_no')
             .eq('tenant_id', tenantId);
 
         if (searchType === 'name') {
