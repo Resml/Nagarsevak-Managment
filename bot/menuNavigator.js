@@ -48,7 +48,11 @@ const MENU_STATES = {
     PERSONAL_REQUEST_FORM_NAME: 'PERSONAL_REQUEST_FORM_NAME',
     PERSONAL_REQUEST_FORM_MOBILE: 'PERSONAL_REQUEST_FORM_MOBILE',
     PERSONAL_REQUEST_FORM_DESC: 'PERSONAL_REQUEST_FORM_DESC',
-    PERSONAL_REQUEST_TRACK_MOBILE: 'PERSONAL_REQUEST_TRACK_MOBILE'
+    PERSONAL_REQUEST_TRACK_MOBILE: 'PERSONAL_REQUEST_TRACK_MOBILE',
+    VOTER_VERIFY_NAME_PROMPT: 'VOTER_VERIFY_NAME_PROMPT',
+    VOTER_VERIFY_CONFIRM: 'VOTER_VERIFY_CONFIRM',
+    VOTER_REGISTER_NAME: 'VOTER_REGISTER_NAME',
+    VOTER_REGISTER_WARD: 'VOTER_REGISTER_WARD'
 };
 
 class MenuNavigator {
@@ -228,6 +232,18 @@ class MenuNavigator {
             case MENU_STATES.AREA_PROBLEM_FORM_LOCATION:
                 return await this.handleAreaProblemLocation(sock, tenantId, userId, input);
 
+            case MENU_STATES.VOTER_VERIFY_NAME_PROMPT:
+                return await this.handleVoterVerifyName(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_VERIFY_CONFIRM:
+                return await this.handleVoterVerifyConfirm(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_REGISTER_NAME:
+                return await this.handleVoterRegisterName(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_REGISTER_WARD:
+                return await this.handleVoterRegisterWard(sock, tenantId, userId, input);
+
             default:
                 // Fallback to language selection
                 return await this.showLanguageMenu(sock, userId);
@@ -307,12 +323,14 @@ class MenuNavigator {
                 return await this.showLettersMenu(sock, userId, lang, tenantId);
             case '3': // Government Schemes
                 return await this.showSchemesMenu(sock, userId, lang);
-            case '4': // Ward Problems
+            case '4': // Voter Services
+                return await this.showVoterMenu(sock, userId, lang);
+            case '5': // Ward Problems
                 return await this.showWardProblemsMenu(sock, userId, lang);
-            case '5': // Personal Request
+            case '6': // Personal Request
                 session.currentMenu = MENU_STATES.PERSONAL_REQUEST_MENU;
                 return await sock.sendMessage(userId, { text: PERSONAL_REQUEST_MENU[lang].text });
-            case '6': // Other Services
+            case '7': // Other Services
                 return await this.showOtherMenu(sock, userId, lang);
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
@@ -975,12 +993,16 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             case '1': // Search Voter
                 session.currentMenu = 'VOTER_SEARCH_PROMPT';
                 const searchMsg = lang === 'en' ? '🔍 *Search Voter*\n\nEnter name, mobile number, or voter ID:' :
-                    lang === 'mr' ? '🔍 *मतदार शोधा*\n\nनाव, मोबाइल नंबर किंवा मतदार आयडी प्रविष्ट करा:' :
+                    lang === 'mr' ? '🔍 *मतदार शोधा*\n\nनाव,मोबाइल नंबर किंवा मतदार आयडी प्रविष्ट करा:' :
                         '🔍 *मतदाता खोजें*\n\nनाम, मोबाइल नंबर या मतदाता ID दर्ज करें:';
                 await sock.sendMessage(userId, { text: searchMsg });
                 break;
 
-            case '2': // Voter Card Status
+            case '2': // Link WhatsApp to Voter
+                session.currentMenu = MENU_STATES.VOTER_VERIFY_NAME_PROMPT;
+                await sock.sendMessage(userId, { text: MESSAGES.voter_verify_name_prompt[lang] });
+                break;
+
             case '3': // Polling Booth
             case '4': // Election Results
                 const comingSoon = lang === 'en' ? 'Coming soon!' :
@@ -1044,6 +1066,160 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         // Return to menu
         session.currentMenu = MENU_STATES.VOTER_MENU;
         await this.showVoterMenu(sock, userId, lang);
+    }
+
+    async handleVoterVerifyName(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const nameQuery = input.trim();
+
+        if (nameQuery.length < 3) {
+            const errorMsg = lang === 'en' ? '❌ Please enter at least 3 characters for name.' :
+                lang === 'mr' ? '❌ कृपया नावासाठी किमान ३ अक्षरे प्रविष्ट करा.' :
+                    '❌ कृपया नाम के लिए कम से कम 3 अक्षर दर्ज करें।';
+            await sock.sendMessage(userId, { text: errorMsg });
+            return;
+        }
+
+        const voters = await this.store.searchVoters(tenantId, nameQuery, 'name', 5);
+
+        if (!voters || voters.length === 0) {
+            const noVoterMsg = lang === 'en' ? `❌ No voter found with name "${nameQuery}".\n\nLet's register you as a new voter. Please enter your Full Name:` :
+                lang === 'mr' ? `❌ "${nameQuery}" नावाचा कोणताही मतदार सापडला नाही.\n\nचला नवीन मतदार म्हणून तुमची नोंदणी करूया. कृपया तुमचे पूर्ण नाव प्रविष्ट करा:` :
+                    `❌ "${nameQuery}" नाम का कोई मतदाता नहीं मिला।\n\nआइए आपको एक नए मतदाता के रूप में पंजीकृत करें। कृपया अपना पूरा नाम दर्ज करें:`;
+            await sock.sendMessage(userId, { text: noVoterMsg });
+            session.voterRegisterData = {};
+            session.currentMenu = MENU_STATES.VOTER_REGISTER_NAME;
+            return;
+        }
+
+        if (voters.length === 1) {
+            const voter = voters[0];
+            session.voterMatch = voter;
+            session.currentMenu = MENU_STATES.VOTER_VERIFY_CONFIRM;
+
+            const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward}\n📍 Booth: ${voter.polling_booth_name}\n\n1️⃣ Yes, this is me\n2️⃣ No, search again\n9️⃣ Main Menu` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward}\n📍 बूथ: ${voter.polling_booth_name}\n\n1️⃣ हो, हे मीच आहे\n2️⃣ नाही, पुन्हा शोधा\n9️⃣ मुख्य मेनू` :
+                    `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward}\n📍 बूथ: ${voter.polling_booth_name}\n\n1️⃣ हाँ, यह मैं हूँ\n2️⃣ नहीं, फिर से खोजें\n9️⃣ मुख्य मेनू`;
+            await sock.sendMessage(userId, { text: confirmMsg });
+        } else {
+            // Multiple matches
+            session.votersFound = voters;
+            let listMsg = lang === 'en' ? `🔍 *Multiple matches found for "${nameQuery}"*\n\nPlease select who you are (1-${voters.length}):\n\n` :
+                lang === 'mr' ? `🔍 *"${nameQuery}" साठी अनेक नोंदी सापडल्या*\n\nकृपया तुम्ही कोण आहात ते निवडा (१-${voters.length}):\n\n` :
+                    `🔍 *"${nameQuery}" के लिए कई मिलान मिले*\n\nकृपया चुनें कि आप कौन हैं (1-${voters.length}):\n\n`;
+
+            voters.forEach((v, i) => {
+                const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
+                listMsg += `${i + 1}️⃣ ${n} (${v.age} yr, Ward ${v.ward})\n`;
+            });
+            listMsg += `\n0️⃣ None of these (Register New)\n9️⃣ Main Menu`;
+
+            await sock.sendMessage(userId, { text: listMsg });
+            session.currentMenu = MENU_STATES.VOTER_VERIFY_CONFIRM;
+        }
+    }
+
+    async handleVoterVerifyConfirm(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (session.votersFound) {
+            if (input === '0') {
+                const regMsg = lang === 'en' ? "Okay, let's register you. Please enter your Full Name:" :
+                    lang === 'mr' ? "ठीक आहे, तुमची नोंदणी करूया. कृपया तुमचे पूर्ण नाव प्रविष्ट करा:" :
+                        "ठीक है, आइए आपको पंजीकृत करते हैं। कृपया अपना पूरा नाम दर्ज करें:";
+                await sock.sendMessage(userId, { text: regMsg });
+                session.voterRegisterData = {};
+                session.currentMenu = MENU_STATES.VOTER_REGISTER_NAME;
+                delete session.votersFound;
+                return;
+            } else if (input === '9') {
+                return await this.showMainMenu(sock, userId, lang);
+            }
+
+            const idx = parseInt(input) - 1;
+            if (idx >= 0 && idx < session.votersFound.length) {
+                session.voterMatch = session.votersFound[idx];
+                delete session.votersFound;
+                // Ask for final confirmation
+                const voter = session.voterMatch;
+                const name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+                const confirmMsg = lang === 'en' ? `🔍 *Is this you?*\n\n👤 Name: ${name}\n🎂 Age: ${voter.age}\n🏘️ Ward: ${voter.ward}\n\n1️⃣ Yes, confirm linking\n2️⃣ No, search again` :
+                    lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\n👤 नाव: ${name}\n🎂 वय: ${voter.age}\n🏘️ प्रभाग: ${voter.ward}\n\n1️⃣ हो, लिंक करा\n2️⃣ नाही, पुन्हा शोधा` :
+                        `🔍 *क्या यह आप हैं?*\n\n👤 नाम: ${name}\n🎂 उम्र: ${voter.age}\n🏘️ वार्ड: ${voter.ward}\n\n1️⃣ हाँ, लिंकिंग की पुष्टि करें\n2️⃣ नहीं, फिर से खोजें`;
+                await sock.sendMessage(userId, { text: confirmMsg });
+                return;
+            } else {
+                await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+                return;
+            }
+        }
+
+        if (input === '1') {
+            const voter = session.voterMatch;
+            const mobile = userId.replace('@s.whatsapp.net', '').replace('@lid', '');
+
+            try {
+                await this.store.updateVoterMobile(voter.id, mobile);
+                const successMsg = lang === 'en' ? `✅ *Success!* Your WhatsApp number has been linked to your voter record.\n\nNow you can use voter-specific services easily.` :
+                    lang === 'mr' ? `✅ *यश!* तुमचा व्हॉट्सॲप नंबर तुमच्या मतदार नोंदणीशी लिंक केला गेला आहे.\n\nआता तुम्ही मतदार-विशिष्ट सेवा आरामात वापरू शकता.` :
+                        `✅ *सफलता!* आपका व्हाट्सएप नंबर आपके मतदाता रिकॉर्ड से जुड़ गया है।\n\nअब आप मतदाता-विशिष्ट सेवाओं का आसानी से उपयोग कर सकते हैं।`;
+                await sock.sendMessage(userId, { text: successMsg });
+                delete session.voterMatch;
+                await this.showMainMenu(sock, userId, lang);
+            } catch (err) {
+                console.error('Error linking voter:', err);
+                const errMsg = lang === 'en' ? '❌ Error linking record. Please try again later.' : '❌ त्रुटी आली. कृपया नंतर प्रयत्न करा.';
+                await sock.sendMessage(userId, { text: errMsg });
+                await this.showMainMenu(sock, userId, lang);
+            }
+        } else if (input === '2') {
+            session.currentMenu = MENU_STATES.VOTER_VERIFY_NAME_PROMPT;
+            await sock.sendMessage(userId, { text: MESSAGES.voter_verify_name_prompt[lang] });
+            delete session.voterMatch;
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
+    }
+
+    async handleVoterRegisterName(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        session.voterRegisterData.name = input.trim();
+        session.currentMenu = MENU_STATES.VOTER_REGISTER_WARD;
+        await sock.sendMessage(userId, { text: MESSAGES.voter_register_ward_prompt[lang] });
+    }
+
+    async handleVoterRegisterWard(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        session.voterRegisterData.ward = input.trim();
+
+        const mobile = userId.replace('@s.whatsapp.net', '').replace('@lid', '');
+        const voterData = {
+            name_english: session.voterRegisterData.name,
+            ward_no: session.voterRegisterData.ward,
+            mobile: mobile,
+            tenant_id: tenantId,
+            is_verified: true
+        };
+
+        try {
+            await this.store.createVoter(voterData);
+            const successMsg = lang === 'en' ? `✅ *Registration Successful!*\n\nWelcome, ${session.voterRegisterData.name}. You are now registered in our voter database.` :
+                lang === 'mr' ? `✅ *नोंदणी यशस्वी!*\n\nस्वागत आहे, ${session.voterRegisterData.name}. तुमची आमच्या मतदार डेटाबेसमध्ये नोंदणी झाली आहे.` :
+                    `✅ *पंजीकरण सफल!*\n\nस्वागत है, ${session.voterRegisterData.name}। अब आप हमारे मतदाता डेटाबेस में पंजीकृत हैं।`;
+            await sock.sendMessage(userId, { text: successMsg });
+            delete session.voterRegisterData;
+            await this.showMainMenu(sock, userId, lang);
+        } catch (err) {
+            console.error('Error creating voter:', err);
+            const errMsg = lang === 'en' ? '❌ Error registering. Please try again later.' : '❌ नोंदणी करताना त्रुटी आली.';
+            await sock.sendMessage(userId, { text: errMsg });
+            await this.showMainMenu(sock, userId, lang);
+        }
     }
 
     /**

@@ -541,6 +541,37 @@ async function getPersonalRequestsByMobile(tenantId, mobile, limit = 10) {
     }
 }
 
+async function updateVoterMobile(voterId, mobile) {
+    try {
+        const { data, error } = await supabase
+            .from('voters')
+            .update({ mobile: mobile, is_verified: true })
+            .eq('id', voterId)
+            .select();
+
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (err) {
+        console.error('Error updating voter mobile:', err);
+        throw err;
+    }
+}
+
+async function createVoter(voterData) {
+    try {
+        const { data, error } = await supabase
+            .from('voters')
+            .insert([voterData])
+            .select();
+
+        if (error) throw error;
+        return data ? data[0] : null;
+    } catch (err) {
+        console.error('Error creating voter:', err);
+        throw err;
+    }
+}
+
 module.exports = {
     saveUser,
     getUser,
@@ -563,5 +594,7 @@ module.exports = {
     getAreaProblems,
     getAreaProblemsByUser,
     savePersonalRequest,
-    getPersonalRequestsByMobile
+    getPersonalRequestsByMobile,
+    updateVoterMobile,
+    createVoter
 };
