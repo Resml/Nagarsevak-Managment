@@ -610,4 +610,19 @@ server.listen(PORT, async () => {
 
     // Restore previous sessions
     await restoreSessions();
+
+    // Keep-Alive Mechanism for Render Free Tier
+    // Pings the server every 10 minutes to prevent it from spinning down
+    const keepAliveUrl = `http://localhost:${PORT}/`;
+    setInterval(() => {
+        http.get(keepAliveUrl, (res) => {
+            if (res.statusCode === 200) {
+                // console.log('[Keep-Alive] Ping successful');
+            } else {
+                console.error(`[Keep-Alive] Ping failed with status: ${res.statusCode}`);
+            }
+        }).on('error', (err) => {
+            console.error('[Keep-Alive] Ping error:', err.message);
+        });
+    }, 10 * 60 * 1000); // 10 minutes
 });
