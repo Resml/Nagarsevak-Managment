@@ -134,6 +134,10 @@ async function logoutSession(tenantId) {
     }
 }
 
+// --- Vapi Routes ---
+const vapiRoutes = require('./vapiRoutes');
+app.use('/api/vapi', vapiRoutes);
+
 // --- API Routes ---
 app.post('/api/broadcast', async (req, res) => {
     const { eventId, tenantId } = req.body;
