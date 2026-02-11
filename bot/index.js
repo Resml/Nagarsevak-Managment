@@ -241,8 +241,43 @@ app.post('/webhook/letter-status', async (req, res) => {
 async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false) {
     if (!tenantId) return;
 
+    // Race Condition Fix:
+    // If we are NOT retrying, and a session header exists, check its status.
+    // If it is already connecting/connected/scanning, we should NOT start another connection.
+    if (!isRetry && sessions.has(tenantId)) {
+        const s = sessions.get(tenantId);
+        if (s.status === 'connecting' || s.status === 'connected' || s.status === 'scanning') {
+            console.log(`[${tenantId}] Connection already in progress or active (Status: ${s.status}). Skipping duplicate request.`);
+            return;
+        }
+    }
+
+    // Immediately initialize a placeholder session to block other concurrent requests
+    // This must happen synchronously before any await
+    if (!sessions.has(tenantId)) {
+        console.log(`[${tenantId}] Initializing new session placeholder.`);
+        sessions.set(tenantId, {
+            sock: null,
+            status: 'connecting',
+            qr: '',
+            store: baileysStore,
+            menuNavigator: null,
+            retryCount: 0,
+            ev: null
+        });
+    }
+
     const session = sessions.get(tenantId);
-    const retryCount = session?.retryCount || 0;
+    // If retrying, we use the existing retry count.
+    // If not retrying, we reset it (passed as 0 or handled by placeholder init above)
+    // Note: If we just created the placeholder, retryCount is 0.
+    // If we are retrying, session exists, so we get its count.
+
+    // However, if isRetry is true, we might be here because of a disconnect.
+    // We should make sure we don't double-increment or mess up the object ref.
+
+    // Let's get the retry count from the session object if it exists and we are retrying.
+    const retryCount = (isRetry && session) ? (session.retryCount || 0) : 0;
 
     // Check if we've exceeded max retry attempts
     if (isRetry && retryCount >= MAX_RETRY_ATTEMPTS) {
@@ -278,18 +313,21 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         maxMsgRetryCount: 5, // Maximum message retry attempts
     });
 
-    // Save session to map
     // Create menu navigator instance for this tenant
     const menuNavigator = new MenuNavigator(store);
 
+    // Update the existing session object instead of overwriting it completely
+    const currentSession = sessions.get(tenantId);
+
     sessions.set(tenantId, {
+        ...currentSession,
         sock,
         status: 'connecting',
         qr: '',
         store: baileysStore,
-        menuNavigator,  // Store MenuNavigator for webhook access
+        menuNavigator,
         retryCount: isRetry ? retryCount : 0,
-        ev: sock.ev // Store event emitter for cleanup
+        ev: sock.ev
     });
 
     // Bind Store (Global store for now)
