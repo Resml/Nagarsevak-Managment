@@ -54,7 +54,9 @@ const MENU_STATES = {
     VOTER_REGISTER_NAME: 'VOTER_REGISTER_NAME',
     VOTER_REGISTER_WARD: 'VOTER_REGISTER_WARD',
     COMPLAINT_VOTER_VERIFY: 'COMPLAINT_VOTER_VERIFY',
-    PERSONAL_REQUEST_VOTER_VERIFY: 'PERSONAL_REQUEST_VOTER_VERIFY'
+    PERSONAL_REQUEST_VOTER_VERIFY: 'PERSONAL_REQUEST_VOTER_VERIFY',
+    LETTER_VOTER_VERIFY: 'LETTER_VOTER_VERIFY',
+    AREA_PROBLEM_VOTER_VERIFY: 'AREA_PROBLEM_VOTER_VERIFY'
 };
 
 class MenuNavigator {
@@ -251,6 +253,12 @@ class MenuNavigator {
 
             case MENU_STATES.PERSONAL_REQUEST_VOTER_VERIFY:
                 return await this.handlePersonalRequestVoterVerify(sock, tenantId, userId, input);
+
+            case MENU_STATES.LETTER_VOTER_VERIFY:
+                return await this.handleLetterVoterVerify(sock, tenantId, userId, input);
+
+            case MENU_STATES.AREA_PROBLEM_VOTER_VERIFY:
+                return await this.handleAreaProblemVoterVerify(sock, tenantId, userId, input);
 
             default:
                 // Fallback to language selection
@@ -1640,14 +1648,81 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
     async handleLetterFormName(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
+        const nameQuery = input.trim();
+        session.letterFormData.name = nameQuery;
 
-        session.letterFormData.name = input.trim();
-        session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+        const voters = await this.store.searchVoters(tenantId, nameQuery, 'name', 5);
 
-        const mobilePrompt = lang === 'en' ? '\ud83d\udcf1 Please enter your mobile number (10 digits):' :
-            lang === 'mr' ? '\ud83d\udcf1 \u0915\u0943\u092a\u092f\u093e \u0924\u0941\u092e\u091a\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u092a\u094d\u0930\u0935\u093f\u0937\u094d\u091f \u0915\u0930\u093e (\u0967\u0966 \u0905\u0902\u0915):' :
-                '\ud83d\udcf1 \u0915\u0943\u092a\u092f\u093e \u0905\u092a\u0928\u093e \u092e\u094b\u092c\u093e\u0907\u0932 \u0928\u0902\u092c\u0930 \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902 (10 \u0905\u0902\u0915):';
-        await sock.sendMessage(userId, { text: mobilePrompt });
+        if (voters && voters.length > 0) {
+            session.votersFound = voters;
+            session.currentMenu = MENU_STATES.LETTER_VOTER_VERIFY;
+
+            let listMsg = lang === 'en' ? `🔍 *Is this you?*\n\nPlease select (1-${voters.length}):\n\n` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\nकृपया निवडा (१-${voters.length}):\n\n` :
+                    `🔍 *क्या यह आप हैं?*\n\nकृपया चुनें (1-${voters.length}):\n\n`;
+
+            voters.forEach((v, i) => {
+                const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+            });
+            listMsg += `\n0️⃣ None of these (New Voter)`;
+            await sock.sendMessage(userId, { text: listMsg });
+        } else {
+            // Not found
+            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your letter request." :
+                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या पत्र विनंतीसह पुढे जात आहोत." :
+                    "नये मतदाता का स्वागत है! आपके पत्र अनुरोध के साथ आगे बढ़ रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+        }
+    }
+
+    async handleLetterVoterVerify(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (input === '0') {
+            const msg = lang === 'en' ? "Okay, registering as a new voter." :
+                lang === 'mr' ? "ठीक आहे, नवीन मतदार म्हणून नोंदणी करत आहोत." :
+                    "ठीक है, नए मतदाता के रूप में पंजीकरण कर रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            delete session.votersFound;
+            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+            return;
+        }
+
+        const idx = parseInt(input) - 1;
+        if (idx >= 0 && idx < (session.votersFound?.length || 0)) {
+            const voter = session.votersFound[idx];
+            session.letterFormData.voter_id = voter.id;
+            session.letterFormData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            session.letterFormData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            await sock.sendMessage(userId, { text: successMsg });
+
+            delete session.votersFound;
+
+            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+            await sock.sendMessage(userId, { text: mobilePrompt + ` (linked: ${session.letterFormData.mobile})` });
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
     }
 
     async handleLetterFormMobile(sock, tenantId, userId, input) {
@@ -1702,6 +1777,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 user_id: userId, // Store full WhatsApp ID: "105029583282256@lid"
                 tenant_id: tenantId,
                 type: session.letterFormData.type,
+                voter_id: session.letterFormData.voter_id,
                 area: '', // Optional
                 details: {
                     name: session.letterFormData.name,
@@ -1759,14 +1835,81 @@ Your request has been sent to the office for approval. You will be notified once
     async handleAreaProblemName(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
         const lang = session.language;
+        const nameQuery = input.trim();
+        session.areaFormData.reporter_name = nameQuery;
 
-        session.areaFormData.reporter_name = input.trim();
-        session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+        const voters = await this.store.searchVoters(tenantId, nameQuery, 'name', 5);
 
-        const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
-            lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
-                '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
-        await sock.sendMessage(userId, { text: mobilePrompt });
+        if (voters && voters.length > 0) {
+            session.votersFound = voters;
+            session.currentMenu = MENU_STATES.AREA_PROBLEM_VOTER_VERIFY;
+
+            let listMsg = lang === 'en' ? `🔍 *Is this you?*\n\nPlease select (1-${voters.length}):\n\n` :
+                lang === 'mr' ? `🔍 *हे तुम्हीच आहात का?*\n\nकृपया निवडा (१-${voters.length}):\n\n` :
+                    `🔍 *क्या यह आप हैं?*\n\nकृपया चुनें (1-${voters.length}):\n\n`;
+
+            voters.forEach((v, i) => {
+                const n = lang === 'mr' ? (v.name_marathi || v.name_english) : v.name_english;
+                listMsg += `${i + 1}️⃣ ${n} (Ward ${v.ward})\n`;
+            });
+            listMsg += `\n0️⃣ None of these (New Voter)`;
+            await sock.sendMessage(userId, { text: listMsg });
+        } else {
+            // Not found
+            const msg = lang === 'en' ? "Welcome new voter! Proceeding with your report." :
+                lang === 'mr' ? "नवीन मतदाराचे स्वागत! तुमच्या तक्रारीसह पुढे जात आहोत." :
+                    "नये मतदाता का स्वागत है! आपकी शिकायत के साथ आगे बढ़ रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+        }
+    }
+
+    async handleAreaProblemVoterVerify(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (input === '0') {
+            const msg = lang === 'en' ? "Okay, registering as a new voter." :
+                lang === 'mr' ? "ठीक आहे, नवीन मतदार म्हणून नोंदणी करत आहोत." :
+                    "ठीक है, नए मतदाता के रूप में पंजीकरण कर रहे हैं।";
+            await sock.sendMessage(userId, { text: msg });
+            delete session.votersFound;
+            session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+            return;
+        }
+
+        const idx = parseInt(input) - 1;
+        if (idx >= 0 && idx < (session.votersFound?.length || 0)) {
+            const voter = session.votersFound[idx];
+            session.areaFormData.voter_id = voter.id;
+            session.areaFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
+            session.areaFormData.reporter_mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
+
+            const successMsg = lang === 'en' ? `✅ *Voter Linked!* (Ward ${voter.ward})\n\nProceeding to next step.` :
+                lang === 'mr' ? `✅ *मतदार लिंक केला!* (प्रभाग ${voter.ward})\n\nपुढील पायरीवर जात आहोत.` :
+                    `✅ *मतदाता जुड़ गया!* (वार्ड ${voter.ward})\n\nअगले चरण पर बढ़ रहे हैं।`;
+            await sock.sendMessage(userId, { text: successMsg });
+
+            delete session.votersFound;
+
+            session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: mobilePrompt + ` (linked: ${session.areaFormData.reporter_mobile})` });
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
     }
 
     async handleAreaProblemMobile(sock, tenantId, userId, input) {
@@ -1830,10 +1973,12 @@ Your request has been sent to the office for approval. You will be notified once
                 user_id: userId, // Use full ID for robustness
                 reporter_name: session.areaFormData.reporter_name,
                 reporter_mobile: session.areaFormData.reporter_mobile,
+                voter_id: session.areaFormData.voter_id || null, // Add voter_id, default to null
                 title: session.areaFormData.title,
                 description: session.areaFormData.description,
                 location: session.areaFormData.location,
-                status: 'Pending'
+                status: 'Open', // Change status to 'Open'
+                created_at: new Date().toISOString() // Add created_at timestamp
             };
 
             const result = await this.store.reportAreaProblem(problemData);
