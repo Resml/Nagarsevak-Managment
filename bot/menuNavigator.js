@@ -56,7 +56,10 @@ const MENU_STATES = {
     COMPLAINT_VOTER_VERIFY: 'COMPLAINT_VOTER_VERIFY',
     PERSONAL_REQUEST_VOTER_VERIFY: 'PERSONAL_REQUEST_VOTER_VERIFY',
     LETTER_VOTER_VERIFY: 'LETTER_VOTER_VERIFY',
-    AREA_PROBLEM_VOTER_VERIFY: 'AREA_PROBLEM_VOTER_VERIFY'
+    AREA_PROBLEM_VOTER_VERIFY: 'AREA_PROBLEM_VOTER_VERIFY',
+    VOTER_PROFILE_UPDATE_MENU: 'VOTER_PROFILE_UPDATE_MENU',
+    VOTER_UPDATE_MOBILE_VAL: 'VOTER_UPDATE_MOBILE_VAL',
+    VOTER_UPDATE_ADDRESS_VAL: 'VOTER_UPDATE_ADDRESS_VAL'
 };
 
 class MenuNavigator {
@@ -259,6 +262,15 @@ class MenuNavigator {
 
             case MENU_STATES.AREA_PROBLEM_VOTER_VERIFY:
                 return await this.handleAreaProblemVoterVerify(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_PROFILE_UPDATE_MENU:
+                return await this.handleVoterProfileUpdateMenu(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_UPDATE_MOBILE_VAL:
+                return await this.handleVoterUpdateMobileVal(sock, tenantId, userId, input);
+
+            case MENU_STATES.VOTER_UPDATE_ADDRESS_VAL:
+                return await this.handleVoterUpdateAddressVal(sock, tenantId, userId, input);
 
             default:
                 // Fallback to language selection
@@ -464,32 +476,11 @@ class MenuNavigator {
             session.formData.voter_id = voter.id;
             session.formData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.formData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
-
-            let info = lang === 'mr' ?
-                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
-                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
-
-            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
-
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
-            await sock.sendMessage(userId, { text: successMsg });
+            session.formData.mobile = voter.mobile;
 
             delete session.votersFound;
-
-            // Mobile Confirmation Prompt
-            if (voter.mobile) {
-                session.tempVoterMobile = voter.mobile;
-                session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
-                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
-                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
-                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
-                await sock.sendMessage(userId, { text: confirmPrompt });
-            } else {
-                session.currentMenu = MENU_STATES.COMPLAINT_FORM_MOBILE;
-                await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
-            }
+            session.voterOriginMenu = MENU_STATES.COMPLAINT_VOTER_VERIFY;
+            return await this.showVoterProfileUpdateMenu(sock, userId, voter);
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -512,14 +503,6 @@ class MenuNavigator {
                         '❌ कृपया एक वैध 10 अंकों का मोबाइल नंबर दर्ज करें';
                 await sock.sendMessage(userId, { text: errorMsg + '\n\n' + MESSAGES.complaint_mobile_prompt[lang] });
                 return;
-            }
-            // Update voter in DB if linked and number changed
-            if (session.formData.voter_id && cleanMobile !== session.tempVoterMobile) {
-                try {
-                    await this.store.updateVoter(session.formData.voter_id, { mobile: cleanMobile });
-                } catch (error) {
-                    console.error('Failed to update voter mobile:', error);
-                }
             }
             delete session.tempVoterMobile;
         }
@@ -579,20 +562,6 @@ class MenuNavigator {
             session.formData.location = session.formData.original_address;
         } else {
             session.formData.location = input.trim();
-            // Update voter address in DB if linked and changed
-            if (session.formData.voter_id && session.formData.location !== session.formData.original_address) {
-                try {
-                    const updateData = {};
-                    if (lang === 'mr') {
-                        updateData.address_marathi = session.formData.location;
-                    } else {
-                        updateData.address_english = session.formData.location;
-                    }
-                    await this.store.updateVoter(session.formData.voter_id, updateData);
-                } catch (error) {
-                    console.error('Failed to update voter address:', error);
-                }
-            }
         }
         session.currentMenu = MENU_STATES.COMPLAINT_FORM_PHOTO;
         await sock.sendMessage(userId, { text: MESSAGES.complaint_photo_prompt[lang] });
@@ -1779,38 +1748,12 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             const voter = session.votersFound[idx];
             session.letterFormData.voter_id = voter.id;
             session.letterFormData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
-            session.letterFormData.mobile = voter.mobile || userId.replace(/\D/g, '').slice(-10);
             session.letterFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
-
-            let info = lang === 'mr' ?
-                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
-                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
-
-            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
-
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
-            await sock.sendMessage(userId, { text: successMsg });
+            session.letterFormData.mobile = voter.mobile;
 
             delete session.votersFound;
-
-            // Mobile Confirmation Prompt
-            if (voter.mobile) {
-                session.tempVoterMobile = voter.mobile;
-                session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
-
-                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
-                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
-                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
-                await sock.sendMessage(userId, { text: confirmPrompt });
-            } else {
-                session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
-                const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
-                    lang === 'mr' ? '📱 कृपया तुमचा मोबाइल number प्रविष्ट करा (१० अंक):' :
-                        '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
-                await sock.sendMessage(userId, { text: mobilePrompt });
-            }
+            session.voterOriginMenu = MENU_STATES.LETTER_VOTER_VERIFY;
+            return await this.showVoterProfileUpdateMenu(sock, userId, voter);
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -1832,14 +1775,6 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                         '❌ अमान्य मोबाइल नंबर। कृपया 10 अंक दर्ज करें।';
                 await sock.sendMessage(userId, { text: invalidMsg });
                 return;
-            }
-            // Update voter in DB if linked and changed
-            if (session.letterFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
-                try {
-                    await this.store.updateVoter(session.letterFormData.voter_id, { mobile: cleanMobile });
-                } catch (error) {
-                    console.error('Failed to update voter mobile:', error);
-                }
             }
             delete session.tempVoterMobile;
         }
@@ -1867,20 +1802,6 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.letterFormData.address = session.letterFormData.original_address;
         } else {
             session.letterFormData.address = input.trim();
-            // Update voter address in DB if linked and changed
-            if (session.letterFormData.voter_id && session.letterFormData.address !== session.letterFormData.original_address) {
-                try {
-                    const updateData = {};
-                    if (lang === 'mr') {
-                        updateData.address_marathi = session.letterFormData.address;
-                    } else {
-                        updateData.address_english = session.letterFormData.address;
-                    }
-                    await this.store.updateVoter(session.letterFormData.voter_id, updateData);
-                } catch (error) {
-                    console.error('Failed to update voter address:', error);
-                }
-            }
         }
         session.currentMenu = MENU_STATES.LETTER_FORM_PURPOSE;
 
@@ -2031,35 +1952,11 @@ Your request has been sent to the office for approval. You will be notified once
             session.areaFormData.voter_id = voter.id;
             session.areaFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.areaFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
-
-            let info = lang === 'mr' ?
-                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
-                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
-
-            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
-
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
-            await sock.sendMessage(userId, { text: successMsg });
+            session.areaFormData.reporter_mobile = voter.mobile;
 
             delete session.votersFound;
-
-            // Mobile Confirmation Prompt
-            if (voter.mobile) {
-                session.tempVoterMobile = voter.mobile;
-                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
-                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
-                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
-                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
-                await sock.sendMessage(userId, { text: confirmPrompt });
-            } else {
-                session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
-                const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
-                    lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
-                        '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
-                await sock.sendMessage(userId, { text: mobilePrompt });
-            }
+            session.voterOriginMenu = MENU_STATES.AREA_PROBLEM_VOTER_VERIFY;
+            return await this.showVoterProfileUpdateMenu(sock, userId, voter);
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -2081,14 +1978,6 @@ Your request has been sent to the office for approval. You will be notified once
                         '❌ अमान्य मोबाइल नंबर। कृपया 10 अंकों का नंबर दर्ज करें:';
                 await sock.sendMessage(userId, { text: invalidMsg });
                 return;
-            }
-            // Update voter in DB if linked and changed
-            if (session.areaFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
-                try {
-                    await this.store.updateVoter(session.areaFormData.voter_id, { mobile: cleanMobile });
-                } catch (error) {
-                    console.error('Failed to update voter mobile:', error);
-                }
             }
             delete session.tempVoterMobile;
         }
@@ -2142,20 +2031,6 @@ Your request has been sent to the office for approval. You will be notified once
             session.areaFormData.location = session.areaFormData.original_address;
         } else {
             session.areaFormData.location = input.trim();
-            // Update voter address in DB if linked and changed
-            if (session.areaFormData.voter_id && session.areaFormData.location !== session.areaFormData.original_address) {
-                try {
-                    const updateData = {};
-                    if (lang === 'mr') {
-                        updateData.address_marathi = session.areaFormData.location;
-                    } else {
-                        updateData.address_english = session.areaFormData.location;
-                    }
-                    await this.store.updateVoter(session.areaFormData.voter_id, updateData);
-                } catch (error) {
-                    console.error('Failed to update voter address:', error);
-                }
-            }
         }
 
         // Submit the area problem
@@ -2325,32 +2200,11 @@ Your request has been sent to the office for approval. You will be notified once
             session.personalFormData.voter_id = voter.id;
             session.personalFormData.reporter_name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.personalFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
-
-            let info = lang === 'mr' ?
-                `👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ प्रभाग: ${voter.ward_no || 'N/A'}\n📍 पत्ता: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_marathi || voter.address_english || 'N/A'}` :
-                `👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n🏘️ Ward: ${voter.ward_no || 'N/A'}\n📍 Address: ${voter.house_no ? voter.house_no + ', ' : ''}${voter.address_english || 'N/A'}`;
-
-            if (voter.mobile) info += lang === 'mr' ? `\n📱 मोबाईल: ${voter.mobile}` : `\n📱 Mobile: ${voter.mobile}`;
-
-            const successMsg = lang === 'en' ? `✅ *Voter Linked!*\n\n${info}\n\nProceeding to next step.` :
-                lang === 'mr' ? `✅ *मतदार लिंक केला!*\n\n${info}\n\nपुढील पायरीवर जात आहोत.` :
-                    `✅ *मतदाता जुड़ गया!*\n\n${info}\n\nअगले चरण पर बढ़ रहे हैं।`;
-            await sock.sendMessage(userId, { text: successMsg });
+            session.personalFormData.reporter_mobile = voter.mobile;
 
             delete session.votersFound;
-
-            // Mobile Confirmation Prompt
-            if (voter.mobile) {
-                session.tempVoterMobile = voter.mobile;
-                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
-                const confirmPrompt = lang === 'en' ? `📱 Found your mobile number: *${voter.mobile}*\n\n1️⃣ Use this number\n\n_Or enter a different 10-digit mobile number:_` :
-                    lang === 'mr' ? `📱 तुमचा मोबाईल नंबर आढळला: *${voter.mobile}*\n\n1️⃣ हाच नंबर वापरा\n\n_किंवा दुसरा १०-अंकी मोबाईल नंबर प्रविष्ट करा:_` :
-                        `📱 आपका मोबाइल नंबर मिला: *${voter.mobile}*\n\n1️⃣ यही नंबर उपयोग करें\n\n_या कोई अन्य 10-अंकों का मोबाइल नंबर दर्ज करें:_`;
-                await sock.sendMessage(userId, { text: confirmPrompt });
-            } else {
-                session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
-                await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
-            }
+            session.voterOriginMenu = MENU_STATES.PERSONAL_REQUEST_VOTER_VERIFY;
+            return await this.showVoterProfileUpdateMenu(sock, userId, voter);
         } else {
             await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
         }
@@ -2369,14 +2223,6 @@ Your request has been sent to the office for approval. You will be notified once
             if (cleanMobile.length !== 10) {
                 await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
                 return;
-            }
-            // Update voter in DB if linked and changed
-            if (session.personalFormData.voter_id && cleanMobile !== session.tempVoterMobile) {
-                try {
-                    await this.store.updateVoter(session.personalFormData.voter_id, { mobile: cleanMobile });
-                } catch (error) {
-                    console.error('Failed to update voter mobile:', error);
-                }
             }
             delete session.tempVoterMobile;
         }
@@ -2454,6 +2300,148 @@ Your request has been sent to the office for approval. You will be notified once
 
         session.currentMenu = MENU_STATES.PERSONAL_REQUEST_MENU;
         await sock.sendMessage(userId, { text: PERSONAL_REQUEST_MENU[lang].text });
+    }
+
+    async handleVoterProfileUpdateMenu(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        if (input === '1') {
+            session.currentMenu = MENU_STATES.VOTER_UPDATE_MOBILE_VAL;
+            const msg = lang === 'en' ? '📱 Please enter your new 10-digit mobile number:' :
+                lang === 'mr' ? '📱 कृपया तुमचा नवीन १०-अंकी मोबाईल नंबर प्रविष्ट करा:' :
+                    '📱 कृपया अपना नया 10-अंकों का मोबाइल नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: msg });
+        } else if (input === '2') {
+            session.currentMenu = MENU_STATES.VOTER_UPDATE_ADDRESS_VAL;
+            const msg = lang === 'en' ? '🏠 Please enter your new full address:' :
+                lang === 'mr' ? '🏠 कृपया तुमचा नवीन पूर्ण पत्ता प्रविष्ट करा:' :
+                    '🏠 कृपया अपना नया पूरा पता दर्ज करें:';
+            await sock.sendMessage(userId, { text: msg });
+        } else if (input === '3') {
+            // Everything correct, return to original flow
+            return await this.resumeVoterFlow(sock, tenantId, userId);
+        } else {
+            await sock.sendMessage(userId, { text: MESSAGES.invalid_option[lang] });
+        }
+    }
+
+    async handleVoterUpdateMobileVal(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const mobile = input.trim().replace(/\D/g, '');
+
+        if (mobile.length !== 10) {
+            const msg = lang === 'en' ? '❌ Invalid mobile number. Please enter 10 digits:' :
+                lang === 'mr' ? '❌ अवैध मोबाईल नंबर. कृपया १० अंक प्रविष्ट करा:' :
+                    '❌ अमान्य मोबाइल नंबर। कृपया 10 अंक दर्ज करें:';
+            await sock.sendMessage(userId, { text: msg });
+            return;
+        }
+
+        const voterId = session.formData?.voter_id || session.letterFormData?.voter_id || session.areaFormData?.voter_id || session.personalFormData?.voter_id;
+
+        if (voterId) {
+            try {
+                await this.store.updateVoter(voterId, { mobile: mobile });
+                // Update session data
+                if (session.formData) session.formData.mobile = mobile;
+                if (session.letterFormData) session.letterFormData.mobile = mobile;
+                if (session.areaFormData) session.areaFormData.reporter_mobile = mobile;
+                if (session.personalFormData) session.personalFormData.reporter_mobile = mobile;
+
+                const success = lang === 'en' ? '✅ Mobile number updated successfully!' :
+                    lang === 'mr' ? '✅ मोबाईल नंबर यशस्वीरित्या अपडेट केला!' :
+                        '✅ मोबाइल नंबर सफलतापूर्वक अपडेट किया गया!';
+                await sock.sendMessage(userId, { text: success });
+            } catch (err) {
+                console.error('Failed to update voter mobile:', err);
+            }
+        }
+        return await this.resumeVoterFlow(sock, tenantId, userId);
+    }
+
+    async handleVoterUpdateAddressVal(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const address = input.trim();
+
+        if (!address) return;
+
+        const voterId = session.formData?.voter_id || session.letterFormData?.voter_id || session.areaFormData?.voter_id || session.personalFormData?.voter_id;
+
+        if (voterId) {
+            try {
+                const updateData = {};
+                if (lang === 'mr') {
+                    updateData.address_marathi = address;
+                } else {
+                    updateData.address_english = address;
+                }
+                await this.store.updateVoter(voterId, updateData);
+
+                // Update session data
+                if (session.formData) session.formData.original_address = address;
+                if (session.letterFormData) session.letterFormData.original_address = address;
+                if (session.areaFormData) session.areaFormData.original_address = address;
+                if (session.personalFormData) session.personalFormData.original_address = address;
+
+                const success = lang === 'en' ? '✅ Address updated successfully!' :
+                    lang === 'mr' ? '✅ पत्ता यशस्वीरित्या अपडेट केला!' :
+                        '✅ पता सफलतापूर्वक अपडेट किया गया!';
+                await sock.sendMessage(userId, { text: success });
+            } catch (err) {
+                console.error('Failed to update voter address:', err);
+            }
+        }
+        return await this.resumeVoterFlow(sock, tenantId, userId);
+    }
+
+    async showVoterProfileUpdateMenu(sock, userId, voter) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        session.currentMenu = MENU_STATES.VOTER_PROFILE_UPDATE_MENU;
+
+        const profileInfo = lang === 'mr' ?
+            `✅ *मतदार लिंक केला!*\n\n👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n📍 पत्ता: ${voter.address_marathi || voter.address_english || 'N/A'}\n📱 मोबाईल: ${voter.mobile || 'N/A'}` :
+            `✅ *Voter Linked!*\n\n👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n📍 Address: ${voter.address_english || 'N/A'}\n📱 Mobile: ${voter.mobile || 'N/A'}`;
+
+        const menuText = lang === 'mr' ?
+            `${profileInfo}\n\nतुम्ही तुमची नोंदणीकृत माहिती बदलू इच्छिता का?\n\n1️⃣ मोबाईल नंबर बदला\n2️⃣ पत्ता बदला\n3️⃣ सर्व माहिती बरोबर आहे, पुढे सुरू ठेवा` :
+            `${profileInfo}\n\nWould you like to update your registered details?\n\n1️⃣ Update Mobile\n2️⃣ Update Address\n3️⃣ Everything is correct, continue with request`;
+
+        await sock.sendMessage(userId, { text: menuText });
+    }
+
+    async resumeVoterFlow(sock, tenantId, userId) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const origin = session.voterOriginMenu;
+        delete session.voterOriginMenu;
+
+        if (origin === MENU_STATES.COMPLAINT_VOTER_VERIFY) {
+            session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
+        } else if (origin === MENU_STATES.LETTER_VOTER_VERIFY) {
+            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+        } else if (origin === MENU_STATES.AREA_PROBLEM_VOTER_VERIFY) {
+            session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
+            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :
+                lang === 'mr' ? '📱 कृपया तुमचा मोबाईल नंबर प्रविष्ट करा:' :
+                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें:';
+            await sock.sendMessage(userId, { text: mobilePrompt });
+        } else if (origin === MENU_STATES.PERSONAL_REQUEST_VOTER_VERIFY) {
+            session.currentMenu = MENU_STATES.PERSONAL_REQUEST_FORM_MOBILE;
+            await sock.sendMessage(userId, { text: MESSAGES.complaint_mobile_prompt[lang] });
+        } else {
+            await this.showMainMenu(sock, userId, lang);
+        }
     }
 }
 
