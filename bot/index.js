@@ -77,8 +77,56 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- Multi-Tenant Globals ---
-// Map<tenantId, { sock: WASocket, status: string, qr: string, store: SimpleStore }>
+// Map<tenantId, { sock: WASocket, status: string, qr: string, store: SimpleStore, menuNavigator: MenuNavigator, retryCount: number }>
 const sessions = new Map();
+
+// Connection retry configuration
+const MAX_RETRY_ATTEMPTS = 10;
+const INITIAL_RETRY_DELAY = 5000; // 5 seconds
+const MAX_RETRY_DELAY = 300000; // 5 minutes
+
+// Calculate exponential backoff delay
+function getRetryDelay(retryCount) {
+    const delay = Math.min(INITIAL_RETRY_DELAY * Math.pow(2, retryCount), MAX_RETRY_DELAY);
+    return delay;
+}
+
+// Manual logout function
+async function logoutSession(tenantId) {
+    const session = sessions.get(tenantId);
+    if (!session) {
+        console.log(`[${tenantId}] No session to logout`);
+        return false;
+    }
+
+    try {
+        // Close socket connection
+        if (session.sock) {
+            session.sock.end();
+            session.ev.removeAllListeners();
+        }
+
+        // Clear session data
+        sessions.delete(tenantId);
+
+        // Delete auth folder to force fresh QR scan on next login
+        const authPath = path.join('auth_info_baileys', `session_${tenantId}`);
+        if (fs.existsSync(authPath)) {
+            fs.rmSync(authPath, { recursive: true, force: true });
+            console.log(`[${tenantId}] Auth folder deleted for fresh login`);
+        }
+
+        // Emit logout status to frontend
+        io.to(tenantId).emit('status', 'disconnected');
+        io.to(tenantId).emit('logged_out', true);
+
+        console.log(`[${tenantId}] Successfully logged out`);
+        return true;
+    } catch (error) {
+        console.error(`[${tenantId}] Error during logout:`, error);
+        return false;
+    }
+}
 
 // --- API Routes ---
 app.post('/api/broadcast', async (req, res) => {
@@ -184,8 +232,18 @@ app.post('/webhook/letter-status', async (req, res) => {
 });
 
 // --- Baileys Connection Logic (Per Tenant) ---
-async function connectToWhatsApp(tenantId, socketToEmit = null) {
+async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false) {
     if (!tenantId) return;
+
+    const session = sessions.get(tenantId);
+    const retryCount = session?.retryCount || 0;
+
+    // Check if we've exceeded max retry attempts
+    if (isRetry && retryCount >= MAX_RETRY_ATTEMPTS) {
+        console.error(`[${tenantId}] Max retry attempts (${MAX_RETRY_ATTEMPTS}) exceeded. Stopping retries.`);
+        updateSessionStatus(tenantId, 'failed');
+        return;
+    }
 
     // specific auth folder for this tenant
     const authPath = path.join('auth_info_baileys', `session_${tenantId}`);
@@ -195,7 +253,7 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
         fs.mkdirSync(authPath, { recursive: true });
     }
 
-    console.log(`[${tenantId}] Initializing Baileys connection...`);
+    console.log(`[${tenantId}] Initializing Baileys connection... ${isRetry ? `(Retry attempt ${retryCount + 1}/${MAX_RETRY_ATTEMPTS})` : ''}`);
 
     // Update status to connecting
     updateSessionStatus(tenantId, 'connecting');
@@ -213,7 +271,12 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
                 return msg?.message || undefined;
             }
             return { conversation: 'hello' };
-        }
+        },
+        // Add connection stability options
+        connectTimeoutMs: 60000, // 60 seconds connection timeout
+        keepAliveIntervalMs: 25000, // 25 seconds keep alive
+        retryRequestDelayMs: 5000, // 5 seconds between retries
+        maxMsgRetryCount: 5, // Maximum message retry attempts
     });
 
     // Save session to map
@@ -225,7 +288,9 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
         status: 'connecting',
         qr: '',
         store: baileysStore,
-        menuNavigator  // Store MenuNavigator for webhook access
+        menuNavigator,  // Store MenuNavigator for webhook access
+        retryCount: isRetry ? retryCount : 0,
+        ev: sock.ev // Store event emitter for cleanup
     });
 
     // Bind Store (Global store for now)
@@ -239,13 +304,12 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
         if (qr) {
             console.log(`[${tenantId}] QR Received`);
 
-            // Generate basic text QR for terminal logs if needed, but mainly emit to frontend
-            // qrcode.generate(qr, { small: true }); 
-
+            // Reset retry count on QR generation (fresh start)
             const session = sessions.get(tenantId);
             if (session) {
                 session.qr = qr;
                 session.status = 'scanning';
+                session.retryCount = 0;
                 sessions.set(tenantId, session);
             }
 
@@ -261,7 +325,20 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
             updateSessionStatus(tenantId, 'disconnected');
 
             if (shouldReconnect) {
-                connectToWhatsApp(tenantId); // Reconnect
+                // Increment retry count
+                const session = sessions.get(tenantId);
+                if (session) {
+                    session.retryCount = (session.retryCount || 0) + 1;
+                    sessions.set(tenantId, session);
+                }
+
+                // Calculate delay and retry
+                const delay = getRetryDelay(retryCount);
+                console.log(`[${tenantId}] Retrying connection in ${delay / 1000} seconds...`);
+                
+                setTimeout(() => {
+                    connectToWhatsApp(tenantId, socketToEmit, true);
+                }, delay);
             } else {
                 console.log(`[${tenantId}] Logged out. Cleaning up session.`);
                 sessions.delete(tenantId);
@@ -275,12 +352,35 @@ async function connectToWhatsApp(tenantId, socketToEmit = null) {
             const session = sessions.get(tenantId);
             if (session) {
                 session.qr = '';
+                session.retryCount = 0; // Reset retry count on successful connection
                 sessions.set(tenantId, session);
             }
 
             io.to(tenantId).emit('qr', ''); // Clear QR
         }
     });
+
+    // Add connection timeout handling
+    setTimeout(() => {
+        const session = sessions.get(tenantId);
+        if (session && session.status === 'connecting') {
+            console.log(`[${tenantId}] Connection timeout, retrying...`);
+            sock.end();
+            
+            const retryCount = session.retryCount || 0;
+            if (retryCount < MAX_RETRY_ATTEMPTS) {
+                session.retryCount = retryCount + 1;
+                sessions.set(tenantId, session);
+                
+                const delay = getRetryDelay(retryCount);
+                setTimeout(() => {
+                    connectToWhatsApp(tenantId, socketToEmit, true);
+                }, delay);
+            } else {
+                updateSessionStatus(tenantId, 'failed');
+            }
+        }
+    }, 60000); // 60 second timeout
 
     sock.ev.on('messages.upsert', async (m) => {
         try {
@@ -423,6 +523,13 @@ io.on('connection', (socket) => {
             // Start new session
             connectToWhatsApp(tenantId);
         }
+    });
+
+    socket.on('logout_session', ({ tenantId }) => {
+        if (!tenantId) return;
+        
+        console.log(`[${tenantId}] Manual logout requested by user`);
+        logoutSession(tenantId);
     });
 
     socket.on('disconnect', () => {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { io } from 'socket.io-client';
-import { CheckCircle, RefreshCw, Smartphone } from 'lucide-react';
+import { CheckCircle, RefreshCw, Smartphone, LogOut, Power } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 import { useTenant } from '../../context/TenantContext';
@@ -15,6 +15,13 @@ const BotDashboard = () => {
     const [qrCode, setQrCode] = useState<string>('');
     const [logs, setLogs] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
+    const [socket, setSocket] = useState<any>(null);
+
+    const handleLogout = () => {
+        if (socket && tenantId) {
+            socket.emit('logout_session', { tenantId });
+        }
+    };
 
     useEffect(() => {
         if (!tenantId) return;
@@ -22,35 +29,42 @@ const BotDashboard = () => {
         // Initial simulated loading
         // setTimeout(() => setLoading(false), 1000);
 
-        const socket = io(SOCKET_URL);
+        const newSocket = io(SOCKET_URL);
+        setSocket(newSocket);
 
-        socket.on('connect', () => {
+        newSocket.on('connect', () => {
             console.log('Connected to Bot Server');
             // Join the specific tenant room
-            socket.emit('join_tenant', { tenantId });
+            newSocket.emit('join_tenant', { tenantId });
             // Request to start session if not exists
-            socket.emit('start_session', { tenantId });
+            newSocket.emit('start_session', { tenantId });
         });
 
-        socket.on('disconnect', () => {
+        newSocket.on('disconnect', () => {
             console.log('Disconnected from Bot Server');
             setStatus('disconnected');
         });
 
-        socket.on('status', (newStatus) => {
+        newSocket.on('status', (newStatus) => {
             console.log('Bot Status:', newStatus);
             setStatus(newStatus);
             setLoading(false); // Stop loading when we get status
         });
 
-        socket.on('qr', (qr) => {
+        newSocket.on('qr', (qr) => {
             console.log('QR Received');
             setQrCode(qr);
             setLoading(false);
         });
 
+        newSocket.on('logged_out', () => {
+            console.log('Bot logged out successfully');
+            setStatus('disconnected');
+            setQrCode('');
+        });
+
         return () => {
-            socket.disconnect();
+            newSocket.disconnect();
         };
     }, [tenantId]);
 
@@ -59,6 +73,7 @@ const BotDashboard = () => {
             case 'connected': return 'text-green-600 bg-green-50 border-green-200';
             case 'scanning': return 'text-orange-600 bg-orange-50 border-orange-200';
             case 'authenticated': return 'text-blue-600 bg-blue-50 border-blue-200';
+            case 'failed': return 'text-red-600 bg-red-50 border-red-200';
             default: return 'text-gray-600 bg-gray-50 border-gray-200';
         }
     };
@@ -70,6 +85,7 @@ const BotDashboard = () => {
             case 'authenticated': return t('whatsapp_bot.status_auth');
             case 'disconnected': return t('whatsapp_bot.status_disconnected');
             case 'connected_to_server': return t('whatsapp_bot.status_waiting');
+            case 'failed': return 'Connection Failed - Retry Needed';
             default: return status;
         }
     };
@@ -108,9 +124,21 @@ const BotDashboard = () => {
                         {/* Status Card */}
                         <div className="ns-card p-6">
                             <h2 className="text-lg font-semibold text-slate-900 mb-4">{t('whatsapp_bot.status_title')}</h2>
-                            <div className={`p-4 rounded-lg border flex items-center gap-3 ${getStatusColor()}`}>
-                                {status === 'connected' ? <CheckCircle className="w-6 h-6" /> : <RefreshCw className={`w-6 h-6 ${status === 'scanning' ? 'animate-spin' : ''}`} />}
-                                <span className="font-medium text-lg">{getStatusText()}</span>
+                            <div className={`p-4 rounded-lg border flex items-center justify-between ${getStatusColor()}`}>
+                                <div className="flex items-center gap-3">
+                                    {status === 'connected' ? <CheckCircle className="w-6 h-6" /> : <RefreshCw className={`w-6 h-6 ${status === 'scanning' ? 'animate-spin' : ''}`} />}
+                                    <span className="font-medium text-lg">{getStatusText()}</span>
+                                </div>
+                                {status === 'connected' && (
+                                    <button
+                                        onClick={handleLogout}
+                                        className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
+                                        title="Logout WhatsApp Bot"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Logout
+                                    </button>
+                                )}
                             </div>
 
                             <div className="mt-6">
@@ -133,6 +161,13 @@ const BotDashboard = () => {
                                     </div>
                                     <h3 className="text-xl font-bold text-slate-900">{t('whatsapp_bot.connected_title')}</h3>
                                     <p className="text-slate-500 mt-2">{t('whatsapp_bot.connected_desc')}</p>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="mt-4 flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors mx-auto"
+                                    >
+                                        <Power className="w-4 h-4" />
+                                        Disconnect Bot
+                                    </button>
                                 </div>
                             ) : status === 'scanning' && qrCode ? (
                                 <div className="text-center">
