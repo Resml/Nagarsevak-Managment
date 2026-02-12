@@ -300,6 +300,7 @@ const AppLayout = () => {
           { to: '/voters', icon: Search, label: t('nav.voter_search'), show: isAdminOrStaff, permission: 'voters' },
           { to: '/staff', icon: Users, label: t('nav.my_team'), show: true, permission: 'staff' },
           { to: '/political/public-communication', icon: Megaphone, label: t('nav.public_communication'), show: true, permission: 'public_comm' },
+          { to: '/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
         ],
       },
       // 8) Analysis Strategy

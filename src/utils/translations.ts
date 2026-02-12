@@ -251,14 +251,38 @@ export const translations = {
             new_voter_add: "New voter add",
             friends_relatives: "Friends and relatives",
             ward_info_constituency: "Ward Info (Constituency)",
+            ward_map: "Ward Map",
             public_communication: "Public Communication",
-            ward_map: "Ward Map"
+            voter_forms: "Voter Forms"
         },
-        ward_map: {
-            title: "Ward Map",
-            subtitle: "View geographic details of the ward",
-            coming_soon: "Map Coming Soon",
-            coming_soon_desc: "The interactive ward map is currently under development. Please check back later."
+        voter_forms: {
+            title: "Voter Registration Forms",
+            subtitle: "Official ECI forms for voter services",
+            form_6: {
+                title: "New Voter Registration (Form 6)",
+                desc: "For first-time voters or those shifting from another constituency.",
+                docs: "Required: Photo, Age Proof, Address Proof"
+            },
+            form_7: {
+                title: "Deletion of Voter Name (Form 7)",
+                desc: "To object to inclusion or seek deletion of a name from the roll.",
+                docs: "Required: EPIC details, Reason/Proof for deletion"
+            },
+            form_8: {
+                title: "Update Voter Details (Form 8)",
+                desc: "For corrections, shifting within constituency, or replacement EPIC.",
+                docs: "Required: EPIC details, Proof for specific update"
+            },
+            apply_now: "Apply on ECI Portal",
+            required_documents: "Required Documents",
+            id_proof: "Identity Proof (Aadhaar, PAN, Passport, DL)",
+            address_proof: "Address Proof (Aadhaar, Utility Bill, Bank Passbook)",
+            dob_proof: "Date of Birth Proof (Aadhaar, Birth Certificate, 10th/12th Marksheet)",
+            other_requirements: "Other Requirements",
+            photo_req: "Recent passport-sized color photograph",
+            epic_req: "EPIC details for deletion/updates",
+            fir_req: "FIR copy (only for lost EPIC replacement)",
+            deletion_reason: "Reason for deletion (Death certificate, shifting proof, etc.)"
         },
         communication_page: {
             title: "Public Communication",
@@ -1460,8 +1484,38 @@ export const translations = {
             new_voter_add: "नवीन मतदार नोंदणी",
             friends_relatives: "मित्र आणि नातेवाईक",
             ward_info_constituency: "प्रभाग माहिती (मतदारसंघ)",
+            ward_map: "प्रभाग नकाशा",
             public_communication: "जनसंवाद",
-            ward_map: "प्रभाग नकाशा"
+            voter_forms: "मतदार अर्ज"
+        },
+        voter_forms: {
+            title: "मतदार नोंदणी अर्ज",
+            subtitle: "मतदार सेवांसाठी अधिकृत निवडणूक आयोग (ECI) अर्ज",
+            form_6: {
+                title: "नवीन मतदार नोंदणी (फॉर्म ६)",
+                desc: "प्रथमच मतदार होणाऱ्यांसाठी किंवा दुसऱ्या मतदारसंघातून स्थलांतरित झालेल्यांसाठी.",
+                docs: "आवश्यक: फोटो, वयाचा पुरावा, निवासाचा पुरावा"
+            },
+            form_7: {
+                title: "मतदार यादीतून नाव वगळणे (फॉर्म ७)",
+                desc: "मतदार यादीत नाव समाविष्ट करण्यास हरकत घेण्यासाठी किंवा नाव वगळण्यासाठी.",
+                docs: "आवश्यक: EPIC तपशील, वगळण्यासाठी कारण/पुरावा"
+            },
+            form_8: {
+                title: "मतदार तपशील अद्ययावत करणे (फॉर्म ८)",
+                desc: "दुरुस्ती, मतदारसंघांतर्गत स्थलांतर किंवा EPIC बदलासाठी.",
+                docs: "आवश्यक: EPIC तपशील, दुरुस्तीसाठी संबंधित पुरावा"
+            },
+            apply_now: "ECI पोर्टलवर अर्ज करा",
+            required_documents: "आवश्यक कागदपत्रे",
+            id_proof: "ओळख पुरावा (आधार, पॅन, पासपोर्ट, ड्रायव्हिंग लायसन्स)",
+            address_proof: "निवासाचा पुरावा (आधार, वीज/पाणी बिल, बँक पासबुक)",
+            dob_proof: "जन्मदिनांक पुरावा (आधार, जन्म दाखला, १०वी/१२वी गुणपत्रिका)",
+            other_requirements: "इतर आवश्यकता",
+            photo_req: "अलीकडील पासपोर्ट आकाराचा रंगीत फोटो",
+            epic_req: "वगळण्यासाठी/दुरुस्तीसाठी EPIC तपशील",
+            fir_req: "एफआयआर (FIR) प्रत (केवळ हरवलेल्या ओळखपत्रासाठी)",
+            deletion_reason: "वगळण्यासाठी कारण (मृत्यू दाखला, स्थलांतर पुरावा, इ.)"
         },
         communication_page: {
             title: "जनसंवाद",

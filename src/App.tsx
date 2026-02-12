@@ -49,6 +49,7 @@ import AddVoter from './pages/political/AddVoter';
 import FriendsRelatives from './pages/political/FriendsRelatives';
 import WardInfoConstituency from './pages/political/WardInfoConstituency';
 import PublicCommunication from './pages/political/PublicCommunication';
+import VoterForms from './pages/political/VoterForms';
 import ProfileSettings from './pages/settings/ProfileSettings';
 
 // Protected Route Wrapper
@@ -163,6 +164,7 @@ function App() {
           <Route path="political/ward-info" element={<PermissionGuard permission="voters"><WardInfoConstituency /></PermissionGuard>} />
 
           <Route path="political/public-communication" element={<PermissionGuard permission="public_comm"><PublicCommunication /></PermissionGuard>} />
+          <Route path="political/voter-forms" element={<PermissionGuard permission="voters"><VoterForms /></PermissionGuard>} />
 
           <Route path="settings/profile" element={<PermissionGuard permission="profile_settings"><ProfileSettings /></PermissionGuard>} />
         </Route>
