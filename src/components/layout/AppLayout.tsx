@@ -633,29 +633,25 @@ const AppLayout = () => {
                       {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
                         <button onClick={() => navigate('/settings/profile')} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1">
                           {t('sadasya.profile_settings') || 'Profile Settings'}
-                          <ChevronRight className="w-3 h-3" />
                         </button>
                       )}
                     </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title={t('common.logout')}
+                    >
+                      <LogOut className="h-5 w-5" />
+                    </button>
                   </div>
-
-                  <button type="button" onClick={handleLogout} className="ns-btn-ghost w-full justify-center">
-                    <LogOut className="h-4 w-4" />
-                    <span>{t('common.logout')}</span>
-                  </button>
                 </>
               ) : (
                 <div className="flex flex-col gap-4 items-center w-full">
                   <button title="Change Language" className="p-2 rounded-lg hover:bg-slate-200 text-slate-500">
                     <Globe className="h-5 w-5" />
                   </button>
-                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-100 text-brand-700 border border-brand-200 flex items-center justify-center font-bold relative overflow-hidden" title={user?.name}>
-                    {branding?.profile_image ? (
-                      <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      user?.name?.charAt(0) ?? 'U'
-                    )}
-                  </div>
+
                   {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
                     <button type="button" onClick={() => navigate('/settings/profile')} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
                       <UserPlus className="h-5 w-5" />
