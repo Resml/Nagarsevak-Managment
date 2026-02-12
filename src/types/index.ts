@@ -71,6 +71,7 @@ export interface Voter {
   current_address_marathi?: string;
   houseNo?: string;
   caste?: string;
+  serial_no?: number;
   is_friend_relative?: boolean;
   history: ServiceRecord[];
 }

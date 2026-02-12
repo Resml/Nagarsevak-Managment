@@ -244,6 +244,7 @@ const VoterList = () => {
                 .from('voters')
                 .select('*', { count: 'exact' })
                 .eq('tenant_id', tenantId)
+                .order('serial_no', { ascending: true })
                 .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
 
             if (nameFilter) {
@@ -310,6 +311,7 @@ const VoterList = () => {
                 mobile: row.mobile,
                 houseNo: row.house_no,
                 caste: row.caste,
+                serial_no: row.serial_no || row.new_serial_no,
                 is_friend_relative: row.is_friend_relative,
                 history: []
             }));
@@ -679,7 +681,15 @@ const VoterList = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-slate-900">{getDisplayName(voter)}</h3>
-                                            <p className="text-xs text-slate-500">EPIC: {voter.epicNo}</p>
+                                            <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                <span>EPIC: {voter.epicNo}</span>
+                                                {voter.serial_no && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">#{voter.serial_no}</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
