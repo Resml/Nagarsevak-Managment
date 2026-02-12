@@ -273,6 +273,14 @@ export const translations = {
                 desc: "For corrections, shifting within constituency, or replacement EPIC.",
                 docs: "Required: EPIC details, Proof for specific update"
             },
+            search_roll: {
+                title: "Search in Electoral Roll",
+                desc: "Search your name in the official electoral roll to find your polling station.",
+                docs: "Required: Basic Details or EPIC Number"
+            },
+            search_option_details: "Search by Personal Details",
+            search_option_epic: "Search by EPIC Number",
+            search_option_mobile: "Search by Mobile Number",
             apply_now: "Apply on ECI Portal",
             required_documents: "Required Documents",
             id_proof: "Identity Proof (Aadhaar, PAN, Passport, DL)",
@@ -1506,6 +1514,14 @@ export const translations = {
                 desc: "दुरुस्ती, मतदारसंघांतर्गत स्थलांतर किंवा EPIC बदलासाठी.",
                 docs: "आवश्यक: EPIC तपशील, दुरुस्तीसाठी संबंधित पुरावा"
             },
+            search_roll: {
+                title: "मतदार यादीत शोधा",
+                desc: "आपले मतदान केंद्र शोधण्यासाठी अधिकृत मतदार यादीत आपले नाव शोधा.",
+                docs: "आवश्यक: वैयक्तिक तपशील किंवा EPIC क्रमांक"
+            },
+            search_option_details: "वैयक्तिक तपशीलांद्वारे शोधा",
+            search_option_epic: "EPIC क्रमांकाद्वारे शोधा",
+            search_option_mobile: "मोबाईल क्रमांकाद्वारे शोधा",
             apply_now: "ECI पोर्टलवर अर्ज करा",
             required_documents: "आवश्यक कागदपत्रे",
             id_proof: "ओळख पुरावा (आधार, पॅन, पासपोर्ट, ड्रायव्हिंग लायसन्स)",

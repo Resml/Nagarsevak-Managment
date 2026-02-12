@@ -8,13 +8,71 @@ import {
     FileText,
     CheckCircle2,
     AlertCircle,
-    ClipboardList
+    ClipboardList,
+    Search
 } from 'lucide-react';
 
 const VoterForms: React.FC = () => {
     const { t } = useLanguage();
 
+    // Define color mappings to ensure Tailwind picks up classes
+    const colorClasses: Record<string, {
+        bg: string;
+        border: string;
+        iconBg: string;
+        iconText: string;
+        buttonBg: string;
+        buttonHover: string;
+    }> = {
+        orange: {
+            bg: 'bg-orange-50',
+            border: 'border-orange-100',
+            iconBg: 'border-orange-200',
+            iconText: 'text-orange-600',
+            buttonBg: 'bg-orange-600',
+            buttonHover: 'hover:bg-orange-700'
+        },
+        blue: {
+            bg: 'bg-blue-50',
+            border: 'border-blue-100',
+            iconBg: 'border-blue-200',
+            iconText: 'text-blue-600',
+            buttonBg: 'bg-blue-600',
+            buttonHover: 'hover:bg-blue-700'
+        },
+        red: {
+            bg: 'bg-red-50',
+            border: 'border-red-100',
+            iconBg: 'border-red-200',
+            iconText: 'text-red-600',
+            buttonBg: 'bg-red-600',
+            buttonHover: 'hover:bg-red-700'
+        },
+        green: {
+            bg: 'bg-green-50',
+            border: 'border-green-100',
+            iconBg: 'border-green-200',
+            iconText: 'text-green-600',
+            buttonBg: 'bg-green-600',
+            buttonHover: 'hover:bg-green-700'
+        }
+    };
+
     const forms = [
+        {
+            id: 'search',
+            icon: Search,
+            color: 'orange',
+            title: t('voter_forms.search_roll.title'),
+            description: t('voter_forms.search_roll.desc'),
+            docs: t('voter_forms.search_roll.docs'),
+            link: 'https://electoralsearch.eci.gov.in',
+            requirements: [
+                t('voter_forms.search_option_details'),
+                t('voter_forms.search_option_epic'),
+                t('voter_forms.search_option_mobile')
+            ]
+        },
         {
             id: 'form6',
             icon: UserPlus,
@@ -70,11 +128,13 @@ const VoterForms: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 {forms.map((form) => {
                     const Icon = form.icon;
+                    const colors = colorClasses[form.color] || colorClasses.blue; // Fallback
+
                     return (
                         <div key={form.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
-                            <div className={`p-6 bg-${form.color}-50 border-b border-${form.color}-100 flex items-center gap-4`}>
-                                <div className={`p-3 bg-white rounded-xl shadow-sm border border-${form.color}-200`}>
-                                    <Icon className={`w-8 h-8 text-${form.color}-600`} />
+                            <div className={`p-6 ${colors.bg} border-b ${colors.border} flex items-center gap-4`}>
+                                <div className={`p-3 bg-white rounded-xl shadow-sm border ${colors.iconBg}`}>
+                                    <Icon className={`w-8 h-8 ${colors.iconText}`} />
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-800">{form.title}</h2>
                             </div>
@@ -104,7 +164,7 @@ const VoterForms: React.FC = () => {
                                         href={form.link}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className={`w-full py-3 px-4 bg-${form.color}-600 hover:bg-${form.color}-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm`}
+                                        className={`w-full py-3 px-4 ${colors.buttonBg} ${colors.buttonHover} text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm`}
                                     >
                                         {t('voter_forms.apply_now')}
                                         <ExternalLink className="w-4 h-4" />
