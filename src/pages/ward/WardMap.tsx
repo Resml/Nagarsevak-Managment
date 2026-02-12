@@ -198,7 +198,7 @@ const WardMap = () => {
             {/* Map Container */}
             <div className="flex-1 w-full relative rounded-2xl overflow-hidden shadow-sm border border-slate-200">
                 <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
-                    <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
+                    {/* <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
                         <div className="pointer-events-auto flex flex-col gap-2">
                             <div className="bg-white p-4 rounded-lg shadow-lg max-w-xs transition-opacity duration-300">
                                 <h2 className="font-bold text-lg mb-1">{t('ward_map.title') || 'Ward Map'}</h2>
@@ -249,7 +249,7 @@ const WardMap = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     <GoogleMap
                         mapContainerStyle={containerStyle}
