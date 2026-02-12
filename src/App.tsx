@@ -37,6 +37,7 @@ import ContentStudio from './pages/content/ContentStudio';
 import SurveyDashboard from './pages/surveys/SurveyDashboard'; import CreateSurvey from './pages/surveys/CreateSurvey';
 
 import WardWiseProblem from './pages/ward/WardWiseProblem';
+import WardMap from './pages/ward/WardMap';
 import PossibleImprovements from './pages/ward/PossibleImprovements';
 import ImprovementDetail from './pages/ward/ImprovementDetail';
 import WardWiseProvision from './pages/ward/WardProvisions';
@@ -146,6 +147,7 @@ function App() {
 
           {/* New Routes */}
           <Route path="ward/problems" element={<PermissionGuard permission="ward_problems"><WardWiseProblem /></PermissionGuard>} />
+          <Route path="ward/map" element={<PermissionGuard permission="ward_info"><WardMap /></PermissionGuard>} />
           <Route path="ward/improvements" element={<PermissionGuard permission="improvements"><PossibleImprovements /></PermissionGuard>} />
           <Route path="ward/improvements/:id" element={<PermissionGuard permission="improvements"><ImprovementDetail /></PermissionGuard>} />
           <Route path="ward/provision" element={<PermissionGuard permission="provision"><WardWiseProvision /></PermissionGuard>} />

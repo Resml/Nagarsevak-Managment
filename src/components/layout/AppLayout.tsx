@@ -22,6 +22,7 @@ import {
   LineChart,
   LogOut,
   Menu,
+  Map as MapIcon,
   Megaphone,
   Newspaper,
   PanelLeftClose,
@@ -229,6 +230,7 @@ const AppLayout = () => {
         // permission: 'ward_info', 
         items: [
           { to: '/ward/problems', icon: AlertTriangle, label: t('nav.ward_problem'), show: true, permission: 'ward_problems' },
+          { to: '/ward/map', icon: MapIcon, label: t('nav.ward_map'), show: true, permission: 'ward_info' },
           { to: '/history', icon: History, label: t('nav.work_history'), show: true, permission: 'work_history' },
           { to: '/ward/improvements', icon: TrendingUp, label: t('nav.ward_improvement'), show: true, permission: 'improvements' },
           { to: '/ward/provision', icon: IndianRupee, label: t('nav.ward_provision'), show: true, permission: 'provision' },

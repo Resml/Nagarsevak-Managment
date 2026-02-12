@@ -251,7 +251,14 @@ export const translations = {
             new_voter_add: "New voter add",
             friends_relatives: "Friends and relatives",
             ward_info_constituency: "Ward Info (Constituency)",
-            public_communication: "Public Communication"
+            public_communication: "Public Communication",
+            ward_map: "Ward Map"
+        },
+        ward_map: {
+            title: "Ward Map",
+            subtitle: "View geographic details of the ward",
+            coming_soon: "Map Coming Soon",
+            coming_soon_desc: "The interactive ward map is currently under development. Please check back later."
         },
         communication_page: {
             title: "Public Communication",
@@ -1678,7 +1685,14 @@ export const translations = {
             area_name_placeholder: "परिसराचे नाव",
             first_name: "पहिले नाव",
             middle_name: "मधले नाव",
-            last_name: "आडनाव"
+            last_name: "आडनाव",
+            ward_map: "प्रभाग नकाशा"
+        },
+        ward_map: {
+            title: "प्रभाग नकाशा",
+            subtitle: "प्रभागाची भौगोलिक माहिती पहा",
+            coming_soon: "नकाशा लवकरच येत आहे",
+            coming_soon_desc: "परस्परसंवादी प्रभाग नकाशा सध्या विकासाधीन आहे. कृपया नंतर तपासा."
         },
         status: {
             Pending: "प्रलंबित",
