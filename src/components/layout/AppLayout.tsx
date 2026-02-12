@@ -93,10 +93,10 @@ function SidebarNavItem({
       title={isCollapsed ? label : undefined}
       className={({ isActive }) =>
         cn(
-          'group flex items-center gap-3 rounded-xl px-3 py-2 text-base font-bold transition-all relative',
+          'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200 relative',
           isActive
-            ? 'bg-brand-50 text-brand-900 shadow-sm ring-1 ring-brand-100'
-            : 'text-slate-900 hover:bg-slate-100',
+            ? 'bg-brand-600 text-white shadow-md shadow-brand-200'
+            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
           isCollapsed && 'justify-center px-2',
           className
         )
@@ -104,12 +104,12 @@ function SidebarNavItem({
     >
       {({ isActive }) => (
         <>
-          <Icon className={cn('h-5 w-5 shrink-0', isActive ? 'text-brand-700' : 'text-slate-400 group-hover:text-slate-600')} />
-          {!isCollapsed && <span className="truncate transition-all duration-300">{label}</span>}
+          <Icon className={cn('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')} />
+          {!isCollapsed && <span className="truncate">{label}</span>}
 
           {/* Tooltip for collapsed state */}
           {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
               {label}
             </div>
           )}
@@ -143,20 +143,20 @@ function SidebarNavGroup({
         onClick={onToggle}
         title={isCollapsed ? label : undefined}
         className={cn(
-          "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-base font-bold text-slate-900 hover:bg-slate-100 transition",
+          "group flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors duration-200",
           isCollapsed && "justify-center px-2",
           className
         )}
       >
         <span className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-slate-500 group-hover:text-slate-700 shrink-0" />
+          <Icon className="h-5 w-5 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
           {!isCollapsed && <span>{label}</span>}
         </span>
         {!isCollapsed && (
           isOpen ? (
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <ChevronDown className="h-4 w-4 text-slate-400 transition-transform duration-200" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-slate-400" />
+            <ChevronRight className="h-4 w-4 text-slate-400 transition-transform duration-200" />
           )
         )}
       </button>
@@ -434,14 +434,14 @@ const AppLayout = () => {
         >
           <div className="flex h-full flex-col">
             {/* Header */}
-            <div className={cn("flex items-center border-b border-brand-700/50 p-4 bg-gradient-to-r from-brand-600 to-brand-700", isCollapsed ? "justify-center" : "justify-between px-5")}>
+            <div className={cn("flex items-center p-4 bg-white", isCollapsed ? "justify-center" : "justify-between px-5")}>
               {!isCollapsed && (
                 <button
                   type="button"
                   onClick={() => navigate('/')}
-                  className="flex items-center gap-3 text-left overflow-hidden"
+                  className="flex items-center gap-3 text-left overflow-hidden group"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md font-black overflow-hidden relative border-2 border-white/20">
+                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-colors">
                     {branding?.profile_image ? (
                       <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -449,17 +449,17 @@ const AppLayout = () => {
                     )}
                   </div>
                   <div>
-                    <div className="font-display text-base font-bold leading-tight text-white whitespace-nowrap drop-shadow-sm">
+                    <div className="font-display text-base font-bold leading-tight text-slate-900 whitespace-nowrap group-hover:text-brand-700 transition-colors">
                       {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
                     </div>
-                    <div className="text-xs text-brand-100 leading-tight whitespace-nowrap font-medium opacity-90">
+                    <div className="text-xs text-slate-500 leading-tight whitespace-nowrap font-medium">
                       {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
                     </div>
                   </div>
                 </button>
               )}
               {isCollapsed && (
-                <div className="h-10 w-10 shrink-0 rounded-2xl bg-white text-brand-600 flex items-center justify-center shadow-md font-black cursor-pointer overflow-hidden relative border-2 border-white/20" onClick={() => navigate('/')}>
+                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate('/')}>
                   {branding?.profile_image ? (
                     <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -469,14 +469,14 @@ const AppLayout = () => {
               )}
 
               {/* Mobile Close */}
-              <button type="button" className="md:hidden ns-btn-ghost px-2 py-2 text-white hover:bg-white/10" onClick={() => setSidebarOpen(false)}>
+              <button type="button" className="md:hidden ns-btn-ghost px-2 py-2 text-slate-500 hover:bg-slate-100" onClick={() => setSidebarOpen(false)}>
                 <X className="h-5 w-5" />
               </button>
 
               {/* Desktop Toggle */}
               <button
                 type="button"
-                className="hidden md:flex ns-btn-ghost px-2 py-2 text-brand-100 hover:text-white hover:bg-white/10"
+                className="hidden md:flex ns-btn-ghost px-2 py-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50"
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
               >
@@ -532,7 +532,7 @@ const AppLayout = () => {
                       isOpen={!!openGroups[entry.id]}
                       onToggle={() => setOpenGroups((p) => ({ ...p, [entry.id]: !p[entry.id] }))}
                       isCollapsed={isCollapsed}
-                      className={isHighlighted ? 'bg-brand-600 text-white shadow-md ring-1 ring-brand-700 mb-1 hover:bg-brand-600' : ''}
+                      className={''}
                     >
                       {visibleItems.map((item) => (
                         <SidebarNavItem
@@ -579,7 +579,7 @@ const AppLayout = () => {
                       onNavigate={onNavigate}
                       end={entry.end}
                       isCollapsed={isCollapsed}
-                      className={isHighlighted ? 'bg-brand-600 text-white shadow-md ring-1 ring-brand-700 mb-1 hover:bg-brand-600 hover:text-white' : ''}
+                      className={''}
                       itemRef={(el) => {
                         const isActive = entry.end
                           ? location.pathname === entry.to
@@ -594,7 +594,7 @@ const AppLayout = () => {
 
             {/* Footer / User Profile */}
             <div className={cn(
-              "border-t border-slate-200/70 p-4 space-y-3 bg-slate-50/40",
+              "border-t border-slate-100 p-4 space-y-3",
               isCollapsed && "flex flex-col items-center p-2"
             )}>
               {!isCollapsed ? (
