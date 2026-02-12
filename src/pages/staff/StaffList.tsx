@@ -1,12 +1,13 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
-import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff } from 'lucide-react';
 import StaffProfile from './StaffProfile';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+
 
 const StaffList = () => {
     const { t } = useLanguage();
@@ -19,15 +20,61 @@ const StaffList = () => {
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
 
+    const AVAILABLE_PERMISSIONS = useMemo(() => [
+        // Daily Work
+        { id: 'complaints', label: t('permissions.complaints') },
+        { id: 'letters', label: t('permissions.letters') },
+        { id: 'tasks', label: t('permissions.tasks') },
+        { id: 'visitors', label: t('permissions.visitors') },
+        { id: 'schemes', label: t('permissions.schemes') },
+
+        // Ward Info
+        { id: 'ward_problems', label: t('permissions.ward_problems') },
+        { id: 'work_history', label: t('permissions.work_history') },
+        { id: 'improvements', label: t('permissions.improvements') },
+        { id: 'provision', label: t('permissions.provision') },
+
+        // Municipal
+        { id: 'gb_register', label: t('permissions.gb_register') },
+        { id: 'budget', label: t('permissions.budget') },
+
+        // Gov Office
+        { id: 'gov_office', label: t('permissions.gov_office') },
+
+        // Media
+        { id: 'social', label: t('permissions.social') },
+        { id: 'newspaper', label: t('permissions.newspaper') },
+        { id: 'bot', label: t('permissions.bot') },
+        { id: 'ai_content', label: t('permissions.ai_content') },
+
+        // Programs
+        { id: 'events', label: t('permissions.events') },
+        { id: 'gallery', label: t('permissions.gallery') },
+
+        // Political
+        { id: 'results', label: t('permissions.results') },
+        { id: 'sadasya', label: t('permissions.sadasya') },
+        { id: 'surveys', label: t('permissions.surveys') },
+        { id: 'voters', label: t('permissions.voters') },
+        { id: 'staff', label: t('permissions.staff') },
+        { id: 'public_comm', label: t('permissions.public_comm') },
+        { id: 'analysis', label: t('permissions.analysis') },
+        { id: 'profile_settings', label: t('permissions.profile_settings') || 'Profile Settings' },
+    ], [t]);
+
     // Form State
     const [formData, setFormData] = useState({
         name: '',
         mobile: '',
+        user_email: '',
+        password: '',
         role: '',
         area: '',
         category: 'Office' as 'Office' | 'Party' | 'Cooperative',
-        keywords: ''
+        keywords: '',
+        permissions: [] as string[]
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     // Search State
     const [nameSearch, setNameSearch] = useState('');
@@ -79,7 +126,8 @@ const StaffList = () => {
             const fullMobile = `+91${formData.mobile}`;
 
             if (editingStaffId) {
-                // Update Logic
+                // Update Logic (Existing staff)
+                // Note: We are strictly updating profile details here, not auth credentials
                 const { error } = await supabase
                     .from('staff')
                     .update({
@@ -88,36 +136,57 @@ const StaffList = () => {
                         role: formData.role,
                         category: formData.category,
                         area: formData.area,
-                        keywords: keywordsArray
+                        keywords: keywordsArray,
+                        permissions: formData.permissions
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
                 if (error) throw error;
                 toast.success('Staff updated successfully');
             } else {
-                // Insert Logic
-                const { error } = await supabase
-                    .from('staff')
-                    .insert([{
+                // Insert Logic (New Staff with Login)
+                if (!formData.user_email || !formData.password) {
+                    toast.error('Email and Password are required for new staff');
+                    return;
+                }
+
+                // Call Edge Function to create Auth User + Staff Record
+                const { data, error } = await supabase.functions.invoke('create-staff-user', {
+                    body: {
+                        email: formData.user_email,
+                        password: formData.password,
                         name: formData.name,
                         mobile: fullMobile,
                         role: formData.role,
-                        category: formData.category,
+                        tenant_id: tenantId,
                         area: formData.area,
+                        category: formData.category,
                         keywords: keywordsArray,
-                        tenant_id: tenantId // Secured
-                    }]);
-                if (error) throw error;
+                        permissions: formData.permissions
+                    }
+                });
+
+                if (error) {
+                    console.error('Edge Function Error:', error);
+                    // Check for specific error messages from the function if possible
+                    throw new Error(error.message || 'Failed to create staff user');
+                }
+
+                // If the function returns an error in the body (custom error handling)
+                if (data && data.error) {
+                    throw new Error(data.error);
+                }
+
                 toast.success(t('staff.list.success_add'));
             }
 
             setShowModal(false);
-            setFormData({ name: '', mobile: '', role: '', area: '', category: 'Office', keywords: '' });
+            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', permissions: [] });
             setEditingStaffId(null);
             fetchStaff();
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            toast.error(editingStaffId ? 'Failed to update staff' : t('staff.list.error_add'));
+            toast.error(err.message || (editingStaffId ? 'Failed to update staff' : t('staff.list.error_add')));
         }
     };
 
@@ -127,10 +196,13 @@ const StaffList = () => {
         setFormData({
             name: staffMember.name,
             mobile: mobileNum,
+            user_email: '', // Don't fetch email for now as it's in auth.users
+            password: '',
             role: staffMember.role,
             area: staffMember.area || '',
             category: (staffMember.category as any) || 'Office',
-            keywords: staffMember.keywords ? staffMember.keywords.join(', ') : ''
+            keywords: staffMember.keywords ? staffMember.keywords.join(', ') : '',
+            permissions: staffMember.permissions || []
         });
         setShowModal(true);
         // We might want to keep the profile open or close it?
@@ -430,6 +502,43 @@ const StaffList = () => {
                                 </div>
                             </div>
 
+                            {/* Email & Password for New Users */}
+                            {!editingStaffId && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Email (Login ID)</label>
+                                        <input
+                                            type="email"
+                                            required={!editingStaffId}
+                                            className="ns-input mt-1"
+                                            value={formData.user_email}
+                                            onChange={e => setFormData({ ...formData, user_email: e.target.value })}
+                                            placeholder="staff@example.com"
+                                        />
+                                    </div>
+                                    <div className="relative">
+                                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                                        <div className="relative mt-1">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                required={!editingStaffId}
+                                                className="ns-input pr-10"
+                                                value={formData.password}
+                                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                                placeholder="••••••••"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('staff.modal.role')}</label>
@@ -477,6 +586,33 @@ const StaffList = () => {
                                     placeholder={t('staff.modal.keywords_placeholder')}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">{t('staff.modal.keywords_help')}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Permissions (Access Control)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-100 rounded-lg bg-gray-50/50">
+                                    {AVAILABLE_PERMISSIONS.map((perm) => (
+                                        <label key={perm.id} className="flex items-center space-x-2 text-sm cursor-pointer p-1 rounded hover:bg-gray-100">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                                checked={formData.permissions.includes(perm.id)}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        permissions: checked
+                                                            ? [...prev.permissions, perm.id]
+                                                            : prev.permissions.filter(p => p !== perm.id)
+                                                    }));
+                                                }}
+                                            />
+                                            <span className="text-gray-700">{perm.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4">

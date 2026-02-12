@@ -199,30 +199,33 @@ const GovernmentOfficePage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">
-                        {activeTab === 'Offices' ? t('government_office.title') : t('government_office.employee_title')}
-                    </h1>
-                    <p className="text-slate-500">{t('government_office.subtitle')}</p>
+            {/* Sticky Header Section */}
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 -mx-4 px-4 sm:-mx-8 sm:px-8 border-b border-slate-200/60 mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">
+                            {activeTab === 'Offices' ? t('government_office.title') : t('government_office.employee_title')}
+                        </h1>
+                        <p className="text-slate-500">{t('government_office.subtitle')}</p>
+                    </div>
+                    {activeTab === 'Offices' ? (
+                        <button
+                            onClick={() => setIsOfficeModalOpen(true)}
+                            className="ns-btn-primary w-full md:w-auto justify-center"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>{t('government_office.add_office')}</span>
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => setIsStaffModalOpen(true)}
+                            className="ns-btn-primary w-full md:w-auto justify-center"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>{t('staff.add_staff')}</span>
+                        </button>
+                    )}
                 </div>
-                {activeTab === 'Offices' ? (
-                    <button
-                        onClick={() => setIsOfficeModalOpen(true)}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>{t('government_office.add_office')}</span>
-                    </button>
-                ) : (
-                    <button
-                        onClick={() => setIsStaffModalOpen(true)}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>{t('staff.add_staff')}</span>
-                    </button>
-                )}
             </div>
 
             {/* Tabs */}

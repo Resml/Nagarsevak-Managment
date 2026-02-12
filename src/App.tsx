@@ -60,6 +60,32 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Permission Guard Component
+const PermissionGuard = ({ children, permission }: { children: React.ReactNode; permission: string }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+
+  // If no user, ProtectedRoute will handle it, but safety check:
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Admin always has access
+  if (user.role === 'admin') return <>{children}</>;
+
+  // Staff check
+  if (user.role === 'staff') {
+    if (user.permissions?.includes(permission)) {
+      return <>{children}</>;
+    } else {
+      // No permission, redirect to dashboard
+      return <Navigate to="/" replace />;
+    }
+  }
+
+  // Fallback (e.g., other roles? assume no access for safety)
+  return <Navigate to="/" replace />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -73,53 +99,70 @@ function App() {
           </ProtectedRoute>
         }>
           <Route index element={<Dashboard />} />
-          <Route path="voters" element={<VoterList />} />
-          <Route path="voters/:id" element={<VoterProfile />} />
-          <Route path="complaints" element={<ComplaintList />} />
-          <Route path="complaints/new" element={<ComplaintForm />} />
-          <Route path="personal-requests/new" element={<PersonalRequestForm />} />
-          <Route path="complaints/:id" element={<ComplaintDetail />} />
-          <Route path="schemes" element={<SchemeList />} />
-          <Route path="schemes/new" element={<SchemeForm />} />
-          <Route path="schemes/edit/:id" element={<SchemeForm />} />
-          <Route path="events" element={<EventManagement />} />
-          <Route path="events/:id" element={<EventDetail />} />
-          <Route path="tasks" element={<Tasks />} />
-          <Route path="staff" element={<StaffList />} />
-          <Route path="letters" element={<LetterDashboard />} />
-          <Route path="letters/new" element={<LetterForm />} />
-          <Route path="letters/edit/:id" element={<LetterForm />} />
-          <Route path="letters/types" element={<LetterTypeManager />} />
-          <Route path="visitors" element={<VisitorLog />} />
-          <Route path="bot-dashboard" element={<BotDashboard />} />
-          <Route path="sadasya" element={<SadasyaList />} />
-          <Route path="social" element={<SocialDashboard />} />
-          <Route path="history" element={<WorkHistory />} />
-          <Route path="history/:id" element={<WorkDetail />} />
-          <Route path="diary" element={<DiaryList />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="budget" element={<BudgetDashboard />} />
-          <Route path="results" element={<ResultAnalysis />} />
-          <Route path="content" element={<ContentStudio />} />
-          <Route path="surveys" element={<SurveyDashboard />} />
-          <Route path="surveys" element={<SurveyDashboard />} />
-          <Route path="surveys/new" element={<CreateSurvey />} />
+
+          {/* Daily Work */}
+          <Route path="voters" element={<PermissionGuard permission="voters"><VoterList /></PermissionGuard>} />
+          <Route path="voters/:id" element={<PermissionGuard permission="voters"><VoterProfile /></PermissionGuard>} />
+
+          <Route path="complaints" element={<PermissionGuard permission="complaints"><ComplaintList /></PermissionGuard>} />
+          <Route path="complaints/new" element={<PermissionGuard permission="complaints"><ComplaintForm /></PermissionGuard>} />
+          <Route path="personal-requests/new" element={<PermissionGuard permission="complaints"><PersonalRequestForm /></PermissionGuard>} />
+          <Route path="complaints/:id" element={<PermissionGuard permission="complaints"><ComplaintDetail /></PermissionGuard>} />
+
+          <Route path="schemes" element={<PermissionGuard permission="schemes"><SchemeList /></PermissionGuard>} />
+          <Route path="schemes/new" element={<PermissionGuard permission="schemes"><SchemeForm /></PermissionGuard>} />
+          <Route path="schemes/edit/:id" element={<PermissionGuard permission="schemes"><SchemeForm /></PermissionGuard>} />
+
+          <Route path="events" element={<PermissionGuard permission="events"><EventManagement /></PermissionGuard>} />
+          <Route path="events/:id" element={<PermissionGuard permission="events"><EventDetail /></PermissionGuard>} />
+
+          <Route path="tasks" element={<PermissionGuard permission="tasks"><Tasks /></PermissionGuard>} />
+          <Route path="staff" element={<PermissionGuard permission="staff"><StaffList /></PermissionGuard>} />
+
+          <Route path="letters" element={<PermissionGuard permission="letters"><LetterDashboard /></PermissionGuard>} />
+          <Route path="letters/new" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
+          <Route path="letters/edit/:id" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
+          <Route path="letters/types" element={<PermissionGuard permission="letters"><LetterTypeManager /></PermissionGuard>} />
+
+          <Route path="visitors" element={<PermissionGuard permission="visitors"><VisitorLog /></PermissionGuard>} />
+
+          {/* Admin Only / Specific Permissions */}
+          <Route path="bot-dashboard" element={<PermissionGuard permission="bot"><BotDashboard /></PermissionGuard>} />
+          <Route path="sadasya" element={<PermissionGuard permission="sadasya"><SadasyaList /></PermissionGuard>} />
+
+          <Route path="social" element={<PermissionGuard permission="social"><SocialDashboard /></PermissionGuard>} />
+
+          <Route path="history" element={<PermissionGuard permission="work_history"><WorkHistory /></PermissionGuard>} />
+          <Route path="history/:id" element={<PermissionGuard permission="work_history"><WorkDetail /></PermissionGuard>} />
+
+          <Route path="diary" element={<PermissionGuard permission="gb_register"><DiaryList /></PermissionGuard>} />
+          <Route path="gallery" element={<PermissionGuard permission="gallery"><Gallery /></PermissionGuard>} />
+          <Route path="budget" element={<PermissionGuard permission="budget"><BudgetDashboard /></PermissionGuard>} />
+          <Route path="results" element={<PermissionGuard permission="results"><ResultAnalysis /></PermissionGuard>} />
+          <Route path="content" element={<PermissionGuard permission="ai_content"><ContentStudio /></PermissionGuard>} />
+
+          <Route path="surveys" element={<PermissionGuard permission="surveys"><SurveyDashboard /></PermissionGuard>} />
+          <Route path="surveys/new" element={<PermissionGuard permission="surveys"><CreateSurvey /></PermissionGuard>} />
 
           {/* New Routes */}
-          <Route path="ward/problems" element={<WardWiseProblem />} />
-          <Route path="ward/improvements" element={<PossibleImprovements />} />
-          <Route path="ward/improvements/:id" element={<ImprovementDetail />} />
-          <Route path="ward/provision" element={<WardWiseProvision />} />
-          <Route path="government-office" element={<GovernmentOffice />} />
-          <Route path="media/newspaper" element={<NewspaperClipping />} />
-          <Route path="analysis-strategy" element={<AnalysisStrategy />} />
-          <Route path="political/cast-wise" element={<CastWiseVoters />} />
-          <Route path="political/add-voter" element={<AddVoter />} />
-          <Route path="political/friends-relatives" element={<FriendsRelatives />} />
-          <Route path="political/ward-info" element={<WardInfoConstituency />} />
-          <Route path="political/ward-info" element={<WardInfoConstituency />} />
-          <Route path="political/public-communication" element={<PublicCommunication />} />
-          <Route path="settings/profile" element={<ProfileSettings />} />
+          <Route path="ward/problems" element={<PermissionGuard permission="ward_problems"><WardWiseProblem /></PermissionGuard>} />
+          <Route path="ward/improvements" element={<PermissionGuard permission="improvements"><PossibleImprovements /></PermissionGuard>} />
+          <Route path="ward/improvements/:id" element={<PermissionGuard permission="improvements"><ImprovementDetail /></PermissionGuard>} />
+          <Route path="ward/provision" element={<PermissionGuard permission="provision"><WardWiseProvision /></PermissionGuard>} />
+
+          <Route path="government-office" element={<PermissionGuard permission="gov_office"><GovernmentOffice /></PermissionGuard>} />
+          <Route path="media/newspaper" element={<PermissionGuard permission="newspaper"><NewspaperClipping /></PermissionGuard>} />
+
+          <Route path="analysis-strategy" element={<PermissionGuard permission="analysis"><AnalysisStrategy /></PermissionGuard>} />
+
+          <Route path="political/cast-wise" element={<PermissionGuard permission="analysis"><CastWiseVoters /></PermissionGuard>} />
+          <Route path="political/add-voter" element={<PermissionGuard permission="voters"><AddVoter /></PermissionGuard>} />
+          <Route path="political/friends-relatives" element={<PermissionGuard permission="voters"><FriendsRelatives /></PermissionGuard>} />
+          <Route path="political/ward-info" element={<PermissionGuard permission="voters"><WardInfoConstituency /></PermissionGuard>} />
+
+          <Route path="political/public-communication" element={<PermissionGuard permission="public_comm"><PublicCommunication /></PermissionGuard>} />
+
+          <Route path="settings/profile" element={<PermissionGuard permission="profile_settings"><ProfileSettings /></PermissionGuard>} />
         </Route>
       </Routes>
     </BrowserRouter>

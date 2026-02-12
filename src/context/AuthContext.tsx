@@ -19,15 +19,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                    email: session.user.email || '',
-                    role: 'admin', // Defaulting to admin for now, ideally fetch from mapping
-                    permissions: []
-                });
+                // Fetch the user's role from the mapping table
+                supabase
+                    .from('user_tenant_mapping')
+                    .select('role')
+                    .eq('user_id', session.user.id)
+                    .single()
+                    .then(async ({ data, error }) => {
+                        const userRole = data?.role || 'staff'; // Default to staff if not found
+
+                        let permissions: string[] = [];
+                        // Try to fetch permissions from staff table
+                        const { data: staffData } = await supabase
+                            .from('staff')
+                            .select('permissions')
+                            .eq('id', session.user.id)
+                            .maybeSingle();
+
+                        if (staffData?.permissions) {
+                            permissions = staffData.permissions;
+                        }
+
+                        setUser({
+                            id: session.user.id,
+                            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                            email: session.user.email || '',
+                            role: userRole,
+                            permissions
+                        });
+                        setIsLoading(false);
+                    });
+            } else {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         });
 
         // Listen for changes
@@ -35,17 +59,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
-                setUser({
-                    id: session.user.id,
-                    name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                    email: session.user.email || '',
-                    role: 'admin',
-                    permissions: []
-                });
+                // Fetch role again on auth change
+                supabase
+                    .from('user_tenant_mapping')
+                    .select('role')
+                    .eq('user_id', session.user.id)
+                    .single()
+                    .then(async ({ data }) => {
+                        const userRole = data?.role || 'staff';
+
+                        let permissions: string[] = [];
+                        // Try to fetch permissions from staff table
+                        const { data: staffData } = await supabase
+                            .from('staff')
+                            .select('permissions')
+                            .eq('id', session.user.id)
+                            .maybeSingle();
+
+                        if (staffData?.permissions) {
+                            permissions = staffData.permissions;
+                        }
+
+                        setUser({
+                            id: session.user.id,
+                            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+                            email: session.user.email || '',
+                            role: userRole,
+                            permissions
+                        });
+                        setIsLoading(false);
+                    });
             } else {
                 setUser(null);
+                setIsLoading(false);
             }
-            setIsLoading(false);
         });
 
         return () => subscription.unsubscribe();
@@ -60,14 +107,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (error) {
+                setIsLoading(false); // Only stop loading on error, otherwise wait for auth state change
                 return { success: false, error: error.message };
             }
 
             return { success: true };
         } catch (err) {
-            return { success: false, error: 'An unexpected error occurred' };
-        } finally {
             setIsLoading(false);
+            return { success: false, error: 'An unexpected error occurred' };
         }
     };
 

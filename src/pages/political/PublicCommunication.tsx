@@ -252,7 +252,7 @@ const PublicCommunication = () => {
     };
 
     return (
-        <div className="space-y-6 h-[calc(100vh-100px)] flex flex-col">
+        <div className="space-y-6 h-auto lg:h-[calc(100vh-100px)] flex flex-col">
             <div className="flex-none space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
@@ -366,9 +366,9 @@ const PublicCommunication = () => {
             </div>
 
             {/* Main Content: Voter List & Message Composer */}
-            <div className="flex-1 flex gap-6 min-h-0">
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
                 {/* Left: Voter List (Scrollable) */}
-                <div className="flex-1 ns-card flex flex-col overflow-hidden">
+                <div className="flex-1 ns-card flex flex-col overflow-hidden min-h-[400px]">
                     <div className="flex-1 overflow-y-auto p-2">
                         {loading ? (
                             <div className="flex items-center justify-center h-40">
@@ -428,7 +428,7 @@ const PublicCommunication = () => {
                 </div>
 
                 {/* Right: Message Composer */}
-                <div className="w-1/3 flex flex-col gap-4">
+                <div className="w-full lg:w-1/3 flex flex-col gap-4">
                     <div className="ns-card p-4 flex-1 flex flex-col">
                         <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
                             <Send className="w-4 h-4" /> {t('communication_page.compose_message')}

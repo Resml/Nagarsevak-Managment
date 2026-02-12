@@ -81,7 +81,7 @@ const ContentStudio = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-100px)] gap-6">
+        <div className="flex flex-col lg:flex-row h-auto lg:h-[calc(100vh-100px)] gap-6">
             {/* Main Content Area */}
             <div className="flex-1 overflow-y-auto pr-2">
                 <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 flex items-center justify-between mb-6">
@@ -225,7 +225,7 @@ const ContentStudio = () => {
             </div>
 
             {/* History Sidebar - Desktop */}
-            <div className="w-80 ns-card overflow-hidden flex flex-col h-full">
+            <div className="w-full lg:w-80 ns-card overflow-hidden flex flex-col lg:h-full min-h-[400px]">
                 <div className="p-4 border-b border-slate-200/70 bg-slate-50 space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-slate-700 flex items-center">

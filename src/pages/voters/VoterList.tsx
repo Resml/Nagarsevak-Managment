@@ -369,7 +369,7 @@ const VoterList = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4 sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
+            <div className="flex flex-col gap-4 md:sticky md:top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">

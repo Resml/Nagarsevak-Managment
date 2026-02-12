@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
-import { Save, Upload, User, Building2, Flag } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import BotDashboard from '../admin/BotDashboard';
+import clsx from 'clsx';
 
 const ProfileSettings = () => {
     const { tenant, tenantId } = useTenant();
     const { t, language } = useLanguage();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState<'profile' | 'bot'>('profile');
 
     const [formData, setFormData] = useState({
         nagarsevak_name_english: '',
@@ -25,6 +30,9 @@ const ProfileSettings = () => {
         email_address: '',
         social_media_link: ''
     });
+
+    // Check permissions
+    const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
 
     useEffect(() => {
         if (tenantId) {
@@ -155,52 +163,10 @@ const ProfileSettings = () => {
     if (loading) {
         return (
             <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <div className="h-8 w-48 bg-slate-200 rounded mb-2"></div>
-                        <div className="h-4 w-64 bg-slate-200 rounded"></div>
-                    </div>
-                    <div className="h-10 w-32 bg-slate-200 rounded"></div>
-                </div>
-
+                <div className="h-8 w-48 bg-slate-200 rounded mb-2"></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Personal Details Skeleton */}
-                    <div className="ns-card p-6 space-y-4">
-                        <div className="h-6 w-32 bg-slate-200 rounded mb-4"></div>
-                        <div className="space-y-3">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i}>
-                                    <div className="h-4 w-24 bg-slate-200 rounded mb-1"></div>
-                                    <div className="h-10 w-full bg-slate-200 rounded"></div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Branding Skeleton */}
-                    <div className="space-y-6">
-                        <div className="ns-card p-6 space-y-4">
-                            <div className="h-6 w-32 bg-slate-200 rounded mb-4"></div>
-                            <div>
-                                <div className="h-4 w-24 bg-slate-200 rounded mb-1"></div>
-                                <div className="h-10 w-full bg-slate-200 rounded"></div>
-                            </div>
-                        </div>
-
-                        <div className="ns-card p-6 space-y-4">
-                            <div className="h-6 w-32 bg-slate-200 rounded mb-4"></div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="text-center space-y-2">
-                                    <div className="w-24 h-24 mx-auto bg-slate-200 rounded-full"></div>
-                                    <div className="h-3 w-20 bg-slate-200 rounded mx-auto"></div>
-                                </div>
-                                <div className="text-center space-y-2">
-                                    <div className="w-24 h-24 mx-auto bg-slate-200 rounded-xl"></div>
-                                    <div className="h-3 w-20 bg-slate-200 rounded mx-auto"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <div className="ns-card p-6 h-64 bg-slate-200 rounded"></div>
+                    <div className="ns-card p-6 h-64 bg-slate-200 rounded"></div>
                 </div>
             </div>
         );
@@ -208,207 +174,254 @@ const ProfileSettings = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900">{t('sadasya.profile_settings') || 'Profile Settings'}</h1>
-                    <p className="text-slate-500">{t('sadasya.branding') || 'Manage your branding and personal details'}</p>
+            {/* Header & Tabs */}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">{t('sadasya.profile_settings') || 'Profile Settings'}</h1>
+                        <p className="text-slate-500">{t('sadasya.branding') || 'Manage your branding and personal details'}</p>
+                    </div>
                 </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="ns-btn-primary flex items-center gap-2"
-                >
-                    <Save className="w-4 h-4" />
-                    {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
-                </button>
+
+                <div className="flex space-x-1 rounded-xl bg-slate-100 p-1">
+                    <button
+                        onClick={() => setActiveTab('profile')}
+                        className={clsx(
+                            'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                            activeTab === 'profile'
+                                ? 'bg-white text-brand-700 shadow'
+                                : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                        )}
+                    >
+                        <User className="w-4 h-4" />
+                        {t('sadasya.personal_details') || 'Profile Details'}
+                    </button>
+                    {canAccessBot && (
+                        <button
+                            onClick={() => setActiveTab('bot')}
+                            className={clsx(
+                                'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                                activeTab === 'bot'
+                                    ? 'bg-white text-brand-700 shadow'
+                                    : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                            )}
+                        >
+                            <Smartphone className="w-4 h-4" />
+                            {t('whatsapp_bot.title') || 'WhatsApp Bot'}
+                        </button>
+                    )}
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Personal Details */}
-                <div className="ns-card p-6 space-y-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
-                        <User className="w-5 h-5 text-brand-600" />
-                        {t('sadasya.personal_details') || 'Personal Details'}
-                    </h3>
-
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Name (English)</label>
-                            <input
-                                type="text"
-                                name="nagarsevak_name_english"
-                                value={formData.nagarsevak_name_english}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. Rahul Patil"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Name (Marathi)</label>
-                            <input
-                                type="text"
-                                name="nagarsevak_name_marathi"
-                                value={formData.nagarsevak_name_marathi}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="उदा. राहुल पाटील"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.ward_name') || 'Ward Name'}</label>
-                            <input
-                                type="text"
-                                name="ward_name"
-                                value={formData.ward_name}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. Shivaji Nagar"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.ward_num') || 'Ward Number'}</label>
-                            <input
-                                type="text"
-                                name="ward_number"
-                                value={formData.ward_number}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. 10"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Office & Contact Details */}
-                <div className="ns-card p-6 space-y-4">
-                    <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
-                        <Building2 className="w-5 h-5 text-brand-600" />
-                        {t('sadasya.office_details')}
-                    </h3>
-
-                    <div className="space-y-3">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_address')}</label>
-                            <input
-                                type="text"
-                                name="office_address"
-                                value={formData.office_address}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. 123 Main St, Pune"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_hours')}</label>
-                            <input
-                                type="text"
-                                name="office_hours"
-                                value={formData.office_hours}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. 10 AM - 6 PM"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.phone_number')}</label>
-                            <input
-                                type="text"
-                                name="phone_number"
-                                value={formData.phone_number}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. +91 9876543210"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.email_address')}</label>
-                            <input
-                                type="email"
-                                name="email_address"
-                                value={formData.email_address}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. contact@nagar.in"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.social_media_link')}</label>
-                            <input
-                                type="text"
-                                name="social_media_link"
-                                value={formData.social_media_link}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. fb.com/rahulpatil"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Branding & Media */}
+            {/* Profile Content */}
+            {activeTab === 'profile' && (
                 <div className="space-y-6">
-                    <div className="ns-card p-6 space-y-4">
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
-                            <Flag className="w-5 h-5 text-brand-600" />
-                            {t('sadasya.branding') || 'Party Details'}
-                        </h3>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.party_name') || 'Party Name'}</label>
-                            <input
-                                type="text"
-                                name="party_name"
-                                value={formData.party_name}
-                                onChange={handleInputChange}
-                                className="ns-input w-full"
-                                placeholder="e.g. XYZ Party"
-                            />
-                        </div>
+                    <div className="flex justify-end">
+                        <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="ns-btn-primary flex items-center gap-2"
+                        >
+                            <Save className="w-4 h-4" />
+                            {saving ? 'Saving...' : t('common.save') || 'Save Changes'}
+                        </button>
                     </div>
 
-                    <div className="ns-card p-6 space-y-4">
-                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
-                            <Building2 className="w-5 h-5 text-brand-600" />
-                            {t('sadasya.logo_update') || 'Images'}
-                        </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Personal Details */}
+                        <div className="ns-card p-6 space-y-4">
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                                <User className="w-5 h-5 text-brand-600" />
+                                {t('sadasya.personal_details') || 'Personal Details'}
+                            </h3>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="text-center space-y-2">
-                                <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
-                                    {formData.profile_image_url ? (
-                                        <img src={formData.profile_image_url} alt="Profile" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <User className="w-8 h-8 text-slate-400" />
-                                    )}
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Name (English)</label>
                                     <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                        onChange={(e) => handleFileUpload(e, 'profile')}
+                                        type="text"
+                                        name="nagarsevak_name_english"
+                                        value={formData.nagarsevak_name_english}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. Rahul Patil"
                                     />
                                 </div>
-                                <p className="text-xs font-semibold text-slate-600">{t('sadasya.upload_photo') || 'Profile Photo'}</p>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Name (Marathi)</label>
+                                    <input
+                                        type="text"
+                                        name="nagarsevak_name_marathi"
+                                        value={formData.nagarsevak_name_marathi}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="उदा. राहुल पाटील"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.ward_name') || 'Ward Name'}</label>
+                                    <input
+                                        type="text"
+                                        name="ward_name"
+                                        value={formData.ward_name}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. Shivaji Nagar"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.ward_num') || 'Ward Number'}</label>
+                                    <input
+                                        type="text"
+                                        name="ward_number"
+                                        value={formData.ward_number}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. 10"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Office & Contact Details */}
+                        <div className="ns-card p-6 space-y-4">
+                            <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                                <Building2 className="w-5 h-5 text-brand-600" />
+                                {t('sadasya.office_details')}
+                            </h3>
+
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_address')}</label>
+                                    <input
+                                        type="text"
+                                        name="office_address"
+                                        value={formData.office_address}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. 123 Main St, Pune"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.office_hours')}</label>
+                                    <input
+                                        type="text"
+                                        name="office_hours"
+                                        value={formData.office_hours}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. 10 AM - 6 PM"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.phone_number')}</label>
+                                    <input
+                                        type="text"
+                                        name="phone_number"
+                                        value={formData.phone_number}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. +91 9876543210"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.email_address')}</label>
+                                    <input
+                                        type="email"
+                                        name="email_address"
+                                        value={formData.email_address}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. contact@nagar.in"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.social_media_link')}</label>
+                                    <input
+                                        type="text"
+                                        name="social_media_link"
+                                        value={formData.social_media_link}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. fb.com/rahulpatil"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Branding & Media */}
+                        <div className="space-y-6">
+                            <div className="ns-card p-6 space-y-4">
+                                <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                                    <Flag className="w-5 h-5 text-brand-600" />
+                                    {t('sadasya.branding') || 'Party Details'}
+                                </h3>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('sadasya.party_name') || 'Party Name'}</label>
+                                    <input
+                                        type="text"
+                                        name="party_name"
+                                        value={formData.party_name}
+                                        onChange={handleInputChange}
+                                        className="ns-input w-full"
+                                        placeholder="e.g. XYZ Party"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="text-center space-y-2">
-                                <div className="w-24 h-24 mx-auto bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
-                                    {formData.party_logo_url ? (
-                                        <img src={formData.party_logo_url} alt="Party Logo" className="w-full h-full object-contain p-2" />
-                                    ) : (
-                                        <Flag className="w-8 h-8 text-slate-400" />
-                                    )}
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="absolute inset-0 opacity-0 cursor-pointer"
-                                        onChange={(e) => handleFileUpload(e, 'party')}
-                                    />
+                            <div className="ns-card p-6 space-y-4">
+                                <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                                    <Building2 className="w-5 h-5 text-brand-600" />
+                                    {t('sadasya.logo_update') || 'Images'}
+                                </h3>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="text-center space-y-2">
+                                        <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
+                                            {formData.profile_image_url ? (
+                                                <img src={formData.profile_image_url} alt="Profile" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-8 h-8 text-slate-400" />
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                onChange={(e) => handleFileUpload(e, 'profile')}
+                                            />
+                                        </div>
+                                        <p className="text-xs font-semibold text-slate-600">{t('sadasya.upload_photo') || 'Profile Photo'}</p>
+                                    </div>
+
+                                    <div className="text-center space-y-2">
+                                        <div className="w-24 h-24 mx-auto bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
+                                            {formData.party_logo_url ? (
+                                                <img src={formData.party_logo_url} alt="Party Logo" className="w-full h-full object-contain p-2" />
+                                            ) : (
+                                                <Flag className="w-8 h-8 text-slate-400" />
+                                            )}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                onChange={(e) => handleFileUpload(e, 'party')}
+                                            />
+                                        </div>
+                                        <p className="text-xs font-semibold text-slate-600">{t('sadasya.upload_logo') || 'Party Logo'}</p>
+                                    </div>
                                 </div>
-                                <p className="text-xs font-semibold text-slate-600">{t('sadasya.upload_logo') || 'Party Logo'}</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            )}
+
+            {/* Bot Content */}
+            {activeTab === 'bot' && canAccessBot && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                    <BotDashboard />
+                </div>
+            )}
         </div>
     );
 };

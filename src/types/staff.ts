@@ -6,4 +6,6 @@ export interface Staff {
     area?: string;
     category: 'Office' | 'Party' | 'Cooperative';
     keywords: string[];
+    permissions?: string[];
+    tenant_id?: string;
 }

@@ -189,9 +189,9 @@ const SchemeList = () => {
                 {/* Filters - Only show for Schemes tab */}
                 {!showApplications && (
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             {/* Category Filters */}
-                            <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide flex-1 mr-4">
+                            <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide w-full sm:w-auto sm:flex-1 sm:mr-4">
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
@@ -208,7 +208,7 @@ const SchemeList = () => {
                                 ))}
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 w-full sm:w-auto">
                                 <button
                                     onClick={() => {
                                         if (filteredSchemes) {
@@ -217,7 +217,7 @@ const SchemeList = () => {
                                             setShowMatcher(true);
                                         }
                                     }}
-                                    className={filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}
+                                    className={`flex-1 sm:flex-none ${filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}`}
                                 >
                                     {filteredSchemes ? (
                                         <>
@@ -231,7 +231,7 @@ const SchemeList = () => {
                                 </button>
                                 <Link
                                     to="/schemes/new"
-                                    className="ns-btn-primary"
+                                    className="ns-btn-primary flex-1 sm:flex-none"
                                 >
                                     <Plus className="w-4 h-4" /> {t('schemes.add_scheme')}
                                 </Link>
@@ -239,12 +239,12 @@ const SchemeList = () => {
                         </div>
 
                         {/* Search Bar */}
-                        <div className="relative">
+                        <div className="relative w-full">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder={t('schemes.search_placeholder')}
-                                className="ns-input pl-10 py-3 bg-white shadow-sm"
+                                className="ns-input pl-10 py-3 bg-white shadow-sm w-full"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />

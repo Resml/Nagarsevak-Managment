@@ -128,39 +128,42 @@ const WardProvisions = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                        <ArrowLeft className="w-5 h-5 text-slate-600" />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('ward_provision.title')}</h1>
-                        <p className="text-slate-500 text-sm">{t('ward_provision.subtitle')}</p>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
-                        <Calendar className="w-4 h-4 text-slate-400 ml-1" />
-                        <select
-                            className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700"
-                            value={year}
-                            onChange={(e) => setYear(e.target.value)}
+            {/* Sticky Header Section */}
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 -mx-4 px-4 sm:-mx-8 sm:px-8 border-b border-slate-200/60 mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
-                            <option value="2024-2025">FY 2024-2025</option>
-                            <option value="2023-2024">FY 2023-2024</option>
-                        </select>
+                            <ArrowLeft className="w-5 h-5 text-slate-600" />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900">{t('ward_provision.title')}</h1>
+                            <p className="text-slate-500 text-sm">{t('ward_provision.subtitle')}</p>
+                        </div>
                     </div>
-                    <button
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4" />
-                        <span>{t('ward_provision.add_request')}</span>
-                    </button>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 flex-1 sm:flex-none justify-center">
+                            <Calendar className="w-4 h-4 text-slate-400 ml-1" />
+                            <select
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 w-full sm:w-auto"
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                            >
+                                <option value="2024-2025">FY 2024-2025</option>
+                                <option value="2023-2024">FY 2023-2024</option>
+                            </select>
+                        </div>
+                        <button
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="ns-btn-primary flex-1 sm:flex-none justify-center"
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>{t('ward_provision.add_request')}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

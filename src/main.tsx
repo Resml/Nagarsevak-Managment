@@ -10,9 +10,9 @@ createRoot(document.getElementById('root')!).render(
   <LanguageProvider>
     <AuthProvider>
       <TenantProvider>
-        <Toaster position="top-center" richColors closeButton />
         <App />
       </TenantProvider>
     </AuthProvider>
+    <Toaster position="top-center" richColors closeButton />
   </LanguageProvider>,
 )
