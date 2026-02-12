@@ -1460,7 +1460,8 @@ export const translations = {
             new_voter_add: "नवीन मतदार नोंदणी",
             friends_relatives: "मित्र आणि नातेवाईक",
             ward_info_constituency: "प्रभाग माहिती (मतदारसंघ)",
-            public_communication: "जनसंवाद"
+            public_communication: "जनसंवाद",
+            ward_map: "प्रभाग नकाशा"
         },
         communication_page: {
             title: "जनसंवाद",
