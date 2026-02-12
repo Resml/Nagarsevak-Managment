@@ -347,18 +347,16 @@ class MenuNavigator {
         switch (input) {
             case '1': // Complaints
                 return await this.showComplaintsMenu(sock, userId, lang);
-            case '2': // Letters/Documents
+            case '2': // Letters
                 return await this.showLettersMenu(sock, userId, lang, tenantId);
             case '3': // Government Schemes
                 return await this.showSchemesMenu(sock, userId, lang);
-            case '4': // Voter Services
-                return await this.showVoterMenu(sock, userId, lang);
-            case '5': // Ward Problems
+            case '4': // Ward Problems
                 return await this.showWardProblemsMenu(sock, userId, lang);
-            case '6': // Personal Request
+            case '5': // Personal Request
                 session.currentMenu = MENU_STATES.PERSONAL_REQUEST_MENU;
                 return await sock.sendMessage(userId, { text: PERSONAL_REQUEST_MENU[lang].text });
-            case '7': // Other Services
+            case '6': // Other Services
                 return await this.showOtherMenu(sock, userId, lang);
             default:
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
