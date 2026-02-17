@@ -327,6 +327,11 @@ class MenuNavigator {
             complainantMobile = complaint.reporter_mobile;
         }
 
+        // Dynamic Date Example
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dateStr = tomorrow.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
         const msg = `🛠️ *New Task Assigned*\n\n` +
             `🆔 *Ticket ID:* #${complaint.id}\n` +
             `📌 *Type:* ${complaint.category}\n` +
@@ -334,7 +339,7 @@ class MenuNavigator {
             `📍 *Location:* ${complaint.location || 'N/A'}\n` +
             `👤 *Complainant:* ${complainantName}\n` +
             `📞 *Mobile:* ${complainantMobile}\n\n` +
-            `Please reply with the *estimated completion date* for this task (e.g., "Tomorrow", "2 days", "17 Feb").`;
+            `Please reply with the *estimated completion date* for this task (e.g., "Tomorrow", "2 days", "${dateStr}").`;
 
         await sock.sendMessage(whatsappId, { text: msg });
     }
@@ -387,9 +392,8 @@ class MenuNavigator {
 
         await sock.sendMessage(userId, { text: msg });
 
-        // Reset state to Main Menu (or keep in task mode? Better to reset to avoid getting stuck)
-        // session.currentMenu = MENU_STATES.MAIN_MENU; // Don't reset immediately, maybe allow them to correct?
-        // Actually, for simplicity, finding the task again is hard without ID. So resetting is safer.
+        // Reset state to Main Menu but DO NOT show the menu text
+        session.currentMenu = MENU_STATES.MAIN_MENU;
 
         // 4. Notify Complainant (Citizen) that work has started
         const { data: complaintData, error: fetchError } = await supabase
@@ -438,7 +442,9 @@ class MenuNavigator {
             }
         }
 
-        return await this.showMainMenu(sock, userId, session.language || 'en');
+        // return await this.showMainMenu(sock, userId, session.language || 'en');
+        // Do nothing more, state is reset.
+        return;
     }
 
     /**
@@ -483,7 +489,12 @@ class MenuNavigator {
             }
 
             // Check if assigned staff matches sender
-            if (complaint.staff?.mobile !== cleanMobile) {
+            // Normalize DB mobile as well
+            const staffMobile = complaint.staff?.mobile?.replace(/\D/g, '').slice(-10);
+
+            console.log(`[StaffCheck] Sender: ${cleanMobile}, Assigned: ${staffMobile} (Orig: ${complaint.staff?.mobile})`);
+
+            if (staffMobile !== cleanMobile) {
                 // Allow admin override? Maybe later.
                 await sock.sendMessage(userId, { text: `❌ You are not assigned to this complaint.` });
                 return true;
