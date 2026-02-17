@@ -541,28 +541,40 @@ const ComplaintDetail = () => {
 
                                                     // Auto-save on change
                                                     if (newAssignee) {
+                                                        const isPersonal = complaint.id.startsWith('pr-');
+                                                        const isAreaProblem = complaint.id.startsWith('ap-');
+                                                        const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+                                                        const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
+
+                                                        // Update the correct table
                                                         const { error } = await supabase
-                                                            .from('complaints')
+                                                            .from(table)
                                                             .update({
                                                                 assigned_to: newAssignee,
                                                                 status: 'Assigned'
                                                             })
-                                                            .eq('id', complaint.id);
+                                                            .eq('id', actualId);
 
                                                         if (!error) {
-                                                            setComplaint({ ...complaint, status: 'Assigned' });
+                                                            setComplaint({ ...complaint, status: 'Assigned', assignedTo: newAssignee });
                                                             toast.success('Staff assigned successfully');
 
                                                             // Trigger WhatsApp Notification
                                                             try {
                                                                 const apiUrl = import.meta.env.VITE_BOT_API_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
 
+                                                                // Find selected staff details
+                                                                const selectedStaff = staffList.find(s => s.id === newAssignee);
+
                                                                 const response = await fetch(`${apiUrl}/api/assign-complaint`, {
                                                                     method: 'POST',
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({
-                                                                        complaintId: complaint.id,
+                                                                        complaintId: actualId,
+                                                                        table: table,
                                                                         staffId: newAssignee,
+                                                                        staffMobile: selectedStaff?.mobile,
+                                                                        staffName: selectedStaff?.name,
                                                                         tenantId: tenantId
                                                                     })
                                                                 });
@@ -576,7 +588,8 @@ const ComplaintDetail = () => {
                                                                 toast.error(`Assigned, but notification failed: ${notifyErr.message}`);
                                                             }
                                                         } else {
-                                                            toast.error('Failed to assign staff');
+                                                            console.error('Assignment Database Error:', error);
+                                                            toast.error(`Failed to assign staff: ${error.message}`);
                                                         }
                                                     }
                                                 }}

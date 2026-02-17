@@ -299,6 +299,7 @@ class MenuNavigator {
         if (whatsappId.length === 10) whatsappId = '91' + whatsappId;
         whatsappId = whatsappId + '@s.whatsapp.net';
 
+        // Initialize session for staff
         const session = this.getSession(whatsappId);
         session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
         session.currentComplaintId = complaint.id;
