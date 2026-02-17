@@ -241,6 +241,92 @@ app.post('/webhook/letter-status', async (req, res) => {
     }
 });
 
+// --- Endpoint for Staff Assignment Notification ---
+app.post('/api/assign-complaint', async (req, res) => {
+    try {
+        const { complaintId, staffId, tenantId, table = 'complaints' } = req.body;
+
+        if (!complaintId || !staffId || !tenantId) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        console.log(`[${tenantId}] Assigning ${table} #${complaintId} to staff ${staffId}`);
+
+        // Get bot session
+        const session = sessions.get(tenantId);
+        if (!session || !session.sock) {
+            return res.status(503).json({ error: 'Bot not connected for this tenant' });
+        }
+
+        // Fetch item details based on table
+        let query = supabase.from(table).select('*').eq('id', complaintId).single();
+
+        // Add specific joins based on table
+        if (table === 'complaints') {
+            query = supabase.from(table).select('*, voter:voters(name_english, name_marathi, mobile)').eq('id', complaintId).single();
+        }
+
+        const { data: item, error: itemError } = await query;
+
+        if (itemError || !item) {
+            console.error(`[${tenantId}] Error fetching item from ${table}:`, itemError);
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        // Map item to common structure for Notification
+        let complaintData = {
+            id: item.id,
+            category: item.category || item.request_type || item.title || 'Task',
+            problem: item.problem || item.description || 'Description not available',
+            location: item.location || item.ward || 'N/A',
+            voter: null,
+            description_meta: item.description_meta
+        };
+
+        if (table === 'complaints' && item.voter) {
+            complaintData.voter = item.voter;
+        } else if (table === 'personal_requests') {
+            complaintData.voter = {
+                name_english: item.reporter_name,
+                mobile: item.reporter_mobile
+            };
+        } else if (table === 'area_problems') {
+            complaintData.voter = {
+                name_english: item.reporter_name,
+                mobile: item.reporter_mobile
+            };
+        }
+
+        // Fetch staff details
+        const { data: staff, error: staffError } = await supabase
+            .from('staff')
+            .select('*')
+            .eq('id', staffId)
+            .single();
+
+        if (staffError || !staff) {
+            console.error(`[${tenantId}] Error fetching staff:`, staffError);
+            return res.status(404).json({ error: 'Staff not found' });
+        }
+
+        if (!staff.mobile) {
+            return res.status(400).json({ error: 'Staff member has no mobile number' });
+        }
+
+        // Trigger notification via MenuNavigator
+        if (session.menuNavigator) {
+            await session.menuNavigator.handleStaffAssignment(session.sock, staff.mobile, complaintData, tenantId);
+            res.json({ success: true, message: 'Staff notified successfully' });
+        } else {
+            res.status(500).json({ error: 'MenuNavigator not initialized' });
+        }
+
+    } catch (error) {
+        console.error('Error assigning complaint:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // --- Baileys Connection Logic (Per Tenant) ---
 async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false) {
     if (!tenantId) return;
