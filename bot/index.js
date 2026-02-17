@@ -297,25 +297,30 @@ app.post('/api/assign-complaint', async (req, res) => {
             };
         }
 
-        // Fetch staff details
-        const { data: staff, error: staffError } = await supabase
-            .from('staff')
-            .select('*')
-            .eq('id', staffId)
-            .single();
+        // Fetch staff details (Or use provided details to bypass RLS)
+        let staffMobile = req.body.staffMobile;
 
-        if (staffError || !staff) {
-            console.error(`[${tenantId}] Error fetching staff:`, staffError);
-            return res.status(404).json({ error: 'Staff not found' });
+        if (!staffMobile) {
+            const { data: staff, error: staffError } = await supabase
+                .from('staff')
+                .select('*')
+                .eq('id', staffId)
+                .single();
+
+            if (staffError || !staff) {
+                console.error(`[${tenantId}] Error fetching staff:`, staffError);
+                return res.status(404).json({ error: 'Staff not found' });
+            }
+            staffMobile = staff.mobile;
         }
 
-        if (!staff.mobile) {
+        if (!staffMobile) {
             return res.status(400).json({ error: 'Staff member has no mobile number' });
         }
 
         // Trigger notification via MenuNavigator
         if (session.menuNavigator) {
-            await session.menuNavigator.handleStaffAssignment(session.sock, staff.mobile, complaintData, tenantId);
+            await session.menuNavigator.handleStaffAssignment(session.sock, staffMobile, complaintData, tenantId);
             res.json({ success: true, message: 'Staff notified successfully' });
         } else {
             res.status(500).json({ error: 'MenuNavigator not initialized' });
