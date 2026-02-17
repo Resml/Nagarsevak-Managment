@@ -16,8 +16,10 @@ const store = require('./store');
 const broadcastService = require('./broadcast');
 // AI Service removed - using menu-driven navigation instead
 const MenuNavigator = require('./menuNavigator');
-const { sendLetterStatusNotification } = require('./notifications');
 const supabaseAuthState = require('./supabaseAuthState');
+
+// Initial LID Cache
+const lidCache = {};
 
 // --- Custom Simple Store for Polls ---
 class SimpleStore {
@@ -613,58 +615,67 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 if (from.endsWith('@lid')) {
                     console.log(`[${tenantId}] Received message from LID: ${from}. Attempting to resolve to Phone JID.`);
 
-                    // Search in store checks
-                    // 1. Check if we can find a contact with this LID
-                    if (baileysStore && baileysStore.contacts) {
-                        const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
-                        if (contact && contact.id) {
-                            resolvedFrom = contact.id;
-                            console.log(`[${tenantId}] Resolved LID ${from} to ${resolvedFrom}`);
-                        } else {
-                            // Fallback: If we sent a message to a phone number recently, maybe we can map it? 
-                            // Hard to do reliably.
-                            console.warn(`[${tenantId}] Could not resolve LID to Phone JID. Session lookup might fail.`);
+                    // --- Cache Check ---
+                    // 0. Check in-memory cache first
+                    if (lidCache[from]) {
+                        resolvedFrom = lidCache[from];
+                        console.log(`[${tenantId}] LID Cache Hit: ${from} -> ${resolvedFrom}`);
+                    } else {
+                        // Search in store checks
+                        // 1. Check if we can find a contact with this LID
+                        if (baileysStore && baileysStore.contacts) {
+                            const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
+                            if (contact && contact.id) {
+                                resolvedFrom = contact.id;
+                                lidCache[from] = resolvedFrom; // Update Cache
+                                console.log(`[${tenantId}] Resolved LID ${from} to ${resolvedFrom}`);
+                            } else {
+                                // Fallback: If we sent a message to a phone number recently, maybe we can map it? 
+                                // Hard to do reliably.
+                                console.warn(`[${tenantId}] Could not resolve LID to Phone JID. Session lookup might fail.`);
 
-                            // Debug: Print some contacts to see structure (limit output)
-                            // const sample = Object.values(baileysStore.contacts).slice(0, 3);
-                            // console.log(`[${tenantId}] Sample contacts:`, JSON.stringify(sample));
+                                // Debug: Print some contacts to see structure (limit output)
+                                // const sample = Object.values(baileysStore.contacts).slice(0, 3);
+                                // console.log(`[${tenantId}] Sample contacts:`, JSON.stringify(sample));
 
-                            // --- Fallback Strategy ---
-                            // If we can't resolve LID to Phone JID (e.g. contacts not synced yet),
-                            // we need to check if there is an active session for this LID itself.
-                            // Staff assignment sets session on PhoneJID.
-                            // If we can't map LID -> PhoneJID, we can't find the session.
+                                // --- Fallback Strategy ---
+                                // If we can't resolve LID to Phone JID (e.g. contacts not synced yet),
+                                // we need to check if there is an active session for this LID itself.
+                                // Staff assignment sets session on PhoneJID.
+                                // If we can't map LID -> PhoneJID, we can't find the session.
 
-                            // HACK: Try to find ANY session that has the currentMenu set to STAFF_TASK_DATE_ESTIMATE
-                            // This is risky if multiple staff are active, but better than being stuck.
-                            // A safer bet: If we assume only 1 active staff task per tenant for now (unlikely), or...
+                                // HACK: Try to find ANY session that has the currentMenu set to STAFF_TASK_DATE_ESTIMATE
+                                // This is risky if multiple staff are active, but better than being stuck.
+                                // A safer bet: If we assume only 1 active staff task per tenant for now (unlikely), or...
 
-                            // BETTER FALLBACK:
-                            // Refer to `menuNavigator` sessions directly.
-                            const nav = sessions.get(tenantId)?.menuNavigator;
-                            if (nav && nav.userSessions) {
-                                // Search for an active staff session
-                                const activeStaffSessions = Object.entries(nav.userSessions).filter(([id, sess]) => {
-                                    return sess.currentMenu === 'STAFF_TASK_DATE_ESTIMATE';
-                                });
+                                // BETTER FALLBACK:
+                                // Refer to `menuNavigator` sessions directly.
+                                const nav = sessions.get(tenantId)?.menuNavigator;
+                                if (nav && nav.userSessions) {
+                                    // Search for an active staff session
+                                    const activeStaffSessions = Object.entries(nav.userSessions).filter(([id, sess]) => {
+                                        return sess.currentMenu === 'STAFF_TASK_DATE_ESTIMATE';
+                                    });
 
-                                if (activeStaffSessions.length === 1) {
-                                    // Found exactly one active staff session!
-                                    // We can reasonably assume this LID belongs to this staff member.
-                                    resolvedFrom = activeStaffSessions[0][0];
-                                    console.log(`[${tenantId}] Fuzzy matched LID ${from} to active staff session ${resolvedFrom}`);
+                                    if (activeStaffSessions.length === 1) {
+                                        // Found exactly one active staff session!
+                                        // We can reasonably assume this LID belongs to this staff member.
+                                        resolvedFrom = activeStaffSessions[0][0];
+                                        lidCache[from] = resolvedFrom; // Update Cache (Critical for subsequent commands like COMPLETE)
+                                        console.log(`[${tenantId}] Fuzzy matched LID ${from} to active staff session ${resolvedFrom}`);
 
-                                    // Optional: Link them in memory for future?
-                                    // For now, just using it is enough to unblock.
-                                } else if (activeStaffSessions.length > 1) {
-                                    console.warn(`[${tenantId}] Multiple staff active. Cannot fuzzy match LID ${from}.`);
-                                } else {
-                                    console.warn(`[${tenantId}] No active staff sessions found. LID ${from} remains unresolved.`);
+                                        // Optional: Link them in memory for future?
+                                        // For now, just using it is enough to unblock.
+                                    } else if (activeStaffSessions.length > 1) {
+                                        console.warn(`[${tenantId}] Multiple staff active. Cannot fuzzy match LID ${from}.`);
+                                    } else {
+                                        console.warn(`[${tenantId}] No active staff sessions found. LID ${from} remains unresolved.`);
+                                    }
                                 }
                             }
+                        } else {
+                            console.warn(`[${tenantId}] Contact store is empty or undefined. Cannot resolve LID.`);
                         }
-                    } else {
-                        console.warn(`[${tenantId}] Contact store is empty or undefined. Cannot resolve LID.`);
                     }
                 }
 
