@@ -23,6 +23,7 @@ const supabaseAuthState = require('./supabaseAuthState');
 class SimpleStore {
     constructor() {
         this.messages = {}; // jid -> { id -> message }
+        this.contacts = {}; // jid -> contact
     }
 
     bind(ev) {
@@ -31,6 +32,24 @@ class SimpleStore {
                 const jid = msg.key.remoteJid;
                 if (!this.messages[jid]) this.messages[jid] = {};
                 this.messages[jid][msg.key.id] = msg;
+            }
+        });
+
+        ev.on('contacts.upsert', (contacts) => {
+            for (const contact of contacts) {
+                // Determine JID (some contacts might just be updates)
+                const id = contact.id;
+                if (id) {
+                    this.contacts[id] = Object.assign(this.contacts[id] || {}, contact);
+                }
+            }
+        });
+
+        ev.on('contacts.update', (updates) => {
+            for (const update of updates) {
+                if (update.id && this.contacts[update.id]) {
+                    Object.assign(this.contacts[update.id], update);
+                }
             }
         });
     }
@@ -577,14 +596,40 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
 
             if (text || isMedia) {
                 const cleanText = (text || '').trim();
-                console.log(`[${tenantId}] [DEBUG] Message from ${from} (Tenant: ${tenantId}) | Media: ${isMedia} | Text: ${cleanText}`);
+
+                // --- LID Resolution Fix ---
+                // If message is from a LID (Linked Device), try to resolve to Phone JID
+                let resolvedFrom = from;
+                if (from.endsWith('@lid')) {
+                    console.log(`[${tenantId}] Received message from LID: ${from}. Attempting to resolve to Phone JID.`);
+
+                    // Search in store checks
+                    // 1. Check if we can find a contact with this LID
+                    if (baileysStore && baileysStore.contacts) {
+                        const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
+                        if (contact && contact.id) {
+                            resolvedFrom = contact.id;
+                            console.log(`[${tenantId}] Resolved LID ${from} to ${resolvedFrom}`);
+                        } else {
+                            // Fallback: If we sent a message to a phone number recently, maybe we can map it? 
+                            // Hard to do reliably.
+                            console.warn(`[${tenantId}] Could not resolve LID to Phone JID. Session lookup might fail.`);
+
+                            // Debug: Print some contacts to see structure (limit output)
+                            // const sample = Object.values(baileysStore.contacts).slice(0, 3);
+                            // console.log(`[${tenantId}] Sample contacts:`, JSON.stringify(sample));
+                        }
+                    }
+                }
+
+                console.log(`[${tenantId}] [DEBUG] Message from ${resolvedFrom} (Original: ${from}) | Media: ${isMedia} | Text: ${cleanText}`);
 
                 // If we receive a message, we are clearly connected
                 if (sessions.get(tenantId)?.status !== 'connected') {
                     updateSessionStatus(tenantId, 'connected');
                 }
 
-                await handleMessage(sock, tenantId, from, contactName, cleanText, msg);
+                await handleMessage(sock, tenantId, resolvedFrom, contactName, cleanText, msg);
             }
 
         } catch (err) {
