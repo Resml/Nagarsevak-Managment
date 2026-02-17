@@ -427,14 +427,24 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         maxMsgRetryCount: 5, // Maximum message retry attempts
     });
 
-    // Create menu navigator instance for this tenant
-    const menuNavigator = new MenuNavigator(store);
+    // Create or Reuse menu navigator instance for this tenant
+    // CRITICAL: We must reuse the existing MenuNavigator to preserve user sessions (state) across reconnects!
+    const currentSession = sessions.get(tenantId);
+    let menuNavigator;
+
+    if (currentSession && currentSession.menuNavigator) {
+        console.log(`[${tenantId}] Reusing existing MenuNavigator (preserving sessions).`);
+        menuNavigator = currentSession.menuNavigator;
+    } else {
+        console.log(`[${tenantId}] Creating new MenuNavigator.`);
+        menuNavigator = new MenuNavigator(store);
+    }
 
     // Update the existing session object instead of overwriting it completely
-    const currentSession = sessions.get(tenantId);
+    const existingSession = sessions.get(tenantId);
 
     sessions.set(tenantId, {
-        ...currentSession,
+        ...existingSession,
         sock,
         status: 'connecting',
         qr: '',
@@ -618,11 +628,63 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                             // Debug: Print some contacts to see structure (limit output)
                             // const sample = Object.values(baileysStore.contacts).slice(0, 3);
                             // console.log(`[${tenantId}] Sample contacts:`, JSON.stringify(sample));
+
+                            // --- Fallback Strategy ---
+                            // If we can't resolve LID to Phone JID (e.g. contacts not synced yet),
+                            // we need to check if there is an active session for this LID itself.
+                            // Staff assignment sets session on PhoneJID.
+                            // If we can't map LID -> PhoneJID, we can't find the session.
+
+                            // HACK: Try to find ANY session that has the currentMenu set to STAFF_TASK_DATE_ESTIMATE
+                            // This is risky if multiple staff are active, but better than being stuck.
+                            // A safer bet: If we assume only 1 active staff task per tenant for now (unlikely), or...
+
+                            // BETTER FALLBACK:
+                            // Refer to `menuNavigator` sessions directly.
+                            const nav = sessions.get(tenantId)?.menuNavigator;
+                            if (nav && nav.userSessions) {
+                                // Search for an active staff session
+                                const activeStaffSessions = Object.entries(nav.userSessions).filter(([id, sess]) => {
+                                    return sess.currentMenu === 'STAFF_TASK_DATE_ESTIMATE';
+                                });
+
+                                if (activeStaffSessions.length === 1) {
+                                    // Found exactly one active staff session!
+                                    // We can reasonably assume this LID belongs to this staff member.
+                                    resolvedFrom = activeStaffSessions[0][0];
+                                    console.log(`[${tenantId}] Fuzzy matched LID ${from} to active staff session ${resolvedFrom}`);
+
+                                    // Optional: Link them in memory for future?
+                                    // For now, just using it is enough to unblock.
+                                } else if (activeStaffSessions.length > 1) {
+                                    console.warn(`[${tenantId}] Multiple staff active. Cannot fuzzy match LID ${from}.`);
+                                } else {
+                                    console.warn(`[${tenantId}] No active staff sessions found. LID ${from} remains unresolved.`);
+                                }
+                            }
                         }
+                    } else {
+                        console.warn(`[${tenantId}] Contact store is empty or undefined. Cannot resolve LID.`);
                     }
                 }
 
                 console.log(`[${tenantId}] [DEBUG] Message from ${resolvedFrom} (Original: ${from}) | Media: ${isMedia} | Text: ${cleanText}`);
+
+                // --- Session Migration Hack (Optional) ---
+                // If we are using valid resolvedFrom (Phone ID) but the session is empty/default,
+                // and we originally had a session on... wait.
+                // The issue is simply `resolvedFrom` remaining as `from` (LID) when resolution fails.
+                // So `handleMessage` looks up session for LID, finds nothing (default Main Menu),
+                // and thus hits "Invalid Option".
+
+                // If we cannot resolve, we MUST send a message asking them to reply from their phone?
+                // Or we just improved the Store so it SHOULD work.
+
+                // If it STILL fails, it means `baileysStore.contacts` is empty.
+                // Log the size of contacts to be sure.
+                if (baileysStore && baileysStore.contacts) {
+                    console.log(`[${tenantId}] Contact Store Size: ${Object.keys(baileysStore.contacts).length}`);
+                }
 
                 // If we receive a message, we are clearly connected
                 if (sessions.get(tenantId)?.status !== 'connected') {
