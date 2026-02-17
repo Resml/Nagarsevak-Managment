@@ -299,10 +299,12 @@ class MenuNavigator {
         if (whatsappId.length === 10) whatsappId = '91' + whatsappId;
         whatsappId = whatsappId + '@s.whatsapp.net';
 
-        // Initialize session for staff
         const session = this.getSession(whatsappId);
         session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
         session.currentComplaintId = complaint.id;
+
+        // Log to debug "Invalid Option" issue
+        console.log(`[${tenantId}] Set session for ${whatsappId}: menu=${session.currentMenu}, task=${complaint.id}`);
 
         // Complainant Name
         let complainantName = 'Anonymous';
@@ -319,12 +321,20 @@ class MenuNavigator {
             } catch (e) { }
         }
 
+        // Fallback if mobile is in reporter_mobile column (for PR/AP)
+        if (complainantMobile === 'N/A' && complaint.voter?.mobile) {
+            complainantMobile = complaint.voter.mobile;
+        } else if (complainantMobile === 'N/A' && (complaint.reporter_mobile)) {
+            complainantMobile = complaint.reporter_mobile;
+        }
+
         const msg = `🛠️ *New Task Assigned*\n\n` +
             `🆔 *Ticket ID:* #${complaint.id}\n` +
             `📌 *Type:* ${complaint.category}\n` +
             `📝 *Description:* ${complaint.problem}\n` +
             `📍 *Location:* ${complaint.location || 'N/A'}\n` +
-            `👤 *Complainant:* ${complainantName} (${complainantMobile})\n\n` +
+            `👤 *Complainant:* ${complainantName}\n` +
+            `📞 *Mobile:* ${complainantMobile}\n\n` +
             `Please reply with the *estimated completion date* for this task (e.g., "Tomorrow", "2 days", "17 Feb").`;
 
         await sock.sendMessage(whatsappId, { text: msg });
@@ -378,7 +388,57 @@ class MenuNavigator {
 
         await sock.sendMessage(userId, { text: msg });
 
-        // Reset state to Main Menu
+        // Reset state to Main Menu (or keep in task mode? Better to reset to avoid getting stuck)
+        // session.currentMenu = MENU_STATES.MAIN_MENU; // Don't reset immediately, maybe allow them to correct?
+        // Actually, for simplicity, finding the task again is hard without ID. So resetting is safer.
+
+        // 4. Notify Complainant (Citizen) that work has started
+        const { data: complaintData, error: fetchError } = await supabase
+            .from('complaints')
+            .select('*')
+            .eq('id', complaintId)
+            .single();
+
+        if (complaintData) {
+            let complainantMobile = complaintData.reporter_mobile; // For PR/AP?
+
+            // Try to find mobile in voter or meta if not in direct column (schema dependent)
+            // The `complaint` object in handleStaffAssignment had this logic. Let's reuse/adapt.
+            // But here we only have ID. We need to fetch or use what we have.
+            // Ideally we need a helper to get complainant mobile. 
+            // For now, let's try standard fields.
+
+            if (!complainantMobile && complaintData.description_meta) {
+                try {
+                    const meta = JSON.parse(complaintData.description_meta);
+                    if (meta.submitter_mobile) complainantMobile = meta.submitter_mobile;
+                } catch (e) { }
+            }
+
+            // If linked to voter
+            if (!complainantMobile && complaintData.voter_id) {
+                const { data: voter } = await supabase.from('voters').select('mobile').eq('id', complaintData.voter_id).single();
+                if (voter) complainantMobile = voter.mobile;
+            }
+
+            if (complainantMobile) {
+                let citizenId = complainantMobile.replace(/\D/g, '');
+                if (citizenId.length === 10) citizenId = '91' + citizenId;
+                citizenId = citizenId + '@s.whatsapp.net';
+
+                const citizenMsg = `👷 *Update on Ticket #${complaintId}*\n\n` +
+                    `Our staff has started working on your request.\n` +
+                    `📅 *Estimated Completion:* ${input}\n\n` +
+                    `Thank you for your patience!`;
+
+                try {
+                    await sock.sendMessage(citizenId, { text: citizenMsg });
+                } catch (e) {
+                    console.error('Failed to notify citizen:', e);
+                }
+            }
+        }
+
         return await this.showMainMenu(sock, userId, session.language || 'en');
     }
 
