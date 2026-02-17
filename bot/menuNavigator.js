@@ -474,7 +474,7 @@ class MenuNavigator {
 
             const { data: complaint, error } = await supabase
                 .from('complaints')
-                .select('*, staff:assigned_to(*)')
+                .select('*, staff:assigned_to(*), voter:voter_id(*)')
                 .eq('id', complaintId)
                 .single();
 
@@ -524,6 +524,11 @@ class MenuNavigator {
     async sendComplaintResolvedNotification(sock, complaint, tenantId) {
         let complainantMobile = complaint.voter?.mobile;
         let complainantName = complaint.voter?.name_marathi || complaint.voter?.name_english || 'Citizen';
+
+        // Fallback to reporter_mobile if available
+        if (!complainantMobile && complaint.reporter_mobile) {
+            complainantMobile = complaint.reporter_mobile;
+        }
 
         if (!complainantMobile && complaint.description_meta) {
             try {
