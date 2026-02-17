@@ -552,6 +552,24 @@ const ComplaintDetail = () => {
                                                         if (!error) {
                                                             setComplaint({ ...complaint, status: 'Assigned' });
                                                             toast.success('Staff assigned successfully');
+
+                                                            // Trigger WhatsApp Notification
+                                                            try {
+                                                                await fetch('http://localhost:4000/api/assign-complaint', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({
+                                                                        complaintId: complaint.id,
+                                                                        staffId: newAssignee,
+                                                                        tenantId: tenantId
+                                                                    })
+                                                                });
+                                                            } catch (notifyErr) {
+                                                                console.error('Failed to notify staff:', notifyErr);
+                                                                toast.error('Assigned, but failed to send WhatsApp notification');
+                                                            }
+                                                        } else {
+                                                            toast.error('Failed to assign staff');
                                                         }
                                                     }
                                                 }}

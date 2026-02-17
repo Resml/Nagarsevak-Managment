@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'staff' | 'citizen';
+export type Role = 'admin' | 'staff' | 'citizen' | 'nagarsevak' | 'amdar' | 'khasdar' | 'minister';
 
 export interface User {
   id: string;
@@ -40,6 +40,20 @@ export interface Complaint {
   createdAt: string; // ISO Date
   updatedAt: string;
   resolvedAt?: string;
+}
+
+export interface VoterApplication {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  tenant_id: string;
+  voter_id?: string; // or number if that's how it's stored, but usually uuid or bigint as string in JS
+  applicant_name: string;
+  applicant_mobile?: string;
+  form_type: string;
+  status: string;
+  notes?: string;
+  created_by?: string;
 }
 
 export interface Task {

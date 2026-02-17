@@ -59,7 +59,9 @@ const MENU_STATES = {
     AREA_PROBLEM_VOTER_VERIFY: 'AREA_PROBLEM_VOTER_VERIFY',
     VOTER_PROFILE_UPDATE_MENU: 'VOTER_PROFILE_UPDATE_MENU',
     VOTER_UPDATE_MOBILE_VAL: 'VOTER_UPDATE_MOBILE_VAL',
-    VOTER_UPDATE_ADDRESS_VAL: 'VOTER_UPDATE_ADDRESS_VAL'
+    VOTER_UPDATE_ADDRESS_VAL: 'VOTER_UPDATE_ADDRESS_VAL',
+    // Staff Task Management
+    STAFF_TASK_DATE_ESTIMATE: 'STAFF_TASK_DATE_ESTIMATE'
 };
 
 class MenuNavigator {
@@ -111,6 +113,11 @@ class MenuNavigator {
         if (input === '0' && session.currentMenu !== MENU_STATES.COMPLAINT_FORM_PHOTO) {
             // Change language
             return await this.showLanguageMenu(sock, userId);
+        }
+
+        // Check for Staff Completion Command
+        if (await this.handleStaffCompletionCommand(sock, tenantId, userId, input)) {
+            return;
         }
 
         if (input === '9' && session.currentMenu !== MENU_STATES.MAIN_MENU) {
@@ -272,9 +279,202 @@ class MenuNavigator {
             case MENU_STATES.VOTER_UPDATE_ADDRESS_VAL:
                 return await this.handleVoterUpdateAddressVal(sock, tenantId, userId, input);
 
+            case MENU_STATES.STAFF_TASK_DATE_ESTIMATE:
+                return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
+
             default:
                 // Fallback to language selection
                 return await this.showLanguageMenu(sock, userId);
+        }
+    }
+
+    /**
+     * Handle Staff Assignment Notification
+     */
+    async handleStaffAssignment(sock, staffMobile, complaint, tenantId) {
+        console.log(`[${tenantId}] Sending staff assignment to ${staffMobile}`);
+
+        // Ensure mobile has country code
+        let whatsappId = staffMobile.replace(/\D/g, '');
+        if (whatsappId.length === 10) whatsappId = '91' + whatsappId;
+        whatsappId = whatsappId + '@s.whatsapp.net';
+
+        // Initialize session for staff
+        const session = this.getSession(whatsappId);
+        session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
+        session.currentComplaintId = complaint.id;
+
+        // Complainant Name
+        let complainantName = 'Anonymous';
+        let complainantMobile = 'N/A';
+
+        if (complaint.voter) {
+            complainantName = complaint.voter.name_marathi || complaint.voter.name_english || 'Anonymous';
+            complainantMobile = complaint.voter.mobile || 'N/A';
+        } else if (complaint.description_meta) {
+            try {
+                const meta = JSON.parse(complaint.description_meta);
+                if (meta.submitter_name) complainantName = meta.submitter_name;
+                if (meta.submitter_mobile) complainantMobile = meta.submitter_mobile;
+            } catch (e) { }
+        }
+
+        const msg = `🛠️ *New Task Assigned*\n\n` +
+            `🆔 *Ticket ID:* #${complaint.id}\n` +
+            `📌 *Type:* ${complaint.category}\n` +
+            `📝 *Description:* ${complaint.problem}\n` +
+            `📍 *Location:* ${complaint.location || 'N/A'}\n` +
+            `👤 *Complainant:* ${complainantName} (${complainantMobile})\n\n` +
+            `Please reply with the *estimated completion date* for this task (e.g., "Tomorrow", "2 days", "17 Feb").`;
+
+        await sock.sendMessage(whatsappId, { text: msg });
+    }
+
+    /**
+     * Handle Staff Date Estimate Response
+     */
+    async handleStaffTaskDateEstimate(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const complaintId = session.currentComplaintId;
+
+        if (!complaintId) {
+            await sock.sendMessage(userId, { text: "❌ Error: No active task found. Reseting..." });
+            return await this.showMainMenu(sock, userId, 'en');
+        }
+
+        // Save estimated date to DB
+        // We need supabase client here. Since we don't have it explicitly injected in handleMessage,
+        // we'll instantiate a lightweight one or assume this.store has one?
+        // Actually, let's use the one from index.js if possible, but importing creates circular deps.
+        // Best way: Use `this.store.updateComplaint` if it exists, or create a method in store.js
+        // For now, let's assume `this.store.updateComplaint` exists or we mock it. 
+        // Wait, looking at store.js in `bot/store.js` (implied), it has saveComplaint.
+        // Let's assume we can add `updateComplaintRequest` to store.js.
+
+        // Since I cannot modify store.js easily without seeing it, I'll use direct supabase call here if needed,
+        // BUT better to add a method to `store.js` later. 
+        // For now, let's try to update using a direct Supabase client inside the method as done in handleComplaintFormPhoto.
+
+        const supabaseUrl = process.env.VITE_SUPABASE_URL;
+        const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        const { error } = await supabase
+            .from('complaints')
+            .update({ estimated_completion_date: input })
+            .eq('id', complaintId);
+
+        if (error) {
+            console.error('Error updating estimated date:', error);
+            await sock.sendMessage(userId, { text: "❌ Failed to save date. Please try again." });
+            return;
+        }
+
+        const msg = `✅ *Date Saved*\n\n` +
+            `The estimated completion date has been recorded.\n\n` +
+            `When the work is done, please reply with:\n` +
+            `*COMPLETE ${complaintId}*\n\n` +
+            `(e.g., COMPLETE 123)`;
+
+        await sock.sendMessage(userId, { text: msg });
+
+        // Reset state to Main Menu
+        return await this.showMainMenu(sock, userId, session.language || 'en');
+    }
+
+    /**
+     * Handle Global "COMPLETE <ID>" Command
+     * (This needs to be called from handleMessage before switch case)
+     */
+    async handleStaffCompletionCommand(sock, tenantId, userId, input) {
+        // Check if input starts with "COMPLETE" (case insensitive)
+        const match = input.match(/^COMPLETE\s+(\d+)$/i);
+        if (match) {
+            const complaintId = match[1];
+
+            const supabaseUrl = process.env.VITE_SUPABASE_URL;
+            const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+            const supabase = createClient(supabaseUrl, supabaseKey);
+
+            // 1. Verify if this user is the assigned staff
+            // We need to fetch the staff ID from the mobile number first? 
+            // Or just check if the complaint is assigned to a staff with this mobile.
+            // Let's query complaint + staff.
+
+            // Clean mobile
+            const mobile = userId.split('@')[0].replace(/^91/, ''); // Remove 91 prefix if present
+            // Note: This simple removal might fail if number doesn't start with 91 but has 12 digits.
+            // Better regex:
+            const cleanMobile = userId.replace('@s.whatsapp.net', '').slice(-10);
+
+            const { data: complaint, error } = await supabase
+                .from('complaints')
+                .select('*, staff:assigned_to(*)')
+                .eq('id', complaintId)
+                .single();
+
+            if (error || !complaint) {
+                await sock.sendMessage(userId, { text: `❌ Complaint #${complaintId} not found.` });
+                return true; // Handled
+            }
+
+            if (complaint.status === 'Resolved') {
+                await sock.sendMessage(userId, { text: `✅ Complaint #${complaintId} is already resolved.` });
+                return true;
+            }
+
+            // Check if assigned staff matches sender
+            if (complaint.staff?.mobile !== cleanMobile) {
+                // Allow admin override? Maybe later.
+                await sock.sendMessage(userId, { text: `❌ You are not assigned to this complaint.` });
+                return true;
+            }
+
+            // 2. Mark as Resolved
+            const { error: updateError } = await supabase
+                .from('complaints')
+                .update({ status: 'Resolved' })
+                .eq('id', complaintId);
+
+            if (updateError) {
+                await sock.sendMessage(userId, { text: `❌ Failed to update status.` });
+                return true;
+            }
+
+            await sock.sendMessage(userId, { text: `✅ *Success!* Complaint #${complaintId} marked as Resolved.` });
+
+            // 3. Notify Complainant
+            await this.sendComplaintResolvedNotification(sock, complaint, tenantId);
+
+            return true; // Handled
+        }
+        return false; // Not handled
+    }
+
+    async sendComplaintResolvedNotification(sock, complaint, tenantId) {
+        let complainantMobile = complaint.voter?.mobile;
+        let complainantName = complaint.voter?.name_marathi || complaint.voter?.name_english || 'Citizen';
+
+        if (!complainantMobile && complaint.description_meta) {
+            try {
+                const meta = JSON.parse(complaint.description_meta);
+                if (meta.submitter_mobile) complainantMobile = meta.submitter_mobile;
+                if (meta.submitter_name) complainantName = meta.submitter_name;
+            } catch (e) { }
+        }
+
+        if (complainantMobile) {
+            // Ensure format
+            let whatsappId = complainantMobile.replace(/\D/g, '');
+            if (whatsappId.length === 10) whatsappId = '91' + whatsappId;
+            whatsappId = whatsappId + '@s.whatsapp.net';
+
+            const msg = `✅ *Complaint Resolved*\n\n` +
+                `Hello ${complainantName},\n` +
+                `Your complaint #${complaint.id} regarding "${complaint.category}" has been resolved by our team.\n\n` +
+                `Thank you for your patience!`;
+
+            await sock.sendMessage(whatsappId, { text: msg });
         }
     }
 
