@@ -555,7 +555,9 @@ const ComplaintDetail = () => {
 
                                                             // Trigger WhatsApp Notification
                                                             try {
-                                                                await fetch('http://localhost:4000/api/assign-complaint', {
+                                                                const apiUrl = import.meta.env.VITE_BOT_API_URL || `${window.location.protocol}//${window.location.hostname}:4000`;
+
+                                                                const response = await fetch(`${apiUrl}/api/assign-complaint`, {
                                                                     method: 'POST',
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({
@@ -564,9 +566,14 @@ const ComplaintDetail = () => {
                                                                         tenantId: tenantId
                                                                     })
                                                                 });
-                                                            } catch (notifyErr) {
+
+                                                                if (!response.ok) {
+                                                                    const errorData = await response.json();
+                                                                    throw new Error(errorData.error || 'Server responded with error');
+                                                                }
+                                                            } catch (notifyErr: any) {
                                                                 console.error('Failed to notify staff:', notifyErr);
-                                                                toast.error('Assigned, but failed to send WhatsApp notification');
+                                                                toast.error(`Assigned, but notification failed: ${notifyErr.message}`);
                                                             }
                                                         } else {
                                                             toast.error('Failed to assign staff');

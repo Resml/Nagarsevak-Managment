@@ -6,7 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 
 import { useTenant } from '../../context/TenantContext';
 
-const SOCKET_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
 
 const BotDashboard = () => {
     const { t } = useLanguage();

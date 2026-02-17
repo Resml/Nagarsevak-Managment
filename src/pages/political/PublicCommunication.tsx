@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { io } from 'socket.io-client';
 
 const PAGE_SIZE = 50;
-const SOCKET_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:4000';
+const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
 
 const PublicCommunication = () => {
     const { t, language } = useLanguage();
