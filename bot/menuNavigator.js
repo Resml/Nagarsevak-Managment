@@ -2674,6 +2674,23 @@ Your request has been sent to the office for approval. You will be notified once
         const session = this.getSession(userId);
         const lang = session.language;
 
+        // Check if mobile is missing or N/A
+        if (!voter.mobile || voter.mobile === 'null' || voter.mobile.toUpperCase() === 'N/A' || voter.mobile.trim() === '') {
+            // Auto-prompt for mobile update
+            session.currentMenu = MENU_STATES.VOTER_UPDATE_MOBILE_VAL;
+
+            const profileInfo = lang === 'mr' ?
+                `✅ *मतदार लिंक केला!*\n\n👤 नाव: ${voter.name_marathi || voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n📍 पत्ता: ${voter.address_marathi || voter.address_english || 'N/A'}` :
+                `✅ *Voter Linked!*\n\n👤 Name: ${voter.name_english}\n🆔 EPIC: ${voter.epic_no || 'N/A'}\n📍 Address: ${voter.address_english || 'N/A'}`;
+
+            const missingMobileMsg = lang === 'mr' ?
+                `${profileInfo}\n\n⚠️ *मोबाईल नंबर उपलब्ध नाही.*\nकृपया चालू असलेल्या विनंतीसाठी तुमचा मोबाईल नंबर प्रविष्ट करा:` :
+                `${profileInfo}\n\n⚠️ *Mobile Number Missing.*\nPlease enter your mobile number for this request:`;
+
+            await sock.sendMessage(userId, { text: missingMobileMsg });
+            return;
+        }
+
         session.currentMenu = MENU_STATES.VOTER_PROFILE_UPDATE_MENU;
 
         const profileInfo = lang === 'mr' ?
