@@ -522,20 +522,45 @@ class MenuNavigator {
     }
 
     async sendComplaintResolvedNotification(sock, complaint, tenantId) {
-        let complainantMobile = complaint.voter?.mobile;
-        let complainantName = complaint.voter?.name_marathi || complaint.voter?.name_english || 'Citizen';
+        console.log(`[NotificationDebug] Attempting to send resolved notification for Complaint #${complaint.id}`);
 
-        // Fallback to reporter_mobile if available
-        if (!complainantMobile && complaint.reporter_mobile) {
-            complainantMobile = complaint.reporter_mobile;
+        let complainantMobile = null;
+        let complainantName = 'Citizen';
+
+        // 1. Try Voter Record
+        if (complaint.voter && complaint.voter.mobile && complaint.voter.mobile !== 'N/A') {
+            complainantMobile = complaint.voter.mobile;
+            complainantName = complaint.voter.name_marathi || complaint.voter.name_english || 'Citizen';
+            console.log(`[NotificationDebug] Found mobile in Voter record: ${complainantMobile}`);
         }
 
+        // 2. Try Reporter Mobile Column (Fallback)
+        if (!complainantMobile && complaint.reporter_mobile && complaint.reporter_mobile !== 'N/A') {
+            complainantMobile = complaint.reporter_mobile;
+            console.log(`[NotificationDebug] Found mobile in reporter_mobile: ${complainantMobile}`);
+        }
+
+        // 3. Try user_id column (Sometimes stores mobile for complaints)
+        if (!complainantMobile && complaint.user_id && /^\d{10,15}$/.test(complaint.user_id.replace(/\D/g, ''))) {
+            complainantMobile = complaint.user_id;
+            console.log(`[NotificationDebug] Found mobile in user_id: ${complainantMobile}`);
+        }
+
+        // 4. Try Meta Data (Last Resort)
         if (!complainantMobile && complaint.description_meta) {
             try {
                 const meta = JSON.parse(complaint.description_meta);
-                if (meta.submitter_mobile) complainantMobile = meta.submitter_mobile;
+                if (meta.submitter_mobile) {
+                    complainantMobile = meta.submitter_mobile;
+                    console.log(`[NotificationDebug] Found mobile in description_meta (submitter_mobile): ${complainantMobile}`);
+                } else if (meta.mobile) {
+                    complainantMobile = meta.mobile;
+                    console.log(`[NotificationDebug] Found mobile in description_meta (mobile): ${complainantMobile}`);
+                }
                 if (meta.submitter_name) complainantName = meta.submitter_name;
-            } catch (e) { }
+            } catch (e) {
+                console.error('[NotificationDebug] Error parsing description_meta:', e);
+            }
         }
 
         if (complainantMobile) {
@@ -544,12 +569,25 @@ class MenuNavigator {
             if (whatsappId.length === 10) whatsappId = '91' + whatsappId;
             whatsappId = whatsappId + '@s.whatsapp.net';
 
+            // Check if it's a valid ID (basic check)
+            if (whatsappId.length < 12) { // 91 + 10 digits = 12
+                console.warn(`[NotificationDebug] Invalid WhatsApp ID generated: ${whatsappId}`);
+                return;
+            }
+
             const msg = `✅ *Complaint Resolved*\n\n` +
                 `Hello ${complainantName},\n` +
                 `Your complaint #${complaint.id} regarding "${complaint.category}" has been resolved by our team.\n\n` +
                 `Thank you for your patience!`;
 
-            await sock.sendMessage(whatsappId, { text: msg });
+            try {
+                await sock.sendMessage(whatsappId, { text: msg });
+                console.log(`[NotificationDebug] Notification SENT to ${whatsappId}`);
+            } catch (err) {
+                console.error(`[NotificationDebug] FAILED to send notification to ${whatsappId}:`, err);
+            }
+        } else {
+            console.warn(`[NotificationDebug] Could not find ANY mobile number for Complaint #${complaint.id}. Notification skipped.`);
         }
     }
 
