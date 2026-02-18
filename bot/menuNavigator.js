@@ -710,7 +710,7 @@ class MenuNavigator {
      */
     async handleMainMenu(sock, tenantId, userId, input) {
         const session = this.getSession(userId);
-        const lang = session.language;
+        const lang = session.language || 'mr'; // Fix: Default to Marathi to prevent crash
 
         switch (input) {
             case '1': // Complaints
