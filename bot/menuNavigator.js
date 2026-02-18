@@ -398,27 +398,28 @@ class MenuNavigator {
         // 4. Notify Complainant (Citizen) that work has started
         const { data: complaintData, error: fetchError } = await supabase
             .from('complaints')
-            .select('*')
+            .select('*, staff:assigned_to(name, mobile)')
             .eq('id', complaintId)
             .single();
 
         if (complaintData) {
-            let complainantMobile = complaintData.reporter_mobile; // For PR/AP?
-
-            // Try to find mobile in voter or meta if not in direct column (schema dependent)
-            // The `complaint` object in handleStaffAssignment had this logic. Let's reuse/adapt.
-            // But here we only have ID. We need to fetch or use what we have.
-            // Ideally we need a helper to get complainant mobile. 
-            // For now, let's try standard fields.
+            let complainantMobile = null;
+            // Robust Mobile Lookup (Same as Resolved Notification)
+            if (complaintData.reporter_mobile && complaintData.reporter_mobile !== 'N/A') {
+                complainantMobile = complaintData.reporter_mobile;
+            } else if (complaintData.user_id && /^\d{10,15}$/.test(complaintData.user_id.replace(/\D/g, ''))) {
+                complainantMobile = complaintData.user_id;
+            }
 
             if (!complainantMobile && complaintData.description_meta) {
                 try {
                     const meta = JSON.parse(complaintData.description_meta);
                     if (meta.submitter_mobile) complainantMobile = meta.submitter_mobile;
+                    else if (meta.mobile) complainantMobile = meta.mobile;
                 } catch (e) { }
             }
 
-            // If linked to voter
+            // If still null, try voter
             if (!complainantMobile && complaintData.voter_id) {
                 const { data: voter } = await supabase.from('voters').select('mobile').eq('id', complaintData.voter_id).single();
                 if (voter) complainantMobile = voter.mobile;
@@ -429,10 +430,39 @@ class MenuNavigator {
                 if (citizenId.length === 10) citizenId = '91' + citizenId;
                 citizenId = citizenId + '@s.whatsapp.net';
 
-                const citizenMsg = `👷 *Update on Ticket #${complaintId}*\n\n` +
-                    `Our staff has started working on your request.\n` +
-                    `📅 *Estimated Completion:* ${input}\n\n` +
-                    `Thank you for your patience!`;
+                // Determine Language
+                let lang = 'mr'; // Default to Marathi
+                const userSession = this.getSession(citizenId);
+                if (userSession && userSession.language) {
+                    lang = userSession.language;
+                } else {
+                    try {
+                        const user = await this.store.getUser(citizenId);
+                        if (user && user.language) lang = user.language;
+                    } catch (e) { }
+                }
+
+                // Staff Details
+                const staffName = complaintData.staff?.name || 'Staff';
+                const staffMobile = complaintData.staff?.mobile || '';
+
+                let citizenMsg = '';
+                if (lang === 'mr') {
+                    citizenMsg = `👷 *तक्रार अपडेट #${complaintId}*\n\n` +
+                        `आमचे कर्मचारी *${staffName}* (📱 ${staffMobile}) यांनी तुमच्या विनंतीवर काम करण्यास सुरुवात केली आहे.\n` +
+                        `📅 *अंदाजित पूर्णता:* ${input}\n\n` +
+                        `सहकार्याबद्दल धन्यवाद!`;
+                } else if (lang === 'hi') {
+                    citizenMsg = `👷 *शिकायत अपडेट #${complaintId}*\n\n` +
+                        `हमारे कर्मचारी *${staffName}* (📱 ${staffMobile}) ने आपके अनुरोध पर काम शुरू कर दिया है।\n` +
+                        `📅 *अनुमानित पूर्णता:* ${input}\n\n` +
+                        `आपके धैर्य के लिए धन्यवाद!`;
+                } else {
+                    citizenMsg = `👷 *Update on Ticket #${complaintId}*\n\n` +
+                        `Our staff *${staffName}* (📱 ${staffMobile}) has started working on your request.\n` +
+                        `📅 *Estimated Completion:* ${input}\n\n` +
+                        `Thank you for your patience!`;
+                }
 
                 try {
                     await sock.sendMessage(citizenId, { text: citizenMsg });
@@ -575,10 +605,35 @@ class MenuNavigator {
                 return;
             }
 
-            const msg = `✅ *Complaint Resolved*\n\n` +
-                `Hello ${complainantName},\n` +
-                `Your complaint #${complaint.id} regarding "${complaint.category}" has been resolved by our team.\n\n` +
-                `Thank you for your patience!`;
+            // Determine Language for Resolved Message
+            let lang = 'mr'; // Default
+            const userSession = this.getSession(whatsappId);
+            if (userSession && userSession.language) {
+                lang = userSession.language;
+            } else {
+                try {
+                    const user = await this.store.getUser(whatsappId);
+                    if (user && user.language) lang = user.language;
+                } catch (e) { }
+            }
+
+            let msg = '';
+            if (lang === 'mr') {
+                msg = `✅ *तक्रार निवारण*\n\n` +
+                    `नमस्कार ${complainantName},\n` +
+                    `तुमची "${complaint.category}" बाबतची तक्रार #${complaint.id} आमच्या टीमने सोडवली आहे.\n\n` +
+                    `सहकार्याबद्दल धन्यवाद!`;
+            } else if (lang === 'hi') {
+                msg = `✅ *शिकायत का समाधान*\n\n` +
+                    `नमस्ते ${complainantName},\n` +
+                    `"${complaint.category}" के संबंध में आपकी शिकायत #${complaint.id} का हमारी टीम ने समाधान कर दिया है।\n\n` +
+                    `आपके धैर्य के लिए धन्यवाद!`;
+            } else {
+                msg = `✅ *Complaint Resolved*\n\n` +
+                    `Hello ${complainantName},\n` +
+                    `Your complaint #${complaint.id} regarding "${complaint.category}" has been resolved by our team.\n\n` +
+                    `Thank you for your patience!`;
+            }
 
             try {
                 await sock.sendMessage(whatsappId, { text: msg });
