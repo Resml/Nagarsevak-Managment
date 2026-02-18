@@ -103,6 +103,46 @@ async function saveComplaint(complaint) {
             created_at: new Date().toISOString()
         };
 
+        // --- AUTO-ASSIGNMENT LOGIC ---
+        try {
+            if (complaint.type) {
+                // Find staff with matching keyword
+                // Note: keywords is an array of strings. We want to find a staff member where keywords contains complaint.type
+                const { data: staffList } = await supabase
+                    .from('staff')
+                    .select('id, name, mobile, keywords')
+                    .eq('tenant_id', complaint.tenantId)
+                    .containedBy('keywords', [`${complaint.type}`]) // Check if staff keywords contain the complaint type
+                    .limit(1);
+
+                if (staffList && staffList.length > 0) {
+                    const assignedStaff = staffList[0];
+                    dbData.assigned_to = assignedStaff.id;
+                    dbData.status = 'In Progress'; // Auto-move to In Progress? Or keep Pending?
+                    // Let's keep it Pending or whatever default, just assign.
+                    // Actually, if assigned, maybe "In Progress" is better?
+                    // For now, just assign. Status can remain Pending until they accept/estimate.
+                    console.log(`[Auto-Assign] Complaint category '${complaint.type}' matched staff '${assignedStaff.name}' (${assignedStaff.id})`);
+                } else {
+                    // Fallback: Check for exact string match in keywords if containedBy fails (legacy/manual keywords)
+                    const { data: staffListFallback } = await supabase
+                        .from('staff')
+                        .select('id, name, mobile, keywords')
+                        .eq('tenant_id', complaint.tenantId)
+                        .textSearch('keywords', `'${complaint.type}'`)
+                        .limit(1);
+
+                    if (staffListFallback && staffListFallback.length > 0) {
+                        const assignedStaff = staffListFallback[0];
+                        dbData.assigned_to = assignedStaff.id;
+                        console.log(`[Auto-Assign] Fallback text search matched staff '${assignedStaff.name}'`);
+                    }
+                }
+            }
+        } catch (assignError) {
+            console.error('[Auto-Assign] Error finding staff:', assignError);
+        }
+
         console.log('--- DB INSERT DEBUG ---');
         console.log('Tenant:', complaint.tenantId);
         console.log('Data:', JSON.stringify(dbData, null, 2));

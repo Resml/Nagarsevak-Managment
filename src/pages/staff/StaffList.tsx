@@ -62,6 +62,15 @@ const StaffList = () => {
         { id: 'profile_settings', label: t('permissions.profile_settings') || 'Profile Settings' },
     ], [t]);
 
+    const COMPLAINT_CATEGORIES = [
+        { id: 'Road', label: 'Roads (रस्ते)' },
+        { id: 'Water', label: 'Water Supply (पाणीपुरवठा)' },
+        { id: 'StreetLight', label: 'Electricity/Street Lights (वीज/लाईट)' },
+        { id: 'Cleaning', label: 'Cleaning/Waste (कचरा/स्वच्छता)' },
+        { id: 'Drainage', label: 'Drainage (गटार/ड्रेनेज)' },
+        { id: 'Other', label: 'Other (इतर)' }
+    ];
+
     // Form State
     const [formData, setFormData] = useState({
         name: '',
@@ -72,6 +81,7 @@ const StaffList = () => {
         area: '',
         category: 'Office' as 'Office' | 'Party' | 'Cooperative',
         keywords: '',
+        categories: [] as string[],
         permissions: [] as string[]
     });
     const [showPassword, setShowPassword] = useState(false);
@@ -117,7 +127,9 @@ const StaffList = () => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const keywordsArray = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
+            // Merge manual input keywords with selected categories
+            const manualKeywords = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
+            const finalKeywords = Array.from(new Set([...manualKeywords, ...formData.categories]));
 
             if (formData.mobile.length !== 10) {
                 toast.error(t('staff.list.valid_mobile'));
@@ -136,7 +148,7 @@ const StaffList = () => {
                         role: formData.role,
                         category: formData.category,
                         area: formData.area,
-                        keywords: keywordsArray,
+                        keywords: finalKeywords,
                         permissions: formData.permissions
                     })
                     .eq('id', editingStaffId)
@@ -161,7 +173,7 @@ const StaffList = () => {
                         tenant_id: tenantId,
                         area: formData.area,
                         category: formData.category,
-                        keywords: keywordsArray,
+                        keywords: finalKeywords,
                         permissions: formData.permissions
                     }
                 });
@@ -181,7 +193,7 @@ const StaffList = () => {
             }
 
             setShowModal(false);
-            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', permissions: [] });
+            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [] });
             setEditingStaffId(null);
             fetchStaff();
         } catch (err: any) {
@@ -193,6 +205,12 @@ const StaffList = () => {
     const handleEdit = (staffMember: Staff) => {
         setEditingStaffId(staffMember.id);
         const mobileNum = staffMember.mobile.replace('+91', '').replace('+91 ', '');
+
+        // Split keywords into Categories and Manual
+        const currentKeywords = staffMember.keywords || [];
+        const foundCategories = currentKeywords.filter(k => COMPLAINT_CATEGORIES.some(c => c.id === k));
+        const manualKeywords = currentKeywords.filter(k => !COMPLAINT_CATEGORIES.some(c => c.id === k));
+
         setFormData({
             name: staffMember.name,
             mobile: mobileNum,
@@ -201,7 +219,8 @@ const StaffList = () => {
             role: staffMember.role,
             area: staffMember.area || '',
             category: (staffMember.category as any) || 'Office',
-            keywords: staffMember.keywords ? staffMember.keywords.join(', ') : '',
+            keywords: manualKeywords.join(', '),
+            categories: foundCategories,
             permissions: staffMember.permissions || []
         });
         setShowModal(true);
@@ -586,6 +605,33 @@ const StaffList = () => {
                                     placeholder={t('staff.modal.keywords_placeholder')}
                                 />
                                 <p className="text-xs text-gray-500 mt-1">{t('staff.modal.keywords_help')}</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Complaint Categories (Auto-Assign)
+                                </label>
+                                <div className="grid grid-cols-2 gap-2 p-2 border border-gray-100 rounded-lg bg-indigo-50/50 mb-4">
+                                    {COMPLAINT_CATEGORIES.map((cat) => (
+                                        <label key={cat.id} className="flex items-center space-x-2 text-sm cursor-pointer p-1 rounded hover:bg-indigo-100/50">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                checked={formData.categories.includes(cat.id)}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        categories: checked
+                                                            ? [...prev.categories, cat.id]
+                                                            : prev.categories.filter(c => c !== cat.id)
+                                                    }));
+                                                }}
+                                            />
+                                            <span className="text-gray-700">{cat.label}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
