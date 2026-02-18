@@ -1006,6 +1006,74 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: promptAgain });
     }
 
+    async handleStaffAssignment(sock, staffMobile, complaintData, tenantId) {
+        if (!staffMobile) return;
+
+        // Ensure mobile format
+        const staffJid = staffMobile.includes('@') ? staffMobile : `${staffMobile.replace(/\D/g, '')}@s.whatsapp.net`;
+
+        // 1. Notify Staff
+        const staffLang = 'mr'; // Default to Marathi for staff for now, or fetch from session if possible
+        // Ideally we should get staff language preference, but standardizing on Marathi/English is fine.
+
+        const taskMsg = `🆕 *नवीन तक्रार सोपवण्यात आली आहे*
+(New Task Assigned)
+
+🆔 *ID:* #${complaintData.id}
+📂 *विषय:* ${complaintData.category}
+📍 *ठिकाण:* ${complaintData.location || 'N/A'}
+👤 *नागरिक:* ${complaintData.voter ? (complaintData.voter.name_marathi || complaintData.voter.name_english) : (complaintData.user_name || 'नागरिक')}
+📱 *मोबाईल:* ${complaintData.voter ? complaintData.voter.mobile : (complaintData.mobile || 'N/A')}
+
+📝 *तक्रार:*
+${complaintData.problem}
+
+---
+सदर काम पूर्ण करण्यासाठी अंदाजित तारीख आणि वेळ द्या.
+(Please reply with estimated date and time for completion)
+उदा. 25/10/2023 05:00 PM`;
+
+        await sock.sendMessage(staffJid, { text: taskMsg });
+
+        // Set Staff Session State to wait for estimate
+        const staffSession = this.getSession(staffJid);
+        staffSession.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
+        staffSession.currentTask = complaintData;
+
+        // 2. Notify Citizen
+        const citizenMobile = complaintData.user_id || (complaintData.voter ? complaintData.voter.mobile : null);
+        if (citizenMobile) {
+            const citizenJid = citizenMobile.includes('@') ? citizenMobile : `${citizenMobile.replace(/\D/g, '')}@s.whatsapp.net`;
+
+            // Get citizen language preference
+            const citizenSession = this.getSession(citizenJid);
+            const citizenLang = citizenSession.language || 'mr';
+
+            const staffName = complaintData.assignedStaff ? complaintData.assignedStaff.name : 'Staff';
+            const staffPhone = complaintData.assignedStaff ? complaintData.assignedStaff.mobile : '';
+
+            let updateMsg = '';
+            if (citizenLang === 'mr') {
+                updateMsg = `🎫 *तक्रार अपडेट* (ID: #${complaintData.id})
+
+तुमची तक्रार *${staffName}* (${staffPhone}) यांच्याकडे सोपवण्यात आली आहे.
+ते लवकरच यावर कार्यवाही करतील.`;
+            } else if (citizenLang === 'hi') {
+                updateMsg = `🎫 *शिकायत अपडेट* (ID: #${complaintData.id})
+
+आपकी शिकायत *${staffName}* (${staffPhone}) को सौंप दी गई है।
+वे जल्द ही इस पर कार्रवाई करेंगे।`;
+            } else {
+                updateMsg = `🎫 *Ticket Update* (ID: #${complaintData.id})
+
+Your complaint has been assigned to *${staffName}* (${staffPhone}).
+They will take action on it soon.`;
+            }
+
+            await sock.sendMessage(citizenJid, { text: updateMsg });
+        }
+    }
+
     async saveComplaint(sock, tenantId, userId) {
         const session = this.getSession(userId);
         const lang = session.language;
@@ -1038,6 +1106,25 @@ class MenuNavigator {
             // Send success message with ID
             const successMsg = MESSAGES.complaint_registered[lang].replace('#{id}', complaintId);
             await sock.sendMessage(userId, { text: successMsg });
+
+            // Check for Auto-Assignment
+            if (result?.assignedStaff) {
+                console.log(`[Auto-Assign] Triggering notification for Ticket #${complaintId}`);
+
+                // Construct complaintData for notification (Matching structure used in handleStaffAssignment)
+                const notificationData = {
+                    id: complaintId,
+                    category: session.formData.typeDisplay || complaint.type, // Use Display Name if available
+                    location: complaint.location,
+                    problem: complaint.description,
+                    user_name: complaint.user_name,
+                    mobile: complaint.mobile,
+                    voter: null, // We don't have full voter object here, but user_name/mobile fallbacks work
+                    assignedStaff: result.assignedStaff
+                };
+
+                await this.handleStaffAssignment(sock, result.assignedStaff.mobile, notificationData, tenantId);
+            }
 
             // Reset form data and return to main menu
             session.formData = {};

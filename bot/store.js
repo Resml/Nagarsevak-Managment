@@ -104,6 +104,7 @@ async function saveComplaint(complaint) {
         };
 
         // --- AUTO-ASSIGNMENT LOGIC ---
+        let assignedStaffMember = null;
         try {
             if (complaint.type) {
                 // Find staff with matching keyword
@@ -118,10 +119,8 @@ async function saveComplaint(complaint) {
                 if (staffList && staffList.length > 0) {
                     const assignedStaff = staffList[0];
                     dbData.assigned_to = assignedStaff.id;
-                    dbData.status = 'In Progress'; // Auto-move to In Progress? Or keep Pending?
-                    // Let's keep it Pending or whatever default, just assign.
-                    // Actually, if assigned, maybe "In Progress" is better?
-                    // For now, just assign. Status can remain Pending until they accept/estimate.
+                    dbData.status = 'InProgress'; // Fixed: Match frontend enum (No space) -> avoiding default 'Closed' fallback
+                    assignedStaffMember = assignedStaff; // Capture for return
                     console.log(`[Auto-Assign] Complaint category '${complaint.type}' matched staff '${assignedStaff.name}' (${assignedStaff.id})`);
                 } else {
                     // Fallback: Check for exact string match in keywords if containedBy fails (legacy/manual keywords)
@@ -135,6 +134,8 @@ async function saveComplaint(complaint) {
                     if (staffListFallback && staffListFallback.length > 0) {
                         const assignedStaff = staffListFallback[0];
                         dbData.assigned_to = assignedStaff.id;
+                        dbData.status = 'InProgress';
+                        assignedStaffMember = assignedStaff; // Capture for return
                         console.log(`[Auto-Assign] Fallback text search matched staff '${assignedStaff.name}'`);
                     }
                 }
@@ -159,7 +160,13 @@ async function saveComplaint(complaint) {
         }
 
         console.log('Saved to Supabase successfully. Complaint ID:', data?.id);
-        return data; // Return the inserted row with ID
+
+        // Return valid data with potential assigned staff
+        return {
+            ...data,
+            assignedStaff: assignedStaffMember
+        };
+
 
     } catch (err) {
         console.log('Failed to save to Supabase, falling back to local file.', err);
