@@ -29,6 +29,8 @@ const ComplaintForm = () => {
     const [area, setArea] = useState('');
     const [peopleAffected, setPeopleAffected] = useState('');
     const [photos, setPhotos] = useState<string[]>([]);
+    const [files, setFiles] = useState<File[]>([]);
+    const [uploading, setUploading] = useState(false);
 
     // Voter Details State
     const [firstName, setFirstName] = useState('');
@@ -255,9 +257,30 @@ const ComplaintForm = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setUploading(true);
 
         try {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+
+            // Upload first photo if exists
+            let imageUrl = null;
+            if (files.length > 0) {
+                const file = files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `complaints/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('documents') // Using documents bucket as confirmed working
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage
+                    .from('documents')
+                    .getPublicUrl(fileName);
+
+                imageUrl = data.publicUrl;
+            }
 
             const { error } = await supabase.from('complaints').insert([{
                 problem: title + '\n' + description,
@@ -269,6 +292,7 @@ const ComplaintForm = () => {
                 source: 'Website',
                 voter_id: selectedVoterId ? parseInt(selectedVoterId) : null,
                 tenant_id: tenantId,
+                image_url: imageUrl,
                 description_meta: JSON.stringify({
                     submitter_name: fullName,
                     submitter_mobile: mobile,
@@ -283,15 +307,22 @@ const ComplaintForm = () => {
         } catch (err) {
             console.error('Error submitting complaint:', err);
             toast.error('Failed to submit complaint');
+        } finally {
+            setUploading(false);
         }
     };
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            const url = URL.createObjectURL(e.target.files[0]);
+            const file = e.target.files[0];
+            const url = URL.createObjectURL(file);
             setPhotos([...photos, url]);
+            setFiles([...files, file]);
         }
     };
+
+
+
 
     useEffect(() => {
         const cookies = document.cookie.split(';');
@@ -508,9 +539,11 @@ const ComplaintForm = () => {
                     <div className="pt-4 flex justify-end">
                         <button
                             type="submit"
-                            className="ns-btn-primary px-8 py-2.5"
+                            disabled={uploading}
+                            className="ns-btn-primary px-8 py-2.5 flex items-center gap-2"
                         >
-                            {t('complaints.form.submit')}
+                            {uploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {uploading ? 'Submitting...' : t('complaints.form.submit')}
                         </button>
                     </div>
                 </form>

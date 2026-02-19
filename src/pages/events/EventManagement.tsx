@@ -302,7 +302,7 @@ const EventManagement = () => {
                     {filteredEvents.map((event) => (
                         <div
                             key={event.id}
-                            onClick={() => navigate(`/events/${event.id}`)}
+                            onClick={() => navigate(`/dashboard/events/${event.id}`)}
                             className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
                         >
                             <div className="flex items-start gap-4">
@@ -339,7 +339,7 @@ const EventManagement = () => {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/events/${event.id}`);
+                                        navigate(`/dashboard/events/${event.id}`);
                                     }}
                                     className="flex-1 md:w-40 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-sm font-medium text-sm"
                                 >
@@ -349,7 +349,7 @@ const EventManagement = () => {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        navigate(`/events/${event.id}`);
+                                        navigate(`/dashboard/events/${event.id}`);
                                     }}
                                     className="flex-1 md:w-40 border border-slate-300 text-slate-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-slate-50 font-medium text-sm"
                                 >

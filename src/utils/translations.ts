@@ -28,7 +28,9 @@ export const translations = {
             Youth: "Youth",
             Housing: "Housing",
             delete_confirm: "Delete Item?",
-            delete_warning_item: "Are you sure you want to delete '{item}'? This action cannot be undone."
+            delete_warning_item: "Are you sure you want to delete '{item}'? This action cannot be undone.",
+            delete_warning: "will be permanently deleted. This action cannot be undone.",
+            deleted: "Deleted successfully"
         },
         complaints: {
             title: "Requests & Complaints",
@@ -630,7 +632,29 @@ export const translations = {
             going: "Going",
             not_going: "Not Going",
             maybe: "Maybe",
-            edit_event_title: "Edit Event Details"
+            edit_event_title: "Edit Event Details",
+            create_btn: "Create New Event",
+            send_invites: "Send Invites",
+            view_rsvps: "View RSVPs",
+            type_label: "Event Type",
+            audience_label: "Target Audience",
+            creating: "Creating...",
+            types: {
+                "Public Meeting": "Public Meeting",
+                Rally: "Rally / March",
+                "Door-to-Door": "Door-to-Door",
+                Inauguration: "Inauguration",
+                Other: "Other"
+            },
+            audiences: {
+                All: "All Citizens",
+                OPEN: "Open Category (OPEN)",
+                OBC: "Other Backward Class (OBC)",
+                SC: "Scheduled Caste (SC)",
+                ST: "Scheduled Tribe (ST)",
+                VJNT: "Vimukta Jati & Nomadic Tribes (VJNT)",
+                SBC: "Special Backward Class (SBC)"
+            }
         },
 
         budget: {
@@ -973,6 +997,8 @@ export const translations = {
             processing: "Processing...",
             status_pending: "Pending",
             status_completed: "Completed",
+            status_in_progress: "In Progress",
+            status_assigned: "Assigned",
             created: "Created",
             view_details: "View details",
             no_tasks: "No tasks found. Create one manually or scan a document!",
@@ -1425,7 +1451,9 @@ export const translations = {
             Youth: "युवक",
             Housing: "घरकुल",
             delete_confirm: "डिलीट करायचे आहे का?",
-            delete_warning_item: "तुम्ही नक्की '{item}' डिलीट करू इच्छिता का? ही क्रिया पूर्ववत करता येणार नाही."
+            delete_warning_item: "तुम्ही नक्की '{item}' डिलीट करू इच्छिता का? ही क्रिया पूर्ववत करता येणार नाही.",
+            delete_warning: "कायमचे हटवले जाईल. ही क्रिया पूर्ववत करता येणार नाही.",
+            deleted: "यशस्वीरित्या हटवले"
         },
         complaints: {
             title: "तक्रारी आणि विनंती",
@@ -2389,6 +2417,8 @@ export const translations = {
             processing: "प्रक्रिया सुरू आहे...",
             status_pending: "प्रलंबित",
             status_completed: "पूर्ण झाले",
+            status_in_progress: "प्रगतीपथावर",
+            status_assigned: "नियुक्त",
             created: "तयार केले",
             view_details: "तपशील पहा",
             no_tasks: "कोणतेही कार्य सापडले नाही. स्वतः तयार करा किंवा दस्तऐवज स्कॅन करा!",

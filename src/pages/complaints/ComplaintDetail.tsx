@@ -151,6 +151,7 @@ const ComplaintDetail = () => {
                     .single();
 
                 if (error) throw error;
+                console.log('Fetched Complaint Data:', data); // Debugging
 
                 if (data) {
                     const mapped: Complaint = {
@@ -173,7 +174,7 @@ const ComplaintDetail = () => {
                                     if (meta?.submitter_name) {
                                         return {
                                             name_english: meta.submitter_name,
-                                            mobile: meta.submitter_mobile
+                                            mobile: meta.submitter_mobile,
                                         };
                                     }
                                 } catch (e) {
@@ -183,7 +184,7 @@ const ComplaintDetail = () => {
                             })(),
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
-                        photos: [],
+                        photos: data.image_url ? [data.image_url] : [], // Map image_url to photos array as fallback
                         imageUrl: data.image_url,
                         videoUrl: data.video_url,
                         audioUrl: data.audio_url,
@@ -378,6 +379,8 @@ const ComplaintDetail = () => {
                             navigate(location.state.from);
                         } else if (complaint?.id.startsWith('ap-')) {
                             navigate('/dashboard/ward/problems');
+                        } else if (complaint?.id.startsWith('pr-')) {
+                            navigate('/dashboard/complaints', { state: { tab: 'Personal Help' } });
                         } else {
                             navigate('/dashboard/complaints');
                         }
@@ -505,14 +508,16 @@ const ComplaintDetail = () => {
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">{t('complaints.form.detail.update_status')}</label>
                                     <div className="flex flex-col gap-2">
-                                        <button
-                                            onClick={() => handleStatusUpdate('InProgress')}
-                                            disabled={complaint.status === 'InProgress'}
-                                            className="ns-btn-ghost justify-start border border-slate-200"
-                                        >
-                                            <Clock className="w-4 h-4 mr-2" />
-                                            {t('complaints.form.detail.mark_in_progress')}
-                                        </button>
+                                        {!complaint.id.startsWith('pr-') && (
+                                            <button
+                                                onClick={() => handleStatusUpdate('InProgress')}
+                                                disabled={complaint.status === 'InProgress'}
+                                                className="ns-btn-ghost justify-start border border-slate-200"
+                                            >
+                                                <Clock className="w-4 h-4 mr-2" />
+                                                {t('complaints.form.detail.mark_in_progress')}
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => handleStatusUpdate('Resolved')}
                                             disabled={complaint.status === 'Resolved'}
@@ -520,14 +525,6 @@ const ComplaintDetail = () => {
                                         >
                                             <CheckCircle className="w-4 h-4 mr-2" />
                                             {t('complaints.form.detail.mark_resolved')}
-                                        </button>
-                                        <button
-                                            onClick={() => handleStatusUpdate('Closed')}
-                                            disabled={complaint.status === 'Closed'}
-                                            className="ns-btn-ghost justify-start border border-slate-200"
-                                        >
-                                            <XCircle className="w-4 h-4 mr-2" />
-                                            {t('complaints.form.detail.close_ticket')}
                                         </button>
                                     </div>
                                 </div>

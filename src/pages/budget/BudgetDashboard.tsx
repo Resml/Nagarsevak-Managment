@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Filter, AlertTriangle, TrendingUp, IndianRupee, Wallet, PieChart, Edit2, Save, X, Calendar } from 'lucide-react';
+import { Plus, Search, Filter, AlertTriangle, TrendingUp, IndianRupee, Wallet, PieChart, Edit2, Save, X, Calendar, Trash2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -23,6 +23,7 @@ const BudgetDashboard = () => {
 
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedBudgetForUpdate, setSelectedBudgetForUpdate] = useState<{ id: string, current: number, new: number } | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<BudgetRecord | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<Partial<BudgetRecord>>({
@@ -120,6 +121,19 @@ const BudgetDashboard = () => {
         } catch (error) {
             console.error(error);
             toast.error(t('error.action_failed') || 'Failed to update utilization');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteTarget || !tenantId) return;
+        try {
+            await BudgetService.deleteBudget(deleteTarget.id, tenantId);
+            setDeleteTarget(null);
+            toast.success(t('common.deleted') || 'Deleted successfully');
+            loadBudgets();
+        } catch (error) {
+            console.error(error);
+            toast.error(t('error.action_failed') || 'Failed to delete budget');
         }
     };
 
@@ -328,13 +342,23 @@ const BudgetDashboard = () => {
                                                 <span className="text-xs text-slate-500 mt-1 inline-block tabular-nums">{percent.toFixed(0)}%</span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <button
-                                                    onClick={() => openUpdateModal(budget.id, budget.utilizedAmount)}
-                                                    className="ns-btn-ghost border border-slate-200 ml-auto"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                    {t('budget.update_btn')}
-                                                </button>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => openUpdateModal(budget.id, budget.utilizedAmount)}
+                                                        className="ns-btn-ghost border border-slate-200"
+                                                        title={t('budget.update_btn')}
+                                                    >
+                                                        <Edit2 className="w-4 h-4 mr-2" />
+                                                        {t('budget.update_btn')}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteTarget(budget)}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-100"
+                                                        title={t('common.delete')}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     );
@@ -481,6 +505,36 @@ const BudgetDashboard = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="ns-card max-w-sm w-full p-6 text-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                            <span className="font-medium text-slate-700">"{deleteTarget.category}"</span>
+                            {' '}{t('common.delete_warning')}
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="ns-btn-secondary flex-1 justify-center"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                {t('common.delete')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

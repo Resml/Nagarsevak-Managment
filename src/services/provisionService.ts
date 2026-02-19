@@ -89,5 +89,19 @@ export const ProvisionService = {
             console.error('Error updating provision:', err);
             throw err;
         }
+    },
+
+    deleteProvision: async (id: string): Promise<void> => {
+        try {
+            const { error } = await supabase
+                .from('ward_provisions')
+                .delete()
+                .eq('id', id);
+
+            if (error) throw error;
+        } catch (err) {
+            console.error('Error deleting provision:', err);
+            throw err;
+        }
     }
 };

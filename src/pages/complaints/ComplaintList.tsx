@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
 import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,9 +13,12 @@ const ComplaintList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
     const navigate = useNavigate();
+    const location = useLocation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
-    const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help'>('Complaints');
+    const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help'>(
+        (location.state as any)?.tab === 'Personal Help' ? 'Personal Help' : 'Complaints'
+    );
 
     // Derived state for translation - simplified and more robust matching AppLayout logic
     const isTranslated = language === 'mr';
@@ -481,7 +484,10 @@ const ComplaintList = () => {
 
                     {/* Status Filters */}
                     <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide">
-                        {['All', 'Pending', 'Assigned', 'InProgress', 'Resolved', 'Closed'].map((status) => (
+                        {(activeTab === 'Personal Help'
+                            ? ['All', 'Pending', 'Resolved']
+                            : ['All', 'Pending', 'Assigned', 'InProgress', 'Resolved']
+                        ).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status as ComplaintStatus | 'All')}
@@ -498,16 +504,14 @@ const ComplaintList = () => {
                                             status === 'InProgress' ? 'काम चालू' :
                                                 status === 'Pending' ? 'प्रलंबित' :
                                                     status === 'Assigned' ? 'सोपवलेले' :
-                                                        status === 'Resolved' ? 'सोडवलेले' :
-                                                            'बंद'}
+                                                        'सोडवलेले'}
                                     </span>
                                 ) : (
                                     status === 'All' ? t('complaints.filters.all') :
                                         status === 'InProgress' ? t('complaints.filters.in_progress') :
                                             status === 'Pending' ? t('complaints.filters.pending') :
                                                 status === 'Assigned' ? t('complaints.filters.assigned') :
-                                                    status === 'Resolved' ? t('complaints.filters.resolved') :
-                                                        t('complaints.filters.closed')
+                                                    t('complaints.filters.resolved')
                                 )}
                             </button>
                         ))}

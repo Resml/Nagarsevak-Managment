@@ -387,7 +387,7 @@ const WardWiseProblem = () => {
 
                     {/* Status Filters */}
                     <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide">
-                        {['All', 'Pending', 'Assigned', 'InProgress', 'Resolved', 'Closed'].map((status) => (
+                        {['All', 'Pending', 'Assigned', 'InProgress', 'Resolved'].map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status as ComplaintStatus | 'All')}

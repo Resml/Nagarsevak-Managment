@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { DiaryService } from '../../services/diaryService';
+import { AIService } from '../../services/aiService';
+import { TranslatedText } from '../../components/TranslatedText';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
 
 const DiaryList = () => {
@@ -20,6 +22,7 @@ const DiaryList = () => {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingEntry, setEditingEntry] = useState<DiaryEntry | null>(null);
+    const [generatingAI, setGeneratingAI] = useState(false);
     const [formData, setFormData] = useState<Partial<DiaryEntry>>({
         meetingType: 'GB',
         status: 'Raised',
@@ -140,6 +143,20 @@ const DiaryList = () => {
             case 'Resolved': return 'bg-green-100 text-green-800';
             case 'Action Taken': return 'bg-purple-100 text-purple-800';
             default: return 'bg-gray-100 text-gray-800';
+        }
+    };
+
+    const handleAutoGenerate = async () => {
+        if (!formData.subject) return;
+        setGeneratingAI(true);
+        try {
+            const desc = await AIService.generateContent(formData.subject!, 'Work Report', 'Professional', 'Marathi');
+            setFormData(prev => ({ ...prev, description: desc }));
+        } catch (error) {
+            console.error(error);
+            toast.error(t('work_history.desc_gen_failed'));
+        } finally {
+            setGeneratingAI(false);
         }
     };
 
@@ -287,9 +304,9 @@ const DiaryList = () => {
                                                 {entry.meetingDate}
                                             </span>
                                         </div>
-                                        <h3 className="text-lg font-semibold text-slate-900">{entry.subject}</h3>
+                                        <h3 className="text-lg font-semibold text-slate-900"><TranslatedText text={entry.subject} /></h3>
                                         {entry.department && (
-                                            <p className="text-sm text-brand-600 font-medium">{entry.department} {t('diary.dept_label')}</p>
+                                            <p className="text-sm text-brand-600 font-medium"><TranslatedText text={entry.department} /> {t('diary.dept_label')}</p>
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2">
@@ -301,20 +318,20 @@ const DiaryList = () => {
                                 </div>
 
                                 {entry.description && (
-                                    <p className={`mt-3 text-slate-600 text-sm whitespace-pre-wrap ${expandedId === entry.id ? '' : 'line-clamp-2'}`}>{entry.description}</p>
+                                    <p className={`mt-3 text-slate-600 text-sm whitespace-pre-wrap ${expandedId === entry.id ? '' : 'line-clamp-2'}`}><TranslatedText text={entry.description} /></p>
                                 )}
 
                                 {entry.beneficiaries && expandedId === entry.id && (
                                     <div className="mt-3 flex items-center gap-2 text-sm text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 w-fit">
                                         <CheckCircle className="w-4 h-4" />
-                                        <span className="font-semibold">{t('diary.beneficiaries')}: {entry.beneficiaries}</span>
+                                        <span className="font-semibold">{t('diary.beneficiaries')}: <TranslatedText text={entry.beneficiaries} /></span>
                                     </div>
                                 )}
 
                                 {entry.response && expandedId === entry.id && (
                                     <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
                                         <p className="text-xs font-semibold text-slate-600 uppercase mb-1">{t('diary.official_response')}</p>
-                                        <p className="text-sm text-slate-700">{entry.response}</p>
+                                        <p className="text-sm text-slate-700"><TranslatedText text={entry.response} /></p>
                                     </div>
                                 )}
 
@@ -407,13 +424,25 @@ const DiaryList = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">{t('diary.description')}</label>
-                                <textarea
-                                    rows={4}
-                                    placeholder={t('diary.desc_placeholder')}
-                                    className="ns-input mt-1"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        rows={4}
+                                        placeholder={t('diary.desc_placeholder')}
+                                        className="ns-input mt-1 pr-10"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoGenerate}
+                                        disabled={generatingAI || !formData.subject}
+                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                        title="Auto draft description"
+                                    >
+                                        <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint')}</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

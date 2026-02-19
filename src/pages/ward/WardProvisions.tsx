@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle, Trash2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -18,6 +18,7 @@ const WardProvisions = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedProvision, setSelectedProvision] = useState<ProvisionRecord | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<ProvisionRecord | null>(null);
 
     // Form State
     const [formData, setFormData] = useState<Partial<ProvisionRecord>>({
@@ -93,6 +94,19 @@ const WardProvisions = () => {
         } catch (error) {
             console.error(error);
             toast.error('Failed to update sanction details');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await ProvisionService.deleteProvision(deleteTarget.id);
+            setDeleteTarget(null);
+            toast.success(t('common.deleted') || 'Deleted successfully');
+            loadProvisions();
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to delete provision');
         }
     };
 
@@ -266,20 +280,30 @@ const WardProvisions = () => {
                                             {new Date(item.sanctionedDate || item.requestedDate).toLocaleDateString()}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedProvision(item);
-                                                    setUpdateData({
-                                                        sanctionedAmount: item.sanctionedAmount || item.requestedAmount,
-                                                        sanctionedDate: item.sanctionedDate || new Date().toISOString().split('T')[0],
-                                                        status: item.status === 'Pending' ? 'Approved' : item.status
-                                                    });
-                                                    setIsUpdateModalOpen(true);
-                                                }}
-                                                className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
-                                            >
-                                                <Edit2 className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedProvision(item);
+                                                        setUpdateData({
+                                                            sanctionedAmount: item.sanctionedAmount || item.requestedAmount,
+                                                            sanctionedDate: item.sanctionedDate || new Date().toISOString().split('T')[0],
+                                                            status: item.status === 'Pending' ? 'Approved' : item.status
+                                                        });
+                                                        setIsUpdateModalOpen(true);
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
+                                                    title="Edit"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteTarget(item)}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -465,6 +489,36 @@ const WardProvisions = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="ns-card max-w-sm w-full p-6 text-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
+                        <p className="text-slate-500 text-sm mb-6">
+                            <span className="font-medium text-slate-700">"{deleteTarget.title}"</span>
+                            {' '}{t('common.delete_warning')}
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="ns-btn-secondary flex-1 justify-center"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                {t('common.delete')}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

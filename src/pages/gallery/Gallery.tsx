@@ -7,10 +7,6 @@ import { type GalleryItem, type GalleryCategory } from '../../types';
 
 const Gallery = () => {
     const { t } = useLanguage();
-    const activeTabState = useState<'events' | 'media'>('events');
-    const activeTab = activeTabState[0];
-    const setActiveTab = activeTabState[1];
-
     const [items, setItems] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,7 +31,7 @@ const Gallery = () => {
 
     useEffect(() => {
         loadGallery();
-    }, [activeTab]);
+    }, []);
 
     const loadGallery = async () => {
         setLoading(true);
@@ -50,12 +46,8 @@ const Gallery = () => {
     const getFilteredItems = () => {
         let filtered = items;
 
-        // Tab Filter
-        if (activeTab === 'media') {
-            filtered = filtered.filter(i => i.category === 'Newspaper');
-        } else {
-            filtered = filtered.filter(i => i.category !== 'Newspaper');
-        }
+        // Filter out Newspaper items
+        filtered = filtered.filter(i => i.category !== 'Newspaper');
 
         // Search Filter
         if (searchTerm) {
@@ -103,7 +95,7 @@ const Gallery = () => {
             setEditingId(null);
             setFormData({
                 title: '',
-                category: activeTab === 'media' ? 'Newspaper' : 'Event',
+                category: 'Event',
                 imageUrl: '',
                 description: '',
                 date: new Date().toISOString().split('T')[0]
@@ -162,7 +154,7 @@ const Gallery = () => {
                             setEditingId(null);
                             setFormData({
                                 title: '',
-                                category: activeTab === 'media' ? 'Newspaper' : 'Event',
+                                category: 'Event',
                                 imageUrl: '',
                                 description: '',
                                 date: new Date().toISOString().split('T')[0]
@@ -205,36 +197,6 @@ const Gallery = () => {
                             <X className="w-5 h-5" />
                         </button>
                     )}
-                </div>
-
-                {/* Tabs */}
-                <div className="border-b border-slate-200">
-                    <nav className="-mb-px flex space-x-8">
-                        <button
-                            onClick={() => setActiveTab('events')}
-                            className={`
-                                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2
-                                ${activeTab === 'events'
-                                    ? 'border-brand-500 text-brand-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
-                            `}
-                        >
-                            <ImageIcon className="w-5 h-5" />
-                            <span>{t('gallery.tab_events')}</span>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('media')}
-                            className={`
-                                whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2
-                                ${activeTab === 'media'
-                                    ? 'border-brand-500 text-brand-700'
-                                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}
-                            `}
-                        >
-                            <Newspaper className="w-5 h-5" />
-                            <span>{t('gallery.tab_media')}</span>
-                        </button>
-                    </nav>
                 </div>
             </div>
 
@@ -332,7 +294,6 @@ const Gallery = () => {
                                         <option value="Event">{t('gallery.categories.Event')}</option>
                                         <option value="Work">{t('gallery.categories.Work')}</option>
                                         <option value="Award">{t('gallery.categories.Award')}</option>
-                                        <option value="Newspaper">{t('gallery.categories.Newspaper')}</option>
                                     </select>
                                 </div>
 

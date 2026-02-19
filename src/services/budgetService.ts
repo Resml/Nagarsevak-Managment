@@ -157,6 +157,23 @@ export const BudgetService = {
                 localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(current));
             }
         }
+    },
+
+    deleteBudget: async (id: string, tenantId: string): Promise<void> => {
+        try {
+            const { error } = await supabase
+                .from('ward_budget')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+        } catch (e) {
+            console.warn('Fallback local delete');
+            const current = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY) || '[]');
+            const newBudgets = current.filter((b: BudgetRecord) => b.id !== id);
+            localStorage.setItem(BUDGET_STORAGE_KEY, JSON.stringify(newBudgets));
+        }
     }
 };
 
