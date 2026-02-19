@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { Calendar, Clock, MapPin, Plus, Search, Filter, Send, Users, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Search, Filter, Send, Users, ChevronRight, Wand2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { TranslatedText } from '../../components/TranslatedText';
+import { AIService } from '../../services/aiService';
 
 interface Event {
     id: string;
@@ -42,6 +44,7 @@ const EventManagement = () => {
     // Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [creating, setCreating] = useState(false);
+    const [generatingAI, setGeneratingAI] = useState(false);
 
     const [newEvent, setNewEvent] = useState({
         title: '',
@@ -123,6 +126,21 @@ const EventManagement = () => {
             }
         });
         return Object.entries(stats).map(([date, count]) => ({ date, count }));
+    };
+
+    const handleAutoGenerate = async () => {
+        if (!newEvent.title) return;
+        setGeneratingAI(true);
+        try {
+            // Using 'Social Media Caption' type for events as it fits the promotional nature
+            const desc = await AIService.generateContent(newEvent.title, 'Social Media Caption', 'Enthusiastic', 'Marathi');
+            setNewEvent(prev => ({ ...prev, description: desc }));
+        } catch (error) {
+            console.error(error);
+            toast.error(t('work_history.desc_gen_failed') || "Failed to generate content");
+        } finally {
+            setGeneratingAI(false);
+        }
     };
 
     const handleCreateEvent = async (e: React.FormEvent) => {
@@ -311,13 +329,15 @@ const EventManagement = () => {
                                     <div className="text-2xl font-bold">{format(new Date(event.event_date), 'd')}</div>
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-xl font-bold text-slate-900">{event.title}</h3>
+                                    <h3 className="text-xl font-bold text-slate-900">
+                                        <TranslatedText text={event.title} />
+                                    </h3>
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
                                         <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {event.event_time}</span>
-                                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {event.location}</span>
+                                        <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> <TranslatedText text={event.location} /></span>
                                         {event.area && (
                                             <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium">
-                                                {event.area}
+                                                <TranslatedText text={event.area} />
                                             </span>
                                         )}
                                         {event.target_audience && event.target_audience !== 'All' && (
@@ -331,7 +351,9 @@ const EventManagement = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-slate-600 text-sm mt-2 max-w-xl line-clamp-2">{event.description}</p>
+                                    <p className="text-slate-600 text-sm mt-2 max-w-xl line-clamp-2">
+                                        <TranslatedText text={event.description} />
+                                    </p>
                                 </div>
                             </div>
 
@@ -395,14 +417,26 @@ const EventManagement = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.description')}</label>
-                                <textarea
-                                    required
-                                    className="ns-input w-full"
-                                    rows={3}
-                                    value={newEvent.description}
-                                    onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
-                                    placeholder={t('events.desc_placeholder')}
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        required
+                                        className="ns-input w-full pr-10"
+                                        rows={3}
+                                        value={newEvent.description}
+                                        onChange={e => setNewEvent({ ...newEvent, description: e.target.value })}
+                                        placeholder={t('events.desc_placeholder')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoGenerate}
+                                        disabled={generatingAI || !newEvent.title}
+                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                        title="Auto generate content"
+                                    >
+                                        <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint') || "Click wand to AI generate description"}</p>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { ArrowLeft, Calendar, MapPin, Clock, Users, Trash2, Edit, Send, CheckCircle, XCircle, HelpCircle, Save, X, Share2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Users, Trash2, Edit, Send, CheckCircle, XCircle, HelpCircle, Save, X, Share2, AlertTriangle, Wand2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { TranslatedText } from '../../components/TranslatedText';
+import { AIService } from '../../services/aiService';
 
 interface Event {
     id: string;
@@ -48,6 +50,7 @@ const EventDetail = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [broadcasting, setBroadcasting] = useState(false);
+    const [generatingAI, setGeneratingAI] = useState(false);
 
 
     // Edit Form State
@@ -133,6 +136,20 @@ const EventDetail = () => {
 
         } catch (err) {
             console.error('Error fetching RSVPs:', err);
+        }
+    };
+
+    const handleAutoGenerate = async () => {
+        if (!editForm.title) return;
+        setGeneratingAI(true);
+        try {
+            const desc = await AIService.generateContent(editForm.title, 'Social Media Caption', 'Enthusiastic', 'Marathi');
+            setEditForm(prev => ({ ...prev, description: desc }));
+        } catch (error) {
+            console.error(error);
+            toast.error(t('work_history.desc_gen_failed') || "Failed to generate content");
+        } finally {
+            setGeneratingAI(false);
         }
     };
 
@@ -327,9 +344,13 @@ const EventDetail = () => {
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <span className="ns-badge bg-brand-50 text-brand-700 border-brand-100">{event.type}</span>
-                                    {event.area && <span className="ns-badge bg-slate-100 text-slate-600">{event.area}</span>}
+                                    {event.area && <span className="ns-badge bg-slate-100 text-slate-600">
+                                        <TranslatedText text={event.area} />
+                                    </span>}
                                 </div>
-                                <h1 className="text-3xl font-bold text-slate-900 leading-tight">{event.title}</h1>
+                                <h1 className="text-3xl font-bold text-slate-900 leading-tight">
+                                    <TranslatedText text={event.title} />
+                                </h1>
                             </div>
                             {getStatusBadge(event.status)}
                         </div>
@@ -353,14 +374,18 @@ const EventDetail = () => {
                                 <div className="p-2 bg-white rounded-full text-brand-600 shadow-sm"><MapPin className="w-5 h-5" /></div>
                                 <div>
                                     <div className="text-xs text-slate-500 font-semibold uppercase">{t('events.location')}</div>
-                                    <div className="font-medium text-slate-900">{event.location}</div>
+                                    <div className="font-medium text-slate-900">
+                                        <TranslatedText text={event.location} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <h3 className="text-lg font-bold text-slate-900 mb-3">{t('events.about_event')}</h3>
                         <div className="prose prose-slate max-w-none">
-                            <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">{event.description}</p>
+                            <p className="whitespace-pre-wrap text-slate-700 leading-relaxed">
+                                <TranslatedText text={event.description} />
+                            </p>
                         </div>
                     </div>
 
@@ -392,7 +417,7 @@ const EventDetail = () => {
                                             </div>
                                             <div>
                                                 <div className="font-semibold text-slate-900">
-                                                    {rsvp.voter?.name_english || rsvp.voter?.name_marathi || t('events.unknown_voter')}
+                                                    <TranslatedText text={rsvp.voter?.name_english || rsvp.voter?.name_marathi || t('events.unknown_voter')} />
                                                 </div>
                                                 <div className="text-xs text-slate-500 flex items-center gap-1">
                                                     <span>{rsvp.voter?.mobile}</span>
@@ -521,12 +546,24 @@ const EventDetail = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.description')}</label>
-                                <textarea
-                                    className="ns-input w-full h-32"
-                                    value={editForm.description}
-                                    onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                                    required
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        className="ns-input w-full h-32 pr-10"
+                                        value={editForm.description}
+                                        onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoGenerate}
+                                        disabled={generatingAI || !editForm.title}
+                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                        title="Auto generate content"
+                                    >
+                                        <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint') || "Click wand to AI generate description"}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

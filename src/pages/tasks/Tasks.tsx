@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search } from 'lucide-react';
-import { AIAnalysisService } from '../../services/aiService';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2 } from 'lucide-react';
+import { AIAnalysisService, AIService } from '../../services/aiService';
+import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
@@ -15,6 +16,7 @@ const Tasks = () => {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [generatingAI, setGeneratingAI] = useState(false);
 
     // New Task State
     const [newTask, setNewTask] = useState({
@@ -113,6 +115,20 @@ const Tasks = () => {
                 }
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleAutoGenerate = async () => {
+        if (!newTask.title) return;
+        setGeneratingAI(true);
+        try {
+            const desc = await AIService.generateContent(newTask.title, 'Work Report', 'Professional', 'Marathi');
+            setNewTask(prev => ({ ...prev, description: desc }));
+        } catch (error) {
+            console.error(error);
+            toast.error(t('work_history.desc_gen_failed'));
+        } finally {
+            setGeneratingAI(false);
         }
     };
 
@@ -383,8 +399,8 @@ const Tasks = () => {
             {/* Task Form Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="ns-card w-full max-w-lg overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-200/70 flex justify-between items-center bg-slate-50">
+                    <div className="ns-card w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
+                        <div className="px-6 py-4 border-b border-slate-200/70 flex justify-between items-center bg-slate-50 sticky top-0 z-10">
                             <h2 className="text-lg font-semibold text-slate-900">
                                 {editingId ? t('tasks.edit_task') || 'Edit Task' : (newTask.title ? t('tasks.edit_scanned_task') : t('tasks.create_new_task'))}
                             </h2>
@@ -491,13 +507,25 @@ const Tasks = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.description')}</label>
-                                <textarea
-                                    required
-                                    rows={3}
-                                    value={newTask.description}
-                                    onChange={e => setNewTask({ ...newTask, description: e.target.value })}
-                                    className="ns-input"
-                                />
+                                <div className="relative">
+                                    <textarea
+                                        required
+                                        rows={3}
+                                        value={newTask.description}
+                                        onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                                        className="ns-input pr-10"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleAutoGenerate}
+                                        disabled={generatingAI || !newTask.title}
+                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                        title="Auto draft description"
+                                    >
+                                        <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint')}</p>
                             </div>
 
                             <button
@@ -540,7 +568,9 @@ const Tasks = () => {
                     <div key={task.id} className="ns-card p-5 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-2">
                             <div>
-                                <h3 className="font-semibold text-slate-900 text-lg">{formatTaskTitle(task.title)}</h3>
+                                <h3 className="font-semibold text-slate-900 text-lg">
+                                    <TranslatedText text={formatTaskTitle(task.title)} />
+                                </h3>
                                 <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
                                     <span className={clsx(
                                         "px-2 py-0.5 rounded-full text-xs font-medium",
@@ -555,16 +585,30 @@ const Tasks = () => {
                                             <Calendar className="w-3 h-3" /> {task.due_date}
                                         </span>
                                     )}
+                                    {task.office_name && (
+                                        <span className="flex items-center gap-1 text-slate-600">
+                                            <Building2 className="w-3 h-3" /> <TranslatedText text={task.office_name} />
+                                        </span>
+                                    )}
+                                    {task.address && (
+                                        <span className="flex items-center gap-1 text-slate-600">
+                                            <MapPin className="w-3 h-3" /> <TranslatedText text={task.address} />
+                                        </span>
+                                    )}
                                 </div>
                             </div>
-                            <span className={clsx(
-                                "px-3 py-1 rounded-full text-xs font-medium",
-                                task.status === 'Completed' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                            )}>
-                                {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
-                            </span>
+                            <div className="flex flex-col items-end gap-2">
+                                <span className={clsx(
+                                    "px-3 py-1 rounded-full text-xs font-medium",
+                                    task.status === 'Completed' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
+                                )}>
+                                    {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
+                                </span>
+                            </div>
                         </div>
-                        <p className="text-slate-600 text-sm mb-4">{task.description}</p>
+                        <p className="text-slate-600 text-sm mb-4">
+                            <TranslatedText text={task.description} />
+                        </p>
 
                         <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center text-sm">
                             <span className="text-slate-500 flex items-center gap-1">
