@@ -84,6 +84,7 @@ export interface Voter {
   current_address_english?: string;
   current_address_marathi?: string;
   houseNo?: string;
+  house_no?: string;
   caste?: string;
   serial_no?: number;
   is_friend_relative?: boolean;

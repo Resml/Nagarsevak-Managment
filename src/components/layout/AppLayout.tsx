@@ -103,19 +103,26 @@ function SidebarNavItem({
         )
       }
     >
-      {({ isActive }) => (
-        <>
-          <Icon className={cn('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')} />
-          {!isCollapsed && <span className="truncate">{label}</span>}
+      {({ isActive }) => {
+        // Fix for nested routes highlighting parent
+        // If to is /dashboard, exact match only.
+        // If to is /dashboard/x, match startswith.
+        // NavLink end prop handles some of this, but visual logic might need this check.
+        // Actually NavLink's isActive is usually sufficient.
+        return (
+          <>
+            <Icon className={cn('h-5 w-5 shrink-0 transition-colors', isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600')} />
+            {!isCollapsed && <span className="truncate">{label}</span>}
 
-          {/* Tooltip for collapsed state */}
-          {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
-              {label}
-            </div>
-          )}
-        </>
-      )}
+            {/* Tooltip for collapsed state */}
+            {isCollapsed && (
+              <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
+                {label}
+              </div>
+            )}
+          </>
+        )
+      }}
     </NavLink>
   );
 }
@@ -199,8 +206,8 @@ const AppLayout = () => {
     }
   }, [tenant]);
 
-  const isAdminOrStaff = user?.role === 'admin' || user?.role === 'staff';
-  const isAdmin = user?.role === 'admin';
+  const isAdminOrStaff = ['admin', 'staff', 'nagarsevak', 'amdar', 'khasdar', 'minister'].includes(user?.role || '');
+  const isAdmin = ['admin', 'nagarsevak', 'amdar', 'khasdar', 'minister'].includes(user?.role || '');
 
   const navItems: NavEntry[] = useMemo(
     () => [
@@ -213,11 +220,11 @@ const AppLayout = () => {
         show: true,
         // permission: 'daily_work', // Removed to allow granular access
         items: [
-          { to: '/complaints', icon: Newspaper, label: t('nav.complaints'), show: true, permission: 'complaints' },
-          { to: '/letters', icon: FileText, label: t('nav.letters'), show: true, permission: 'letters' },
-          { to: '/tasks', icon: CheckSquare, label: t('nav.task_management'), show: isAdminOrStaff, permission: 'tasks' },
-          { to: '/visitors', icon: Users, label: t('nav.visitor_log'), show: true, permission: 'visitors' },
-          { to: '/schemes', icon: Newspaper, label: t('nav.govt_schemes'), show: true, permission: 'schemes' },
+          { to: '/dashboard/complaints', icon: Newspaper, label: t('nav.complaints'), show: true, permission: 'complaints' },
+          { to: '/dashboard/letters', icon: FileText, label: t('nav.letters'), show: true, permission: 'letters' },
+          { to: '/dashboard/tasks', icon: CheckSquare, label: t('nav.task_management'), show: isAdminOrStaff, permission: 'tasks' },
+          { to: '/dashboard/visitors', icon: Users, label: t('nav.visitor_log'), show: true, permission: 'visitors' },
+          { to: '/dashboard/schemes', icon: Newspaper, label: t('nav.govt_schemes'), show: true, permission: 'schemes' },
         ],
       },
       // 2) Ward information
@@ -229,11 +236,11 @@ const AppLayout = () => {
         show: true,
         // permission: 'ward_info', 
         items: [
-          { to: '/ward/problems', icon: AlertTriangle, label: t('nav.ward_problem'), show: true, permission: 'ward_problems' },
-          { to: '/ward/map', icon: MapIcon, label: t('nav.ward_map'), show: true, permission: 'ward_info' },
-          { to: '/history', icon: History, label: t('nav.work_history'), show: true, permission: 'work_history' },
-          { to: '/ward/improvements', icon: TrendingUp, label: t('nav.ward_improvement'), show: true, permission: 'improvements' },
-          { to: '/ward/provision', icon: IndianRupee, label: t('nav.ward_provision'), show: true, permission: 'provision' },
+          { to: '/dashboard/ward/problems', icon: AlertTriangle, label: t('nav.ward_problem'), show: true, permission: 'ward_problems' },
+          { to: '/dashboard/ward/map', icon: MapIcon, label: t('nav.ward_map'), show: true, permission: 'ward_info' },
+          { to: '/dashboard/history', icon: History, label: t('nav.work_history'), show: true, permission: 'work_history' },
+          { to: '/dashboard/ward/improvements', icon: TrendingUp, label: t('nav.ward_improvement'), show: true, permission: 'improvements' },
+          { to: '/dashboard/ward/provision', icon: IndianRupee, label: t('nav.ward_provision'), show: true, permission: 'provision' },
         ],
       },
       // 3) Municipal work
@@ -245,14 +252,14 @@ const AppLayout = () => {
         show: true,
         // permission: 'municipal',
         items: [
-          { to: '/diary', icon: BookOpen, label: t('nav.gb_register'), show: isAdminOrStaff, permission: 'gb_register' },
-          { to: '/budget', icon: IndianRupee, label: t('nav.ward_budget'), show: true, permission: 'budget' },
+          { to: '/dashboard/diary', icon: BookOpen, label: t('nav.gb_register'), show: isAdminOrStaff, permission: 'gb_register' },
+          { to: '/dashboard/budget', icon: IndianRupee, label: t('nav.ward_budget'), show: true, permission: 'budget' },
         ],
       },
       // 4) Government office
       {
         kind: 'item',
-        to: '/government-office',
+        to: '/dashboard/government-office',
         icon: Building2,
         label: t('nav.gov_office'),
         show: true,
@@ -267,9 +274,9 @@ const AppLayout = () => {
         show: true,
         // permission: 'media',
         items: [
-          { to: '/social', icon: TrendingUp, label: t('nav.social_analytics'), show: true, permission: 'social' },
-          { to: '/media/newspaper', icon: Newspaper, label: t('nav.newspaper_clipping'), show: true, permission: 'newspaper' },
-          { to: '/content', icon: Wand2, label: t('nav.ai_content'), show: true, permission: 'ai_content' },
+          { to: '/dashboard/social', icon: TrendingUp, label: t('nav.social_analytics'), show: true, permission: 'social' },
+          { to: '/dashboard/media/newspaper', icon: Newspaper, label: t('nav.newspaper_clipping'), show: true, permission: 'newspaper' },
+          { to: '/dashboard/content', icon: Wand2, label: t('nav.ai_content'), show: true, permission: 'ai_content' },
         ],
       },
       // 6) Programs and activities
@@ -281,8 +288,8 @@ const AppLayout = () => {
         show: true,
         // permission: 'programs',
         items: [
-          { to: '/events', icon: Calendar, label: t('nav.events_invites'), show: true, permission: 'events' },
-          { to: '/gallery', icon: Image, label: t('nav.gallery_media'), show: true, permission: 'gallery' },
+          { to: '/dashboard/events', icon: Calendar, label: t('nav.events_invites'), show: true, permission: 'events' },
+          { to: '/dashboard/gallery', icon: Image, label: t('nav.gallery_media'), show: true, permission: 'gallery' },
         ],
       },
       // 7) Political
@@ -294,19 +301,19 @@ const AppLayout = () => {
         show: true,
         // permission: 'political',
         items: [
-          { to: '/results', icon: BarChart2, label: t('nav.result_analysis'), show: true, permission: 'results' },
-          { to: '/sadasya', icon: Users, label: t('nav.sadasya'), show: isAdminOrStaff, permission: 'sadasya' },
-          { to: '/surveys', icon: CheckSquare, label: t('nav.sample_surveys'), show: true, permission: 'surveys' },
-          { to: '/voters', icon: Search, label: t('nav.voter_search'), show: isAdminOrStaff, permission: 'voters' },
-          { to: '/staff', icon: Users, label: t('nav.my_team'), show: true, permission: 'staff' },
-          { to: '/political/public-communication', icon: Megaphone, label: t('nav.public_communication'), show: true, permission: 'public_comm' },
-          { to: '/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
+          { to: '/dashboard/results', icon: BarChart2, label: t('nav.result_analysis'), show: true, permission: 'results' },
+          { to: '/dashboard/sadasya', icon: Users, label: t('nav.sadasya'), show: isAdminOrStaff, permission: 'sadasya' },
+          { to: '/dashboard/surveys', icon: CheckSquare, label: t('nav.sample_surveys'), show: true, permission: 'surveys' },
+          { to: '/dashboard/voters', icon: Search, label: t('nav.voter_search'), show: isAdminOrStaff, permission: 'voters' },
+          { to: '/dashboard/staff', icon: Users, label: t('nav.my_team'), show: true, permission: 'staff' },
+          { to: '/dashboard/political/public-communication', icon: Megaphone, label: t('nav.public_communication'), show: true, permission: 'public_comm' },
+          { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
         ],
       },
       // 8) Analysis Strategy
       {
         kind: 'item',
-        to: '/analysis-strategy',
+        to: '/dashboard/analysis-strategy',
         icon: LineChart,
         label: t('nav.analysis_strategy'),
         show: true,
@@ -441,7 +448,7 @@ const AppLayout = () => {
               {!isCollapsed && (
                 <button
                   type="button"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/dashboard')}
                   className="flex items-center gap-3 text-left overflow-hidden group"
                 >
                   <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-colors">
@@ -462,7 +469,7 @@ const AppLayout = () => {
                 </button>
               )}
               {isCollapsed && (
-                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate('/')}>
+                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate('/dashboard')}>
                   {branding?.profile_image ? (
                     <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -491,14 +498,14 @@ const AppLayout = () => {
             <nav ref={navContainerRef} className={cn("flex-1 overflow-y-auto space-y-3", isCollapsed ? "px-2 py-4" : "px-3 py-4")}>
               {isAdminOrStaff ? (
                 <SidebarNavItem
-                  to="/"
+                  to="/dashboard"
                   end
                   icon={LayoutDashboard}
                   label={t('common.dashboard')}
                   onNavigate={onNavigate}
                   isCollapsed={isCollapsed}
                   itemRef={(el) => {
-                    if (location.pathname === '/') activeItemRef.current = el;
+                    if (location.pathname === '/dashboard') activeItemRef.current = el;
                   }}
                 />
               ) : null}
@@ -511,7 +518,7 @@ const AppLayout = () => {
                     if (!isAdmin && user?.role === 'staff' && user.permissions) {
                       return user.permissions.includes(perm);
                     }
-                    return true; // Admin or no restrictions
+                    return true; // Admin, minister, etc. or no restrictions
                   };
 
                   if (entry.permission && !checkPermission(entry.permission)) return null;
@@ -571,7 +578,7 @@ const AppLayout = () => {
                   if (entry.permission && !checkPermission(entry.permission)) return null;
 
                   // Items that should have the highlighted background
-                  const isHighlighted = entry.to === '/analysis-strategy';
+                  const isHighlighted = entry.to === '/dashboard/analysis-strategy';
 
                   return (
                     <SidebarNavItem
@@ -634,7 +641,7 @@ const AppLayout = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-slate-900 truncate">{user?.name ?? 'User'}</div>
                       {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
-                        <button onClick={() => navigate('/settings/profile')} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1">
+                        <button onClick={() => navigate('/dashboard/settings/profile')} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1">
                           {t('sadasya.profile_settings') || 'Profile Settings'}
                         </button>
                       )}
@@ -656,7 +663,7 @@ const AppLayout = () => {
                   </button>
 
                   {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
-                    <button type="button" onClick={() => navigate('/settings/profile')} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
+                    <button type="button" onClick={() => navigate('/dashboard/settings/profile')} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
                       <UserPlus className="h-5 w-5" />
                     </button>
                   )}

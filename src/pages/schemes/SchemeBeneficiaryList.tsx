@@ -24,6 +24,7 @@ const SchemeBeneficiaryList = () => {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState<SchemeApplication | null>(null);
 
     useEffect(() => {
         fetchApplications();
@@ -74,20 +75,21 @@ const SchemeBeneficiaryList = () => {
         }
     };
 
-    const deleteApplication = async (id: number) => {
-        if (!confirm(t('schemes.beneficiary_list.delete_confirm'))) return;
+    const confirmDelete = async () => {
+        if (!deleteTarget) return;
         try {
             const { error } = await supabase
                 .from('scheme_applications')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteTarget.id);
 
             if (error) throw error;
-            toast.success('Application removed');
-            setApplications(prev => prev.filter(app => app.id !== id));
+            toast.success(t('schemes.beneficiary_list.delete_success') || 'Application removed');
+            setApplications(prev => prev.filter(app => app.id !== deleteTarget.id));
+            setDeleteTarget(null);
         } catch (err) {
             console.error('Error deleting application:', err);
-            toast.error('Failed to delete');
+            toast.error(t('schemes.beneficiary_list.delete_error') || 'Failed to delete');
         }
     };
 
@@ -204,7 +206,7 @@ const SchemeBeneficiaryList = () => {
                                                 </>
                                             )}
                                             <button
-                                                onClick={() => deleteApplication(app.id)}
+                                                onClick={() => setDeleteTarget(app)}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                                                 title={t('schemes.beneficiary_list.delete_btn')}
                                             >
@@ -218,6 +220,37 @@ const SchemeBeneficiaryList = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="w-6 h-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">{t('schemes.beneficiary_list.delete_title') || 'Delete Application?'}</h3>
+                            <p className="text-slate-500 mt-2 text-sm">
+                                {t('schemes.beneficiary_list.delete_confirm_msg') || 'Are you sure you want to delete this application? This action cannot be undone.'}
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
+                            >
+                                {t('common.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                            >
+                                {t('schemes.beneficiary_list.delete_btn') || 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

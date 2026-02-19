@@ -77,7 +77,7 @@ const SchemeForm = () => {
                 toast.success('Scheme added successfully!');
             }
 
-            navigate('/schemes');
+            navigate('/dashboard/schemes');
         } catch (err) {
             console.error('Error saving scheme:', err);
             toast.error('Failed to save scheme. Please try again.');
@@ -89,7 +89,7 @@ const SchemeForm = () => {
     return (
         <div className="max-w-2xl mx-auto space-y-6">
             <button
-                onClick={() => navigate('/schemes')}
+                onClick={() => navigate('/dashboard/schemes')}
                 className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> {t('schemes.form.back')}

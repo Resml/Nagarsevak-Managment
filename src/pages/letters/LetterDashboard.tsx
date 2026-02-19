@@ -310,13 +310,13 @@ const LetterDashboard = () => {
                         {activeTab === 'outgoing' ? (
                             <>
                                 <Link
-                                    to="/letters/types"
+                                    to="/dashboard/letters/types"
                                     className="ns-btn-ghost border border-slate-200"
                                 >
                                     <Settings className="w-4 h-4" /> {t('letters.manage_types')}
                                 </Link>
                                 <Link
-                                    to="/letters/new"
+                                    to="/dashboard/letters/new"
                                     className="ns-btn-primary"
                                 >
                                     <Plus className="w-4 h-4" /> {t('letters.new_request')}
@@ -489,7 +489,7 @@ const LetterDashboard = () => {
                                         <p className="text-xs text-slate-500">{format(new Date(req.created_at), 'PP p')}</p>
                                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                             <button
-                                                onClick={() => navigate(`/letters/edit/${req.id}`)}
+                                                onClick={() => navigate(`/dashboard/letters/edit/${req.id}`)}
                                                 className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
                                                 title={t('common.edit')}
                                             >
@@ -513,7 +513,7 @@ const LetterDashboard = () => {
                                     </div>
                                     <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
                                     <Link
-                                        to="/letters/new"
+                                        to="/dashboard/letters/new"
                                         className="ns-btn-primary"
                                     >
                                         <Plus className="w-4 h-4" /> {t('letters.new_request')}

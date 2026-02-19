@@ -25,7 +25,17 @@ export const CUSTOM_TRANSLATIONS: Record<string, string> = {
     "Lokmanya Nagar": "लोकमान्य नगर",
     "Lokamanya Nagar": "लोकमान्य नगर",
     "Lokmanya": "लोकमान्य",
-    "Nagar": "नगर"
+    "Nagar": "नगर",
+
+    // Work Titles
+    "Community Engagement & Welfare Scheme Awareness": "सामुदायिक सहभाग आणि कल्याणकारी योजना जनजागृती",
+    "Monitoring Cleanliness & Sanitation Drive": "स्वच्छता मोहीम आणि देखरेख",
+    "Coordination with Municipal Officials": "पालिका अधिकाऱ्यांशी समन्वय",
+
+    // Work Descriptions
+    "Met local residents and society members to spread awareness about government welfare schemes (health, education, pension). Assisted eligible citizens in understanding the application process.": "स्थानिक रहिवासी आणि संस्था सदस्यांच्या भेटी घेऊन शासकीय कल्याणकारी योजनांची (आरोग्य, शिक्षण, निवृत्तीवेतन) माहिती दिली. पात्र नागरिकांना अर्ज प्रक्रियेत मदत केली.",
+    "Supervised cleanliness drive in market area and residential zones. Ensured proper garbage collection and instructed staff regarding regular maintenance schedules.": "बाजार पेठ आणि निवासी क्षेत्रातील स्वच्छता मोहिमेचे निरीक्षण केले. कचरा वेळेवर उचलला जाईल याची खात्री केली आणि कर्मचाऱ्यांना नियमित स्वच्छतेच्या सूचना दिल्या.",
+    "Held a meeting with municipal engineers and sanitation supervisors to review pending work and discuss progress on infrastructure projects within the ward.": "प्रलंबित कामांचा आढावा घेण्यासाठी आणि प्रभागातील पायाभूत सुविधांच्या कामांवर चर्चा करण्यासाठी पालिका अभियंते आणि स्वच्छता निरीक्षकांसोबत बैठक घेतली."
 };
 
 /**

@@ -389,6 +389,7 @@ export const translations = {
         voters: {
             title: "Voter Search",
             search_placeholder: "Search by Name, EPIC, Address...",
+            address: "Address",
             ward: "Ward",
             booth: "Booth",
             age: "Age",
@@ -1782,6 +1783,7 @@ export const translations = {
         voters: {
             title: "मतदार शोध",
             search_placeholder: "नाव, EPIC किंवा पत्त्यानुसार शोधा...",
+            address: "पत्ता",
             ward: "प्रभाग",
             booth: "बूथ",
             age: "वय",

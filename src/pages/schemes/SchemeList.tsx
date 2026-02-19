@@ -230,7 +230,7 @@ const SchemeList = () => {
                                     )}
                                 </button>
                                 <Link
-                                    to="/schemes/new"
+                                    to="/dashboard/schemes/new"
                                     className="ns-btn-primary flex-1 sm:flex-none"
                                 >
                                     <Plus className="w-4 h-4" /> {t('schemes.add_scheme')}
@@ -333,7 +333,7 @@ const SchemeList = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                navigate(`/schemes/edit/${scheme.id}`);
+                                                navigate(`/dashboard/schemes/edit/${scheme.id}`);
                                             }}
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
                                         >

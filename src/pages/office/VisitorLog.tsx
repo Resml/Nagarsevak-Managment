@@ -2,9 +2,10 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
-import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight } from 'lucide-react';
+import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X, Loader2, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
+import type { Voter } from '../../types';
 
 import { useTenant } from '../../context/TenantContext';
 
@@ -27,7 +28,7 @@ interface Visitor {
 }
 
 const VisitorLog = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [formData, setFormData] = useState({
@@ -58,10 +59,27 @@ const VisitorLog = () => {
     const areaWrapperRef = useRef<HTMLDivElement>(null);
     const dateWrapperRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        fetchVisitors();
+    // --- Voter Search Modal State ---
+    const [isVoterSearchOpen, setIsVoterSearchOpen] = useState(false);
+    const [voterSearchResults, setVoterSearchResults] = useState<Voter[]>([]);
+    const [isVoterSearching, setIsVoterSearching] = useState(false);
 
-        // Click outside listener for dropdowns
+    // Voter Search Filters
+    const [voterNameFilter, setVoterNameFilter] = useState('');
+    const [voterHouseNoFilter, setVoterHouseNoFilter] = useState('');
+    const [voterAddressFilter, setVoterAddressFilter] = useState('');
+
+    // Voter Lookups/Suggestions
+    const [voterAddressSuggestions, setVoterAddressSuggestions] = useState<{ address: string; count: number }[]>([]);
+    const [showVoterAddressSuggestions, setShowVoterAddressSuggestions] = useState(false);
+    const voterAddressWrapperRef = useRef<HTMLDivElement>(null);
+
+    const [voterHouseNoSuggestions, setVoterHouseNoSuggestions] = useState<{ house_no: string; count: number }[]>([]);
+    const [showVoterHouseNoSuggestions, setShowVoterHouseNoSuggestions] = useState(false);
+    const voterHouseNoWrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Close dropdowns when clicking outside
         const handleClickOutside = (event: MouseEvent) => {
             if (areaWrapperRef.current && !areaWrapperRef.current.contains(event.target as Node)) {
                 setShowAreaSuggestions(false);
@@ -69,10 +87,125 @@ const VisitorLog = () => {
             if (dateWrapperRef.current && !dateWrapperRef.current.contains(event.target as Node)) {
                 setShowDateSuggestions(false);
             }
+            if (voterAddressWrapperRef.current && !voterAddressWrapperRef.current.contains(event.target as Node)) {
+                setShowVoterAddressSuggestions(false);
+            }
+            if (voterHouseNoWrapperRef.current && !voterHouseNoWrapperRef.current.contains(event.target as Node)) {
+                setShowVoterHouseNoSuggestions(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    // Fetch Suggestions for Voter Search
+    useEffect(() => {
+        if (!isVoterSearchOpen) return;
+
+        const fetchStats = async () => {
+            try {
+                const { data: votersData } = await supabase
+                    .from('voters')
+                    .select('address_english, address_marathi, house_no')
+                    .eq('tenant_id', tenantId)
+                    .limit(1000);
+
+                if (votersData) {
+                    const addrs = new Map<string, number>();
+                    const houses = new Map<string, number>();
+
+                    votersData.forEach(v => {
+                        // Localized Address Grouping
+                        const addr = language === 'mr'
+                            ? (v.address_marathi || v.address_english)
+                            : (v.address_english || v.address_marathi);
+
+                        if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
+
+                        // House No Grouping
+                        if (v.house_no) houses.set(v.house_no, (houses.get(v.house_no) || 0) + 1);
+                    });
+
+                    setVoterAddressSuggestions(
+                        Array.from(addrs)
+                            .map(([address, count]) => ({ address, count }))
+                            .sort((a, b) => b.count - a.count)
+                            .slice(0, 50)
+                    );
+
+                    setVoterHouseNoSuggestions(
+                        Array.from(houses)
+                            .map(([house_no, count]) => ({ house_no, count }))
+                            .sort((a, b) => b.count - a.count)
+                            .slice(0, 50)
+                    );
+                }
+            } catch (err) {
+                console.error('Error fetching suggestions:', err);
+            }
+        };
+        fetchStats();
+    }, [isVoterSearchOpen, tenantId, language]);
+
+    // Perform Voter Search
+    useEffect(() => {
+        if (!isVoterSearchOpen) return;
+
+        const timer = setTimeout(async () => {
+            // if (!voterNameFilter && !voterHouseNoFilter && !voterAddressFilter) {
+            //     setVoterSearchResults([]);
+            //     return;
+            // }
+
+            setIsVoterSearching(true);
+            try {
+                let query = supabase
+                    .from('voters')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .limit(50);
+
+                if (voterNameFilter) {
+                    // Try to search in both English and Marathi names
+                    query = query.or(`name_english.ilike.%${voterNameFilter}%,name_marathi.ilike.%${voterNameFilter}%`);
+                }
+                if (voterHouseNoFilter) {
+                    query = query.ilike('house_no', `%${voterHouseNoFilter}%`);
+                }
+                if (voterAddressFilter) {
+                    query = query.or(`address_english.ilike.%${voterAddressFilter}%,address_marathi.ilike.%${voterAddressFilter}%`);
+                }
+
+                const { data, error } = await query;
+                if (error) throw error;
+                setVoterSearchResults(data || []);
+            } catch (err) {
+                console.error(err);
+                toast.error('Search failed');
+            } finally {
+                setIsVoterSearching(false);
+            }
+        }, 500); // 500ms debounce
+
+        return () => clearTimeout(timer);
+    }, [voterNameFilter, voterHouseNoFilter, voterAddressFilter, isVoterSearchOpen, tenantId]);
+
+    const handleVoterSelect = (voter: Voter) => {
+        // Prioritize English for system/search, but display is handled by TranslatedText component usually.
+        // For form inputs, we usually prefer the specific language or English as fallback.
+        const name = voter.name_english || voter.name_marathi || 'Unknown';
+        const address = voter.address_english || voter.address_marathi || '';
+
+        setFormData(prev => ({
+            ...prev,
+            name: name,
+            mobile: voter.mobile || prev.mobile,
+            area: address // Use voter's address as the "Area/Venue"
+        }));
+
+        setIsVoterSearchOpen(false);
+        toast.success(t('common.voter_linked') || 'Voter Linked');
+    };
 
     const fetchVisitors = async () => {
         // Fetch last 200 visitors to have decent data for filtering
@@ -256,13 +389,23 @@ const VisitorLog = () => {
                         <form onSubmit={handleCheckIn} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">{t('office.full_name')}</label>
-                                <input
-                                    type="text" required
-                                    className="ns-input mt-1"
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder={t('office.full_name')}
-                                />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text" required
+                                        className="ns-input mt-1 flex-1"
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder={t('office.full_name')}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsVoterSearchOpen(true)}
+                                        className="mt-1 px-3 py-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 transition-colors border border-brand-200"
+                                        title={t('complaints.search_voter') || "Search form Voter List"}
+                                    >
+                                        <Search className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">{t('office.mobile')}</label>
@@ -643,6 +786,172 @@ const VisitorLog = () => {
                             >
                                 Delete
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Voter Search Modal */}
+            {isVoterSearchOpen && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+                        {/* Modal Header */}
+                        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <Search className="w-5 h-5 text-brand-600" />
+                                {t('complaints.form.search_voter') || "Search from Voter List"}
+                            </h2>
+                            <button
+                                onClick={() => setIsVoterSearchOpen(false)}
+                                className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Search Filters */}
+                        <div className="p-4 bg-slate-50 border-b border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                                    {t('staff.modal.name') || "Name"}
+                                </label>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        className="ns-input pl-9 w-full"
+                                        placeholder="Search by name..."
+                                        value={voterNameFilter}
+                                        onChange={e => setVoterNameFilter(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+                            </div>
+                            <div className="relative" ref={voterHouseNoWrapperRef}>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                                    {t('voters.house_no') || "House No"}
+                                </label>
+                                <input
+                                    type="text"
+                                    className="ns-input w-full"
+                                    placeholder="House No."
+                                    value={voterHouseNoFilter}
+                                    onChange={e => {
+                                        setVoterHouseNoFilter(e.target.value);
+                                        setShowVoterHouseNoSuggestions(true);
+                                    }}
+                                    onFocus={() => setShowVoterHouseNoSuggestions(true)}
+                                />
+                                {showVoterHouseNoSuggestions && voterHouseNoSuggestions.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                        {voterHouseNoSuggestions
+                                            .filter(s => s.house_no && s.house_no.toLowerCase().includes(voterHouseNoFilter.toLowerCase()))
+                                            .map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b border-slate-50 last:border-0 flex justify-between"
+                                                    onClick={() => {
+                                                        setVoterHouseNoFilter(item.house_no);
+                                                        setShowVoterHouseNoSuggestions(false);
+                                                    }}
+                                                >
+                                                    <span className="truncate">{item.house_no}</span>
+                                                    <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{item.count}</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="relative" ref={voterAddressWrapperRef}>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">
+                                    {t('voters.address') || "Address"}
+                                </label>
+                                <input
+                                    type="text"
+                                    className="ns-input w-full"
+                                    placeholder="Filter by Address"
+                                    value={voterAddressFilter}
+                                    onChange={e => {
+                                        setVoterAddressFilter(e.target.value);
+                                        setShowVoterAddressSuggestions(true);
+                                    }}
+                                    onFocus={() => setShowVoterAddressSuggestions(true)}
+                                />
+                                {showVoterAddressSuggestions && voterAddressSuggestions.length > 0 && (
+                                    <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                        {voterAddressSuggestions
+                                            .filter(s => s.address && s.address.toLowerCase().includes(voterAddressFilter.toLowerCase()))
+                                            .map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b border-slate-50 last:border-0 flex justify-between"
+                                                    onClick={() => {
+                                                        setVoterAddressFilter(item.address);
+                                                        setShowVoterAddressSuggestions(false);
+                                                    }}
+                                                >
+                                                    <span className="truncate">{item.address}</span>
+                                                    <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{item.count}</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Search Results */}
+                        <div className="flex-1 overflow-y-auto p-4 bg-slate-100">
+                            {isVoterSearching ? (
+                                <div className="flex justify-center items-center h-40">
+                                    <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+                                    <span className="ml-2 text-slate-500">Searching...</span>
+                                </div>
+                            ) : voterSearchResults.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {voterSearchResults.map(voter => (
+                                        <div
+                                            key={voter.id}
+                                            onClick={() => handleVoterSelect(voter)}
+                                            className="bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:border-brand-300 hover:shadow-md cursor-pointer transition-all group"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center shrink-0 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                                                    <User className="w-5 h-5 text-slate-400 group-hover:text-brand-600" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h4 className="font-semibold text-slate-900 truncate">
+                                                        <TranslatedText text={language === 'mr' ? (voter.name_marathi || voter.name_english || 'Unknown') : (voter.name_english || voter.name_marathi || 'Unknown')} />
+                                                    </h4>
+                                                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
+                                                        <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                                                            {voter.age || '?'} / {voter.gender === 'M' ? 'M' : 'F'}
+                                                        </span>
+                                                        {voter.mobile && (
+                                                            <span className="flex items-center gap-1">
+                                                                <Phone className="w-3 h-3" /> {voter.mobile}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500 mt-2 line-clamp-2">
+                                                        <MapPin className="w-3 h-3 inline mr-1" />
+                                                        {voter.house_no ? `${voter.house_no}, ` : ''}
+                                                        <TranslatedText text={language === 'mr' ? (voter.address_marathi || voter.address_english || '') : (voter.address_english || voter.address_marathi || '')} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-slate-500 opacity-60">
+                                    <Search className="w-12 h-12 mb-2" />
+                                    <p>
+                                        {voterNameFilter || voterHouseNoFilter || voterAddressFilter
+                                            ? (t('voters.no_results') || "No voters found matching your filters")
+                                            : (t('voters.no_results') || "No voters found")}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

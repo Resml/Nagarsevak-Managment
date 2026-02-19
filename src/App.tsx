@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import AppLayout from './components/layout/AppLayout';
 import Login from './pages/Login';
+import LandingPage from './pages/LandingPage';
 import Dashboard from './pages/dashboard/Dashboard';
 import VoterList from './pages/voters/VoterList';
 import ComplaintList from './pages/complaints/ComplaintList';
@@ -92,10 +93,11 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/join-party" element={<JoinParty />} />
 
-        <Route path="/" element={
+        <Route path="/dashboard" element={
           <ProtectedRoute>
             <AppLayout />
           </ProtectedRoute>

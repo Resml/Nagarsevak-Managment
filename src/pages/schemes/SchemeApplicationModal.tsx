@@ -80,7 +80,7 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
 
     const handleSelectVoter = (voter: Voter) => {
         setSelectedVoterId(voter.id);
-        const name = language === 'mr' ? (voter.name_marathi || voter.name) : voter.name; // Simple name handling
+        const name = language === 'mr' ? (voter.name_marathi || voter.name_english || voter.name || '') : (voter.name_english || voter.name || '');
         setApplicantName(name);
         setMobile(voter.mobile || '');
         setAddress(language === 'mr' ? (voter.address_marathi || voter.address) : voter.address);
@@ -182,7 +182,7 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
                                             >
                                                 <div>
                                                     <p className="text-sm font-medium text-slate-900">
-                                                        {language === 'mr' ? (voter.name_marathi || voter.name) : voter.name}
+                                                        {language === 'mr' ? (voter.name_marathi || voter.name_english) : (voter.name_english || voter.name)}
                                                     </p>
                                                     <p className="text-xs text-slate-500">
                                                         {voter.age}Y • {voter.gender} • {voter.epicNo}
