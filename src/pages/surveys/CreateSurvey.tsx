@@ -66,14 +66,14 @@ const CreateSurvey = () => {
             status: 'Active'
         });
 
-        navigate('/surveys');
+        navigate('/dashboard/surveys');
     };
 
     return (
         <div className="space-y-6 animate-fade-in-up pb-20">
             <div className="flex items-center space-x-4">
                 <button
-                    onClick={() => navigate('/surveys')}
+                    onClick={() => navigate('/dashboard/surveys')}
                     className="ns-btn-ghost border border-slate-200 px-2 py-2"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-700" />

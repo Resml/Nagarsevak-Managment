@@ -143,7 +143,7 @@ const EventDetail = () => {
             const { error } = await supabase.from('events').delete().eq('id', id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success(t('events.delete_success'));
-            navigate('/events');
+            navigate('/dashboard/events');
         } catch (err) {
             console.error('Error deleting event:', err);
             toast.error('Failed to delete event');
@@ -284,7 +284,7 @@ const EventDetail = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <button
-                    onClick={() => navigate('/events')}
+                    onClick={() => navigate('/dashboard/events')}
                     className="group flex items-center gap-2 text-slate-600 hover:text-brand-700 transition-colors font-medium"
                 >
                     <div className="p-2 bg-white rounded-full border border-slate-200 shadow-sm group-hover:border-brand-200 group-hover:shadow transition-all">

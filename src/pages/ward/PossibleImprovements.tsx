@@ -15,7 +15,7 @@ interface ImprovementParam {
     votes: number;
     location: string;
     area: string;
-    status: 'Proposed' | 'Approved' | 'Rejected';
+    status: 'Pending' | 'Planned' | 'In Progress' | 'Complete';
     completion_date: string;
     metadata?: any;
     created_at: string;
@@ -37,7 +37,7 @@ const PossibleImprovements = () => {
         description: '',
         location: '',
         area: '',
-        status: 'Proposed' as 'Proposed' | 'Approved' | 'Rejected',
+        status: 'Pending' as 'Pending' | 'Planned' | 'In Progress' | 'Complete',
         completion_date: '',
         peopleBenefited: ''
     });
@@ -47,6 +47,7 @@ const PossibleImprovements = () => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [dateSearch, setDateSearch] = useState('');
     const [showDateDropdown, setShowDateDropdown] = useState(false);
+    const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Planned' | 'In Progress' | 'Complete'>('All');
 
     // Helper: Get Unique Areas with Counts
     const getAreaSuggestions = () => {
@@ -83,9 +84,18 @@ const PossibleImprovements = () => {
 
         const matchesArea = !areaSearch || (item.area && item.area.toLowerCase().includes(areaSearch.toLowerCase()));
         const matchesDate = !dateSearch || (item.created_at && format(new Date(item.created_at), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase()));
+        const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
 
-        return matchesSearch && matchesArea && matchesDate;
+        return matchesSearch && matchesArea && matchesDate && matchesStatus;
     });
+
+    const statusCounts = {
+        All: improvements.length,
+        Pending: improvements.filter(i => i.status === 'Pending').length,
+        Planned: improvements.filter(i => i.status === 'Planned').length,
+        'In Progress': improvements.filter(i => i.status === 'In Progress').length,
+        Complete: improvements.filter(i => i.status === 'Complete').length,
+    };
 
     // Close dropdowns when clicking outside
     useEffect(() => {
@@ -175,7 +185,7 @@ const PossibleImprovements = () => {
                 description: '',
                 location: '',
                 area: '',
-                status: 'Proposed',
+                status: 'Pending',
                 completion_date: '',
                 peopleBenefited: ''
             });
@@ -303,6 +313,33 @@ const PossibleImprovements = () => {
                 </div>
             </div>
 
+            {/* Status Filter Tabs */}
+            <div className="flex flex-wrap gap-2">
+                {(['All', 'Pending', 'Planned', 'In Progress', 'Complete'] as const).map((s) => {
+                    const isActive = statusFilter === s;
+                    const activeClass = 'bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-100';
+                    const inactiveClass = 'bg-white text-slate-600 border-slate-200 hover:border-brand-300 hover:text-brand-600';
+                    const label = s === 'All' ? (t('common.all') || 'All') :
+                        s === 'Pending' ? t('improvements.status_pending') :
+                            s === 'Planned' ? t('improvements.status_planned') :
+                                s === 'In Progress' ? t('improvements.status_in_progress') :
+                                    t('improvements.status_complete');
+                    return (
+                        <button
+                            key={s}
+                            onClick={() => setStatusFilter(s)}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${isActive ? activeClass : inactiveClass}`}
+                        >
+                            {label}
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                {statusCounts[s as keyof typeof statusCounts] ?? 0}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {loading ? (
                     <>
@@ -318,7 +355,7 @@ const PossibleImprovements = () => {
                 ) : filteredImprovements.map((item) => (
                     <div
                         key={item.id}
-                        onClick={() => navigate(`/ward/improvements/${item.id}`)}
+                        onClick={() => navigate(`/dashboard/ward/improvements/${item.id}`)}
                         className="ns-card p-5 hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer"
                     >
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -327,12 +364,15 @@ const PossibleImprovements = () => {
 
                         <div className="relative z-10">
                             <div className="flex justify-between items-start mb-3">
-                                <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Approved' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    item.status === 'Rejected' ? 'bg-red-50 text-red-700 border-red-200' :
-                                        'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Complete' ? 'bg-green-50 text-green-700 border-green-200' :
+                                    item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                        item.status === 'Planned' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                            'bg-orange-50 text-orange-700 border-orange-200'
                                     }`}>
-                                    {item.status === 'Proposed' ? t('improvements.status_proposed') :
-                                        (item.status === 'Approved' ? t('improvements.status_approved') : t('improvements.status_rejected'))}
+                                    {item.status === 'Complete' ? t('improvements.status_complete') :
+                                        item.status === 'In Progress' ? t('improvements.status_in_progress') :
+                                            item.status === 'Planned' ? t('improvements.status_planned') :
+                                                t('improvements.status_pending')}
                                 </span>
                                 <div className="flex items-center text-xs text-slate-500">
                                     <Calendar className="w-3 h-3 mr-1" />
@@ -476,9 +516,10 @@ const PossibleImprovements = () => {
                                     value={newImprovement.status}
                                     onChange={e => setNewImprovement({ ...newImprovement, status: e.target.value as any })}
                                 >
-                                    <option value="Proposed">{t('improvements.status_proposed')}</option>
-                                    <option value="Approved">{t('improvements.status_approved')}</option>
-                                    <option value="Rejected">{t('improvements.status_rejected')}</option>
+                                    <option value="Pending">{t('improvements.status_pending')}</option>
+                                    <option value="Planned">{t('improvements.status_planned')}</option>
+                                    <option value="In Progress">{t('improvements.status_in_progress')}</option>
+                                    <option value="Complete">{t('improvements.status_complete')}</option>
                                 </select>
                             </div>
 

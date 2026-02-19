@@ -111,7 +111,7 @@ const SurveyDashboard = () => {
                         <p className="text-slate-500">{t('surveys.subtitle')}</p>
                     </div>
                     <button
-                        onClick={() => navigate('/surveys/new')}
+                        onClick={() => navigate('/dashboard/surveys/new')}
                         className="ns-btn-primary"
                     >
                         <Plus className="w-5 h-5" />

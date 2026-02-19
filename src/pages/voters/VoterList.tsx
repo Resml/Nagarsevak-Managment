@@ -442,7 +442,7 @@ const VoterList = () => {
                                 </button>
 
                                 <button
-                                    onClick={() => navigate('/political/add-voter')}
+                                    onClick={() => navigate('/dashboard/political/add-voter')}
                                     className="ns-btn-primary"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
@@ -671,7 +671,7 @@ const VoterList = () => {
                         {voters.map((voter) => (
                             <div
                                 key={voter.id}
-                                onClick={(e) => isTagMode ? handleTagVoter(voter, e) : navigate(`/voters/${voter.id}`)}
+                                onClick={(e) => isTagMode ? handleTagVoter(voter, e) : navigate(`/dashboard/voters/${voter.id}`)}
                                 className={`ns-card p-5 hover:shadow-md transition-shadow cursor-pointer group relative ${isTagMode && voter.is_friend_relative ? 'ring-2 ring-brand-500 ring-inset bg-brand-50/30' : ''}`}
                             >
                                 <div className="flex items-start justify-between">

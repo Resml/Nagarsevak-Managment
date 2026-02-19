@@ -58,7 +58,7 @@ const AddVoter = () => {
             if (error) throw error;
 
             toast.success(t('add_voter.messages.success'));
-            navigate('/voters');
+            navigate('/dashboard/voters');
         } catch (error: any) {
             console.error('Error adding voter:', error);
             toast.error(t('add_voter.messages.error'));
@@ -71,7 +71,7 @@ const AddVoter = () => {
         <div className="space-y-6 max-w-4xl mx-auto pb-12">
             <div className="flex items-center gap-4">
                 <button
-                    onClick={() => navigate('/voters')}
+                    onClick={() => navigate('/dashboard/voters')}
                     className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                 >
                     <ArrowLeft className="w-6 h-6 text-slate-600" />
@@ -236,7 +236,7 @@ const AddVoter = () => {
                 <div className="flex justify-end gap-4 pt-4">
                     <button
                         type="button"
-                        onClick={() => navigate('/voters')}
+                        onClick={() => navigate('/dashboard/voters')}
                         className="ns-btn-secondary px-8"
                         disabled={loading}
                     >

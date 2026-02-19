@@ -20,6 +20,7 @@ interface WorkItem {
     status: string;
     date: string;
     citizenName?: string;
+    amount?: number;
 }
 
 const WorkHistory = () => {
@@ -49,7 +50,8 @@ const WorkHistory = () => {
         area: '',
         status: 'Planned',
         completion_date: '',
-        peopleBenefited: ''
+        peopleBenefited: '',
+        amount: ''
     });
 
     useEffect(() => {
@@ -113,7 +115,8 @@ const WorkHistory = () => {
                 location: w.location,
                 area: w.area,
                 status: w.status,
-                date: w.completion_date || w.created_at
+                date: w.completion_date || w.created_at,
+                amount: w.amount
             }));
 
             // Sort by Date
@@ -158,11 +161,13 @@ const WorkHistory = () => {
         e.preventDefault();
 
         try {
+            const { peopleBenefited, ...workFields } = newWork;
             const payload = {
-                ...newWork,
+                ...workFields,
+                amount: newWork.amount || 0,
                 completion_date: newWork.completion_date || null,
                 metadata: JSON.stringify({
-                    people_benefited: newWork.peopleBenefited
+                    people_benefited: peopleBenefited
                 }),
                 created_at: new Date().toISOString()
             };
@@ -174,7 +179,7 @@ const WorkHistory = () => {
             if (insertError) throw insertError;
 
             setShowModal(false);
-            setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '', peopleBenefited: '' });
+            setNewWork({ title: '', description: '', location: '', area: '', status: 'Planned', completion_date: '', peopleBenefited: '', amount: '' });
             fetchData();
             toast.success(t('work_history.work_added'));
         } catch (err: any) {
@@ -393,6 +398,11 @@ const WorkHistory = () => {
                                                 <span>{t('work_history.for_citizen')} {item.citizenName}</span>
                                             </div>
                                         )}
+                                        {item.amount && (
+                                            <div className="flex items-center text-xs text-green-600 gap-1 font-medium">
+                                                <span>₹ {item.amount}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -461,37 +471,37 @@ const WorkHistory = () => {
                                         onChange={e => setNewWork({ ...newWork, area: e.target.value })}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
-                                    <input
-                                        type="date"
-                                        className="ns-input mt-1"
-                                        value={newWork.completion_date}
-                                        onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
+                                        <input
+                                            type="date"
+                                            className="ns-input mt-1"
+                                            value={newWork.completion_date}
+                                            onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>
+                                        <input
+                                            type="number"
+                                            className="ns-input mt-1"
+                                            placeholder={t('work_history.people_benefited_placeholder')}
+                                            value={newWork.peopleBenefited}
+                                            onChange={e => setNewWork({ ...newWork, peopleBenefited: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.total_amount_spent')}</label>
                                     <input
                                         type="number"
                                         className="ns-input mt-1"
-                                        placeholder={t('work_history.people_benefited_placeholder')}
-                                        value={newWork.peopleBenefited}
-                                        onChange={e => setNewWork({ ...newWork, peopleBenefited: e.target.value })}
+                                        placeholder={t('work_history.amount_placeholder')}
+                                        value={newWork.amount}
+                                        onChange={e => setNewWork({ ...newWork, amount: e.target.value })}
                                     />
                                 </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('work_history.status')}</label>
-                                <select
-                                    className="ns-input mt-1"
-                                    value={newWork.status}
-                                    onChange={e => setNewWork({ ...newWork, status: e.target.value })}
-                                >
-                                    <option value="Planned">{t('work_history.planned')}</option>
-                                    <option value="InProgress">{t('work_history.in_progress')}</option>
-                                    <option value="Completed">{t('work_history.completed')}</option>
-                                </select>
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">{t('work_history.cancel')}</button>

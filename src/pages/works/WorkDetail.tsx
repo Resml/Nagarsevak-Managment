@@ -18,6 +18,7 @@ interface WorkItemDetail {
     area: string;
     status: string;
     completion_date: string;
+    amount?: number;
     metadata?: any;
     created_at: string;
 }
@@ -47,7 +48,8 @@ const WorkDetail = () => {
         area: '',
         status: '',
         completion_date: '',
-        peopleBenefited: ''
+        peopleBenefited: '',
+        amount: ''
     });
 
     useEffect(() => {
@@ -84,7 +86,8 @@ const WorkDetail = () => {
                 area: data.area || '',
                 status: data.status,
                 completion_date: data.completion_date || '',
-                peopleBenefited: data.metadata?.people_benefited || ''
+                peopleBenefited: data.metadata?.people_benefited || '',
+                amount: data.amount || ''
             });
 
             // Fetch Feedback
@@ -111,7 +114,7 @@ const WorkDetail = () => {
             const { error } = await supabase.from('works').delete().eq('id', id).eq('tenant_id', tenantId); // Secured
             if (error) throw error;
             toast.success('Work deleted successfully');
-            navigate('/history');
+            navigate('/dashboard/history');
         } catch (err) {
             console.error('Error deleting work:', err);
             toast.error('Failed to delete work');
@@ -134,6 +137,7 @@ const WorkDetail = () => {
                     location: editForm.location,
                     area: editForm.area,
                     status: editForm.status,
+                    amount: editForm.amount || 0,
                     completion_date: editForm.completion_date || null,
                     metadata: JSON.stringify({
                         people_benefited: editForm.peopleBenefited
@@ -144,7 +148,7 @@ const WorkDetail = () => {
 
             if (error) throw error;
 
-            setWork(prev => prev ? ({ ...prev, ...editForm }) : null);
+            setWork(prev => prev ? ({ ...prev, ...editForm, amount: editForm.amount ? Number(editForm.amount) : 0 }) : null);
             toast.success('Work updated successfully');
             setIsEditModalOpen(false);
         } catch (err) {
@@ -265,7 +269,7 @@ const WorkDetail = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <button
-                    onClick={() => navigate('/history')}
+                    onClick={() => navigate('/dashboard/history')}
                     className="group flex items-center gap-2 text-slate-600 hover:text-brand-700 transition-colors font-medium"
                 >
                     <div className="p-2 bg-white rounded-full border border-slate-200 shadow-sm group-hover:border-brand-200 group-hover:shadow transition-all">
@@ -334,6 +338,15 @@ const WorkDetail = () => {
                                     <div>
                                         <div className="text-xs uppercase font-semibold text-slate-400">{t('work_history.people_benefited')}</div>
                                         <div className="font-medium text-slate-900">{work.metadata.people_benefited}</div>
+                                    </div>
+                                </div>
+                            )}
+                            {work.amount && (
+                                <div className="flex items-center gap-2">
+                                    <div className="p-2 bg-green-50 rounded-full text-green-600"><User className="w-4 h-4" /></div>
+                                    <div>
+                                        <div className="text-xs uppercase font-semibold text-slate-400">{t('work_history.total_amount_spent')}</div>
+                                        <div className="font-medium text-slate-900">₹{work.amount}</div>
                                     </div>
                                 </div>
                             )}
@@ -512,16 +525,14 @@ const WorkDetail = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.status')}</label>
-                                        <select
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.total_amount_spent')}</label>
+                                        <input
+                                            type="number"
                                             className="ns-input w-full"
-                                            value={editForm.status}
-                                            onChange={e => setEditForm({ ...editForm, status: e.target.value })}
-                                        >
-                                            <option value="Planned">{t('work_history.planned')}</option>
-                                            <option value="InProgress">{t('work_history.in_progress')}</option>
-                                            <option value="Completed">{t('work_history.completed')}</option>
-                                        </select>
+                                            value={editForm.amount}
+                                            onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+                                            placeholder={t('work_history.amount_placeholder')}
+                                        />
                                     </div>
                                 </div>
 
