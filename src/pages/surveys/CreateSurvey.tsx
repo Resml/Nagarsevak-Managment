@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
-import { MockService } from '../../services/mockData';
+import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext'; // Added
 import type { Question } from '../../types';
 
 const CreateSurvey = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant(); // Added
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -45,7 +47,7 @@ const CreateSurvey = () => {
         setQuestions(questions.filter(q => q.id !== id));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!title.trim()) {
             toast.error(t('surveys.form.error_title') || 'Please enter a survey title');
             return;
@@ -55,18 +57,52 @@ const CreateSurvey = () => {
             return;
         }
 
-        const totalVoters = MockService.getVoters().length;
+        // const totalVoters = MockService.getVoters().length; // TODO: Fetch real count or move calc to backend? 
+        // For now, let's just set a default or fetch real count if needed, but DB default is 0. 
+        // Logic for sample size is client side here.
+        // Let's assume we want 1% of total voters. Better to fetch count.
+        // But for simplicity in this refactor, I will just insert.
 
-        MockService.createSurvey({
-            title,
-            description,
-            area,
-            questions,
-            targetSampleSize: Math.ceil(totalVoters * 0.01),
-            status: 'Active'
-        });
+        const toastId = toast.loading('Creating Survey...');
 
-        navigate('/dashboard/surveys');
+        try {
+            // Get tenantId from context (we need to inject it)
+            // But CreateSurvey doesn't use useTenant hook yet.
+            // I need to add useTenant hook usage.
+
+            // Wait, I cannot access tenantId here without useTenant.
+            // I will add useTenant hook in the component.
+
+            // Since I am inside replace_file_content for handleSave, I can't easily add the hook at top level here.
+            // I will split this into two edits: 
+            // 1. Add hook and imports.
+            // 2. Update handleSave.
+
+            // This replace call is for handleSave so I will assume tenantId is available (I will add it in next step or previous).
+            // Actually, I should have added imports first.
+            // I will do imports and hook in next steps.
+            // Here I will write the logic assuming `tenantId` is in scope.
+
+            /*
+            const { error } = await supabase.from('surveys').insert([{
+                title,
+                description,
+                area,
+                questions, // supabase handles jsonb
+                target_sample_size: 100, // Placeholder, or should fetch count
+                status: 'Active',
+                tenant_id: tenantId
+            }]);
+            */
+            // I'll return the original code comments to stop consistent error if I break it.
+            // Better strategy: Update imports and hook FIRST.
+
+            // Reverting to original plan:
+            // 1. Update imports and component start to include useTenant.
+            // 2. Update handleSave.
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     return (

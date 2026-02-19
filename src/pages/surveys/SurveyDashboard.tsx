@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, FileText, Users, Clock, Send, Loader2, Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { MockService } from '../../services/mockData';
+import { supabase } from '../../services/supabaseClient';
 import { VoterService } from '../../services/voterService';
 import { useTenant } from '../../context/TenantContext';
 import type { Survey } from '../../types';
@@ -22,7 +22,7 @@ const SurveyDashboard = () => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
 
     useEffect(() => {
-        setSurveys(MockService.getSurveys());
+        fetchSurveys();
         fetchStats();
 
         // Close dropdowns
@@ -35,7 +35,36 @@ const SurveyDashboard = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [tenantId]);
+
+    const fetchSurveys = async () => {
+        if (!tenantId) return;
+        try {
+            const { data, error } = await supabase
+                .from('surveys')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const mappedSurveys: Survey[] = (data || []).map(s => ({
+                id: s.id,
+                title: s.title,
+                description: s.description,
+                area: s.area,
+                status: s.status,
+                questions: s.questions, // JSONB usually comes as object/array automatically in supabase-js
+                targetSampleSize: s.target_sample_size || 0,
+                createdAt: s.created_at
+            }));
+
+            setSurveys(mappedSurveys);
+        } catch (error) {
+            console.error('Error fetching surveys:', error);
+            toast.error('Failed to load surveys');
+        }
+    };
 
     const fetchStats = async () => {
         if (!tenantId) return;
