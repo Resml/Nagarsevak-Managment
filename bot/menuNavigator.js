@@ -126,7 +126,7 @@ class MenuNavigator {
         // Route to appropriate handler based on current state
         switch (session.currentMenu) {
             case MENU_STATES.LANGUAGE_SELECTION:
-                return await this.handleLanguageSelection(sock, userId, userName, input);
+                return await this.handleLanguageSelection(sock, userId, userName, input, tenantId);
 
             case MENU_STATES.MAIN_MENU:
                 return await this.handleMainMenu(sock, tenantId, userId, input);
@@ -727,7 +727,7 @@ class MenuNavigator {
     /**
      * Handle language selection
      */
-    async handleLanguageSelection(sock, userId, userName, input) {
+    async handleLanguageSelection(sock, userId, userName, input, tenantId) {
         const session = this.getSession(userId);
         let selectedLanguage = null;
 
@@ -752,6 +752,17 @@ class MenuNavigator {
             // Show main menu
             return await this.showMainMenu(sock, userId, selectedLanguage);
         } else {
+            // Check if this is a reply to a pending task (Staff Date Estimate) - Stateless Recovery
+            if (tenantId) {
+                const pendingTask = await this.findPendingStaffTask(sock, tenantId, userId);
+                if (pendingTask) {
+                    console.log(`[${tenantId}] Found pending task #${pendingTask.id} for staff ${userId} (in Lang Search)`);
+                    session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
+                    session.currentComplaintId = pendingTask.id;
+                    return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
+                }
+            }
+
             // Invalid selection, show menu again
             const errorMsg = MESSAGES.invalid_option.en + '\n\n' + MENUS.language.en.text;
             await sock.sendMessage(userId, { text: errorMsg });
@@ -792,6 +803,18 @@ class MenuNavigator {
             case '6': // Other Services
                 return await this.showOtherMenu(sock, userId, lang);
             default:
+                // Check if this is a reply to a pending task (Staff Date Estimate) - Stateless Recovery
+                // Even if in Main Menu, if input is not 1-6/0, check if it's a date reply for a task
+                if (tenantId) {
+                    const pendingTask = await this.findPendingStaffTask(sock, tenantId, userId);
+                    if (pendingTask) {
+                        console.log(`[${tenantId}] Found pending task #${pendingTask.id} for staff ${userId} (in Main Menu)`);
+                        session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
+                        session.currentComplaintId = pendingTask.id;
+                        return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
+                    }
+                }
+
                 const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
@@ -1104,6 +1127,7 @@ ${complaintData.problem}
         const staffSession = this.getSession(staffJid);
         staffSession.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
         staffSession.currentTask = complaintData;
+        staffSession.currentComplaintId = complaintData.id; // Fix: Add this for handleStaffTaskDateEstimate
 
         // 2. Notify Citizen
         const citizenMobile = complaintData.user_id || (complaintData.voter ? complaintData.voter.mobile : null);
