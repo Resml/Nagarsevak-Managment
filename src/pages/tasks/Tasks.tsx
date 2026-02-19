@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2 } from 'lucide-react';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
+import { format } from 'date-fns';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -32,6 +33,25 @@ const Tasks = () => {
     const [staffList, setStaffList] = useState<any[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
+
+    // Filter State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [areaSearch, setAreaSearch] = useState('');
+    const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+    const [dateSearch, setDateSearch] = useState('');
+    const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+    useEffect(() => {
+        // Close dropdowns when clicking outside
+        const handleClickOutside = (event: MouseEvent) => {
+            if (!(event.target as Element).closest('.dropdown-container')) {
+                setShowAreaDropdown(false);
+                setShowDateDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         fetchTasks();
@@ -186,12 +206,86 @@ const Tasks = () => {
         }
     };
 
+    // Helper: Get Unique Areas with Counts
+    const getAreaSuggestions = () => {
+        const stats: Record<string, number> = {};
+        tasks.forEach(task => {
+            const area = task.address || task.office_name; // Use address or office name as "Area"
+            if (area) {
+                stats[area] = (stats[area] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([area, count]) => ({ area, count }));
+    };
+
+    // Helper: Get Unique Dates with Counts
+    const getDateSuggestions = () => {
+        const stats: Record<string, number> = {};
+        tasks.forEach(task => {
+            if (task.due_date) {
+                const dateStr = format(new Date(task.due_date), 'MMM d, yyyy');
+                stats[dateStr] = (stats[dateStr] || 0) + 1;
+            }
+        });
+        return Object.entries(stats).map(([date, count]) => ({ date, count }));
+    };
+
+    const formatTaskTitle = (title: string) => {
+        if (!title) return '';
+
+        // Handle "Greeting from Name"
+        const greetingMatch = title.match(/^Greeting from (.+)$/i);
+        if (greetingMatch) {
+            return t('tasks.greeting_from').replace('{{name}}', greetingMatch[1]);
+        }
+
+        // Handle "Invitation from Name"
+        const invitationMatch = title.match(/^Invitation from (.+)$/i);
+        if (invitationMatch) {
+            return t('tasks.invitation_from').replace('{{name}}', invitationMatch[1]);
+        }
+
+        // Handle "Complaint from Name"
+        const complaintMatch = title.match(/^Complaint from (.+)$/i);
+        if (complaintMatch) {
+            return t('tasks.complaint_from').replace('{{name}}', complaintMatch[1]);
+        }
+
+        return title;
+    };
+
+    const filteredTasks = tasks.filter(task => {
+        const matchesSearch = !searchTerm || (() => {
+            const term = searchTerm.toLowerCase();
+            const translatedTitle = formatTaskTitle(task.title).toLowerCase();
+            return (
+                translatedTitle.includes(term) ||
+                task.title.toLowerCase().includes(term) ||
+                (task.description && task.description.toLowerCase().includes(term)) ||
+                (task.address && task.address.toLowerCase().includes(term)) ||
+                (task.office_name && task.office_name.toLowerCase().includes(term))
+            );
+        })();
+
+        const taskArea = task.address || task.office_name || '';
+        const matchesArea = !areaSearch || taskArea.toLowerCase().includes(areaSearch.toLowerCase());
+
+        const matchesDate = !dateSearch || (task.due_date && format(new Date(task.due_date), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase()));
+
+        return matchesSearch && matchesArea && matchesDate;
+    });
+
     return (
         <div className="space-y-6">
-            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900">{t('tasks.title')}</h1>
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            {t('tasks.title')}
+                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
+                                {t('work_history.found') || 'Found'}: {filteredTasks.length}
+                            </span>
+                        </h1>
                         <p className="text-sm text-slate-500">{t('tasks.subtitle')}</p>
                     </div>
                     <div className="flex gap-2">
@@ -206,6 +300,82 @@ const Tasks = () => {
                         >
                             <Plus className="w-4 h-4" /> {t('tasks.new_task')}
                         </button>
+                    </div>
+                </div>
+
+                {/* Filters Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    {/* Main Search */}
+                    <div className="md:col-span-6 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder={t('work_history.search_placeholder') || "Search tasks..."}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="ns-input pl-10 w-full"
+                        />
+                    </div>
+
+                    {/* Area Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder={t('work_history.search_area') || "Search Area"}
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={areaSearch}
+                            onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
+                            onChange={(e) => setAreaSearch(e.target.value)}
+                        />
+                        {showAreaDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.area}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setAreaSearch(item.area);
+                                            setShowAreaDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.area}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                                {getAreaSuggestions().filter(s => s.area.toLowerCase().includes(areaSearch.toLowerCase())).length === 0 && (
+                                    <div className="px-4 py-2 text-sm text-slate-500 italic">{t('work_history.no_areas') || "No areas found"}</div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Date Search */}
+                    <div className="md:col-span-3 relative dropdown-container">
+                        <input
+                            type="text"
+                            placeholder={t('work_history.filter_date') || "Filter Date"}
+                            className="ns-input w-full bg-white shadow-sm"
+                            value={dateSearch}
+                            onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
+                            onChange={(e) => setDateSearch(e.target.value)}
+                        />
+                        {showDateDropdown && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                {getDateSuggestions().filter(d => d.date.toLowerCase().includes(dateSearch.toLowerCase())).map((item) => (
+                                    <div
+                                        key={item.date}
+                                        className="px-4 py-2 hover:bg-slate-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => {
+                                            setDateSearch(item.date);
+                                            setShowDateDropdown(false);
+                                        }}
+                                    >
+                                        <span className="text-sm text-slate-700">{item.date}</span>
+                                        <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -282,35 +452,35 @@ const Tasks = () => {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Office Name</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.office_name')}</label>
                                     <input
                                         type="text"
                                         value={newTask.office_name}
                                         onChange={e => setNewTask({ ...newTask, office_name: e.target.value })}
                                         className="ns-input"
-                                        placeholder="e.g. Ward Office"
+                                        placeholder={t('tasks.office_placeholder')}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Who to meet</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.meet_person')}</label>
                                     <input
                                         type="text"
                                         value={newTask.meet_person_name}
                                         onChange={e => setNewTask({ ...newTask, meet_person_name: e.target.value })}
                                         className="ns-input"
-                                        placeholder="Person Name"
+                                        placeholder={t('tasks.person_placeholder')}
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Assign to Staff</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.assign_staff')}</label>
                                 <select
                                     value={newTask.assigned_staff_id}
                                     onChange={e => setNewTask({ ...newTask, assigned_staff_id: e.target.value })}
                                     className="ns-input"
                                 >
-                                    <option value="">Select Staff Member</option>
+                                    <option value="">{t('tasks.select_staff')}</option>
                                     {staffList.map(staff => (
                                         <option key={staff.id} value={staff.id}>
                                             {staff.name} ({staff.role})
@@ -366,11 +536,11 @@ const Tasks = () => {
                             </div>
                         ))}
                     </div>
-                ) : tasks.map(task => (
+                ) : filteredTasks.map(task => (
                     <div key={task.id} className="ns-card p-5 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-2">
                             <div>
-                                <h3 className="font-semibold text-slate-900 text-lg">{task.title}</h3>
+                                <h3 className="font-semibold text-slate-900 text-lg">{formatTaskTitle(task.title)}</h3>
                                 <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
                                     <span className={clsx(
                                         "px-2 py-0.5 rounded-full text-xs font-medium",
@@ -420,7 +590,7 @@ const Tasks = () => {
                     </div>
                 ))}
 
-                {tasks.length === 0 && !loading && (
+                {filteredTasks.length === 0 && !loading && (
                     <div className="text-center py-12 text-slate-500 ns-card border-dashed">
                         <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                         <p>{t('tasks.no_tasks')}</p>
@@ -437,7 +607,7 @@ const Tasks = () => {
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
                         <p className="text-slate-600 mb-6">
-                            {t('common.delete_warning_item').replace('{item}', deleteTarget.title)}
+                            {t('common.delete_warning_item').replace('{item}', formatTaskTitle(deleteTarget.title))}
                         </p>
                         <div className="flex gap-3 justify-center">
                             <button

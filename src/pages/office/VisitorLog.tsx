@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
-import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X } from 'lucide-react';
+import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 
@@ -18,10 +18,16 @@ interface Visitor {
     area: string;
     visit_date: string;
     status: string;
+    metadata?: {
+        event_date?: string;
+        event_time?: string;
+        event_name?: string;
+        amount?: string;
+    };
 }
 
 const VisitorLog = () => {
-    const { t, language } = useLanguage();
+    const { t } = useLanguage();
     const { tenantId } = useTenant();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [formData, setFormData] = useState({
@@ -30,7 +36,10 @@ const VisitorLog = () => {
         purpose: 'Complaint', // Default
         reference: '',
         area: '',
-        remarks: ''
+        remarks: '',
+        eventDate: '',
+        eventTime: '',
+        amount: ''
     });
 
     // Edit / Delete / Expand State
@@ -67,7 +76,7 @@ const VisitorLog = () => {
 
     const fetchVisitors = async () => {
         // Fetch last 200 visitors to have decent data for filtering
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('visitors')
             .select('*')
             .eq('tenant_id', tenantId) // Secured
@@ -90,7 +99,12 @@ const VisitorLog = () => {
                         purpose: formData.purpose,
                         reference: formData.reference,
                         area: formData.area,
-                        remarks: formData.remarks
+                        remarks: formData.remarks,
+                        message: {
+                            event_date: formData.eventDate,
+                            event_time: formData.eventTime,
+                            amount: formData.amount
+                        }
                     })
                     .eq('id', editingId)
                     .eq('tenant_id', tenantId); // Secured
@@ -109,14 +123,19 @@ const VisitorLog = () => {
                         area: formData.area,
                         remarks: formData.remarks,
                         visit_date: new Date().toISOString(),
-                        tenant_id: tenantId // Secured
+                        tenant_id: tenantId, // Secured
+                        metadata: {
+                            event_date: formData.eventDate,
+                            event_time: formData.eventTime,
+                            amount: formData.amount
+                        }
                     }]);
 
                 if (error) throw error;
                 toast.success('Visitor Checked In');
             }
 
-            setFormData({ name: '', mobile: '', purpose: 'Complaint', reference: '', area: '', remarks: '' });
+            setFormData({ name: '', mobile: '', purpose: 'Complaint', reference: '', area: '', remarks: '', eventDate: '', eventTime: '', amount: '' });
             fetchVisitors();
         } catch (err) {
             console.error(err);
@@ -132,7 +151,10 @@ const VisitorLog = () => {
             purpose: visitor.purpose,
             reference: visitor.reference,
             area: visitor.area,
-            remarks: visitor.remarks
+            remarks: visitor.remarks,
+            eventDate: visitor.metadata?.event_date || '',
+            eventTime: visitor.metadata?.event_time || '',
+            amount: visitor.metadata?.amount || ''
         });
         // Scroll to form nicely
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -261,15 +283,57 @@ const VisitorLog = () => {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('office.area')}</label>
+                                <label className="block text-sm font-medium text-slate-700">
+                                    {(formData.purpose === 'Greeting' || formData.purpose === 'Invitation') ? t('office.event_venue') || 'Event Venue / Address' : t('office.area')}
+                                </label>
                                 <input
                                     type="text"
                                     className="ns-input mt-1"
                                     value={formData.area}
                                     onChange={e => setFormData({ ...formData, area: e.target.value })}
-                                    placeholder={t('office.area_placeholder')}
+                                    placeholder={(formData.purpose === 'Greeting' || formData.purpose === 'Invitation') ? "Enter Venue" : t('office.area_placeholder')}
                                 />
                             </div>
+
+                            {(formData.purpose === 'Greeting' || formData.purpose === 'Invitation') && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('office.event_date')}</label>
+                                        <input
+                                            type="date"
+                                            className="ns-input mt-1"
+                                            value={formData.eventDate}
+                                            onChange={e => setFormData({ ...formData, eventDate: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('office.event_time')}</label>
+                                        <input
+                                            type="time"
+                                            className="ns-input mt-1"
+                                            value={formData.eventTime}
+                                            onChange={e => setFormData({ ...formData, eventTime: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(formData.purpose === 'Donation' || formData.purpose === 'Help') && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('office.amount')} <span className="text-gray-400 font-normal ml-1">({t('staff.modal.optional')})</span></label>
+                                    <div className="relative mt-1">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-medium">₹</span>
+                                        <input
+                                            type="number"
+                                            className="ns-input pl-8"
+                                            value={formData.amount}
+                                            onChange={e => setFormData({ ...formData, amount: e.target.value })}
+                                            placeholder="0.00"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">{t('office.purpose')}</label>
                                 <select
@@ -281,6 +345,7 @@ const VisitorLog = () => {
                                     <option value="Meeting">{t('office.purpose_meeting')}</option>
                                     <option value="Greeting">{t('office.purpose_greeting')}</option>
                                     <option value="Donation">{t('office.purpose_donation')}</option>
+                                    <option value="Help">{t('office.purpose_help')}</option>
                                     <option value="Other">{t('office.purpose_other')}</option>
                                 </select>
                             </div>
@@ -313,7 +378,8 @@ const VisitorLog = () => {
                                     type="button"
                                     onClick={() => {
                                         setEditingId(null);
-                                        setFormData({ name: '', mobile: '', purpose: 'Complaint', reference: '', area: '', remarks: '' });
+                                        setEditingId(null);
+                                        setFormData({ name: '', mobile: '', purpose: 'Complaint', reference: '', area: '', remarks: '', eventDate: '', eventTime: '', amount: '' });
                                     }}
                                     className="w-full mt-2 text-sm text-slate-500 hover:text-slate-700"
                                 >
@@ -478,6 +544,16 @@ const VisitorLog = () => {
                                         <div className="text-right shrink-0 ml-4">
                                             <div className="text-sm font-bold text-slate-900">{format(new Date(v.visit_date), 'h:mm a')}</div>
                                             <div className="text-xs font-medium text-slate-500 mt-1">{format(new Date(v.visit_date), 'MMM dd')}</div>
+                                            {v.metadata?.event_date && (
+                                                <div className="mt-1 text-xs bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-100">
+                                                    Event: {format(new Date(v.metadata.event_date), 'MMM dd')}
+                                                </div>
+                                            )}
+                                            {v.metadata?.amount && (
+                                                <div className="mt-1 text-xs bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-100 font-medium">
+                                                    ₹{v.metadata.amount}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

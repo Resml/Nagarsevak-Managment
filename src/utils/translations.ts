@@ -18,6 +18,7 @@ export const translations = {
             back: "Back",
             edit: "Edit",
             delete: "Delete",
+            all: "All",
             All: "All",
             Women: "Women",
             Student: "Student",
@@ -290,7 +291,50 @@ export const translations = {
             photo_req: "Recent passport-sized color photograph",
             epic_req: "EPIC details for deletion/updates",
             fir_req: "FIR copy (only for lost EPIC replacement)",
-            deletion_reason: "Reason for deletion (Death certificate, shifting proof, etc.)"
+            deletion_reason: "Reason for deletion (Death certificate, shifting proof, etc.)",
+            applications_history: "Applications History",
+            log_application: "Log Application",
+            no_applications: "No applications logged yet.",
+            form_type: "Form Type",
+            applicant_name: "Applicant Name",
+            status: "Status",
+            date: "Date",
+            notes: "Notes",
+            log_new_application: "Log New Application",
+            select_voter: "Select Voter",
+            search_placeholder: "Search applications...",
+            search_voter_placeholder: "Search voter by name...",
+            manual_entry: "Manual Entry (Non-Voter)",
+            form_status: "Application Status",
+            status_submitted: "Submitted",
+            status_pending: "Pending",
+            status_approved: "Approved",
+            status_rejected: "Rejected",
+            save_log: "Save Log",
+            applicant_mobile: "Applicant Mobile",
+            forms_tab: "Voter Forms",
+            applications_tab: "Applications History",
+            form_type_search: "Search",
+            form_type_form6: "Form 6",
+            form_type_form7: "Form 7",
+            form_type_form8: "Form 8",
+            edit_application: "Edit Application",
+            delete_application: "Delete Application",
+            delete_confirm_title: "Delete Application?",
+            delete_confirm_msg: "Are you sure you want to delete this application? This action cannot be undone.",
+            link_voter_title: "Link a Voter?",
+            link_voter_desc: "Search and select a voter to auto-fill details",
+            search_voter_list: "Search Voter List",
+            back_to_form: "Back to form",
+            search_voter: "Search Voter",
+            search_by_name_mobile_epic: "Search by Name, Mobile or EPIC...",
+            searching: "Searching...",
+            no_voters_found: "No voters found",
+            type_to_search: "Type to search...",
+            linked_to_voter_id: "Linked to Voter ID",
+            remove: "Remove",
+            mobile_number_placeholder: "Mobile Number",
+            notes_placeholder: "Any additional details..."
         },
         communication_page: {
             title: "Public Communication",
@@ -520,6 +564,12 @@ export const translations = {
             ward_num: "Ward Number",
             party_name: "Party Name"
         },
+        ward_map: {
+            title: "Ward Map",
+            subtitle: "View ward geographical information",
+            coming_soon: "Map Coming Soon",
+            coming_soon_desc: "Interactive ward map is currently under development. Please check back later."
+        },
         status: {
             Pending: "Pending",
             Assigned: "Assigned",
@@ -727,9 +777,13 @@ export const translations = {
             purpose_other: "Other",
             edit_visitor: "Edit Visitor",
             update_visitor: "Update Visitor",
-            cancel_edit: "Cancel Edit",
             filter_area: "Filter Area",
-            filter_date: "Filter Date"
+            filter_date: "Filter Date",
+            event_venue: "Event Venue",
+            event_date: "Event Date",
+            event_time: "Event Time",
+            amount: "Amount",
+            purpose_help: "Help"
         },
 
         schemes: {
@@ -781,6 +835,8 @@ export const translations = {
                 reject_btn: "Reject",
                 delete_btn: "Delete",
                 delete_confirm: "Are you sure you want to delete this application?",
+                delete_title: "Delete Application?",
+                delete_confirm_msg: "Are you sure you want to delete this application? This action cannot be undone.",
                 legacy_scheme: "Legacy Scheme"
             },
             check_eligibility: "Check Eligibility",
@@ -919,7 +975,16 @@ export const translations = {
             created: "Created",
             view_details: "View details",
             no_tasks: "No tasks found. Create one manually or scan a document!",
-            priority_label: "Priority"
+            priority_label: "Priority",
+            office_name: "Office Name",
+            office_placeholder: "e.g. Ward Office",
+            meet_person: "Who to meet",
+            person_placeholder: "Person Name",
+            assign_staff: "Assign to Staff",
+            select_staff: "Select Staff Member",
+            greeting_from: "Greeting from {{name}}",
+            invitation_from: "Invitation from {{name}}",
+            complaint_from: "Complaint from {{name}}"
         },
         improvements: {
             title: "Possible Improvements",
@@ -1242,6 +1307,93 @@ export const translations = {
 
 
 
+        landing: {
+            hero: {
+                title: "Empowering Local Leaders for a Better Tomorrow",
+                subtitle: "A comprehensive digital solution to manage your ward, connect with citizens, and track development work efficiently.",
+                get_started: "Get Started",
+                login: "Login to Dashboard",
+                dashboard: "Go to Dashboard",
+                badge: "Smart Governance Platform",
+                view_demo: "View Demo",
+                trusted_by: "TRUSTED BY LEADING MUNICIPAL REPRESENTATIVES"
+            },
+            features: {
+                title: "Everything you need to serve better",
+                subtitle: "Streamline your daily operations with powerful tools designed specifically for ward management.",
+                complaints_title: "Complaint Management",
+                complaints_desc: "Track and resolve citizen grievances with a streamlined ticketing system.",
+                voters_title: "Voter Database",
+                voters_desc: "Access comprehensive voter lists and manage constituency data easily.",
+                works_title: "Development Works",
+                works_desc: "Monitor ongoing projects, fund utilization, and ward improvements.",
+                schemes_title: "Government Schemes",
+                schemes_desc: "Guide citizens to relevant beneficiary schemes with AI-powered search.",
+                comm_title: "Public Communication",
+                comm_desc: "Send updates via WhatsApp/SMS and managed social media presence.",
+                analysis_title: "Smart Analytics",
+                analysis_desc: "Data-driven insights for better decision making and strategy."
+            },
+            stats: {
+                wards: "Wards Managed",
+                citizens: "Citizens Connected",
+                complaints: "Complaints Resolved",
+                projects: "Active Projects"
+            },
+            footer: {
+                rights: "All rights reserved.",
+                privacy: "Privacy Policy",
+                terms: "Terms of Service",
+                description: "Building bridges between citizens and administration through technology and transparency.",
+                platform: "Platform",
+                features: "Features",
+                testimonials: "Testimonials",
+                pricing: "Pricing",
+                legal: "Legal",
+                made_with_love: "Made with ❤️ for Better Governance"
+            }
+        },
+        login: {
+            welcome: "Welcome Back",
+            subtitle: "Sign in to your account",
+            email_label: "Email Address",
+            password_label: "Password",
+            forgot_password: "Forgot Password?",
+            login_button: "Sign In",
+            signing_in: "Signing in...",
+            nagarsevak: "Nagarsevak (Admin)",
+            staff: "Staff Member",
+            email_placeholder: "Enter your email",
+            password_placeholder: "Enter your password",
+            branding_title: "Smart Management for Modern Governance.",
+            branding_subtitle: "Streamline citizen requests, manage your staff, and track development works in one unified workspace.",
+            trusted_by: "Trusted by Nagarsevaks across the state"
+        },
+        testimonials: {
+            title: "Trusted by Community Leaders",
+            subtitle: "See how Nagar Sevak is transforming ward management across the state.",
+            review_1: "This platform has completely revolutionized how I track complaints. My response time has improved by 50%!",
+            review_1_author: "Rajesh Patil",
+            review_1_role: "Corporator, Ward 12",
+            review_2: "Tracking development funds was a nightmare before. Now everything is transparent and easy to manage.",
+            review_2_author: "Priya Deshmukh",
+            review_2_role: "Nagar Sevak, Pune",
+            review_3: "The voter analysis tools helped me connect with the right people during the election campaign. Highly recommended!",
+            review_3_author: "Amit Shinde",
+            review_3_role: "Independent Candidate"
+        },
+        faq: {
+            title: "Frequently Asked Questions",
+            subtitle: "Common questions about the platform",
+            q1: "Is my data secure?",
+            a1: "Yes, we use enterprise-grade encryption to ensure all citizen and administrative data is 100% secure.",
+            q2: "Can I manage multiple wards?",
+            a2: "Absolutely. The system supports multi-ward management with granular access controls for your staff.",
+            q3: "Is there a mobile app?",
+            a3: "Our platform is fully responsive and works seamlessly on all mobile devices, tablets, and desktops.",
+            q4: "How do I get started?",
+            a4: "Simply click 'Get Started' to request a demo. Our team will set up your account within 24 hours."
+        }
     },
     mr: {
         common: {
@@ -1259,6 +1411,7 @@ export const translations = {
             back: "मागे",
             edit: "संपादित करा",
             delete: "हटवा",
+            all: "सर्व",
             All: "सर्व",
             Women: "महिला",
             Student: "विद्यार्थी",
@@ -1530,8 +1683,51 @@ export const translations = {
             other_requirements: "इतर आवश्यकता",
             photo_req: "अलीकडील पासपोर्ट आकाराचा रंगीत फोटो",
             epic_req: "वगळण्यासाठी/दुरुस्तीसाठी EPIC तपशील",
-            fir_req: "एफआयआर (FIR) प्रत (केवळ हरवलेल्या ओळखपत्रासाठी)",
-            deletion_reason: "वगळण्यासाठी कारण (मृत्यू दाखला, स्थलांतर पुरावा, इ.)"
+
+            applications_history: "अर्ज केलेले",
+            log_application: "अर्ज नोंदवा",
+            no_applications: "अद्याप कोणतेही अर्ज नोंदवलेले नाहीत.",
+            form_type: "अर्जाचा प्रकार",
+            applicant_name: "अर्जदाराचे नाव",
+            status: "स्थिती",
+            date: "तारीख",
+            notes: "टीपा",
+            log_new_application: "नवीन अर्ज नोंदवा",
+            select_voter: "मतदार निवडा",
+            search_placeholder: "अर्ज शोधा...",
+            search_voter_placeholder: "नावाने मतदार शोधा...",
+            manual_entry: "मॅन्युअल नोंदणी (बिगर-मतदार)",
+            form_status: "अर्जाची स्थिती",
+            status_submitted: "सादर केले",
+            status_pending: "प्रलंबित",
+            status_approved: "मंजूर",
+            status_rejected: "नाकारले",
+            save_log: "जतन करा",
+            applicant_mobile: "अर्जदाराचा मोबाईल",
+            forms_tab: "मतदार अर्ज",
+            applications_tab: "अर्ज केलेले ",
+            form_type_search: "मतदार शोध",
+            form_type_form6: "फॉर्म ६ (नवीन नोंदणी)",
+            form_type_form7: "फॉर्म ७ (नाव वगळणे)",
+            form_type_form8: "फॉर्म ८ (दुरुस्ती/स्थलांतर)",
+            edit_application: "अर्ज संपादित करा",
+            delete_application: "अर्ज हटवा",
+            delete_confirm_title: "अर्ज हटवायचा का?",
+            delete_confirm_msg: "तुम्ही नक्की हा अर्ज हटवू इच्छिता? ही कृती पूर्ववत करता येणार नाही.",
+            link_voter_title: "मतदार जोडायचा?",
+            link_voter_desc: "तपशील स्वयंचलितपणे भरण्यासाठी मतदार शोधा आणि निवडा",
+            search_voter_list: "मतदार यादी शोधा",
+            back_to_form: "अर्जाकडे परत",
+            search_voter: "मतदार शोधा",
+            search_by_name_mobile_epic: "नाव, मोबाईल किंवा EPIC नंबर द्वारे शोधा...",
+            searching: "शोधत आहे...",
+            no_voters_found: "कोणतेही मतदार सापडले नाहीत",
+            type_to_search: "शोधण्यासाठी टाइप करा...",
+            linked_to_voter_id: "मतदार आयडी जोडलेला",
+            remove: "काढा",
+            mobile_number_placeholder: "मोबाईल नंबर",
+            notes_placeholder: "काही अतिरिक्त तपशील...",
+            fir_req: "FIR (केवळ हरवलेल्या EPIC बदलासाठी)"
         },
         communication_page: {
             title: "जनसंवाद",
@@ -1994,9 +2190,13 @@ export const translations = {
             purpose_other: "इतर",
             edit_visitor: "व्हिजिटर अपडेट करा",
             update_visitor: "अपडेट करा",
-            cancel_edit: "रद्द करा",
-            filter_area: "भाग फिल्टर करा",
-            filter_date: "तारीख फिल्टर करा"
+            filter_area: "क्षेत्र फिल्टर",
+            filter_date: "दिनांक फिल्टर",
+            event_venue: "कार्यक्रम स्थळ",
+            event_date: "कार्यक्रम दिनांक",
+            event_time: "कार्यक्रम वेळ",
+            amount: "रक्कम",
+            purpose_help: "मदत"
         },
         schemes: {
             title: "सरकारी योजना",
@@ -2047,6 +2247,8 @@ export const translations = {
                 reject_btn: "नाकारा",
                 delete_btn: "हटवा",
                 delete_confirm: "तुम्ही नक्की हा अर्ज हटवू इच्छिता का?",
+                delete_title: "अर्ज हटवा?",
+                delete_confirm_msg: "तुम्ही नक्की हा अर्ज हटवू इच्छिता का? ही क्रिया पूर्ववत करता येणार नाही.",
                 legacy_scheme: "जुनी योजना"
             },
             check_eligibility: "पात्रता तपासा",
@@ -2185,7 +2387,16 @@ export const translations = {
             created: "तयार केले",
             view_details: "तपशील पहा",
             no_tasks: "कोणतेही कार्य सापडले नाही. स्वतः तयार करा किंवा दस्तऐवज स्कॅन करा!",
-            priority_label: "प्राधान्यता"
+            priority_label: "प्राधान्यता",
+            office_name: "कार्यालयाचे नाव",
+            office_placeholder: "उदा. प्रभाग कार्यालय",
+            meet_person: "कोणाला भेटायचे",
+            person_placeholder: "व्यक्तीचे नाव",
+            assign_staff: "कर्मचारी नियुक्त करा",
+            select_staff: "कर्मचारी निवडा",
+            greeting_from: "{{name}} कडून आमंत्रण",
+            invitation_from: "{{name}} कडून निमंत्रण",
+            complaint_from: "{{name}} ची तक्रार"
         },
         improvements: {
             title: "संभाव्य सुधारणा",
@@ -2501,6 +2712,77 @@ export const translations = {
                 created_at: "तयार केल्याची तारीख",
                 actions: "क्रिया"
             }
+        },
+        landing: {
+            hero: {
+                title: "उज्ज्वल भविष्यासाठी स्थानिक नेतृत्वाला सक्षम करणे",
+                subtitle: "आपला प्रभाग व्यवस्थापित करण्यासाठी, नागरिकांशी जोडले जाण्यासाठी आणि विकास कामांचा मागोवा घेण्यासाठी एक संपूर्ण डिजिटल समाधान.",
+                get_started: "सुरुवात करा",
+                login: "डॅशबोर्डवर लॉगिन करा",
+                dashboard: "डॅशबोर्डवर जा",
+                badge: "स्मार्ट शासन मंच",
+                view_demo: "डेमो पहा",
+                trusted_by: "आघाडी नगरप्रतिनिधींचा विश्वास"
+            },
+            features: {
+                title: "अधिक चांगली सेवा देण्यासाठी आवश्यक सर्व काही",
+                subtitle: "प्रभाग व्यवस्थापनासाठी विशेषतः डिझाइन केलेल्या शक्तिशाली साधनांसह आपल्या दैनंदिन कार्याची सुव्यवस्था करा.",
+                complaints_title: "तक्रार व्यवस्थापन",
+                complaints_desc: "नागरिकांच्या तक्रारींचा मागोवा घ्या आणि एका सुव्यवस्थित तिकीट प्रणालीसह त्यांचे निराकरण करा.",
+                voters_title: "मतदार डेटाबेस",
+                voters_desc: "संपूर्ण मतदार यादीत प्रवेश करा आणि मतदारसंघाचा डेटा सहजपणे व्यवस्थापित करा.",
+                works_title: "विकास कामे",
+                works_desc: "चालू प्रकल्प, निधीचा वापर आणि प्रभागातील सुधारणांवर लक्ष ठेवा.",
+                schemes_title: "सरकारी योजना",
+                schemes_desc: "AI-पॉवर्ड सर्चसह नागरिकांना संबंधित लाभार्थी योजनांसाठी मार्गदर्शन करा.",
+                comm_title: "जनसंवाद",
+                comm_desc: "व्हॉट्सअॅप/एसएमएसद्वारे अपडेट्स पाठवा आणि सोशल मीडियाची उपस्थिती व्यवस्थापित करा.",
+                analysis_title: "स्मार्ट विश्लेषण",
+                analysis_desc: "उत्तम निर्णय घेण्यासाठी आणि रणनीतीसाठी डेटा-आधारित अंतर्दृष्टी (Insights)."
+            },
+            stats: {
+                wards: "व्यवस्थापित प्रभाग",
+                citizens: "जोडलेले नागरिक",
+                complaints: "सोडवलेल्या तक्रारी",
+                projects: "सक्रिय प्रकल्प"
+            },
+            footer: {
+                rights: "सर्व हक्क राखीव.",
+                privacy: "गोपनीयता धोरण",
+                terms: "सेवेच्या अटी",
+                description: "तंत्रज्ञान आणि पारदर्शकतेद्वारे नागरिक आणि प्रशासन यांच्यात पूल तयार करणे.",
+                platform: "मंच",
+                features: "वैशिष्ट्ये",
+                testimonials: "प्रशस्तिपत्रे",
+                pricing: "किंमत",
+                legal: "कायदेशीर",
+                made_with_love: "चांगल्या शासनासाठी ❤️ ने बनवले"
+            }
+        },
+        testimonials: {
+            title: "लोकप्रतिनिधींचा विश्वास",
+            subtitle: "पहा 'नगर सेवक' प्लॅटफॉर्मने प्रभाग व्यवस्थापनात कसा बदल घडवला आहे.",
+            review_1: "या प्लॅटफॉर्मने तक्रार निवारणाची माझी पद्धत पूर्णपणे बदलली आहे. माझा प्रतिसाद वेळ ५०% ने सुधारला आहे!",
+            review_1_author: "राजेश पाटील",
+            review_1_role: "नगरसेवक, प्रभाग १२",
+            review_2: "विकास निधीचा मागोवा घेणे पूर्वी कठीण होते. आता सर्व काही पारदर्शक आणि व्यवस्थापित करणे सोपे झाले आहे.",
+            review_2_author: "प्रिया देशमुख",
+            review_2_role: "नगरसेविका, पुणे",
+            review_3: "निवडणूक प्रचारादरम्यान योग्य मतदारांपर्यंत पोहोचण्यासाठी मतदार विश्लेषण साधनांची खूप मदत झाली.",
+            review_3_author: "अमित शिंदे",
+            review_3_role: "अपक्ष उमेदवार"
+        },
+        faq: {
+            title: "सतत विचारले जाणारे प्रश्न",
+            subtitle: "प्लॅटफॉर्मबद्दलचे सामान्य प्रश्न",
+            q1: "माझा डेटा सुरक्षित आहे का?",
+            a1: "होय, सर्व नागरिक आणि प्रशासकीय डेटा १००% सुरक्षित ठेवण्यासाठी आम्ही प्रगत एनक्रिप्शन वापरतो.",
+            q2: "मी एकाधिक प्रभाग व्यवस्थापित करू शकतो का?",
+            a2: "नक्कीच. आमची प्रणाली एकाधिक प्रभाग व्यवस्थापनास समर्थन देते आणि कर्मचाऱ्यांसाठी स्वतंत्र ऍक्सेस देते.",
+            q3: "याचे मोबाईल ऍप आहे का?",
+            a3: "आमचा प्लॅटफॉर्म पूर्णपणे रिस्पॉन्सिव्ह आहे आणि सर्व मोबाईल, टॅब्लेट आणि डेस्कटॉपवर सहज चालतो.",
+            q4: "मी सुरुवात कशी करू?",
+            a4: "डेमो विनंती करण्यासाठी फक्त 'सुरुवात करा' वर क्लिक करा. आमची टीम २४ तासांत तुमचे खाते सक्रिय करेल."
         }
     },
     hi: {
@@ -2914,6 +3196,23 @@ export const translations = {
             publish: "सर्वेक्षण प्रकाशित करें",
             found: "सापडले",
             of: "एकूण",
+        },
+
+        login: {
+            welcome: "पुन्हा स्वागत आहे",
+            subtitle: "आपल्या खात्यात साइन इन करा",
+            email_label: "ईमेल आयडी",
+            password_label: "पासवर्ड",
+            forgot_password: "पासवर्ड विसरलात?",
+            login_button: "साइन इन करा",
+            signing_in: "साइन इन करत आहे...",
+            nagarsevak: "नगरसेवक (Admin)",
+            staff: "कर्मचारी (Staff)",
+            email_placeholder: "तुमचा ईमेल प्रविष्ट करा",
+            password_placeholder: "tumचा पासवर्ड प्रविष्ट करा",
+            branding_title: "आधुनिक शासनासाठी स्मार्ट व्यवस्थापन.",
+            branding_subtitle: "नागरिकांच्या विनंत्या सुलभ करा, कर्मचाऱ्यांचे व्यवस्थापन करा आणि विकासाच्या कामांचा एकाच ठिकाणी मागोवा घ्या.",
+            trusted_by: "राज्यभरातील नगरसेवकांचा विश्वास"
         },
 
     }
