@@ -473,7 +473,7 @@ const StaffList = () => {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-xl">
+                    <div className="bg-white rounded-xl max-w-lg w-full p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4 text-gray-900">{editingStaffId ? 'Edit Staff Member' : t('staff.modal.title')}</h2>
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
