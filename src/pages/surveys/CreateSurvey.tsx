@@ -48,6 +48,8 @@ const CreateSurvey = () => {
     };
 
     const handleSave = async () => {
+        console.log("handleSave START - Clicking Save");
+
         if (!title.trim()) {
             toast.error(t('surveys.form.error_title') || 'Please enter a survey title');
             return;
@@ -57,51 +59,47 @@ const CreateSurvey = () => {
             return;
         }
 
-        // const totalVoters = MockService.getVoters().length; // TODO: Fetch real count or move calc to backend? 
-        // For now, let's just set a default or fetch real count if needed, but DB default is 0. 
-        // Logic for sample size is client side here.
-        // Let's assume we want 1% of total voters. Better to fetch count.
-        // But for simplicity in this refactor, I will just insert.
+        if (!tenantId) {
+            console.error("Tenant ID is missing!");
+            toast.error('System Error: Tenant ID missing. Please reload.');
+            return;
+        }
 
         const toastId = toast.loading('Creating Survey...');
 
         try {
-            // Get tenantId from context (we need to inject it)
-            // But CreateSurvey doesn't use useTenant hook yet.
-            // I need to add useTenant hook usage.
-
-            // Wait, I cannot access tenantId here without useTenant.
-            // I will add useTenant hook in the component.
-
-            // Since I am inside replace_file_content for handleSave, I can't easily add the hook at top level here.
-            // I will split this into two edits: 
-            // 1. Add hook and imports.
-            // 2. Update handleSave.
-
-            // This replace call is for handleSave so I will assume tenantId is available (I will add it in next step or previous).
-            // Actually, I should have added imports first.
-            // I will do imports and hook in next steps.
-            // Here I will write the logic assuming `tenantId` is in scope.
-
-            /*
-            const { error } = await supabase.from('surveys').insert([{
+            const payload = {
                 title,
                 description,
                 area,
-                questions, // supabase handles jsonb
-                target_sample_size: 100, // Placeholder, or should fetch count
+                questions: questions,
+                target_sample_size: 100, // Default to 100 for now
                 status: 'Active',
                 tenant_id: tenantId
-            }]);
-            */
-            // I'll return the original code comments to stop consistent error if I break it.
-            // Better strategy: Update imports and hook FIRST.
+            };
 
-            // Reverting to original plan:
-            // 1. Update imports and component start to include useTenant.
-            // 2. Update handleSave.
-        } catch (e) {
-            console.error(e);
+            console.log("Sending Payload to Supabase:", payload);
+
+            const { data, error } = await supabase
+                .from('surveys')
+                .insert([payload])
+                .select();
+
+            console.log("Supabase Response:", { data, error });
+
+            if (error) {
+                console.error("Supabase Error Detail:", error);
+                throw error;
+            }
+
+            toast.dismiss(toastId);
+            toast.success(t('surveys.create_success') || 'Survey created successfully!');
+            navigate('/dashboard/surveys');
+
+        } catch (error: any) {
+            console.error('CRITICAL Error creating survey:', error);
+            toast.dismiss(toastId);
+            toast.error(`Failed to create survey: ${error.message || 'Unknown error'}`);
         }
     };
 
