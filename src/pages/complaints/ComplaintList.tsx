@@ -337,7 +337,7 @@ const ComplaintList = () => {
                     </div>
                     <div className="flex gap-2">
                         <Link
-                            to={activeTab === 'Personal Help' ? '/personal-requests/new' : '/complaints/new'}
+                            to={activeTab === 'Personal Help' ? '/dashboard/personal-requests/new' : '/dashboard/complaints/new'}
                             className="ns-btn-primary"
                         >
                             <Plus className="w-4 h-4" />
@@ -520,7 +520,7 @@ const ComplaintList = () => {
                     return (
                         <div
                             key={complaint.id}
-                            onClick={() => navigate(`/complaints/${complaint.id}`)}
+                            onClick={() => navigate(`/dashboard/complaints/${complaint.id}`)}
                             className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group"
                         >
                             <div className="flex justify-between items-start mb-3">
@@ -579,7 +579,7 @@ const ComplaintList = () => {
                     <div className="col-span-full w-full py-12 text-center text-gray-500 bg-white rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center">
                         <p className="mb-4">{t('complaints.no_requests')} "{filterStatus !== 'All' ? filterStatus : ''}"</p>
                         <Link
-                            to="/complaints/new"
+                            to="/dashboard/complaints/new"
                             className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />

@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { type Complaint } from '../../types';
 import { type Staff } from '../../types/staff';
@@ -16,6 +16,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 const ComplaintDetail = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
@@ -53,6 +54,7 @@ const ComplaintDetail = () => {
 
     useEffect(() => {
         if (id) {
+            window.scrollTo(0, 0);
             fetchComplaint();
             fetchStaff();
         }
@@ -289,9 +291,9 @@ const ComplaintDetail = () => {
 
             toast.success('Deleted successfully');
             if (isAreaProblem) {
-                navigate('/ward/problems');
+                navigate('/dashboard/ward/problems');
             } else {
-                navigate('/complaints');
+                navigate('/dashboard/complaints');
             }
         } catch (err) {
             console.error('Error deleting:', err);
@@ -369,13 +371,15 @@ const ComplaintDetail = () => {
     return (
         <div className="max-w-4xl mx-auto space-y-6 px-4 md:px-0 pb-20 md:pb-0">
             {/* Enhanced Header with Back and Delete */}
-            <div className="flex items-center justify-between notranslate">
+            <div className="sticky top-14 md:top-0 z-30 bg-slate-50 pt-4 pb-4 flex items-center justify-between notranslate">
                 <button
                     onClick={() => {
-                        if (complaint?.id.startsWith('ap-')) {
-                            navigate('/ward/problems');
+                        if (location.state?.from) {
+                            navigate(location.state.from);
+                        } else if (complaint?.id.startsWith('ap-')) {
+                            navigate('/dashboard/ward/problems');
                         } else {
-                            navigate('/complaints');
+                            navigate('/dashboard/complaints');
                         }
                     }}
                     className="group flex items-center gap-2 text-slate-600 hover:text-brand-700 transition-colors font-medium"

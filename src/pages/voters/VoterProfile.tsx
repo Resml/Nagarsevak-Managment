@@ -263,7 +263,7 @@ const VoterProfile = () => {
                             <span className="text-xs font-medium">{t('voter_profile.edit')}</span>
                         </button>
                         <button
-                            onClick={() => navigate('/complaints/new', { state: { voterId: voter.id, voterName: getDisplayName(voter) } })}
+                            onClick={() => navigate('/dashboard/complaints/new', { state: { voterId: voter.id, voterName: getDisplayName(voter) } })}
                             className="ns-btn-primary"
                         >
                             <PlusCircle className="w-4 h-4" />

@@ -167,7 +167,7 @@ const LetterTypeManager = () => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <Link to="/letters" className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                    <Link to="/dashboard/letters" className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                     <div>

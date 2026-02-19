@@ -621,6 +621,15 @@ const LetterDashboard = () => {
                                     <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
                                         <TranslatedText text={selectedRequest.details?.text || ''} />
                                     </p>
+
+                                    {(selectedRequest.details?.purpose || selectedRequest.details?.reason) && (
+                                        <>
+                                            <p className="text-slate-800 mt-2"><span className="font-semibold">{t('office.purpose')}:</span></p>
+                                            <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
+                                                <TranslatedText text={selectedRequest.details?.purpose || selectedRequest.details?.reason || ''} />
+                                            </p>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 

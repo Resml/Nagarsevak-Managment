@@ -126,7 +126,7 @@ const Dashboard = () => {
                             <RefreshCw className="w-4 h-4" />
                             <span className="hidden sm:inline">{t('dashboard.refresh')}</span>
                         </button>
-                        <button className="ns-btn-primary" onClick={() => navigate('/complaints/new')}>
+                        <button className="ns-btn-primary" onClick={() => navigate('/dashboard/complaints/new')}>
                             <Plus className="w-4 h-4" /> {t('complaints.new_request') || 'New Request'}
                         </button>
                     </div>
@@ -139,15 +139,15 @@ const Dashboard = () => {
                     {t('dashboard.quick_actions')}
                 </div>
                 <div className="sm:ml-auto flex flex-wrap gap-2">
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/voters')}>
+                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/voters')}>
                         <Search className="w-4 h-4" />
                         {t('dashboard.action_voter')}
                     </button>
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/staff')}>
+                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/staff')}>
                         <UserPlus className="w-4 h-4" />
                         {t('dashboard.action_staff')}
                     </button>
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/complaints')}>
+                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/complaints')}>
                         <Megaphone className="w-4 h-4" />
                         {t('dashboard.action_complaints')}
                     </button>
@@ -186,7 +186,7 @@ const Dashboard = () => {
                 <div className="lg:col-span-2 ns-card p-6">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-lg font-bold text-slate-900">{t('dashboard.status_overview')}</h2>
-                        <button onClick={() => navigate('/complaints')} className="text-sm text-brand-700 font-semibold hover:underline">
+                        <button onClick={() => navigate('/dashboard/complaints')} className="text-sm text-brand-700 font-semibold hover:underline">
                             {t('dashboard.view_all')}
                         </button>
                     </div>
@@ -236,7 +236,7 @@ const Dashboard = () => {
                     <h2 className="text-lg font-bold text-slate-900 mb-4">{t('dashboard.live_activity')}</h2>
                     <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[400px]">
                         {recentActivity.map((activity) => (
-                            <div key={activity.id} className="flex gap-3 group cursor-pointer" onClick={() => navigate(`/complaints/${activity.id}`)}>
+                            <div key={activity.id} className="flex gap-3 group cursor-pointer" onClick={() => navigate(`/dashboard/complaints/${activity.id}`)}>
                                 <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${activity.status === 'Resolved' ? 'bg-green-500' :
                                     activity.status === 'Pending' ? 'bg-red-500' : 'bg-yellow-500'
                                     }`}></div>
@@ -256,7 +256,7 @@ const Dashboard = () => {
                             <p className="text-sm text-slate-500 text-center py-8">{t('dashboard.no_activity')}</p>
                         )}
                     </div>
-                    <button className="w-full mt-4 ns-btn-ghost border border-slate-200 justify-center" onClick={() => navigate('/complaints')}>
+                    <button className="w-full mt-4 ns-btn-ghost border border-slate-200 justify-center" onClick={() => navigate('/dashboard/complaints')}>
                         {t('dashboard.view_full_log')}
                     </button>
                 </div>

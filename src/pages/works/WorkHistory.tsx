@@ -60,7 +60,6 @@ const WorkHistory = () => {
         const workSubscription = supabase
             .channel('work_history_channel')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'works', filter: `tenant_id=eq.${tenantId}` }, () => fetchData())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => fetchData())
             .subscribe();
 
         // 2. Subscribe to REAL-TIME Feedback
@@ -105,20 +104,7 @@ const WorkHistory = () => {
 
             if (worksError) throw worksError;
 
-            // 2. Fetch Resolved Complaints/Help
-            const { data: complaints, error: complaintsError } = await supabase
-                .from('complaints')
-                .select(`
-                    id, problem, location, status, category, created_at,
-                    voter:voters (name_english, name_marathi)
-                `)
-                .eq('tenant_id', tenantId) // Secured
-                .in('status', ['Resolved', 'Closed'])
-                .order('created_at', { ascending: false });
-
-            if (complaintsError) throw complaintsError;
-
-            // 3. Normalize & Merge
+            // 2. Normalize
             const manualItems: WorkItem[] = (works || []).map((w: any) => ({
                 id: `work-${w.id}`,
                 source: 'Manual',
@@ -130,18 +116,8 @@ const WorkHistory = () => {
                 date: w.completion_date || w.created_at
             }));
 
-            const complaintItems: WorkItem[] = (complaints || []).map((c: any) => ({
-                id: `comp-${c.id}`,
-                source: c.category === 'Help' ? 'Help' : 'Complaint',
-                title: c.category === 'Help' ? t('work_history.help_provided') : t('work_history.issue_resolved'),
-                description: c.problem,
-                location: c.location || 'Not Provided',
-                status: 'Completed',
-                date: c.created_at,
-                citizenName: c.voter?.name_english || c.voter?.name_marathi || 'Citizen'
-            }));
-
-            const allItems = [...manualItems, ...complaintItems].sort((a, b) =>
+            // Sort by Date
+            const allItems = manualItems.sort((a, b) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime()
             );
 
@@ -208,13 +184,8 @@ const WorkHistory = () => {
     };
 
     const handleCardClick = (item: WorkItem) => {
-        if (item.source === 'Manual') {
-            const dbId = item.id.replace('work-', '');
-            navigate(`/history/${dbId}`);
-        } else {
-            const dbId = item.id.replace('comp-', '');
-            navigate(`/complaints/${dbId}`);
-        }
+        const dbId = item.id.replace('work-', '');
+        navigate(`/dashboard/history/${dbId}`);
     };
 
     // Helper: Get Unique Areas with Counts
@@ -257,17 +228,10 @@ const WorkHistory = () => {
     });
 
     const getSourceIcon = (source: string) => {
-        switch (source) {
-            case 'Manual': return <Hammer className="w-4 h-4 text-blue-500" />;
-            case 'Help': return <HeartHandshake className="w-4 h-4 text-purple-500" />;
-            default: return <FileText className="w-4 h-4 text-green-500" />; // Complaint
-        }
+        return <Hammer className="w-4 h-4 text-blue-500" />;
     };
 
     const getStatusBadge = (status: string, source: string) => {
-        if (source !== 'Manual') {
-            return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {t('work_history.resolved')}</span>;
-        }
         switch (status) {
             case 'Completed':
                 return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1"><CheckCircle className="w-3 h-3" /> {t('work_history.completed')}</span>;
