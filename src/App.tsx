@@ -147,6 +147,7 @@ function App() {
 
           <Route path="surveys" element={<PermissionGuard permission="surveys"><SurveyDashboard /></PermissionGuard>} />
           <Route path="surveys/new" element={<PermissionGuard permission="surveys"><CreateSurvey /></PermissionGuard>} />
+          <Route path="surveys/edit/:id" element={<PermissionGuard permission="surveys"><CreateSurvey /></PermissionGuard>} />
 
           {/* New Routes */}
           <Route path="ward/problems" element={<PermissionGuard permission="ward_problems"><WardWiseProblem /></PermissionGuard>} />

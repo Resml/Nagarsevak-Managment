@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Users, Clock, Send, Loader2, Search } from 'lucide-react';
+import { Plus, FileText, Users, Clock, Send, Loader2, Search, Edit2, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import { VoterService } from '../../services/voterService';
@@ -21,7 +21,11 @@ const SurveyDashboard = () => {
     const [areaSearch, setAreaSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
 
+    // Delete State
+    const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+
     useEffect(() => {
+        if (!tenantId) return;
         fetchSurveys();
         fetchStats();
 
@@ -54,7 +58,7 @@ const SurveyDashboard = () => {
                 description: s.description,
                 area: s.area,
                 status: s.status,
-                questions: s.questions, // JSONB usually comes as object/array automatically in supabase-js
+                questions: s.questions,
                 targetSampleSize: s.target_sample_size || 0,
                 createdAt: s.created_at
             }));
@@ -68,7 +72,7 @@ const SurveyDashboard = () => {
 
     const fetchStats = async () => {
         if (!tenantId) return;
-        const count = await VoterService.getTotalCount(tenantId); // Modified this line
+        const count = await VoterService.getTotalCount(tenantId);
         setTotalVoters(count);
     };
 
@@ -82,7 +86,7 @@ const SurveyDashboard = () => {
                 return;
             }
             // 1. Fetch all voter numbers
-            const phones = await VoterService.getAllVoterPhones(tenantId); // Modified this line
+            const phones = await VoterService.getAllVoterPhones(tenantId);
 
             if (phones.length === 0) {
                 toast.dismiss(toastId);
@@ -104,6 +108,28 @@ const SurveyDashboard = () => {
             toast.error('Failed to broadcast survey.');
         } finally {
             setBroadcastingId(null);
+        }
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget || !tenantId) return;
+
+        const toastId = toast.loading('Deleting survey...');
+        try {
+            const { error } = await supabase
+                .from('surveys')
+                .delete()
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+
+            toast.success('Survey deleted successfully', { id: toastId });
+            setSurveys(surveys.filter(s => s.id !== deleteTarget.id));
+            setDeleteTarget(null);
+        } catch (error) {
+            console.error('Error deleting survey:', error);
+            toast.error('Failed to delete survey', { id: toastId });
         }
     };
 
@@ -291,18 +317,34 @@ const SurveyDashboard = () => {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <button
-                                                onClick={() => handleWhatsAppBroadcast(survey)}
-                                                disabled={broadcastingId === survey.id}
-                                                className="text-brand-700 hover:text-brand-800 disabled:opacity-50 disabled:cursor-not-allowed hover:underline text-sm font-semibold flex items-center transition-all"
-                                            >
-                                                {broadcastingId === survey.id ? (
-                                                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                                ) : (
-                                                    <Send className="w-3 h-3 mr-1" />
-                                                )}
-                                                {broadcastingId === survey.id ? t('surveys.sending') : t('surveys.send_whatsapp')}
-                                            </button>
+                                            <div className="flex items-center gap-3">
+                                                <button
+                                                    onClick={() => navigate(`/dashboard/surveys/edit/${survey.id}`)}
+                                                    className="text-slate-500 hover:text-brand-600 transition-colors"
+                                                    title={t('common.edit') || "Edit"}
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteTarget({ id: survey.id, title: survey.title })}
+                                                    className="text-slate-500 hover:text-red-600 transition-colors"
+                                                    title={t('common.delete') || "Delete"}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleWhatsAppBroadcast(survey)}
+                                                    disabled={broadcastingId === survey.id}
+                                                    className="text-brand-700 hover:text-brand-800 disabled:opacity-50 disabled:cursor-not-allowed hover:underline text-sm font-semibold flex items-center transition-all ml-2"
+                                                >
+                                                    {broadcastingId === survey.id ? (
+                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                                    ) : (
+                                                        <Send className="w-3 h-3 mr-1" />
+                                                    )}
+                                                    {broadcastingId === survey.id ? t('surveys.sending') : t('surveys.send_whatsapp')}
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -311,6 +353,37 @@ const SurveyDashboard = () => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="w-6 h-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">Delete Survey?</h3>
+                            <p className="text-slate-500 mt-2 text-sm">
+                                Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>? This action cannot be undone.
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

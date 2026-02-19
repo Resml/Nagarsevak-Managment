@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,10 +11,50 @@ const CreateSurvey = () => {
     const { t } = useLanguage();
     const { tenantId } = useTenant(); // Added
     const navigate = useNavigate();
+    const { id } = useParams(); // Get ID from URL
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [area, setArea] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    // Fetch existing survey if in edit mode
+    useEffect(() => {
+        if (!id || !tenantId) return;
+
+        const fetchSurvey = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase
+                    .from('surveys')
+                    .select('*')
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId)
+                    .single();
+
+                if (error) throw error;
+
+                if (data) {
+                    setTitle(data.title);
+                    setDescription(data.description || '');
+                    setArea(data.area || '');
+                    // Ensure questions is an array
+                    const qs = typeof data.questions === 'string'
+                        ? JSON.parse(data.questions)
+                        : data.questions;
+                    setQuestions(qs || []);
+                }
+            } catch (error) {
+                console.error('Error fetching survey:', error);
+                toast.error('Failed to load survey details');
+                navigate('/dashboard/surveys');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSurvey();
+    }, [id, tenantId, navigate]);
 
     const addQuestion = () => {
         const newQuestion: Question = {
@@ -65,7 +105,7 @@ const CreateSurvey = () => {
             return;
         }
 
-        const toastId = toast.loading('Creating Survey...');
+        const toastId = toast.loading(id ? 'Updating Survey...' : 'Creating Survey...');
 
         try {
             const payload = {
@@ -80,12 +120,20 @@ const CreateSurvey = () => {
 
             console.log("Sending Payload to Supabase:", payload);
 
-            const { data, error } = await supabase
-                .from('surveys')
-                .insert([payload])
-                .select();
-
-            console.log("Supabase Response:", { data, error });
+            let error;
+            if (id) {
+                const { error: updateError } = await supabase
+                    .from('surveys')
+                    .update(payload)
+                    .eq('id', id)
+                    .eq('tenant_id', tenantId);
+                error = updateError;
+            } else {
+                const { error: insertError } = await supabase
+                    .from('surveys')
+                    .insert([payload]);
+                error = insertError;
+            }
 
             if (error) {
                 console.error("Supabase Error Detail:", error);
@@ -93,15 +141,23 @@ const CreateSurvey = () => {
             }
 
             toast.dismiss(toastId);
-            toast.success(t('surveys.create_success') || 'Survey created successfully!');
+            toast.success(id ? 'Survey updated successfully!' : (t('surveys.create_success') || 'Survey created successfully!'));
             navigate('/dashboard/surveys');
 
         } catch (error: any) {
-            console.error('CRITICAL Error creating survey:', error);
+            console.error('CRITICAL Error saving survey:', error);
             toast.dismiss(toastId);
-            toast.error(`Failed to create survey: ${error.message || 'Unknown error'}`);
+            toast.error(`Failed to save survey: ${error.message || 'Unknown error'}`);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6 animate-fade-in-up pb-20">
@@ -112,7 +168,9 @@ const CreateSurvey = () => {
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-700" />
                 </button>
-                <h1 className="text-2xl font-bold text-slate-900">{t('surveys.create_new_title')}</h1>
+                <h1 className="text-2xl font-bold text-slate-900">
+                    {id ? (t('surveys.edit_title') || 'Edit Survey') : t('surveys.create_new_title')}
+                </h1>
             </div>
 
             <div className="ns-card p-6 space-y-4">
@@ -242,7 +300,7 @@ const CreateSurvey = () => {
                     className="ns-btn-primary px-8 py-3"
                 >
                     <Save className="w-5 h-5 mr-2" />
-                    {t('surveys.form.save_launch')}
+                    {id ? (t('surveys.form.update') || 'Update Survey') : (t('surveys.form.save_launch') || 'Save Request')}
                 </button>
             </div>
         </div>
