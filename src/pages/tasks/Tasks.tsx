@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, User, Calendar, X, Edit2, Trash2 } from 'lucide-react';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2 } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
-import { format } from 'date-fns';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -25,7 +24,10 @@ const Tasks = () => {
         due_time: '',
         address: '',
         status: 'Pending',
-        assigned_to: '' // For MVP we might not list all staff, or just a text field
+        assigned_to: '',
+        office_name: '',
+        meet_person_name: '',
+        assigned_staff_id: ''
     });
     const [staffList, setStaffList] = useState<any[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
@@ -61,7 +63,7 @@ const Tasks = () => {
 
     const fetchStaff = async () => {
         // Changed from 'users' to 'staff' for consistency and tenant isolation
-        const { data } = await supabase.from('staff').select('id, name').eq('tenant_id', tenantId);
+        const { data } = await supabase.from('staff').select('id, name, role').eq('tenant_id', tenantId);
         setStaffList(data || []);
     };
 
@@ -101,6 +103,7 @@ const Tasks = () => {
                 ...newTask,
                 due_date: newTask.due_date || null,
                 due_time: newTask.due_time || null,
+                assigned_staff_id: newTask.assigned_staff_id || null,
                 tenant_id: tenantId
             };
 
@@ -130,7 +133,10 @@ const Tasks = () => {
                 due_time: '',
                 address: '',
                 status: 'Pending',
-                assigned_to: ''
+                assigned_to: '',
+                office_name: '',
+                meet_person_name: '',
+                assigned_staff_id: ''
             });
             setEditingId(null);
             fetchTasks();
@@ -149,7 +155,10 @@ const Tasks = () => {
             due_time: task.due_time || '',
             address: task.address || '',
             status: task.status || 'Pending',
-            assigned_to: task.assigned_to || ''
+            assigned_to: task.assigned_to || '',
+            office_name: task.office_name || '',
+            meet_person_name: task.meet_person_name || '',
+            assigned_staff_id: task.assigned_staff_id || ''
         });
         setEditingId(task.id);
         setShowForm(true);
@@ -269,6 +278,45 @@ const Tasks = () => {
                                         placeholder={t('tasks.address_placeholder')}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Office Name</label>
+                                    <input
+                                        type="text"
+                                        value={newTask.office_name}
+                                        onChange={e => setNewTask({ ...newTask, office_name: e.target.value })}
+                                        className="ns-input"
+                                        placeholder="e.g. Ward Office"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Who to meet</label>
+                                    <input
+                                        type="text"
+                                        value={newTask.meet_person_name}
+                                        onChange={e => setNewTask({ ...newTask, meet_person_name: e.target.value })}
+                                        className="ns-input"
+                                        placeholder="Person Name"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Assign to Staff</label>
+                                <select
+                                    value={newTask.assigned_staff_id}
+                                    onChange={e => setNewTask({ ...newTask, assigned_staff_id: e.target.value })}
+                                    className="ns-input"
+                                >
+                                    <option value="">Select Staff Member</option>
+                                    {staffList.map(staff => (
+                                        <option key={staff.id} value={staff.id}>
+                                            {staff.name} ({staff.role})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div>
