@@ -281,8 +281,73 @@ class MenuNavigator {
                 return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
 
             default:
+                // Check if this is a reply to a pending task (Staff Date Estimate)
+                // This makes the bot stateless/robust against restarts
+                const pendingTask = await this.findPendingStaffTask(sock, tenantId, userId);
+                if (pendingTask) {
+                    console.log(`[${tenantId}] Found pending task #${pendingTask.id} for staff ${userId}`);
+                    // Restore session state
+                    session.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
+                    session.currentComplaintId = pendingTask.id;
+
+                    // Process the input as the date
+                    return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
+                }
+
                 // Fallback to language selection
-                return await this.showLanguageMenu(sock, userId);
+                const errorMsg = MESSAGES.invalid_option[session.language || 'en'] || MESSAGES.invalid_option.en;
+                // Only show invalid option if not a valid number for main menu (simplification)
+                // await sock.sendMessage(userId, { text: errorMsg });
+
+                // Show Main Menu by default instead of Language Validation for better UX
+                return await this.showMainMenu(sock, userId, session.language || 'mr');
+        }
+    }
+
+    /**
+     * Find if this user is a staff member with a pending task (assigned but no date)
+     */
+    async findPendingStaffTask(sock, tenantId, userId) {
+        try {
+            const supabaseUrl = process.env.VITE_SUPABASE_URL;
+            const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+            const supabase = createClient(supabaseUrl, supabaseKey);
+
+            // 1. Get Staff ID from Mobile
+            const cleanMobile = userId.replace('@s.whatsapp.net', '').replace(/^91/, '').slice(-10);
+
+            // We need to find staff with this mobile. 
+            // Staff table mobile might have 91 or not.
+            const { data: staff, error: staffError } = await supabase
+                .from('staff')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .ilike('mobile', `%${cleanMobile}%`) // Robust match
+                .limit(1)
+                .single();
+
+            if (staffError || !staff) return null;
+
+            // 2. Find Pending Complaint
+            // Status InProgress, Assigned to Staff, No Estimated Date
+            const { data: complaint, error: taskError } = await supabase
+                .from('complaints')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .eq('assigned_to', staff.id)
+                .is('estimated_completion_date', null)
+                .neq('status', 'Resolved')
+                .neq('status', 'Closed')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (taskError || !complaint) return null;
+
+            return complaint;
+        } catch (e) {
+            console.error('Error finding pending task:', e);
+            return null;
         }
     }
 
