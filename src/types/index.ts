@@ -121,6 +121,12 @@ export interface Sadasya {
   address_english?: string;
   isVoter: boolean;
   voterId?: string; // Optional, only if isVoter is true
+  linked_voter_id?: number | null; // BigInt from DB comes as string or number, usually we handle it carefully.
+  // Actually, Supabase JS returns BigInt as number if it fits, or we might need string.
+  // Let's keep it consistent with usage. The error said incompatible uuid vs bigint.
+  // In JS, we can use string for bigints to be safe, or number.
+  // Given existing code uses string for IDs mostly, I will check what `voters.id` is in `Voter` type.
+  // Voter type has `id: string`. So I should probably keep it string in TS and let Supabase client handle conversion or casting.
   registeredAt: string;
 }
 

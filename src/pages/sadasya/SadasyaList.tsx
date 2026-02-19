@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, PlusCircle, X, Trash2, Home, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { MockService } from '../../services/mockData';
+
 import { CUSTOM_TRANSLATIONS } from '../../services/translationService';
 import { type Voter, type Sadasya } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -266,10 +266,56 @@ const SadasyaList = () => {
         address: '',
     });
 
-    // In a real app, this would be fetched via useEffect and re-fetched on update
-    // Using a simple state to trigger re-renders when data changes
-    const [, setRefreshTrigger] = useState(0);
-    const sadasyas = MockService.getSadasyas();
+    // Data State
+    const [sadasyas, setSadasyas] = useState<Sadasya[]>([]);
+    const [isLoadingSadasyas, setIsLoadingSadasyas] = useState(true);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+    // Fetch Sadasyas
+    useEffect(() => {
+        const fetchSadasyas = async () => {
+            setIsLoadingSadasyas(true);
+            try {
+                const { data, error } = await supabase
+                    .from('sadasya')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Map DB fields to Sadasya interface if needed, or rely on matching names
+                // The DB columns match the interface mostly, but checks are good
+                const mappedData: Sadasya[] = (data || []).map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    name_marathi: item.name_marathi,
+                    name_english: item.name_english,
+                    mobile: item.mobile,
+                    age: item.age,
+                    gender: item.gender,
+                    ward: item.ward,
+                    area: item.area,
+                    address: item.address,
+                    address_marathi: item.address_marathi,
+                    address_english: item.address_english,
+                    isVoter: item.is_voter,
+                    voterId: item.voter_id,
+                    registeredAt: item.created_at
+                }));
+
+                setSadasyas(mappedData);
+            } catch (error) {
+                console.error('Error fetching sadasyas:', error);
+                toast.error('Failed to load members');
+            } finally {
+                setIsLoadingSadasyas(false);
+            }
+        };
+
+        fetchSadasyas();
+    }, [tenantId, refreshTrigger]);
+
 
     const getDisplayName = (member: any) => {
         if (language === 'mr') {
@@ -361,82 +407,94 @@ const SadasyaList = () => {
         setConfirmArea('');
     };
 
-    const confirmAddVoter = () => {
+    const confirmAddVoter = async () => {
         if (!selectedVoter) return;
 
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const toastId = toast.loading('Adding Sadasya...');
+        try {
+            const { error } = await supabase.from('sadasya').insert([{
+                name: selectedVoter.name,
+                name_marathi: selectedVoter.name_marathi || selectedVoter.name,
+                name_english: selectedVoter.name_english || selectedVoter.name,
+                mobile: confirmMobile,
+                age: selectedVoter.age,
+                address: selectedVoter.address,
+                address_marathi: selectedVoter.address_marathi,
+                address_english: selectedVoter.address_english,
+                area: confirmArea,
+                is_voter: true,
+                voter_id: selectedVoter.epicNo,
+                tenant_id: tenantId,
+                status: 'Active'
+            }]);
 
-        toast.promise(promise, {
-            loading: 'Adding Sadasya...',
-            success: () => {
-                MockService.addSadasya({
-                    name: selectedVoter.name,
-                    name_marathi: selectedVoter.name_marathi,
-                    name_english: selectedVoter.name_english,
-                    mobile: confirmMobile,
-                    age: selectedVoter.age,
-                    address: selectedVoter.address,
-                    address_marathi: selectedVoter.address_marathi,
-                    address_english: selectedVoter.address_english,
-                    area: confirmArea,
-                    isVoter: true,
-                    voterId: selectedVoter.epicNo
-                });
+            if (error) throw error;
 
-                // Reset and Close
-                setSelectedVoter(null);
-                setConfirmMobile('');
-                setConfirmArea('');
-                setIsModalOpen(false);
-                setRefreshTrigger(prev => prev + 1);
-                initVoterList();
+            toast.success(`${selectedVoter.name} added as Sadasya!`, { id: toastId });
 
-                return `${selectedVoter.name} added as Sadasya!`;
-            },
-            error: 'Failed to add Sadasya',
-        });
+            // Reset and Close
+            setSelectedVoter(null);
+            setConfirmMobile('');
+            setConfirmArea('');
+            setIsModalOpen(false);
+            setRefreshTrigger(prev => prev + 1);
+            initVoterList();
+
+        } catch (error) {
+            console.error('Error adding sadasya:', error);
+            toast.error('Failed to add Sadasya', { id: toastId });
+        }
     };
 
-    const handleManualSubmit = (e: React.FormEvent) => {
+    const handleManualSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const promise = new Promise((resolve) => setTimeout(resolve, 800));
 
-        toast.promise(promise, {
-            loading: editingSadasyaId ? 'Updating Member...' : 'Adding Member...',
-            success: () => {
-                if (editingSadasyaId) {
-                    const fullName = [manualForm.firstName, manualForm.middleName, manualForm.lastName].filter(Boolean).join(' ');
-                    MockService.updateSadasya(editingSadasyaId, {
-                        name: fullName,
-                        mobile: manualForm.mobile,
-                        age: parseInt(manualForm.age) || 0,
-                        gender: manualForm.gender || undefined,
-                        ward: manualForm.ward,
-                        address: manualForm.address,
-                        area: manualForm.area,
-                    });
-                } else {
-                    const fullName = [manualForm.firstName, manualForm.middleName, manualForm.lastName].filter(Boolean).join(' ');
-                    MockService.addSadasya({
-                        name: fullName,
-                        mobile: manualForm.mobile,
-                        age: parseInt(manualForm.age) || 0,
-                        gender: manualForm.gender || undefined,
-                        ward: manualForm.ward,
-                        address: manualForm.address,
-                        area: manualForm.area,
-                        isVoter: false
-                    });
-                }
-                setIsModalOpen(false);
-                setRefreshTrigger(prev => prev + 1);
-                setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' });
-                setEditingSadasyaId(null);
-                setSelectedMember(null); // Ensure profile view is reset if editing from there
-                return editingSadasyaId ? 'Member updated successfully!' : 'Member added successfully!';
-            },
-            error: 'Failed to save member',
-        });
+        const toastId = toast.loading(editingSadasyaId ? 'Updating Member...' : 'Adding Member...');
+
+        try {
+            const fullName = [manualForm.firstName, manualForm.middleName, manualForm.lastName].filter(Boolean).join(' ');
+
+            const payload: any = {
+                name: fullName,
+                mobile: manualForm.mobile,
+                age: parseInt(manualForm.age) || 0,
+                gender: manualForm.gender || null,
+                ward: manualForm.ward,
+                address: manualForm.address,
+                area: manualForm.area,
+            };
+
+            let error;
+            if (editingSadasyaId) {
+                const { error: updateError } = await supabase
+                    .from('sadasya')
+                    .update(payload)
+                    .eq('id', editingSadasyaId)
+                    .eq('tenant_id', tenantId);
+                error = updateError;
+            } else {
+                payload.is_voter = false;
+                payload.tenant_id = tenantId;
+                payload.status = 'Active';
+                const { error: insertError } = await supabase
+                    .from('sadasya')
+                    .insert([payload]);
+                error = insertError;
+            }
+
+            if (error) throw error;
+
+            toast.success(editingSadasyaId ? 'Member updated successfully!' : 'Member added successfully!', { id: toastId });
+            setIsModalOpen(false);
+            setRefreshTrigger(prev => prev + 1);
+            setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' });
+            setEditingSadasyaId(null);
+            setSelectedMember(null);
+
+        } catch (error) {
+            console.error('Error saving member:', error);
+            toast.error('Failed to save member', { id: toastId });
+        }
     };
 
     const handleEditClick = (member: Sadasya) => {
@@ -472,14 +530,27 @@ const SadasyaList = () => {
         setDeleteTarget({ id, name });
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (!deleteTarget) return;
 
-        MockService.deleteSadasya(deleteTarget.id);
-        setRefreshTrigger(prev => prev + 1);
-        toast.success(`${deleteTarget.name} removed.`);
-        setDeleteTarget(null);
-        setSelectedMember(null); // Close profile view if the member was deleted
+        const toastId = toast.loading('Deleting member...');
+        try {
+            const { error } = await supabase
+                .from('sadasya')
+                .delete()
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+
+            toast.success(`${deleteTarget.name} removed.`, { id: toastId });
+            setRefreshTrigger(prev => prev + 1);
+            setDeleteTarget(null);
+            setSelectedMember(null);
+        } catch (error) {
+            console.error('Error deleting member:', error);
+            toast.error('Failed to delete member', { id: toastId });
+        }
     };
 
     const renderContent = () => {
