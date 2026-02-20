@@ -99,14 +99,14 @@ const SchemeList = () => {
     const schemesToDisplay = schemes.filter(s => {
         const matchesFilter = filteredSchemes ? filteredSchemes.includes(s.id) : true;
 
-        if (!searchQuery) return matchesFilter;
-
-        const term = searchQuery.toLowerCase();
-        // Search in both parts if possible, but for now searching the raw text is safer to find matches in either lang
-        const matchesSearch =
-            s.name.toLowerCase().includes(term) ||
-            s.description.toLowerCase().includes(term) ||
-            s.benefits.toLowerCase().includes(term);
+        let matchesSearch = true;
+        if (searchQuery) {
+            const term = searchQuery.toLowerCase();
+            matchesSearch =
+                s.name.toLowerCase().includes(term) ||
+                s.description.toLowerCase().includes(term) ||
+                s.benefits.toLowerCase().includes(term);
+        }
 
         let matchesCategory = true;
         if (activeCategory !== 'All') {

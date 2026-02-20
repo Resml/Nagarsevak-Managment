@@ -23,6 +23,7 @@ const LetterForm = () => {
         name: '',
         type: '', // Start empty, fill on load
         mobile: '',
+        subject: '',
         address: '',
         area: '',
         purpose: ''
@@ -81,6 +82,7 @@ const LetterForm = () => {
                     name: data.details.name,
                     type: data.type,
                     mobile: data.details.mobile || '',
+                    subject: data.details.subject || '',
                     address: data.details.text || '',
                     area: data.area || '',
                     purpose: data.details.purpose || ''
@@ -291,6 +293,7 @@ const LetterForm = () => {
                 area: formData.area,
                 details: {
                     name: fullName,
+                    subject: formData.subject,
                     text: formData.address,
                     purpose: formData.purpose,
                     mobile: formData.mobile
@@ -445,6 +448,18 @@ const LetterForm = () => {
                             onChange={handleChange}
                             className="ns-input"
                             placeholder={t('complaints.form.area_placeholder')}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.subject')}</label>
+                        <input
+                            name="subject"
+                            type="text"
+                            value={formData.subject}
+                            onChange={handleChange}
+                            className="ns-input"
+                            placeholder={t('letters.subject_placeholder')}
                         />
                     </div>
 

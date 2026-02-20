@@ -480,6 +480,11 @@ const LetterDashboard = () => {
                                     <p className="text-sm text-slate-600 mt-1">
                                         <TranslatedText text={req.details?.name || req.user_id} />
                                     </p>
+                                    {req.details?.subject && (
+                                        <p className="text-sm text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                            <TranslatedText text={req.details.subject} />
+                                        </p>
+                                    )}
                                     {req.area && (
                                         <p className="text-xs text-brand-600 mt-1">
                                             <TranslatedText text={req.area} />
@@ -617,6 +622,9 @@ const LetterDashboard = () => {
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
                                     <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
                                     <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
+                                    {selectedRequest.details?.subject && (
+                                        <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.subject')}:</span> <TranslatedText text={selectedRequest.details.subject} /></p>
+                                    )}
                                     <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
                                     <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
                                         <TranslatedText text={selectedRequest.details?.text || ''} />
