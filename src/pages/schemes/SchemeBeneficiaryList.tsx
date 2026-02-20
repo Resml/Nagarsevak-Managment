@@ -16,6 +16,8 @@ interface SchemeApplication {
     status: 'Pending' | 'Approved' | 'Rejected';
     created_at: string;
     notes?: string;
+    benefit?: string;
+    rejection_reason?: string;
 }
 
 const SchemeBeneficiaryList = () => {
@@ -25,6 +27,12 @@ const SchemeBeneficiaryList = () => {
     const [filterStatus, setFilterStatus] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<SchemeApplication | null>(null);
+    const [editTarget, setEditTarget] = useState<SchemeApplication | null>(null);
+
+    // Edit Modal State
+    const [editStatus, setEditStatus] = useState<'Pending' | 'Approved' | 'Rejected'>('Pending');
+    const [editBenefit, setEditBenefit] = useState('');
+    const [editRejectionReason, setEditRejectionReason] = useState('');
 
     useEffect(() => {
         fetchApplications();
@@ -72,6 +80,39 @@ const SchemeBeneficiaryList = () => {
         } catch (err) {
             console.error('Error updating status:', err);
             toast.error('Failed to update status');
+        }
+    };
+
+    const handleEditSave = async () => {
+        if (!editTarget) return;
+
+        try {
+            const { error } = await supabase
+                .from('scheme_applications')
+                .update({
+                    status: editStatus,
+                    benefit: editBenefit,
+                    rejection_reason: editRejectionReason
+                })
+                .eq('id', editTarget.id);
+
+            if (error) throw error;
+            toast.success(t('schemes.beneficiary_list.update_success') || 'Application updated successfully');
+
+            // Optimistic update
+            setApplications(prev => prev.map(app =>
+                app.id === editTarget.id ? {
+                    ...app,
+                    status: editStatus,
+                    benefit: editBenefit,
+                    rejection_reason: editRejectionReason
+                } : app
+            ));
+
+            setEditTarget(null);
+        } catch (err) {
+            console.error('Error updating application:', err);
+            toast.error(t('schemes.beneficiary_list.update_error') || 'Failed to update application');
         }
     };
 
@@ -149,8 +190,10 @@ const SchemeBeneficiaryList = () => {
                     <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.applicant_col')}</th>
-                            <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.scheme_col')}</th>
                             <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.info_col')}</th>
+                            <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.scheme_col')}</th>
+                            <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.benefit_col') || 'BENEFIT'}</th>
+                            <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.rejection_reason') || 'REJECTION REASON'}</th>
                             <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500">{t('schemes.beneficiary_list.status_col')}</th>
                             <th className="px-6 py-4 text-xs font-semibold uppercase text-slate-500 text-right">{t('schemes.beneficiary_list.actions_col')}</th>
                         </tr>
@@ -167,16 +210,26 @@ const SchemeBeneficiaryList = () => {
                                         <p className="font-medium text-slate-900">{app.applicant_name}</p>
                                         <p className="text-xs text-slate-500">{format(new Date(app.created_at), 'MMM d, yyyy')}</p>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-sm text-slate-700 font-medium">
-                                            <TranslatedText text={app.scheme_name || t('schemes.beneficiary_list.legacy_scheme')} />
-                                        </p>
-                                    </td>
                                     <td className="px-6 py-4 text-sm text-slate-600">
                                         <div className="space-y-0.5">
                                             {app.mobile && <p>📞 {app.mobile}</p>}
                                             {app.address && <p className="truncate max-w-[200px]" title={app.address}>📍 {app.address}</p>}
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm text-slate-700 font-medium whitespace-pre-wrap">
+                                            <TranslatedText text={app.scheme_name || t('schemes.beneficiary_list.legacy_scheme')} />
+                                        </p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                                            {app.benefit || '-'}
+                                        </p>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm text-red-600 whitespace-pre-wrap">
+                                            {app.status === 'Rejected' ? (app.rejection_reason || '-') : '-'}
+                                        </p>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
@@ -205,6 +258,18 @@ const SchemeBeneficiaryList = () => {
                                                     </button>
                                                 </>
                                             )}
+                                            <button
+                                                onClick={() => {
+                                                    setEditTarget(app);
+                                                    setEditStatus(app.status);
+                                                    setEditBenefit(app.benefit || '');
+                                                    setEditRejectionReason(app.rejection_reason || '');
+                                                }}
+                                                className="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
+                                                title={t('common.edit') || 'Edit'}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg>
+                                            </button>
                                             <button
                                                 onClick={() => setDeleteTarget(app)}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -246,6 +311,77 @@ const SchemeBeneficiaryList = () => {
                                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
                             >
                                 {t('schemes.beneficiary_list.delete_btn') || 'Delete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {editTarget && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                    <div className="ns-card w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center p-5 border-b border-slate-200 bg-white">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">{t('common.edit') || 'Edit Application'}</h3>
+                                <p className="text-sm text-brand-600 font-medium truncate max-w-[300px]">{editTarget.applicant_name}</p>
+                            </div>
+                            <button onClick={() => setEditTarget(null)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-x"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto bg-slate-50 p-5 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.beneficiary_list.status_col') || 'Status'}</label>
+                                <select
+                                    value={editStatus}
+                                    onChange={e => setEditStatus(e.target.value as any)}
+                                    className="ns-input"
+                                >
+                                    <option value="Pending">{t('schemes.beneficiary_list.pending') || 'Pending'}</option>
+                                    <option value="Approved">{t('schemes.beneficiary_list.approved') || 'Approved'}</option>
+                                    <option value="Rejected">{t('schemes.beneficiary_list.rejected') || 'Rejected'}</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.beneficiary_list.benefit_col') || 'Benefit'}</label>
+                                <textarea
+                                    value={editBenefit}
+                                    onChange={e => setEditBenefit(e.target.value)}
+                                    className="ns-input min-h-[80px]"
+                                    placeholder={t('schemes.beneficiary_list.benefit_placeholder') || 'Enter benefit details...'}
+                                />
+                            </div>
+
+                            {editStatus === 'Rejected' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.beneficiary_list.rejection_reason') || 'Rejection Reason'}</label>
+                                    <textarea
+                                        value={editRejectionReason}
+                                        onChange={e => setEditRejectionReason(e.target.value)}
+                                        className="ns-input min-h-[80px]"
+                                        placeholder={t('schemes.beneficiary_list.rejection_reason_placeholder') || 'Enter rejection reason...'}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-5 border-t border-slate-200 bg-white flex justify-end gap-3 rounded-b-xl">
+                            <button
+                                type="button"
+                                onClick={() => setEditTarget(null)}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-50 font-medium rounded-lg"
+                            >
+                                {t('common.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleEditSave}
+                                className="ns-btn-primary px-6"
+                            >
+                                {t('common.save_changes') || 'Save Changes'}
                             </button>
                         </div>
                     </div>

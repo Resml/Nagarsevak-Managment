@@ -248,6 +248,7 @@ export interface ProvisionRecord {
   status: 'Pending' | 'Approved' | 'Rejected' | 'Partially Approved';
   financialYear: string;
   category: string;
+  area?: string;
   letterReference: string;
   metadata?: any;
   createdAt: string;

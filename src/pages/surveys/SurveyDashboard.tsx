@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText, Users, Clock, Send, Loader2, Search, Edit2, Trash2 } from 'lucide-react';
+import { Plus, FileText, Users, Clock, Send, Loader2, Search, Edit2, Trash2, BarChart3, X, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import { VoterService } from '../../services/voterService';
 import { useTenant } from '../../context/TenantContext';
-import type { Survey } from '../../types';
+import type { Survey, Voter } from '../../types';
 import { toast } from 'sonner';
+import { TranslatedText } from '../../components/TranslatedText';
 
 const SurveyDashboard = () => {
     const { t } = useLanguage();
@@ -23,6 +24,14 @@ const SurveyDashboard = () => {
 
     // Delete State
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
+
+    // Share Modal State
+    const [showShareModal, setShowShareModal] = useState(false);
+    const [shareTarget, setShareTarget] = useState<Survey | null>(null);
+    const [votersList, setVotersList] = useState<Voter[]>([]);
+    const [voterSearch, setVoterSearch] = useState('');
+    const [selectedVoters, setSelectedVoters] = useState<Set<string>>(new Set());
+    const [loadingVoters, setLoadingVoters] = useState(false);
 
     useEffect(() => {
         if (!tenantId) return;
@@ -76,38 +85,78 @@ const SurveyDashboard = () => {
         setTotalVoters(count);
     };
 
-    const handleWhatsAppBroadcast = async (survey: Survey) => {
-        setBroadcastingId(survey.id);
-        const toastId = toast.loading('Fetching voter contacts...');
-
+    const openShareModal = async (survey: Survey) => {
+        if (!tenantId) return;
+        setShareTarget(survey);
+        setShowShareModal(true);
+        setSelectedVoters(new Set());
+        setVoterSearch('');
+        setLoadingVoters(true);
         try {
-            if (!tenantId) {
-                toast.error("Tenant context missing");
-                return;
-            }
-            // 1. Fetch all voter numbers
-            const phones = await VoterService.getAllVoterPhones(tenantId);
-
-            if (phones.length === 0) {
-                toast.dismiss(toastId);
-                toast.error('No voter contacts found to broadcast to.');
-                return;
-            }
-
-            toast.loading(`Broadcasting survey to ${phones.length} voters...`, { id: toastId });
-
-            // 2. Simulate sending process (would be an API call to bot)
-            await new Promise(resolve => setTimeout(resolve, 3000));
-
-            toast.dismiss(toastId);
-            toast.success(`Successfully sent survey to ${phones.length} voters!`);
-
-        } catch (error) {
-            console.error('Broadcast error:', error);
-            toast.dismiss(toastId);
-            toast.error('Failed to broadcast survey.');
+            const recent = await VoterService.getRecentVotersWithMobile(tenantId, 50);
+            setVotersList(recent);
+        } catch (e) {
+            toast.error("Failed to fetch voters");
         } finally {
-            setBroadcastingId(null);
+            setLoadingVoters(false);
+        }
+    };
+
+    const handleSearchVoters = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setVoterSearch(val);
+        if (!tenantId) return;
+
+        if (val.length < 2) {
+            // Revert to recent if search cleared
+            if (val.length === 0) {
+                const recent = await VoterService.getRecentVotersWithMobile(tenantId, 50);
+                setVotersList(recent);
+            }
+            return;
+        }
+
+        setLoadingVoters(true);
+        try {
+            const results = await VoterService.searchVoters(val, tenantId);
+            setVotersList(results.filter(v => v.mobile));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingVoters(false);
+        }
+    };
+
+    const toggleVoterSelection = (id: string) => {
+        const next = new Set(selectedVoters);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelectedVoters(next);
+    };
+
+    const selectAllVoters = () => {
+        if (selectedVoters.size === votersList.length && votersList.length > 0) {
+            setSelectedVoters(new Set());
+        } else {
+            setSelectedVoters(new Set(votersList.map(v => v.id)));
+        }
+    };
+
+    const sendWhatsAppMessages = () => {
+        if (!shareTarget || selectedVoters.size === 0) return;
+
+        const selected = votersList.filter(v => selectedVoters.has(v.id));
+        if (selected.length === 1) {
+            const v = selected[0];
+            const link = `${window.location.origin}/s/${shareTarget.id}?v=${v.id}`;
+            const msg = encodeURIComponent(`Please fill out this survey: ${link}`);
+            window.open(`https://wa.me/91${v.mobile}?text=${msg}`, '_blank');
+            toast.success(`Opened WhatsApp for ${v.name}`);
+            setShowShareModal(false);
+        } else {
+            // Bulk simulation
+            toast.success(`Survey broadcast simulation: Messages queued for ${selected.length} citizens.`);
+            setShowShareModal(false);
         }
     };
 
@@ -291,11 +340,11 @@ const SurveyDashboard = () => {
                                 {filteredSurveys.map((survey) => (
                                     <tr key={survey.id} className="hover:bg-slate-50">
                                         <td className="p-4">
-                                            <div className="font-semibold text-slate-900">{survey.title}</div>
-                                            <div className="text-sm text-slate-500 truncate max-w-xs">{survey.description}</div>
+                                            <div className="font-semibold text-slate-900"><TranslatedText text={survey.title} /></div>
+                                            <div className="text-sm text-slate-500 truncate max-w-xs"><TranslatedText text={survey.description} /></div>
                                             {survey.area && (
                                                 <span className="inline-block mt-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium border border-blue-100">
-                                                    {survey.area}
+                                                    <TranslatedText text={survey.area} />
                                                 </span>
                                             )}
                                         </td>
@@ -333,16 +382,18 @@ const SurveyDashboard = () => {
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleWhatsAppBroadcast(survey)}
-                                                    disabled={broadcastingId === survey.id}
+                                                    onClick={() => navigate(`/dashboard/surveys/${survey.id}`)}
+                                                    className="text-brand-600 hover:text-brand-700 transition-colors bg-brand-50 hover:bg-brand-100 p-2 rounded-full shadow-sm"
+                                                    title={t('surveys.view_report') || "View Report"}
+                                                >
+                                                    <BarChart3 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => openShareModal(survey)}
                                                     className="text-brand-700 hover:text-brand-800 disabled:opacity-50 disabled:cursor-not-allowed hover:underline text-sm font-semibold flex items-center transition-all ml-2"
                                                 >
-                                                    {broadcastingId === survey.id ? (
-                                                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                                                    ) : (
-                                                        <Send className="w-3 h-3 mr-1" />
-                                                    )}
-                                                    {broadcastingId === survey.id ? t('surveys.sending') : t('surveys.send_whatsapp')}
+                                                    <Send className="w-3 h-3 mr-1" />
+                                                    {t('surveys.send_whatsapp')}
                                                 </button>
                                             </div>
                                         </td>
@@ -364,7 +415,7 @@ const SurveyDashboard = () => {
                             </div>
                             <h3 className="text-lg font-bold text-slate-900">Delete Survey?</h3>
                             <p className="text-slate-500 mt-2 text-sm">
-                                Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>? This action cannot be undone.
+                                Are you sure you want to delete <span className="font-semibold text-slate-900"><TranslatedText text={deleteTarget.title} /></span>? This action cannot be undone.
                             </p>
                         </div>
                         <div className="flex gap-3 pt-2">
@@ -380,6 +431,102 @@ const SurveyDashboard = () => {
                             >
                                 Delete
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Share WhatsApp Modal */}
+            {showShareModal && shareTarget && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in-up">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-xl border border-slate-100">
+                        <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                    <Send className="w-5 h-5 text-brand-600" />
+                                    {t('surveys.dashboard.share_title')}
+                                </h2>
+                                <p className="text-sm text-slate-500 mt-1">{t('surveys.dashboard.share_subtitle')} <span className="font-semibold text-slate-700"><TranslatedText text={shareTarget.title} /></span></p>
+                            </div>
+                            <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-2 hover:bg-slate-200 rounded-full">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-4 border-b border-slate-100">
+                            <div className="relative">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder={t('surveys.dashboard.search_placeholder')}
+                                    value={voterSearch}
+                                    onChange={handleSearchVoters}
+                                    className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-2 bg-slate-50">
+                            {loadingVoters ? (
+                                <div className="flex justify-center items-center h-32 text-slate-500">
+                                    <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...
+                                </div>
+                            ) : votersList.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-48 text-slate-500 space-y-3">
+                                    <Users className="w-10 h-10 text-slate-300" />
+                                    <p>{t('surveys.dashboard.no_citizens')}</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-1">
+                                    <div className="flex items-center px-4 py-2 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors group mb-2 border-b border-slate-200 pb-2" onClick={selectAllVoters}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors mr-3 ${selectedVoters.size === votersList.length && votersList.length > 0 ? 'bg-brand-600 border-brand-600' : 'border-slate-300 bg-white group-hover:border-brand-400'}`}>
+                                            {selectedVoters.size === votersList.length && votersList.length > 0 && <Check className="w-3.5 h-3.5 text-white" />}
+                                        </div>
+                                        <span className="font-semibold text-slate-700">{t('surveys.dashboard.select_all')} ({votersList.length})</span>
+                                    </div>
+
+                                    {votersList.map(v => (
+                                        <div
+                                            key={v.id}
+                                            onClick={() => toggleVoterSelection(v.id)}
+                                            className="flex items-center justify-between p-3 hover:bg-slate-100 bg-white rounded-lg cursor-pointer transition-colors group border border-slate-100 shadow-sm"
+                                        >
+                                            <div className="flex items-center">
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors mr-4 ${selectedVoters.has(v.id) ? 'bg-brand-600 border-brand-600' : 'border-slate-300 bg-slate-50 group-hover:border-brand-400'}`}>
+                                                    {selectedVoters.has(v.id) && <Check className="w-3.5 h-3.5 text-white" />}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-slate-800">{v.name_marathi || v.name}</p>
+                                                    <p className="text-xs text-slate-500 flex items-center mt-0.5">
+                                                        <span className="inline-block w-2 truncate mr-1.5">•</span>
+                                                        +91 {v.mobile}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-slate-100 bg-white flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                            <span className="text-sm font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{selectedVoters.size} {t('surveys.dashboard.selected')}</span>
+                            <div className="space-x-3">
+                                <button
+                                    onClick={() => setShowShareModal(false)}
+                                    className="px-4 py-2 font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+                                >
+                                    {t('common.cancel')}
+                                </button>
+                                <button
+                                    onClick={sendWhatsAppMessages}
+                                    disabled={selectedVoters.size === 0}
+                                    className="bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm inline-flex items-center"
+                                >
+                                    <Send className="w-4 h-4 mr-2" />
+                                    {t('surveys.dashboard.send_links')}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

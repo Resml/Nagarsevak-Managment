@@ -40,6 +40,8 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
     const [mobile, setMobile] = useState('');
     const [address, setAddress] = useState('');
     const [notes, setNotes] = useState('');
+    const [benefit, setBenefit] = useState('');
+    const [rejectionReason, setRejectionReason] = useState('');
     const [selectedVoterId, setSelectedVoterId] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -99,6 +101,8 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
                 mobile: mobile,
                 address: address,
                 notes: notes,
+                benefit: benefit,
+                rejection_reason: rejectionReason,
                 status: 'Pending',
                 tenant_id: tenantId // Secured
             }]);
@@ -252,6 +256,26 @@ const SchemeApplicationModal: React.FC<SchemeApplicationModalProps> = ({ scheme,
                                 onChange={e => setNotes(e.target.value)}
                                 className="ns-input min-h-[80px]"
                                 placeholder="Any additional details..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Benefit</label>
+                            <textarea
+                                value={benefit}
+                                onChange={e => setBenefit(e.target.value)}
+                                className="ns-input min-h-[80px]"
+                                placeholder="Details about benefit provided..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Rejection Reason</label>
+                            <textarea
+                                value={rejectionReason}
+                                onChange={e => setRejectionReason(e.target.value)}
+                                className="ns-input min-h-[80px]"
+                                placeholder="If rejected, provide reason..."
                             />
                         </div>
 

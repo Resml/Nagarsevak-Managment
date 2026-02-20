@@ -6,9 +6,10 @@ import { AIService } from '../../services/aiService';
 import { FeedbackService } from '../../services/feedbackService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
-import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight } from 'lucide-react';
+import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight, Download, Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
+import { AhwalReportGenerator } from './AhwalReportGenerator';
 
 interface WorkItem {
     id: string;
@@ -40,6 +41,11 @@ const WorkHistory = () => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [dateSearch, setDateSearch] = useState('');
     const [showDateDropdown, setShowDateDropdown] = useState(false);
+
+    // Ahwal Report State
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [selectedWorkIds, setSelectedWorkIds] = useState<Set<string>>(new Set());
+    const [showAhwalPreview, setShowAhwalPreview] = useState(false);
 
     // Modal State (Create Only)
     const [showModal, setShowModal] = useState(false);
@@ -189,8 +195,22 @@ const WorkHistory = () => {
     };
 
     const handleCardClick = (item: WorkItem) => {
+        if (selectionMode) {
+            setSelectedWorkIds(prev => {
+                const newSet = new Set(prev);
+                if (newSet.has(item.id)) newSet.delete(item.id);
+                else newSet.add(item.id);
+                return newSet;
+            });
+            return;
+        }
         const dbId = item.id.replace('work-', '');
         navigate(`/dashboard/history/${dbId}`);
+    };
+
+    const toggleSelectionMode = () => {
+        setSelectionMode(!selectionMode);
+        setSelectedWorkIds(new Set());
     };
 
     // Helper: Get Unique Areas with Counts
@@ -260,13 +280,53 @@ const WorkHistory = () => {
                         </h1>
                         <p className="text-sm text-slate-500">{t('work_history.subtitle')}</p>
                     </div>
-                    <button
-                        onClick={() => setShowModal(true)}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4" /> {t('work_history.add_work')}
-                    </button>
+                    <div className="flex gap-3">
+                        {!selectionMode && (
+                            <button
+                                onClick={toggleSelectionMode}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors"
+                            >
+                                <FileText className="w-4 h-4" /> {t('work_history.generate_ahwal') || 'Generate Ahwal'}
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="ns-btn-primary"
+                        >
+                            <Plus className="w-4 h-4" /> {t('work_history.add_work')}
+                        </button>
+                    </div>
                 </div>
+
+                {/* Selection Action Bar */}
+                {selectionMode && (
+                    <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4 animate-in fade-in slide-in-from-top-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold">
+                                {selectedWorkIds.size}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-slate-900">{t('work_history.works_selected') || 'Works Selected'}</h3>
+                                <p className="text-sm text-slate-600">{t('work_history.select_works') || 'Select works to include in the Ahwal report.'}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <button
+                                onClick={toggleSelectionMode}
+                                className="ns-btn-ghost text-slate-600 bg-white flex-1 sm:flex-none"
+                            >
+                                {t('common.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                onClick={() => setShowAhwalPreview(true)}
+                                disabled={selectedWorkIds.size === 0}
+                                className="ns-btn-primary flex-1 sm:flex-none"
+                            >
+                                <FileText className="w-4 h-4" /> {t('work_history.preview_report') || 'Preview Report'}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filters Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
@@ -355,9 +415,23 @@ const WorkHistory = () => {
                     {filteredItems.map((item) => (
                         <div
                             key={item.id}
-                            className="ns-card overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer group"
+                            className={`ns-card overflow-hidden hover:shadow-md transition-all flex flex-col h-full cursor-pointer group relative ${selectionMode && selectedWorkIds.has(item.id)
+                                ? 'ring-2 ring-brand-500 bg-brand-50/30'
+                                : ''
+                                }`}
                             onClick={() => handleCardClick(item)}
                         >
+                            {selectionMode && (
+                                <div className="absolute top-4 right-4 z-10 pointer-events-none">
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id)
+                                        ? 'bg-brand-600 border-brand-600 text-white'
+                                        : 'border-slate-300 bg-white/80'
+                                        }`}>
+                                        {selectedWorkIds.has(item.id) && <Check className="w-3.5 h-3.5" />}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="p-5 flex flex-col h-full">
                                 <div className="flex justify-between items-start mb-3">
                                     {getStatusBadge(item.status, item.source)}
@@ -510,6 +584,13 @@ const WorkHistory = () => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {showAhwalPreview && (
+                <AhwalReportGenerator
+                    selectedWorks={filteredItems.filter(item => selectedWorkIds.has(item.id))}
+                    onClose={() => setShowAhwalPreview(false)}
+                />
             )}
         </div>
     );

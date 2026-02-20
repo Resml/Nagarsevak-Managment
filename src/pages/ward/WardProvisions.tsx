@@ -31,13 +31,15 @@ const WardProvisions = () => {
         status: 'Pending',
         financialYear: '2024-2025',
         category: '',
+        area: '',
         letterReference: ''
     });
 
     const [updateData, setUpdateData] = useState({
         sanctionedAmount: 0,
         sanctionedDate: new Date().toISOString().split('T')[0],
-        status: 'Approved' as ProvisionRecord['status']
+        status: 'Approved' as ProvisionRecord['status'],
+        area: ''
     });
 
     useEffect(() => {
@@ -72,6 +74,7 @@ const WardProvisions = () => {
                 status: 'Pending',
                 financialYear: year,
                 category: '',
+                area: '',
                 letterReference: ''
             });
             toast.success(t('ward_provision.success_add'));
@@ -224,6 +227,7 @@ const WardProvisions = () => {
                         <thead className="bg-slate-50/50">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('ward_provision.col_title')}</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('ward_provision.col_area')}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('ward_provision.col_amount')}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('ward_provision.col_status')}</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('ward_provision.col_date')}</th>
@@ -236,6 +240,7 @@ const WardProvisions = () => {
                                     <tr key={i} className="animate-pulse">
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-48"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-24"></div></td>
+                                        <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-24"></div></td>
                                         <td className="px-6 py-4"><div className="h-6 bg-slate-100 rounded w-20"></div></td>
                                         <td className="px-6 py-4"><div className="h-4 bg-slate-100 rounded w-32"></div></td>
                                         <td className="px-6 py-4"><div className="h-8 bg-slate-100 rounded w-8 ml-auto"></div></td>
@@ -243,7 +248,7 @@ const WardProvisions = () => {
                                 ))
                             ) : provisions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center">
+                                    <td colSpan={6} className="px-6 py-12 text-center">
                                         <div className="flex flex-col items-center text-slate-400">
                                             <FileText className="w-12 h-12 mb-3 opacity-20" />
                                             <p>No provision records found</p>
@@ -263,6 +268,9 @@ const WardProvisions = () => {
                                                 </span>
                                                 <span className="truncate max-w-[200px]">Ref: {item.letterReference}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-700">
+                                            <TranslatedText text={item.area || '-'} />
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-bold text-slate-900 tabular-nums">{formatCurrency(item.sanctionedAmount || item.requestedAmount)}</div>
@@ -287,7 +295,8 @@ const WardProvisions = () => {
                                                         setUpdateData({
                                                             sanctionedAmount: item.sanctionedAmount || item.requestedAmount,
                                                             sanctionedDate: item.sanctionedDate || new Date().toISOString().split('T')[0],
-                                                            status: item.status === 'Pending' ? 'Approved' : item.status
+                                                            status: item.status === 'Pending' ? 'Approved' : item.status,
+                                                            area: item.area || ''
                                                         });
                                                         setIsUpdateModalOpen(true);
                                                     }}
@@ -372,6 +381,17 @@ const WardProvisions = () => {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.form_area')}</label>
+                                    <input
+                                        required type="text"
+                                        className="ns-input"
+                                        value={formData.area}
+                                        onChange={e => setFormData({ ...formData, area: e.target.value })}
+                                        placeholder="Enter Area / Ward Sector"
+                                    />
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.form_year')}</label>
                                     <select
                                         className="ns-input"
@@ -448,6 +468,17 @@ const WardProvisions = () => {
                                         onChange={e => setUpdateData({ ...updateData, sanctionedAmount: Number(e.target.value) })}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.form_area')}</label>
+                                <input
+                                    required type="text"
+                                    className="ns-input"
+                                    value={updateData.area}
+                                    onChange={e => setUpdateData({ ...updateData, area: e.target.value })}
+                                    placeholder="Enter Area / Ward Sector"
+                                />
                             </div>
 
                             <div>

@@ -4,6 +4,7 @@ import { Plus, Newspaper, Trash2, X, Upload, Search, Edit2 } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext';
 import { GalleryService } from '../../services/galleryService';
 import { type GalleryItem, type GalleryCategory } from '../../types';
+import { TranslatedText } from '../../components/TranslatedText';
 
 const NewspaperClipping = () => {
     const { t } = useLanguage();
@@ -274,13 +275,13 @@ const NewspaperClipping = () => {
                                             {item.date}
                                         </span>
                                         <h3 className="font-bold text-slate-800 mt-2 line-clamp-2">
-                                            {item.titleKey ? t(item.titleKey) : item.title}
+                                            {item.titleKey ? t(item.titleKey) : <TranslatedText text={item.title} />}
                                         </h3>
                                     </div>
                                 </div>
                                 {item.description && (
                                     <p className="text-slate-600 text-sm line-clamp-3">
-                                        {item.descriptionKey ? t(item.descriptionKey) : item.description}
+                                        {item.descriptionKey ? t(item.descriptionKey) : <TranslatedText text={item.description || ''} />}
                                     </p>
                                 )}
                             </div>

@@ -35,7 +35,10 @@ import Gallery from './pages/gallery/Gallery';
 import BudgetDashboard from './pages/budget/BudgetDashboard';
 import ResultAnalysis from './pages/results/ResultAnalysis';
 import ContentStudio from './pages/content/ContentStudio';
-import SurveyDashboard from './pages/surveys/SurveyDashboard'; import CreateSurvey from './pages/surveys/CreateSurvey';
+import SurveyDashboard from './pages/surveys/SurveyDashboard';
+import CreateSurvey from './pages/surveys/CreateSurvey';
+import SurveyDetails from './pages/surveys/SurveyDetails';
+import PublicSurveyForm from './pages/surveys/PublicSurveyForm';
 
 import WardWiseProblem from './pages/ward/WardWiseProblem';
 import WardMap from './pages/ward/WardMap';
@@ -96,6 +99,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/join-party" element={<JoinParty />} />
+        <Route path="/s/:id" element={<PublicSurveyForm />} />
 
         <Route path="/dashboard" element={
           <ProtectedRoute>
@@ -148,6 +152,7 @@ function App() {
           <Route path="surveys" element={<PermissionGuard permission="surveys"><SurveyDashboard /></PermissionGuard>} />
           <Route path="surveys/new" element={<PermissionGuard permission="surveys"><CreateSurvey /></PermissionGuard>} />
           <Route path="surveys/edit/:id" element={<PermissionGuard permission="surveys"><CreateSurvey /></PermissionGuard>} />
+          <Route path="surveys/:id" element={<PermissionGuard permission="surveys"><SurveyDetails /></PermissionGuard>} />
 
           {/* New Routes */}
           <Route path="ward/problems" element={<PermissionGuard permission="ward_problems"><WardWiseProblem /></PermissionGuard>} />

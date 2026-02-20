@@ -66,6 +66,39 @@ export const VoterService = {
         }));
     },
 
+    // Fetch recent voters who specifically have mobile numbers (useful for broadcast modals)
+    getRecentVotersWithMobile: async (tenantId: string, limit: number = 50): Promise<Voter[]> => {
+        const { data, error } = await supabase
+            .from('voters')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .not('mobile', 'is', null)
+            .neq('mobile', '')
+            .limit(limit);
+
+        if (error) {
+            console.error('Error fetching recent voters with mobile:', error);
+            return [];
+        }
+
+        return (data || []).map((row: any) => ({
+            id: row.id.toString(),
+            name: row.name_english || row.name_marathi || 'Unknown',
+            name_english: row.name_english,
+            name_marathi: row.name_marathi,
+            age: row.age || 0,
+            gender: row.gender || 'O',
+            address: row.address_english || row.address_marathi || '',
+            address_english: row.address_english,
+            address_marathi: row.address_marathi,
+            ward: row.ward_no || '',
+            booth: row.part_no?.toString() || '',
+            epicNo: row.epic_no || '',
+            mobile: row.mobile || undefined,
+            history: []
+        }));
+    },
+
     getTotalCount: async (tenantId: string): Promise<number> => {
         const { count, error } = await supabase
             .from('voters')

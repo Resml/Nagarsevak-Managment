@@ -4,6 +4,7 @@ import { Plus, Image as ImageIcon, Newspaper, Trash2, X, Upload, Search, Edit2 }
 import { useLanguage } from '../../context/LanguageContext';
 import { GalleryService } from '../../services/galleryService';
 import { type GalleryItem, type GalleryCategory } from '../../types';
+import { TranslatedText } from '../../components/TranslatedText';
 
 const Gallery = () => {
     const { t } = useLanguage();
@@ -249,13 +250,13 @@ const Gallery = () => {
                             <div className="p-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-semibold text-slate-900 line-clamp-1" title={item.titleKey ? t(item.titleKey) : item.title}>
-                                        {item.titleKey ? t(item.titleKey) : item.title}
+                                        {item.titleKey ? t(item.titleKey) : <TranslatedText text={item.title} />}
                                     </h3>
                                     <span className="text-xs text-slate-500 whitespace-nowrap">{item.date}</span>
                                 </div>
                                 {(item.description || item.descriptionKey) && (
                                     <p className="text-sm text-slate-600 line-clamp-2" title={item.descriptionKey ? t(item.descriptionKey) : item.description}>
-                                        {item.descriptionKey ? t(item.descriptionKey) : item.description}
+                                        {item.descriptionKey ? t(item.descriptionKey) : <TranslatedText text={item.description || ''} />}
                                     </p>
                                 )}
                             </div>
@@ -399,7 +400,7 @@ const Gallery = () => {
                                 </div>
                                 <h3 className="text-lg font-bold text-slate-900">{t('gallery.delete_title')}</h3>
                                 <p className="text-slate-500 mt-2 text-sm">
-                                    {t('gallery.delete_confirm')} <span className="font-semibold text-slate-900">{deleteTarget.titleKey ? t(deleteTarget.titleKey) : deleteTarget.title}</span>?
+                                    {t('gallery.delete_confirm')} <span className="font-semibold text-slate-900">{deleteTarget.titleKey ? t(deleteTarget.titleKey) : <TranslatedText text={deleteTarget.title} />}</span>?
                                 </p>
                             </div>
                             <div className="flex gap-3 pt-2">

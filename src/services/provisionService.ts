@@ -28,6 +28,7 @@ export const ProvisionService = {
                 status: row.status,
                 financialYear: row.financial_year,
                 category: row.category,
+                area: row.area,
                 letterReference: row.letter_reference,
                 metadata: row.metadata,
                 createdAt: row.created_at
@@ -52,6 +53,7 @@ export const ProvisionService = {
                     status: record.status,
                     financial_year: record.financialYear,
                     category: record.category,
+                    area: record.area,
                     letter_reference: record.letterReference,
                     metadata: record.metadata,
                     tenant_id: record.tenantId
@@ -76,6 +78,7 @@ export const ProvisionService = {
             if (updates.status) payload.status = updates.status;
             if (updates.financialYear) payload.financial_year = updates.financialYear;
             if (updates.category) payload.category = updates.category;
+            if (updates.area !== undefined) payload.area = updates.area;
             if (updates.letterReference) payload.letter_reference = updates.letterReference;
             if (updates.metadata) payload.metadata = updates.metadata;
 

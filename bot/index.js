@@ -177,6 +177,67 @@ app.post('/api/broadcast', async (req, res) => {
     res.json({ success: true, message: 'Broadcast started in background' });
 });
 
+// --- Selective Event Invite Sender ---
+// POST /api/send-event-invites
+// Body: { tenantId, eventId, mobiles: [{ mobile, name }] }
+app.post('/api/send-event-invites', async (req, res) => {
+    const { eventId, tenantId, mobiles } = req.body;
+
+    if (!eventId || !tenantId || !Array.isArray(mobiles) || mobiles.length === 0) {
+        return res.status(400).json({ error: 'eventId, tenantId, and non-empty mobiles[] are required' });
+    }
+
+    const session = sessions.get(tenantId);
+    if (!session || session.status !== 'connected') {
+        return res.status(503).json({ error: 'WhatsApp bot not connected for this tenant. Please connect the bot first.' });
+    }
+
+    // Fetch event details
+    const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+    if (eventError || !event) {
+        return res.status(404).json({ error: 'Event not found' });
+    }
+
+    console.log(`[${tenantId}] Sending event invites for "${event.title}" to ${mobiles.length} citizens`);
+
+    // Send in background (non-blocking)
+    res.json({ success: true, message: `Sending invites to ${mobiles.length} citizens in background` });
+
+    // Build message
+    const eventDateStr = event.event_date ? new Date(event.event_date).toLocaleDateString('mr-IN', { day: '2-digit', month: 'long', year: 'numeric' }) : event.event_date;
+    const messageText = `🎉 *आमंत्रण / Invitation*\n\nआपणास *${event.title}* कार्यक्रमासाठी आमंत्रित करण्यात आले आहे!\n\n📅 *दिनांक:* ${eventDateStr}\n⏰ *वेळ:* ${event.event_time}\n📍 *ठिकाण:* ${event.location}\n\n${event.description ? `${event.description}\n\n` : ''}कृपया उपस्थित राहावे.\n\n_- नगरसेवक कार्यालय_`;
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    (async () => {
+        let sent = 0;
+        for (const recipient of mobiles) {
+            try {
+                let number = (recipient.mobile || '').replace(/\D/g, '');
+                if (number.length === 10) number = '91' + number;
+                if (!number || number.length < 11) continue;
+
+                const jid = number + '@s.whatsapp.net';
+                await session.sock.sendMessage(jid, { text: messageText });
+                console.log(`[${tenantId}] ✅ Invite sent to ${recipient.name || number}`);
+                sent++;
+
+                // Random 2-4s delay to avoid spam detection
+                const delay = Math.floor(Math.random() * 2000) + 2000;
+                await sleep(delay);
+            } catch (sendErr) {
+                console.error(`[${tenantId}] ❌ Failed to send to ${recipient.mobile}:`, sendErr.message);
+            }
+        }
+        console.log(`[${tenantId}] Event invite broadcast complete: ${sent}/${mobiles.length} sent`);
+    })();
+});
+
 // --- Webhook endpoint for letter status updates ---
 app.post('/webhook/letter-status', async (req, res) => {
     try {
