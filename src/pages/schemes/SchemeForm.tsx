@@ -17,8 +17,20 @@ const SchemeForm = () => {
         description: '',
         eligibility: '',
         benefits: '',
-        documents: ''
+        documents: '',
+        category: 'All'
     });
+
+    const categories = [
+        { id: 'All', label: 'All' },
+        { id: 'Women', label: 'Women' },
+        { id: 'Student', label: 'Student' },
+        { id: 'Senior Citizen', label: 'Senior Citizen' },
+        { id: 'Farmer', label: 'Farmer' },
+        { id: 'Health', label: 'Health' },
+        { id: 'Youth', label: 'Youth' },
+        { id: 'Housing', label: 'Housing' },
+    ];
 
     useEffect(() => {
         if (id) {
@@ -42,7 +54,8 @@ const SchemeForm = () => {
                     description: data.description,
                     eligibility: data.eligibility,
                     benefits: data.benefits,
-                    documents: data.documents
+                    documents: data.documents,
+                    category: data.category || 'All'
                 });
             }
         } catch (error) {
@@ -51,7 +64,7 @@ const SchemeForm = () => {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
@@ -113,6 +126,21 @@ const SchemeForm = () => {
                             className="ns-input"
                             placeholder={t('schemes.form.name_placeholder')}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                        <select
+                            name="category"
+                            value={formData.category}
+                            onChange={handleChange}
+                            className="ns-input bg-white w-full"
+                        >
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.label}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-slate-500 mt-1">Select the target group for this scheme (helps with filtering in the Schemes list).</p>
                     </div>
 
                     <div>

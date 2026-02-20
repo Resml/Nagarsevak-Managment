@@ -39,6 +39,10 @@ const WardWiseProblem = () => {
                         name_english,
                         name_marathi,
                         mobile
+                    ),
+                    staff:assigned_to (
+                        name,
+                        mobile
                     )
                 `)
                 .eq('category', 'SelfIdentified')
@@ -63,6 +67,10 @@ const WardWiseProblem = () => {
                     name_english?: string | null;
                     name_marathi?: string | null;
                     mobile?: string | null;
+                } | null;
+                staff?: {
+                    name: string;
+                    mobile: string;
                 } | null;
             };
 
@@ -135,6 +143,7 @@ const WardWiseProblem = () => {
                     })(),
                 createdAt: row.created_at,
                 photos: [],
+                staff: row.staff ? { name: row.staff.name, mobile: row.staff.mobile } : undefined,
                 updatedAt: row.created_at
             }));
 
@@ -433,8 +442,16 @@ const WardWiseProblem = () => {
                                 </div>
                             </div>
 
+                            {complaint.staff && complaint.status === 'Assigned' && (
+                                <div className="mb-2 text-xs text-blue-700 font-medium bg-blue-50/50 border border-blue-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit">
+                                    <User className="w-3.5 h-3.5" />
+                                    {complaint.staff.name} {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
+                                </div>
+                            )}
+
                             {complaint.voter && (
-                                <div className="mb-2 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded flex items-center gap-1 w-fit">
+                                <div className="mb-2 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded flex items-center gap-1 w-fit border border-gray-100">
+                                    <User className="w-3 h-3" />
                                     {language === 'mr' && complaint.voter.name_marathi
                                         ? complaint.voter.name_marathi
                                         : (complaint.voter.name_english || complaint.voter.name_marathi)}

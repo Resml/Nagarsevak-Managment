@@ -31,6 +31,10 @@ export interface Complaint {
     mobile?: string;
   };
   assignedTo?: string; // User ID of staff
+  staff?: {
+    name?: string;
+    mobile?: string;
+  };
   photos: string[]; // URLs type legacy
   imageUrl?: string;
   videoUrl?: string;

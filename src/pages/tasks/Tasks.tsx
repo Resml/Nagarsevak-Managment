@@ -270,6 +270,32 @@ const Tasks = () => {
         return title;
     };
 
+    const renderDynamicTitle = (title: string) => {
+        if (!title) return null;
+
+        const patterns = [
+            { regex: /^Greeting from (.+)$/i, key: 'tasks.greeting_from' },
+            { regex: /^Invitation from (.+)$/i, key: 'tasks.invitation_from' },
+            { regex: /^Complaint from (.+)$/i, key: 'tasks.complaint_from' }
+        ];
+
+        for (const { regex, key } of patterns) {
+            const match = title.match(regex);
+            if (match) {
+                const parts = t(key).split('{{name}}');
+                return (
+                    <>
+                        {parts[0]}
+                        <TranslatedText text={match[1]} />
+                        {parts[1]}
+                    </>
+                );
+            }
+        }
+
+        return <TranslatedText text={title} />;
+    };
+
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = !searchTerm || (() => {
             const term = searchTerm.toLowerCase();
@@ -569,7 +595,7 @@ const Tasks = () => {
                         <div className="flex justify-between items-start mb-2">
                             <div>
                                 <h3 className="font-semibold text-slate-900 text-lg">
-                                    <TranslatedText text={formatTaskTitle(task.title)} />
+                                    {renderDynamicTitle(task.title)}
                                 </h3>
                                 <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
                                     <span className={clsx(
@@ -651,7 +677,8 @@ const Tasks = () => {
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
                         <p className="text-slate-600 mb-6">
-                            {t('common.delete_warning_item').replace('{item}', formatTaskTitle(deleteTarget.title))}
+                            {t('common.delete_warning_item').replace('{item}', '')}
+                            <span className="font-semibold mx-1">{renderDynamicTitle(deleteTarget.title)}</span>?
                         </p>
                         <div className="flex gap-3 justify-center">
                             <button

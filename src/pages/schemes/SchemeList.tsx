@@ -18,6 +18,7 @@ interface Scheme {
     eligibility: string;
     benefits: string;
     documents: string;
+    category?: string;
 }
 
 const SchemeList = () => {
@@ -109,10 +110,16 @@ const SchemeList = () => {
 
         let matchesCategory = true;
         if (activeCategory !== 'All') {
-            const category = categories.find(c => c.id === activeCategory);
-            if (category && category.keywords) {
-                const combinedText = `${s.name} ${s.description} ${s.eligibility} ${s.benefits}`.toLowerCase();
-                matchesCategory = category.keywords.some(keyword => combinedText.includes(keyword));
+            // First check if the scheme has an explicitly set category
+            if (s.category && s.category !== 'All') {
+                matchesCategory = s.category === activeCategory;
+            } else {
+                // Fallback to keyword matching if no explicit category is set
+                const category = categories.find(c => c.id === activeCategory);
+                if (category && category.keywords) {
+                    const combinedText = `${s.name} ${s.description} ${s.eligibility} ${s.benefits}`.toLowerCase();
+                    matchesCategory = category.keywords.some(keyword => combinedText.includes(keyword));
+                }
             }
         }
 

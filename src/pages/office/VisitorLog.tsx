@@ -220,6 +220,13 @@ const VisitorLog = () => {
         setLoading(false);
     };
 
+    useEffect(() => {
+        if (tenantId) {
+            fetchVisitors();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tenantId]);
+
     const handleCheckIn = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
