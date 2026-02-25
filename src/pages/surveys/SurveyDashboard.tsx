@@ -142,23 +142,61 @@ const SurveyDashboard = () => {
         }
     };
 
-    const sendWhatsAppMessages = () => {
-        if (!shareTarget || selectedVoters.size === 0) return;
+    const [sendingSurvey, setSendingSurvey] = useState(false);
 
+    const sendWhatsAppMessages = async () => {
+        if (!shareTarget || selectedVoters.size === 0) return;
         const selected = votersList.filter(v => selectedVoters.has(v.id));
-        if (selected.length === 1) {
-            const v = selected[0];
-            const link = `${window.location.origin}/s/${shareTarget.id}?v=${v.id}`;
-            const msg = encodeURIComponent(`Please fill out this survey: ${link}`);
-            window.open(`https://wa.me/91${v.mobile}?text=${msg}`, '_blank');
-            toast.success(`Opened WhatsApp for ${v.name}`);
-            setShowShareModal(false);
-        } else {
-            // Bulk simulation
-            toast.success(`Survey broadcast simulation: Messages queued for ${selected.length} citizens.`);
+        const BOT_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
+
+        setSendingSurvey(true);
+        try {
+            const res = await fetch(`${BOT_URL}/api/send-survey`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    surveyId: shareTarget.id,
+                    tenantId,
+                    mobiles: selected.map(v => ({
+                        mobile: v.mobile,
+                        name: v.name_marathi || v.name,
+                        voterId: v.id
+                    }))
+                })
+            });
+
+            if (res.ok) {
+                toast.success(`✅ Survey started for ${selected.length} citizens via WhatsApp bot!`);
+            } else if (res.status === 503) {
+                // Fallback to direct wa.me links if bot is offline
+                toast.error('Bot offline. Sending via browser links instead...');
+                selected.forEach((v, i) => {
+                    setTimeout(() => {
+                        const link = `${window.location.origin}/s/${shareTarget.id}?v=${v.id}`;
+                        const msg = encodeURIComponent(`Please fill out this survey: ${link}`);
+                        window.open(`https://wa.me/91${v.mobile}?text=${msg}`, '_blank');
+                    }, i * 600);
+                });
+            } else {
+                const err = await res.json().catch(() => ({}));
+                toast.error(err.error || 'Failed to send surveys');
+            }
+        } catch (e) {
+            // Network error fallback
+            toast.error('Bot unreachable. Sending via browser links...');
+            selected.forEach((v, i) => {
+                setTimeout(() => {
+                    const link = `${window.location.origin}/s/${shareTarget.id}?v=${v.id}`;
+                    const msg = encodeURIComponent(`Please fill out this survey: ${link}`);
+                    window.open(`https://wa.me/91${v.mobile}?text=${msg}`, '_blank');
+                }, i * 600);
+            });
+        } finally {
+            setSendingSurvey(false);
             setShowShareModal(false);
         }
     };
+
 
     const confirmDelete = async () => {
         if (!deleteTarget || !tenantId) return;
@@ -520,11 +558,13 @@ const SurveyDashboard = () => {
                                 </button>
                                 <button
                                     onClick={sendWhatsAppMessages}
-                                    disabled={selectedVoters.size === 0}
+                                    disabled={selectedVoters.size === 0 || sendingSurvey}
                                     className="bg-[#25D366] hover:bg-[#1ebd5c] disabled:bg-slate-300 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm inline-flex items-center"
                                 >
-                                    <Send className="w-4 h-4 mr-2" />
-                                    {t('surveys.dashboard.send_links')}
+                                    {sendingSurvey
+                                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Sending...</>
+                                        : <><Send className="w-4 h-4 mr-2" /> {t('surveys.dashboard.send_links')}</>
+                                    }
                                 </button>
                             </div>
                         </div>

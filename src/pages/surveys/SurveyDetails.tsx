@@ -264,63 +264,104 @@ const SurveyDetails = () => {
                 })}
             </div>
 
-            {/* Detailed Responses Table */}
-            <h2 className="text-lg font-bold text-slate-900 mt-10 mb-4 border-b border-slate-200 pb-2">
-                <Users className="w-5 h-5 inline-block mr-2 text-slate-500" />
-                Detailed Citizen Responses
+            {/* Individual Citizen Responses */}
+            <h2 className="text-lg font-bold text-slate-900 mt-10 mb-1 flex items-center gap-2">
+                <Users className="w-5 h-5 text-slate-500" />
+                Individual Responses
+                <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium ml-1">{responses.length}</span>
             </h2>
+            <p className="text-sm text-slate-500 mb-5">Each citizen's full responses to all survey questions.</p>
 
-            <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden mb-12">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm whitespace-nowrap">
-                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase">Citizen</th>
-                                <th className="px-6 py-4 font-semibold text-xs tracking-wider uppercase">Date</th>
-                                {survey.questions.map((q, i) => (
-                                    <th key={q.id} className="px-6 py-4 font-semibold text-xs tracking-wider uppercase max-w-[200px] truncate" title={q.text}>
-                                        Q{i + 1}: <TranslatedText text={q.text} />
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {responses.length === 0 ? (
-                                <tr>
-                                    <td colSpan={survey.questions.length + 2} className="px-6 py-8 text-center text-slate-500">
-                                        No responses yet. Send the survey link over WhatsApp to start collecting data.
-                                    </td>
-                                </tr>
-                            ) : (
-                                responses.map(r => (
-                                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">
-                                            {r.voters ? (
-                                                <div className="flex flex-col gap-0.5">
-                                                    <div>{r.voters.name_marathi || r.voters.name}</div>
-                                                    <div className="text-xs text-slate-500 font-normal hover:text-brand-600 transition-colors cursor-pointer" onClick={() => window.open(`https://wa.me/91${r.voters.mobile}`, '_blank')}>
-                                                        +91 {r.voters.mobile}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <span className="text-slate-500 italic">Anonymous</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500">
-                                            {new Date(r.created_at).toLocaleDateString()} {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </td>
-                                        {survey.questions.map(q => (
-                                            <td key={q.id} className="px-6 py-4 text-slate-700 max-w-[250px] truncate" title={r.answers?.[q.id]}>
-                                                {r.answers?.[q.id] || <span className="text-slate-300">-</span>}
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+            {responses.length === 0 ? (
+                <div className="ns-card p-10 text-center text-slate-400">
+                    <Users className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                    <p className="font-medium">No responses yet.</p>
+                    <p className="text-sm mt-1">Send the survey to citizens via WhatsApp bot to start collecting data.</p>
                 </div>
-            </div>
+            ) : (
+                <div className="space-y-4 mb-12">
+                    {responses.map((r, rIdx) => {
+                        const citizen = r.voters;
+                        const submitDate = new Date(r.created_at);
+                        return (
+                            <div key={r.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                {/* Citizen header */}
+                                <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-brand-50 to-slate-50 border-b border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                            {rIdx + 1}
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-slate-800 text-sm">
+                                                {citizen ? (citizen.name_marathi || citizen.name || 'Unknown') : <span className="italic text-slate-400">Anonymous</span>}
+                                            </p>
+                                            {citizen?.mobile && (
+                                                <button
+                                                    onClick={() => window.open(`https://wa.me/91${citizen.mobile}`, '_blank')}
+                                                    className="text-xs text-brand-600 hover:underline font-medium"
+                                                >
+                                                    +91 {citizen.mobile}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs text-slate-500">
+                                            {submitDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
+                                        <p className="text-xs text-slate-400">
+                                            {submitDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Answers grid */}
+                                <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {survey.questions.map((q, qIdx) => {
+                                        // answers may be keyed by q.id OR by q.text (from bot which uses text as key)
+                                        const answer = r.answers?.[q.id] ?? r.answers?.[q.text] ?? null;
+                                        const isYes = typeof answer === 'string' && /^(yes|होय)$/i.test(answer);
+                                        const isNo = typeof answer === 'string' && /^(no|नाही)$/i.test(answer);
+                                        const isRating = typeof answer === 'number' || (typeof answer === 'string' && /^\d$/.test(answer) && q.type === 'Rating');
+                                        return (
+                                            <div key={q.id} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+                                                    Q{qIdx + 1}: <TranslatedText text={q.text} />
+                                                </p>
+                                                {answer !== null && answer !== undefined ? (
+                                                    <div>
+                                                        {isYes && (
+                                                            <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">
+                                                                <CheckCircle2 className="w-3.5 h-3.5" /> {String(answer)}
+                                                            </span>
+                                                        )}
+                                                        {isNo && (
+                                                            <span className="inline-flex items-center gap-1 text-sm font-semibold text-red-600 bg-red-100 px-2.5 py-1 rounded-full">
+                                                                <AlertCircle className="w-3.5 h-3.5" /> {String(answer)}
+                                                            </span>
+                                                        )}
+                                                        {isRating && !isYes && !isNo && (
+                                                            <span className="text-lg font-bold text-amber-500">
+                                                                {'★'.repeat(Number(answer))}{'☆'.repeat(5 - Number(answer))}
+                                                                <span className="text-sm text-slate-500 font-normal ml-1">{answer}/5</span>
+                                                            </span>
+                                                        )}
+                                                        {!isYes && !isNo && !isRating && (
+                                                            <p className="text-sm text-slate-800 font-medium">{String(answer)}</p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-slate-400 italic">No answer</span>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };

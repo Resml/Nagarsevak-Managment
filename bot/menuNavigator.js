@@ -1,6 +1,7 @@
 const { MENUS, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { createClient } = require('@supabase/supabase-js');
+const { SURVEY_MENU_STATE, handleSurveyReply } = require('./surveyBot');
 
 // Menu states
 const MENU_STATES = {
@@ -58,7 +59,9 @@ const MENU_STATES = {
     VOTER_UPDATE_MOBILE_VAL: 'VOTER_UPDATE_MOBILE_VAL',
     VOTER_UPDATE_ADDRESS_VAL: 'VOTER_UPDATE_ADDRESS_VAL',
     // Staff Task Management
-    STAFF_TASK_DATE_ESTIMATE: 'STAFF_TASK_DATE_ESTIMATE'
+    STAFF_TASK_DATE_ESTIMATE: 'STAFF_TASK_DATE_ESTIMATE',
+    // Survey Conversation
+    SURVEY_IN_PROGRESS: 'SURVEY_IN_PROGRESS'
 };
 
 class MenuNavigator {
@@ -279,6 +282,9 @@ class MenuNavigator {
 
             case MENU_STATES.STAFF_TASK_DATE_ESTIMATE:
                 return await this.handleStaffTaskDateEstimate(sock, tenantId, userId, input);
+
+            case MENU_STATES.SURVEY_IN_PROGRESS:
+                return await handleSurveyReply(sock, userId, session, input);
 
             default:
                 // Check if this is a reply to a pending task (Staff Date Estimate)
