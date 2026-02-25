@@ -49,6 +49,12 @@ const BotDashboard = () => {
             console.log('Bot Status:', newStatus);
             setStatus(newStatus);
             setLoading(false); // Stop loading when we get status
+
+            // Auto-start scanning if backend says there is no session
+            if (newStatus === 'disconnected') {
+                console.log('No backend session active. Auto-starting new session...');
+                newSocket.emit('start_session', { tenantId });
+            }
         });
 
         newSocket.on('qr', (qr) => {
