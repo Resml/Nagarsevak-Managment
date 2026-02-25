@@ -129,16 +129,14 @@ const BotDashboard = () => {
                                     {status === 'connected' ? <CheckCircle className="w-6 h-6" /> : <RefreshCw className={`w-6 h-6 ${status === 'scanning' ? 'animate-spin' : ''}`} />}
                                     <span className="font-medium text-lg">{getStatusText()}</span>
                                 </div>
-                                {status === 'connected' && (
-                                    <button
-                                        onClick={handleLogout}
-                                        className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
-                                        title="Logout WhatsApp Bot"
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        Logout
-                                    </button>
-                                )}
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm ml-auto"
+                                    title={status === 'connected' ? "Logout WhatsApp Bot" : "Force Reset Bot Connection"}
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    {status === 'connected' ? 'Logout' : 'Reset Bot'}
+                                </button>
                             </div>
 
                             <div className="mt-6">

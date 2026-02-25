@@ -14,6 +14,7 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const store = require('./store');
 const broadcastService = require('./broadcast');
+const { startSurveyForUser } = require('./surveyBot');
 // AI Service removed - using menu-driven navigation instead
 const MenuNavigator = require('./menuNavigator');
 const supabaseAuthState = require('./supabaseAuthState');
@@ -235,6 +236,85 @@ app.post('/api/send-event-invites', async (req, res) => {
             }
         }
         console.log(`[${tenantId}] Event invite broadcast complete: ${sent}/${mobiles.length} sent`);
+    })();
+});
+
+// --- Survey via WhatsApp Bot ---
+// POST /api/send-survey
+// Body: { tenantId, surveyId, mobiles: [{ mobile, name, voterId? }] }
+app.post('/api/send-survey', async (req, res) => {
+    const { surveyId, tenantId, mobiles } = req.body;
+
+    if (!surveyId || !tenantId || !Array.isArray(mobiles) || mobiles.length === 0) {
+        return res.status(400).json({ error: 'surveyId, tenantId, and non-empty mobiles[] are required' });
+    }
+
+    const session = sessions.get(tenantId);
+    if (!session || session.status !== 'connected') {
+        return res.status(503).json({ error: 'WhatsApp bot is not connected for this tenant.' });
+    }
+
+    if (!session.menuNavigator) {
+        return res.status(500).json({ error: 'MenuNavigator not initialized' });
+    }
+
+    // Fetch survey with questions from DB
+    const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .select('*')
+        .eq('id', surveyId)
+        .single();
+
+    if (surveyError || !survey) {
+        return res.status(404).json({ error: 'Survey not found' });
+    }
+
+    // Normalize questions (could be JSONB array in DB)
+    let questions = survey.questions;
+    if (typeof questions === 'string') {
+        try { questions = JSON.parse(questions); } catch { questions = []; }
+    }
+    if (!Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ error: 'Survey has no questions' });
+    }
+
+    const surveyObj = { id: survey.id, title: survey.title, questions };
+
+    console.log(`[${tenantId}] Starting WhatsApp survey "${survey.title}" for ${mobiles.length} citizens`);
+
+    // Respond immediately - processing happens in background
+    res.json({ success: true, message: `Survey started for ${mobiles.length} citizens in background` });
+
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    (async () => {
+        let started = 0;
+        for (const recipient of mobiles) {
+            try {
+                let number = (recipient.mobile || '').replace(/\D/g, '');
+                if (number.length === 10) number = '91' + number;
+                if (!number || number.length < 11) continue;
+
+                const jid = number + '@s.whatsapp.net';
+                await startSurveyForUser(
+                    session.sock,
+                    session.menuNavigator,
+                    jid,
+                    surveyObj,
+                    tenantId,
+                    recipient.voterId || null
+                );
+                started++;
+                console.log(`[${tenantId}] ✅ Survey started for ${recipient.name || number}`);
+
+                // 3-6s delay between citizens to avoid rate limits
+                const delay = Math.floor(Math.random() * 3000) + 3000;
+                await sleep(delay);
+            } catch (err) {
+                console.error(`[${tenantId}] ❌ Failed to start survey for ${recipient.mobile}:`, err.message);
+            }
+        }
+        console.log(`[${tenantId}] Survey dispatch complete: ${started}/${mobiles.length}`);
     })();
 });
 
@@ -543,7 +623,8 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         }
 
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
+            const statusCode = (lastDisconnect.error)?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut && statusCode !== 405;
             console.log(`[${tenantId}] Connection closed due to:`, lastDisconnect.error, ', Reconnecting:', shouldReconnect);
 
             updateSessionStatus(tenantId, 'disconnected');
@@ -566,6 +647,7 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
             } else {
                 console.log(`[${tenantId}] Logged out. Cleaning up session.`);
                 sessions.delete(tenantId);
+                io.to(tenantId).emit('logged_out', true);
                 // Also remove from Supabase (already done in logout, but good for safety)
                 supabase.from('whatsapp_sessions').delete().eq('session_id', tenantId).then(() => {
                     console.log(`[${tenantId}] Session cleaned from DB after logout/disconnect`);
