@@ -58,9 +58,11 @@ const BotDashboard = () => {
         });
 
         newSocket.on('logged_out', () => {
-            console.log('Bot logged out successfully');
+            console.log('Bot logged out explicitly. Fetching new QR code...');
             setStatus('disconnected');
             setQrCode('');
+            // Automatically request a new session instead of staying offline infinitely
+            newSocket.emit('start_session', { tenantId });
         });
 
         return () => {
