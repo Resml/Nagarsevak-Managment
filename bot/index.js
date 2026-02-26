@@ -1,4 +1,4 @@
-const { makeWASocket, DisconnectReason, getAggregateVotesInPollMessage, delay } = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, getAggregateVotesInPollMessage, delay, Browsers, fetchLatestWaWebVersion } = require('@whiskeysockets/baileys');
 // const makeInMemoryStore = require('@whiskeysockets/baileys').makeInMemoryStore; // Removed as it is missing
 
 const pino = require('pino');
@@ -142,6 +142,15 @@ async function logoutSession(tenantId) {
             console.error(`[${tenantId}] Error deleting session from Supabase:`, error);
         } else {
             console.log(`[${tenantId}] Session deleted from Supabase`);
+        }
+
+        // Wipe local auth folder if it exists (Baileys sometimes caches here)
+        const fs = require('fs');
+        const path = require('path');
+        const authDir = path.join(__dirname, `auth_info_${tenantId}`);
+        if (fs.existsSync(authDir)) {
+            fs.rmSync(authDir, { recursive: true, force: true });
+            console.log(`[${tenantId}] Local auth files deleted`);
         }
 
         // Emit logout status to frontend
@@ -548,14 +557,20 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
     // Update status to connecting
     updateSessionStatus(tenantId, 'connecting');
 
+    // Fetch the latest WA Web version to avoid 405 Method Not Allowed error on fresh connects
+    const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => ({ version: [2, 3000, 1015901307], isLatest: false }));
+    console.log(`[${tenantId}] Using WA Web v${version.join('.')}, isLatest: ${isLatest}`);
+
     // Use Supabase Auth State
     const { state, saveCreds } = await supabaseAuthState(supabase, tenantId);
 
     const sock = makeWASocket({
+        version,
         auth: state,
         logger: pino({ level: 'silent' }),
         msgRetryCounterCache,
-        printQRInTerminal: false, // We handle QR manually
+        printQRInTerminal: true, // Enable terminal QR for debugging empty sessions on Render
+        browser: ['Ubuntu', 'Chrome', '120.0.0'], // Explicit generic desktop browser to prevent 405 drop
         getMessage: async (key) => {
             if (baileysStore) {
                 const msg = await baileysStore.loadMessage(key.remoteJid, key.id);
@@ -607,6 +622,7 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
 
         if (qr) {
             console.log(`[${tenantId}] QR Received`);
+            qrcode.generate(qr, { small: true });
 
             // Reset retry count on QR generation (fresh start)
             const session = sessions.get(tenantId);
@@ -638,20 +654,16 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 }
 
                 // Calculate delay and retry
-                const delay = getRetryDelay(retryCount);
+                const delay = getRetryDelay(session?.retryCount || 0);
                 console.log(`[${tenantId}] Retrying connection in ${delay / 1000} seconds...`);
 
                 setTimeout(() => {
-                    connectToWhatsApp(tenantId, socketToEmit, true);
+                    connectToWhatsApp(tenantId);
                 }, delay);
             } else {
-                console.log(`[${tenantId}] Logged out. Cleaning up session.`);
-                sessions.delete(tenantId);
-                io.to(tenantId).emit('logged_out', true);
-                // Also remove from Supabase (already done in logout, but good for safety)
-                supabase.from('whatsapp_sessions').delete().eq('session_id', tenantId).then(() => {
-                    console.log(`[${tenantId}] Session cleaned from DB after logout/disconnect`);
-                });
+                console.log(`[${tenantId}] Unrecoverable connection drop. Performing full logout/cleanup.`);
+                // We use the full logoutSession function to guarantee DB and FileSystem cleanup
+                logoutSession(tenantId);
             }
         } else if (connection === 'open') {
             console.log(`[${tenantId}] ✅ Connection opened! Bot is ready.`);
@@ -949,6 +961,30 @@ async function restoreSessions() {
         const uniqueSessionIds = [...new Set(data.map(item => item.session_id))];
 
         console.log(`[Startup] Found ${uniqueSessionIds.length} sessions to restore:`, uniqueSessionIds);
+
+        if (uniqueSessionIds.length === 0) {
+            console.log(`[Startup] No active sessions found. Attempting to start default tenant(s)...`);
+            // Fetch all tenants to auto-start them
+            const { data: tenants, error: tenantError } = await supabase
+                .from('tenants')
+                .select('id');
+
+            if (tenantError) {
+                console.error('[Startup] Error fetching tenants:', tenantError);
+                return;
+            }
+
+            if (tenants && tenants.length > 0) {
+                console.log(`[Startup] Found ${tenants.length} tenants. Generating initial QR codes...`);
+                for (const tenant of tenants) {
+                    console.log(`[Startup] Generating new session for tenant: ${tenant.id}`);
+                    await connectToWhatsApp(tenant.id);
+                }
+            } else {
+                console.log(`[Startup] No tenants found in database either. Bot is idle.`);
+            }
+            return;
+        }
 
         for (const tenantId of uniqueSessionIds) {
             console.log(`[Startup] Restoring session for tenant: ${tenantId}`);
