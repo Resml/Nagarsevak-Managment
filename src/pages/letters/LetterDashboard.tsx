@@ -32,7 +32,7 @@ interface IncomingLetter {
     created_at: string;
 }
 
-import { translateText } from '../../services/translationService';
+import { translateText, CUSTOM_TRANSLATIONS } from '../../services/translationService';
 import { TranslatedText } from '../../components/TranslatedText';
 
 // ... (other imports)
@@ -645,7 +645,7 @@ const LetterDashboard = () => {
                                 >
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800">
-                                            {req.type}
+                                            {language === 'mr' ? (CUSTOM_TRANSLATIONS[req.type] || req.type) : req.type}
                                         </h3>
                                         <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                                             {req.status}
