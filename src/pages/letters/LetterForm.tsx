@@ -15,7 +15,9 @@ const LetterForm = () => {
     const { id } = useParams();
 
     const [loading, setLoading] = useState(false);
-    const [types, setTypes] = useState<{ name: string }[]>([]);
+    const [types, setTypes] = useState<{ name: string, name_marathi?: string, template_content?: string }[]>([]);
+    const [dynamicFields, setDynamicFields] = useState<Record<string, string>>({});
+    const [templateFields, setTemplateFields] = useState<string[]>([]);
     const [formData, setFormData] = useState({
         firstName: '',
         middleName: '',
@@ -87,6 +89,17 @@ const LetterForm = () => {
                     area: data.area || '',
                     purpose: data.details.purpose || ''
                 });
+
+                // Extract dynamic fields from existing request
+                const dynFields: Record<string, string> = {};
+                if (data.details) {
+                    Object.keys(data.details).forEach(key => {
+                        if (!['name', 'subject', 'text', 'purpose', 'mobile'].includes(key)) {
+                            dynFields[key] = data.details[key];
+                        }
+                    });
+                }
+                setDynamicFields(dynFields);
             }
         } catch (error) {
             console.error('Error fetching details:', error);
@@ -96,7 +109,7 @@ const LetterForm = () => {
 
     useEffect(() => {
         const fetchTypes = async () => {
-            const { data } = await supabase.from('letter_types').select('name').order('name');
+            const { data } = await supabase.from('letter_types').select('name, name_marathi, template_content').order('name');
             if (data && data.length > 0) {
                 setTypes(data);
                 setFormData(prev => ({ ...prev, type: data[0].name }));
@@ -113,6 +126,36 @@ const LetterForm = () => {
         };
         fetchTypes();
     }, []);
+
+    // Extract dynamic fields when type changes
+    useEffect(() => {
+        if (!formData.type || types.length === 0) return;
+        const selectedType = types.find(t => t.name === formData.type);
+        if (selectedType && selectedType.template_content) {
+            const template = selectedType.template_content;
+            const matches = template.match(/{{\s*([^}]+)\s*}}/g);
+            if (matches) {
+                const extractedFields = matches.map(m => m.replace(/[{}]/g, '').trim());
+                setTemplateFields(extractedFields);
+                const standardFields = ['name', 'address', 'subject', 'purpose', 'date', 'mobile', 'text'];
+                const customFields = extractedFields.filter(f => !standardFields.includes(f));
+
+                setDynamicFields(prev => {
+                    const newFields: Record<string, string> = {};
+                    customFields.forEach(field => {
+                        newFields[field] = prev[field] || '';
+                    });
+                    return newFields;
+                });
+            } else {
+                setTemplateFields([]);
+                setDynamicFields({});
+            }
+        } else {
+            setTemplateFields([]);
+            setDynamicFields({});
+        }
+    }, [formData.type, types]);
 
     // Fetch Stats for Suggestions
     useEffect(() => {
@@ -247,7 +290,7 @@ const LetterForm = () => {
 
 
     const handleVoterSelect = (voter: Voter) => {
-        const fullName = voter.name_english || voter.name_marathi || '';
+        const fullName = language === 'mr' ? (voter.name_marathi || voter.name_english || '') : (voter.name_english || voter.name_marathi || '');
         const parts = fullName.trim().split(/\s+/);
 
         let f = '', m = '', l = '';
@@ -296,7 +339,8 @@ const LetterForm = () => {
                     subject: formData.subject,
                     text: formData.address,
                     purpose: formData.purpose,
-                    mobile: formData.mobile
+                    mobile: formData.mobile,
+                    ...dynamicFields
                 },
                 status: 'Pending',
                 tenant_id: tenantId // Include Tenant ID
@@ -417,20 +461,24 @@ const LetterForm = () => {
                             >
                                 {types.map(tOption => {
                                     // Helper to translate known types
-                                    const getTranslatedType = (name: string) => {
+                                    const getTranslatedType = (tOption: any) => {
+                                        if (language === 'mr' && tOption.name_marathi) {
+                                            return tOption.name_marathi;
+                                        }
+
                                         const map: Record<string, string> = {
                                             'Residential Certificate': 'residential',
                                             'Character Certificate': 'character',
                                             'No Objection Certificate (NOC)': 'noc',
                                             'Income Certificate': 'income'
                                         };
-                                        const key = map[name];
-                                        return key ? t(`letters.types.${key}`) : name;
+                                        const key = map[tOption.name];
+                                        return key ? t(`letters.types.${key}`) : tOption.name;
                                     };
 
                                     return (
                                         <option key={tOption.name} value={tOption.name}>
-                                            {getTranslatedType(tOption.name)}
+                                            {getTranslatedType(tOption)}
                                         </option>
                                     );
                                 })}
@@ -438,6 +486,8 @@ const LetterForm = () => {
                         </div>
                     </div>
 
+                    {/* Area is strictly an internal database requirement for some tables, so keep it showing if needed, 
+                        BUT user screenshot complains about default fields. We'll leave area as is, but conditionally render the rest. */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.area')}</label>
                         <input
@@ -451,42 +501,78 @@ const LetterForm = () => {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.subject')}</label>
-                        <input
-                            name="subject"
-                            type="text"
-                            value={formData.subject}
-                            onChange={handleChange}
-                            className="ns-input"
-                            placeholder={t('letters.subject_placeholder')}
-                        />
-                    </div>
+                    {templateFields.includes('subject') && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.subject')}</label>
+                            <input
+                                name="subject"
+                                type="text"
+                                value={formData.subject}
+                                onChange={handleChange}
+                                className="ns-input"
+                                placeholder={t('letters.subject_placeholder')}
+                            />
+                        </div>
+                    )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.address')}</label>
-                        <textarea
-                            required
-                            name="address"
-                            rows={3}
-                            value={formData.address}
-                            onChange={handleChange}
-                            className="ns-input"
-                            placeholder={t('letters.addr_placeholder')}
-                        />
-                    </div>
+                    {(templateFields.includes('address') || templateFields.includes('text')) && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.address')}</label>
+                            <textarea
+                                required
+                                name="address"
+                                rows={3}
+                                value={formData.address}
+                                onChange={handleChange}
+                                className="ns-input"
+                                placeholder={t('letters.addr_placeholder')}
+                            />
+                        </div>
+                    )}
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('office.purpose')}</label>
-                        <input
-                            name="purpose"
-                            type="text"
-                            value={formData.purpose}
-                            onChange={handleChange}
-                            className="ns-input"
-                            placeholder={t('office.purpose')}
-                        />
-                    </div>
+                    {templateFields.includes('purpose') && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('office.purpose')}</label>
+                            <input
+                                name="purpose"
+                                type="text"
+                                value={formData.purpose}
+                                onChange={handleChange}
+                                className="ns-input"
+                                placeholder={t('office.purpose')}
+                            />
+                        </div>
+                    )}
+
+                    {Object.keys(dynamicFields).length > 0 && (
+                        <div className="pt-4 border-t border-slate-200">
+                            <h3 className="text-sm font-bold text-slate-800 mb-4">{t('letters.additional_details') || "Additional Details"}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {Object.keys(dynamicFields).map(field => {
+                                    const translatedLabel = t(`letters.dynamic.${field}`);
+                                    const labelText = translatedLabel && translatedLabel !== `letters.dynamic.${field}`
+                                        ? translatedLabel
+                                        : field.replace(/_/g, ' ');
+
+                                    return (
+                                        <div key={field}>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1 capitalize">
+                                                {labelText}
+                                            </label>
+                                            <input
+                                                required
+                                                type="text"
+                                                value={dynamicFields[field]}
+                                                onChange={(e) => setDynamicFields(prev => ({ ...prev, [field]: e.target.value }))}
+                                                className="ns-input"
+                                                placeholder={language === 'mr' ? `${labelText} प्रविष्ट करा` : `Enter ${labelText}`}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="pt-4 flex justify-end">
                         <button

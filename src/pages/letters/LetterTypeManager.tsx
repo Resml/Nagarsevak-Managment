@@ -324,6 +324,10 @@ const LetterTypeManager = () => {
                                                     <li>{'{{address}}'} - Applicant Address</li>
                                                     <li>{'{{purpose}}'} - Letter Type Name</li>
                                                     <li>{'{{date}}'} - Current Date</li>
+                                                    <li className="text-amber-300 mt-2 font-medium border-t border-slate-600 pt-2">Custom Fields (Auto-generated in form)</li>
+                                                    <li>{'{{age}}'} - Creates "Age" input</li>
+                                                    <li>{'{{school_name}}'} - Creates "School Name" input</li>
+                                                    <li>Create any <code>{`{{ field_name }}`}</code> you need!</li>
                                                 </ul>
                                             </div>
                                         </div>

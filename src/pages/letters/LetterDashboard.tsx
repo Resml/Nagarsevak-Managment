@@ -7,6 +7,7 @@ import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, 
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
 import IncomingLetterUpload from './IncomingLetterUpload';
 
@@ -38,7 +39,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 
 const LetterDashboard = () => {
     const { t, language } = useLanguage(); // Get language
-    const { tenantId } = useTenant();
+    const { tenantId, tenant } = useTenant();
     const navigate = useNavigate();
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
@@ -193,51 +194,120 @@ const LetterDashboard = () => {
         }
 
         // 2. Hydrate Template with Request Data
-        const filledContent = templateContent
+        let filledContent = templateContent
             .replace(/{{name}}/g, req.details?.name || 'Unknown')
             .replace(/{{address}}/g, req.details?.text || 'the address provided')
             .replace(/{{purpose}}/g, req.type)
             .replace(/{{date}}/g, format(new Date(), 'dd/MM/yyyy'));
 
-        // --- Letterhead Header (simple, official) ---
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Rajesh Sharma', 20, 20);
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Nagar Sevak - Ward 12, Shivaji Nagar', 20, 28);
-        doc.setDrawColor(180, 180, 180);
-        doc.line(20, 34, 190, 34);
+        // Dynamically replace any other custom placeholders that exist in req.details
+        if (req.details) {
+            Object.keys(req.details).forEach(key => {
+                if (!['name', 'text', 'purpose', 'subject', 'mobile'].includes(key)) {
+                    const regex = new RegExp(`{{${key}}}`, 'g');
+                    filledContent = filledContent.replace(regex, req.details[key] || '');
+                }
+            });
+        }
 
-        // --- Content ---
-        doc.setFontSize(12);
-        doc.text(`Date: ${format(new Date(), 'dd/MM/yyyy')}`, 160, 50);
+        // Check if the content is in Marathi (contains Devanagari script)
+        const isMarathi = /[अ-ज्ञ]/.test(filledContent);
 
-        doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text('TO WHOMSOEVER IT MAY CONCERN', 105, 70, { align: 'center', underline: true } as any);
+        // Translations for dynamic parts
+        const dateLabel = isMarathi ? 'दिनांक:' : 'Date:';
+        const regardsLabel = isMarathi ? 'आपला नम्र,' : 'Regards,';
+        const nagarSevakLabel = isMarathi ? '(नगरसेवक)' : '(Nagar Sevak)';
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
+        // Only add title if it's explicitly needed or if it's an English letter that usually has it. 
+        // For Marathi, they usually put subject (विषय). We'll assume the template handles the subject.
+        const titleHtml = isMarathi ? '' : `
+            <h2 style="text-align: center; text-decoration: underline; font-size: 20px; font-weight: bold; margin-bottom: 40px;">
+                TO WHOMSOEVER IT MAY CONCERN
+            </h2>
+        `;
 
-        const splitText = doc.splitTextToSize(filledContent, 170);
-        doc.text(splitText, 20, 90);
+        // Generate PDF using html2canvas to fully support Devanagari/Complex text layout
+        const container = document.createElement('div');
+        container.style.position = 'absolute';
+        container.style.top = '-9999px';
+        container.style.left = '-9999px';
+        container.style.width = '794px';
+        container.style.padding = '40px 60px'; // Top/bottom 40px, left/right 60px
+        container.style.background = 'white';
+        container.style.color = 'black';
+        container.style.fontFamily = 'Arial, sans-serif';
+        container.style.boxSizing = 'border-box';
 
-        // --- Signature ---
-        doc.text('Regards,', 150, 200);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Rajesh Sharma', 150, 210);
-        doc.setFont('helvetica', 'normal');
-        doc.text('(Nagar Sevak)', 150, 215);
-        doc.setTextColor(90, 90, 90);
-        doc.setFontSize(9);
-        doc.text('Office: 123, Main Road, Shivaji Nagar | Contact: +91 98765 43210', 105, 285, { align: 'center' });
+        const config = tenant?.config || {};
+        const nagarsevakName = isMarathi
+            ? (config.nagarsevak_name_marathi || config.nagarsevak_name_english || 'Rajesh Sharma')
+            : (config.nagarsevak_name_english || config.nagarsevak_name_marathi || 'Rajesh Sharma');
 
-        if (returnBlob) {
-            return doc.output('blob');
-        } else {
-            doc.save(`${req.type}_${req.details?.name}.pdf`);
+        const wardName = config.ward_name || '';
+        const officeAddress = config.office_address || '';
+        const phoneNumber = config.phone_number || '';
+
+        const subtitleText = isMarathi
+            ? `नगरसेवक${wardName ? ` - ${wardName}` : ''}`
+            : `Nagar Sevak${wardName ? ` - ${wardName}` : ''}`;
+
+        const footerText = isMarathi
+            ? `कार्यालय: ${officeAddress} | संपर्क: ${phoneNumber}`
+            : `Office: ${officeAddress} | Contact: ${phoneNumber}`;
+
+        container.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 20px;">
+                <h1 style="margin: 0; font-size: 24px; font-weight: bold;">${nagarsevakName}</h1>
+                <p style="margin: 0; font-size: 14px; color: #333;">${subtitleText}</p>
+            </div>
+            <hr style="border: 1px solid #ccc; margin-bottom: 30px;" />
+            
+            <div style="text-align: right; margin-bottom: 30px; font-size: 14px; font-weight: bold;">
+                ${dateLabel} ${format(new Date(), 'dd/MM/yyyy')}
+            </div>
+            
+            ${titleHtml}
+            
+            <div style="font-size: 16px; line-height: 1.6; white-space: pre-wrap; margin-bottom: 60px; font-family: sans-serif;">${filledContent.replace(/\\n/g, '<br/>')}</div>
+            
+            <div style="text-align: right; margin-top: 50px;">
+                <p style="margin: 0; margin-bottom: 10px;">${regardsLabel}</p>
+                <div style="height: 40px;"></div>
+                <p style="margin: 0; font-weight: bold;">${nagarsevakName}</p>
+                <p style="margin: 0;">${nagarSevakLabel}</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 80px; font-size: 12px; color: #555;">
+                ${footerText}
+            </div>
+        `;
+
+        document.body.appendChild(container);
+
+        try {
+            const canvas = await html2canvas(container, {
+                scale: 2,
+                useCORS: true
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+            doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            if (returnBlob) {
+                return doc.output('blob');
+            } else {
+                doc.save(`${req.type}_${req.details?.name || 'citizen'}.pdf`);
+            }
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            toast.error('Failed to generate PDF. Please try again.');
+        } finally {
+            if (document.body.contains(container)) {
+                document.body.removeChild(container);
+            }
         }
     };
 

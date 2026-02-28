@@ -182,7 +182,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLette
 
 
     const handleVoterSelect = (voter: Voter) => {
-        const fullName = voter.name_english || voter.name_marathi || '';
+        const fullName = language === 'mr' ? (voter.name_marathi || voter.name_english || '') : (voter.name_english || voter.name_marathi || '');
         const parts = fullName.trim().split(/\s+/);
 
         let f = '', m = '', l = '';

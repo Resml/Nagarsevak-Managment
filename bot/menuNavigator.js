@@ -21,6 +21,7 @@ const MENU_STATES = {
     LETTER_FORM_MOBILE: 'LETTER_FORM_MOBILE',
     LETTER_FORM_ADDRESS: 'LETTER_FORM_ADDRESS',
     LETTER_FORM_PURPOSE: 'LETTER_FORM_PURPOSE',
+    LETTER_FORM_DYNAMIC: 'LETTER_FORM_DYNAMIC',
     AREA_PROBLEM_MENU: 'AREA_PROBLEM_MENU',
     AREA_PROBLEM_REPORT: 'AREA_PROBLEM_REPORT',
     AREA_PROBLEM_FORM_TITLE: 'AREA_PROBLEM_FORM_TITLE',
@@ -230,6 +231,9 @@ class MenuNavigator {
 
             case MENU_STATES.LETTER_FORM_PURPOSE:
                 return await this.handleLetterFormPurpose(sock, tenantId, userId, input);
+
+            case MENU_STATES.LETTER_FORM_DYNAMIC:
+                return await this.handleLetterFormDynamic(sock, tenantId, userId, input);
 
 
             case MENU_STATES.AREA_PROBLEM_FORM_NAME:
@@ -2211,9 +2215,25 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         const index = parseInt(input) - 1;
         if (index >= 0 && index < session.letterTypes.length) {
             const selectedType = session.letterTypes[index];
+            const templateText = selectedType.template_content || '';
+
+            // Extract custom fields from template content
+            const allPlaceholders = [];
+            const regex = /{{(.*?)}}/g;
+            let match;
+            while ((match = regex.exec(templateText)) !== null) {
+                const key = match[1].trim();
+                if (!['name', 'text', 'purpose', 'subject', 'mobile', 'date', 'address', 'signature'].includes(key) && !allPlaceholders.includes(key)) {
+                    allPlaceholders.push(key);
+                }
+            }
+
             session.letterFormData = {
                 type: selectedType.name,
-                typeName: (lang === 'mr' && selectedType.name_marathi) ? selectedType.name_marathi : selectedType.name
+                typeName: (lang === 'mr' && selectedType.name_marathi) ? selectedType.name_marathi : selectedType.name,
+                dynamicFieldKeys: allPlaceholders,
+                dynamicFieldAnswers: {},
+                currentDynamicFieldIndex: 0
             };
 
             session.currentMenu = MENU_STATES.LETTER_FORM_NAME;
@@ -2365,25 +2385,67 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
 
         session.letterFormData.purpose = input.trim();
 
-        // Submit the letter request
+        // Check if there are dynamic fields to ask
+        if (session.letterFormData.dynamicFieldKeys && session.letterFormData.dynamicFieldKeys.length > 0) {
+            session.currentMenu = MENU_STATES.LETTER_FORM_DYNAMIC;
+            await this.promptNextDynamicField(sock, userId, session.letterFormData, lang);
+            return;
+        }
+
+        // Submit the letter request if no dynamic fields
+        await this.submitLetterRequest(sock, tenantId, userId, session, lang);
+    }
+
+    async promptNextDynamicField(sock, userId, letterFormData, lang) {
+        const index = letterFormData.currentDynamicFieldIndex;
+        const fieldName = letterFormData.dynamicFieldKeys[index];
+        // Format label nicely: replace underscores and capitalize
+        const displayLabel = fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+        // Let's check if there are translations available in LOCALES for these dynamic fields later on, 
+        // but for now, generate a basic prompt based on the language.
+        const prompt = lang === 'en' ? `📝 Please enter *${displayLabel}*:` :
+            lang === 'mr' ? `📝 कृपया *${displayLabel}* प्रविष्ट करा:` :
+                `📝 कृपया *${displayLabel}* दर्ज करें:`;
+
+        await sock.sendMessage(userId, { text: prompt });
+    }
+
+    async handleLetterFormDynamic(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+
+        const index = session.letterFormData.currentDynamicFieldIndex;
+        const fieldName = session.letterFormData.dynamicFieldKeys[index];
+
+        session.letterFormData.dynamicFieldAnswers[fieldName] = input.trim();
+        session.letterFormData.currentDynamicFieldIndex++;
+
+        if (session.letterFormData.currentDynamicFieldIndex < session.letterFormData.dynamicFieldKeys.length) {
+            await this.promptNextDynamicField(sock, userId, session.letterFormData, lang);
+        } else {
+            // All finished, submit!
+            await this.submitLetterRequest(sock, tenantId, userId, session, lang);
+        }
+    }
+
+    async submitLetterRequest(sock, tenantId, userId, session, lang) {
         try {
-            // IMPORTANT: Store the FULL WhatsApp ID for notifications
-            // Examples: 105029583282256@lid, 917058731515@s.whatsapp.net
-            // We need the exact WhatsApp ID to send messages, not a cleaned phone number
-            // The mobile number in details is just for display/reference
+            const details = {
+                name: session.letterFormData.name,
+                mobile: session.letterFormData.mobile,
+                text: session.letterFormData.address,
+                purpose: session.letterFormData.purpose,
+                ...(session.letterFormData.dynamicFieldAnswers || {})
+            };
 
             const letterRequest = {
-                user_id: userId, // Store full WhatsApp ID: "105029583282256@lid"
+                user_id: userId,
                 tenant_id: tenantId,
                 type: session.letterFormData.type,
                 voter_id: session.letterFormData.voter_id,
                 area: '', // Optional
-                details: {
-                    name: session.letterFormData.name,
-                    mobile: session.letterFormData.mobile, // Display number: "7058731515"
-                    text: session.letterFormData.address,
-                    purpose: session.letterFormData.purpose
-                },
+                details: details,
                 status: 'Pending'
             };
 
@@ -2423,9 +2485,9 @@ Your request has been sent to the office for approval. You will be notified once
 
         } catch (error) {
             console.error('Error saving letter request:', error);
-            const errorMsg = lang === 'en' ? '\u274c Failed to submit letter request. Please try again later.' :
-                lang === 'mr' ? '\u274c \u092a\u0924\u094d\u0930 \u0935\u093f\u0928\u0902\u0924\u0940 \u0938\u093e\u0926\u0930 \u0915\u0930\u0923\u094d\u092f\u093e\u0924 \u0905\u092f\u0936\u0938\u094d\u0935\u0940. \u0915\u0943\u092a\u092f\u093e \u092a\u0941\u0928\u094d\u0939\u093e \u092a\u094d\u0930\u092f\u0924\u094d\u0928 \u0915\u0930\u093e.' :
-                    '\u274c \u092a\u0924\u094d\u0930 \u0905\u0928\u0941\u0930\u094b\u0927 \u091c\u092e\u093e \u0915\u0930\u0928\u0947 \u092e\u0947\u0902 \u0935\u093f\u092b\u0932\u0964 \u0915\u0943\u092a\u092f\u093e \u092c\u093e\u0926 \u092e\u0947\u0902 \u092a\u0941\u0928: \u092a\u094d\u0930\u092f\u093e\u0938 \u0915\u0930\u0947\u0902\u0964';
+            const errorMsg = lang === 'en' ? '❌ Failed to submit letter request. Please try again later.' :
+                lang === 'mr' ? '❌ पत्र विनंती सादर करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.' :
+                    '❌ पत्र अनुरोध जमा करने में विफल। कृपया बाद में पुनः प्रयास करें।';
             await sock.sendMessage(userId, { text: errorMsg });
             await this.showMainMenu(sock, userId, lang);
         }
