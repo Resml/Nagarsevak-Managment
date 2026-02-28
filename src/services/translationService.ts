@@ -43,10 +43,14 @@ export const CUSTOM_TRANSLATIONS: Record<string, string> = {
     "Coordination with Municipal Officials": "पालिका अधिकाऱ्यांशी समन्वय",
 
     // Letter Types
-    "School Admission Recommendation": "शालेय प्रवेश शिफारस",
-    "Job Recommendation Letter": "नोकरी शिफारस पत्र",
-    "Income Certificate Recommendation": "उत्पन्न प्रमाणपत्र शिफारस",
-    "Residence Certificate": "रहिवासी प्रमाणपत्र",
+    "Residence Certificate": "रहिवासी दाखला",
+    "School Admission Recommendation": "शालेय/महाविद्यालयीन प्रवेशासाठी शिफारस पत्र",
+    "Job Recommendation Letter": "नोकरीसाठी शिफारस पत्र",
+    "Character & Identity Certificate": "चारित्र्य व ओळखीचे प्रमाणपत्र",
+    "Death Certificate Request": "मृत्यू दाखला मिळण्याबाबत शिफारस",
+    "Gas Connection Recommendation": "नवीन गॅस कनेक्शन मिळण्यासाठी शिफारस पत्र",
+    "Income Certificate Recommendation": "उत्पन्नाचा दाखला मिळण्याबाबत शिफारस",
+    "New Electricity Meter Recommendation": "नवीन वीज मीटर मिळण्यासाठी शिफारस पत्र",
     "Police Verification Certificate": "पोलीस पडताळणी प्रमाणपत्र",
     "Hospital Admission Recommendation": "रुग्णालय प्रवेश शिफारस",
     "Financial Assistance Request (Medical)": "आर्थिक मदत विनंती (वैद्यकीय)",

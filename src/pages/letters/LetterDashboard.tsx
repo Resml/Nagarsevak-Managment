@@ -140,6 +140,28 @@ const LetterDashboard = () => {
                         });
                     }
 
+                    // Apply Gender-Specific Replacements to Marathi templates
+                    let resolvedGender = await resolveGender(previewDetails);
+                    if (isMarathiTemplate && resolvedGender) {
+                        const isMale = resolvedGender.toLowerCase() === 'male' || resolvedGender.toLowerCase() === 'm';
+                        const isFemale = resolvedGender.toLowerCase() === 'female' || resolvedGender.toLowerCase() === 'f';
+
+                        if (isMale || isFemale) {
+                            filledContent = filledContent
+                                .replace(/विद्यार्थी\s*\/\s*विद्यार्थी?नी/g, isMale ? 'विद्यार्थी' : 'विद्यार्थिनी')
+                                .replace(/मुलगा\s*\/\s*मुलगी/g, isMale ? 'मुलगा' : 'मुलगी')
+                                .replace(/श्री\.?\s*\/\s*श्रीमती/g, isMale ? 'श्री.' : 'श्रीमती')
+                                .replace(/महोदय\s*\/\s*महोदया/g, isMale ? 'महोदय' : 'महोदया')
+                                .replace(/त्यांचा\s*\/\s*त्यांची/g, isMale ? 'त्यांचा' : 'त्यांची')
+                                .replace(/त्याचे\s*\/\s*तिचे/g, isMale ? 'त्याचे' : 'तिचे')
+                                .replace(/त्याला\s*\/\s*तिला/g, isMale ? 'त्याला' : 'तिला')
+                                .replace(/तो\s*\/\s*ती/g, isMale ? 'तो' : 'ती')
+                                .replace(/ओळखतो\s*\/\s*ओळखते/g, isMale ? 'ओळखतो' : 'ओळखते')
+                                .replace(/करतो\s*\/\s*करते/g, isMale ? 'करतो' : 'करते')
+                                .replace(/प्रमाणित करतो\/करते/g, 'प्रमाणित करतो/करते');
+                        }
+                    }
+
                     // Translate entire content if requested preview language is different from template language
                     if (previewLang === 'en' && isMarathiTemplate && /[अ-ज्ञ]/.test(filledContent)) {
                         toast.loading('Translating preview...', { id: 'preview-translation' });
@@ -236,6 +258,45 @@ const LetterDashboard = () => {
         return matchesSearch && matchesArea && matchesDate;
     });
 
+    const resolveGender = async (details: any) => {
+        // 1. Use explicitly saved gender if available
+        if (details?.gender) return details.gender;
+        if (!details?.name && !details?.mobile) return 'Male'; // Safe fallback
+
+        try {
+            // 2. Try to lookup in voters table by mobile or name
+            let query = supabase.from('voters').select('gender');
+            if (details.mobile && details.mobile.length >= 10) {
+                // If mobile ends with the provided number (to handle +91 vs 91 vs raw)
+                const mobileStr = details.mobile.slice(-10);
+                query = query.ilike('mobile', `%${mobileStr}%`);
+            } else if (details.name) {
+                const firstName = details.name.split(' ')[0];
+                query = query.or(`name_marathi.ilike.%${firstName}%,name_english.ilike.%${firstName}%`);
+            }
+            const { data: vData, error } = await query.limit(1);
+            if (!error && vData && vData.length > 0 && vData[0].gender) {
+                const g = vData[0].gender.toLowerCase();
+                if (g === 'm' || g === 'male') return 'Male';
+                if (g === 'f' || g === 'female') return 'Female';
+                return 'Other';
+            }
+
+            // 3. Basic name heuristics if DB lookup fails
+            if (details.name) {
+                const fName = details.name.split(' ')[0];
+                const femaleSuffixes = ['बाई', 'ताई', 'ती', 'ता', 'जा', 'ना', 'ली', 'री', 'नी', 'मा', 'शी', 'सा', 'वा', 'या', 'ला', 'का', 'दी'];
+                for (const suffix of femaleSuffixes) {
+                    if (fName.endsWith(suffix)) return 'Female';
+                }
+            }
+        } catch (e) {
+            console.error("Gender resolution failed", e);
+        }
+        // 4. Ultimate fallback to clean up slashes for old records
+        return 'Male';
+    };
+
     const generatePDF = async (req: LetterRequest, returnBlob: boolean = false, targetLang: 'mr' | 'en' = 'mr') => {
         const doc = new jsPDF();
 
@@ -298,6 +359,27 @@ const LetterDashboard = () => {
                     filledContent = filledContent.replace(regex, translatedDetails[key] || '');
                 }
             });
+        }
+
+        // Apply Gender-Specific Replacements to Marathi templates
+        let resolvedGender = await resolveGender(translatedDetails);
+        if (targetLang === 'mr' && resolvedGender) {
+            const isMale = resolvedGender.toLowerCase() === 'male' || resolvedGender.toLowerCase() === 'm';
+            const isFemale = resolvedGender.toLowerCase() === 'female' || resolvedGender.toLowerCase() === 'f';
+
+            if (isMale || isFemale) {
+                filledContent = filledContent
+                    .replace(/विद्यार्थी\s*\/\s*विद्यार्थी?नी/g, isMale ? 'विद्यार्थी' : 'विद्यार्थिनी')
+                    .replace(/मुलगा\s*\/\s*मुलगी/g, isMale ? 'मुलगा' : 'मुलगी')
+                    .replace(/श्री\.?\s*\/\s*श्रीमती/g, isMale ? 'श्री.' : 'श्रीमती')
+                    .replace(/महोदय\s*\/\s*महोदया/g, isMale ? 'महोदय' : 'महोदया')
+                    .replace(/त्यांचा\s*\/\s*त्यांची/g, isMale ? 'त्यांचा' : 'त्यांची')
+                    .replace(/त्याचे\s*\/\s*तिचे/g, isMale ? 'त्याचे' : 'तिचे')
+                    .replace(/त्याला\s*\/\s*तिला/g, isMale ? 'त्याला' : 'तिला')
+                    .replace(/तो\s*\/\s*ती/g, isMale ? 'तो' : 'ती')
+                    .replace(/ओळखतो\s*\/\s*ओळखते/g, isMale ? 'ओळखतो' : 'ओळखते')
+                    .replace(/करतो\s*\/\s*करते/g, isMale ? 'करतो' : 'करते');
+            }
         }
 
         // Translate content if target language is English and content contains Marathi

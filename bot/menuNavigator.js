@@ -18,6 +18,7 @@ const MENU_STATES = {
     LETTERS_MENU: 'LETTERS_MENU',
     LETTER_TYPE_SELECT: 'LETTER_TYPE_SELECT',
     LETTER_FORM_NAME: 'LETTER_FORM_NAME',
+    LETTER_FORM_GENDER: 'LETTER_FORM_GENDER',
     LETTER_FORM_MOBILE: 'LETTER_FORM_MOBILE',
     LETTER_FORM_ADDRESS: 'LETTER_FORM_ADDRESS',
     LETTER_FORM_PURPOSE: 'LETTER_FORM_PURPOSE',
@@ -225,6 +226,9 @@ class MenuNavigator {
 
             case MENU_STATES.LETTER_FORM_MOBILE:
                 return await this.handleLetterFormMobile(sock, tenantId, userId, input);
+
+            case MENU_STATES.LETTER_FORM_GENDER:
+                return await this.handleLetterFormGender(sock, tenantId, userId, input);
 
             case MENU_STATES.LETTER_FORM_ADDRESS:
                 return await this.handleLetterFormAddress(sock, tenantId, userId, input);
@@ -2318,6 +2322,11 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             session.letterFormData.name = lang === 'mr' ? (voter.name_marathi || voter.name_english) : voter.name_english;
             session.letterFormData.original_address = lang === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
             session.letterFormData.mobile = voter.mobile;
+            // Save voter gender so we don't have to ask again
+            const g = (voter.gender || '').toLowerCase();
+            if (g === 'm' || g === 'male') session.letterFormData.gender = 'Male';
+            else if (g === 'f' || g === 'female') session.letterFormData.gender = 'Female';
+            else if (g === 'o' || g === 'other') session.letterFormData.gender = 'Other';
 
             delete session.votersFound;
             session.voterOriginMenu = MENU_STATES.LETTER_VOTER_VERIFY;
@@ -2348,12 +2357,47 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         }
 
         session.letterFormData.mobile = cleanMobile;
-        session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
+        await this.promptLetterGender(sock, userId, lang);
+    }
 
+    async promptLetterGender(sock, userId, lang) {
+        const session = this.getSession(userId);
+        // If gender is already known from voter link, skip this step
+        const knownGender = session.letterFormData?.gender;
+        if (knownGender && ['Male', 'Female', 'Other'].includes(knownGender)) {
+            return await this.promptLetterAddress(sock, userId, lang);
+        }
+        session.currentMenu = MENU_STATES.LETTER_FORM_GENDER;
+        const genderPrompt = lang === 'en' ?
+            `⚖️ Please select gender:\n\n1️⃣ Male\n2️⃣ Female\n3️⃣ Other` :
+            lang === 'mr' ?
+                `⚖️ लिंग निवडा:\n\n1️⃣ पुरुष\n2️⃣ महिला\n3️⃣ इतर` :
+                `⚖️ लिंग चुनें:\n\n1️⃣ पुरुष\n2️⃣ महिला\n3️⃣ अन्य`;
+        await sock.sendMessage(userId, { text: genderPrompt });
+    }
+
+    async handleLetterFormGender(sock, tenantId, userId, input) {
+        const session = this.getSession(userId);
+        const lang = session.language;
+        const genderMap = { '1': 'Male', '2': 'Female', '3': 'Other' };
+        const gender = genderMap[input.trim()];
+        if (!gender) {
+            const invalidMsg = lang === 'en' ? '❌ Invalid option. Please enter 1, 2 or 3:' :
+                lang === 'mr' ? '❌ चुकीचा पर्याय. कृपया 1, 2 किंवा 3 प्रविष्ट करा:' :
+                    '❌ अमान्य विकल्प। कृपया 1, 2 या 3 दर्ज करें:';
+            await sock.sendMessage(userId, { text: invalidMsg });
+            return;
+        }
+        session.letterFormData.gender = gender;
+        await this.promptLetterAddress(sock, userId, lang);
+    }
+
+    async promptLetterAddress(sock, userId, lang) {
+        const session = this.getSession(userId);
+        session.currentMenu = MENU_STATES.LETTER_FORM_ADDRESS;
         let addressPrompt = lang === 'en' ? '🏠 Please enter your full address:' :
             lang === 'mr' ? '🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:' :
                 '🏠 कृपया अपना पूरा पता दर्ज करें:';
-
         if (session.letterFormData.original_address) {
             addressPrompt = lang === 'en' ? `🏠 Please enter your full address:\n\n1️⃣ Use Linked Address: ${session.letterFormData.original_address}\n\n_Or enter a new address:_` :
                 lang === 'mr' ? `🏠 कृपया तुमचा पूर्ण पत्ता प्रविष्ट करा:\n\n1️⃣ लिंक केलेला पत्ता वापरा: ${session.letterFormData.original_address}\n\n_किंवा नवीन पत्ता प्रविष्ट करा:_` :
@@ -2434,6 +2478,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             const details = {
                 name: session.letterFormData.name,
                 mobile: session.letterFormData.mobile,
+                gender: session.letterFormData.gender || 'Male',
                 text: session.letterFormData.address,
                 purpose: session.letterFormData.purpose,
                 ...(session.letterFormData.dynamicFieldAnswers || {})
@@ -3052,11 +3097,18 @@ Your request has been sent to the office for approval. You will be notified once
             session.currentMenu = MENU_STATES.COMPLAINT_FORM_TYPE;
             await sock.sendMessage(userId, { text: MESSAGES.complaint_type_prompt[lang] });
         } else if (origin === MENU_STATES.LETTER_VOTER_VERIFY) {
-            session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
-            const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
-                lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
-                    '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
-            await sock.sendMessage(userId, { text: mobilePrompt });
+            // If voter already has mobile saved, skip to gender prompt; otherwise ask for mobile
+            const formMobile = session.letterFormData?.mobile;
+            const hasMobile = formMobile && formMobile !== 'null' && formMobile.trim() !== '' && formMobile.toUpperCase() !== 'N/A';
+            if (hasMobile) {
+                await this.promptLetterGender(sock, userId, lang);
+            } else {
+                session.currentMenu = MENU_STATES.LETTER_FORM_MOBILE;
+                const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number (10 digits):' :
+                    lang === 'mr' ? '📱 कृपया तुमचा मोबाइल नंबर प्रविष्ट करा (१० अंक):' :
+                        '📱 कृपया अपना मोबाइल नंबर दर्ज करें (10 अंक):';
+                await sock.sendMessage(userId, { text: mobilePrompt });
+            }
         } else if (origin === MENU_STATES.AREA_PROBLEM_VOTER_VERIFY) {
             session.currentMenu = MENU_STATES.AREA_PROBLEM_FORM_MOBILE;
             const mobilePrompt = lang === 'en' ? '📱 Please enter your mobile number:' :

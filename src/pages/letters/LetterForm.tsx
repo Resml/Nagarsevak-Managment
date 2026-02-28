@@ -27,6 +27,7 @@ const LetterForm = () => {
         lastName: '',
         name: '',
         type: '', // Start empty, fill on load
+        gender: '', // New Gender Field
         mobile: '',
         subject: '',
         address: '',
@@ -86,6 +87,7 @@ const LetterForm = () => {
                     lastName: l,
                     name: data.details.name,
                     type: data.type,
+                    gender: data.details.gender || '',
                     mobile: data.details.mobile || '',
                     subject: data.details.subject || '',
                     address: data.details.text || '',
@@ -115,7 +117,8 @@ const LetterForm = () => {
             const { data } = await supabase.from('letter_types').select('name, name_marathi, template_content').order('name');
             if (data && data.length > 0) {
                 setTypes(data);
-                setFormData(prev => ({ ...prev, type: data[0].name }));
+                // Only set default type if there is no draft type already saved
+                setFormData(prev => ({ ...prev, type: prev.type || data[0].name }));
             } else {
                 // Fallback defaults if DB empty
                 const defaults = [
@@ -124,7 +127,7 @@ const LetterForm = () => {
                     { name: 'No Objection Certificate (NOC)' }
                 ];
                 setTypes(defaults);
-                setFormData(prev => ({ ...prev, type: defaults[0].name }));
+                setFormData(prev => ({ ...prev, type: prev.type || defaults[0].name }));
             }
         };
         fetchTypes();
@@ -307,6 +310,12 @@ const LetterForm = () => {
         const voterAddress = language === 'mr' ? (voter.address_marathi || voter.address_english) : voter.address_english;
         const voterMobile = voter.mobile ? (voter.mobile.startsWith('+91') ? voter.mobile : `+91 ${voter.mobile}`) : '+91 ';
 
+        let mappedGender: '' | 'Male' | 'Female' | 'Other' = '';
+        const g = (voter.gender || '').toLowerCase();
+        if (g === 'm' || g === 'male') mappedGender = 'Male';
+        else if (g === 'f' || g === 'female') mappedGender = 'Female';
+        else if (g === 'o' || g === 'other') mappedGender = 'Other';
+
         setFormData(prev => ({
             ...prev,
             firstName: f,
@@ -314,7 +323,8 @@ const LetterForm = () => {
             lastName: l,
             mobile: voterMobile,
             area: voterAddress || prev.area,
-            address: voterAddress || prev.address // Also fill address if available
+            address: voterAddress || prev.address,
+            gender: mappedGender
         }));
 
         setIsSearchOpen(false);
@@ -448,7 +458,7 @@ const LetterForm = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.mobile')}</label>
                             <input
@@ -460,6 +470,21 @@ const LetterForm = () => {
                                 className="ns-input"
                                 placeholder="+91 98765 43210"
                             />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.gender') || 'Gender'}</label>
+                            <select
+                                required
+                                name="gender"
+                                value={formData.gender}
+                                onChange={handleChange}
+                                className="ns-input"
+                            >
+                                <option value="">{t('common.select')}</option>
+                                <option value="Male">{t('common.male')}</option>
+                                <option value="Female">{t('common.female')}</option>
+                                <option value="Other">{t('common.other')}</option>
+                            </select>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.letter_type')}</label>
