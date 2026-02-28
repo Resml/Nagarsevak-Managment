@@ -18,6 +18,7 @@ const { startSurveyForUser } = require('./surveyBot');
 // AI Service removed - using menu-driven navigation instead
 const MenuNavigator = require('./menuNavigator');
 const supabaseAuthState = require('./supabaseAuthState');
+const { sendLetterStatusNotification } = require('./notifications');
 
 // Initial LID Cache
 const lidCache = {};
