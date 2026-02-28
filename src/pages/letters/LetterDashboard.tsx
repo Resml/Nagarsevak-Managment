@@ -54,9 +54,6 @@ const LetterDashboard = () => {
     const [selectedIncoming, setSelectedIncoming] = useState<IncomingLetter | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
 
-    // Translations Cache
-    const [translatedTypes, setTranslatedTypes] = useState<Record<string, string>>({});
-
     // New State for Advanced Filtering
     const [areaSearch, setAreaSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
@@ -68,6 +65,11 @@ const LetterDashboard = () => {
 
     // Edit State for Incoming
     const [editingIncoming, setEditingIncoming] = useState<IncomingLetter | null>(null);
+
+    // Preview State
+    const [previewContent, setPreviewContent] = useState<string>('');
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewLang, setPreviewLang] = useState<'mr' | 'en'>('mr');
 
     useEffect(() => {
         fetchRequests();
@@ -89,24 +91,89 @@ const LetterDashboard = () => {
         };
     }, [tenantId]);
 
-    // Translate types when language matches Marathi
+    // Fetch template and generate preview when selected request changes
     useEffect(() => {
-        const translateTypes = async () => {
-            if (language === 'mr' && requests.length > 0) {
-                const types = Array.from(new Set(requests.map(r => r.type)));
-                const newTranslations: Record<string, string> = { ...translatedTypes };
+        if (selectedRequest && activeTab === 'outgoing') {
+            const loadPreview = async () => {
+                setPreviewLoading(true);
+                try {
+                    const { data } = await supabase
+                        .from('letter_types')
+                        .select('template_content')
+                        .eq('name', selectedRequest.type)
+                        .single();
 
-                await Promise.all(types.map(async (type) => {
-                    if (!newTranslations[type]) {
-                        newTranslations[type] = await translateText(type, 'mr');
+                    let template = data?.template_content || `This is to certify that Mr./Ms. {{name}},\nresiding at {{address}}, is a resident of Ward 12\nto the best of my knowledge.\n\nThis letter is issued upon their request for the purpose of {{purpose}}.\nI wish them all the best for their future endeavors.`;
+
+                    // Translate dynamic details for preview based on template language
+                    const isMarathiTemplate = /[अ-ज्ञ]/.test(template);
+                    let previewDetails = { ...selectedRequest.details };
+                    const targetLang = isMarathiTemplate ? 'mr' : 'en';
+
+                    // Explicitly iterate and translate all string values
+                    for (const key of Object.keys(previewDetails)) {
+                        const val = previewDetails[key];
+                        if (typeof val === 'string' && val.trim() !== '') {
+                            if (targetLang === 'mr' && /[a-zA-Z]/.test(val)) {
+                                console.log(`Translating ${key} to mr:`, val);
+                                previewDetails[key] = await translateText(val, 'mr');
+                            } else if (targetLang === 'en' && /[\u0900-\u097F]/.test(val)) {
+                                console.log(`Translating ${key} to en:`, val);
+                                previewDetails[key] = await translateText(val, 'en');
+                            }
+                        }
                     }
-                }));
 
-                setTranslatedTypes(newTranslations);
-            }
-        };
-        translateTypes();
-    }, [language, requests]);
+                    // Hydrate template
+                    let filledContent = template
+                        .replace(/{{name}}/g, previewDetails?.name || 'Unknown')
+                        .replace(/{{address}}/g, previewDetails?.text || 'the address provided')
+                        .replace(/{{purpose}}/g, isMarathiTemplate ? await translateText(selectedRequest.type, 'mr') : selectedRequest.type)
+                        .replace(/{{date}}/g, format(new Date(), 'dd/MM/yyyy'));
+
+                    if (previewDetails) {
+                        Object.keys(previewDetails).forEach(key => {
+                            if (!['name', 'text', 'purpose', 'subject', 'mobile'].includes(key)) {
+                                const regex = new RegExp(`{{${key}}}`, 'g');
+                                filledContent = filledContent.replace(regex, previewDetails[key] || '');
+                            }
+                        });
+                    }
+
+                    // Translate entire content if requested preview language is different from template language
+                    if (previewLang === 'en' && isMarathiTemplate && /[अ-ज्ञ]/.test(filledContent)) {
+                        toast.loading('Translating preview...', { id: 'preview-translation' });
+                        try {
+                            filledContent = await translateText(filledContent, 'en', 'mr');
+                        } catch (e) {
+                            console.error("Preview translation failed", e);
+                        } finally {
+                            toast.dismiss('preview-translation');
+                        }
+                    } else if (previewLang === 'mr' && !isMarathiTemplate && /[a-zA-Z]/.test(filledContent)) {
+                        toast.loading('Translating preview...', { id: 'preview-translation' });
+                        try {
+                            filledContent = await translateText(filledContent, 'mr', 'en');
+                        } catch (e) {
+                            console.error("Preview translation failed", e);
+                        } finally {
+                            toast.dismiss('preview-translation');
+                        }
+                    }
+
+                    setPreviewContent(filledContent);
+                } catch (err) {
+                    console.error("Error loading preview:", err);
+                    setPreviewContent("Failed to load preview.");
+                } finally {
+                    setPreviewLoading(false);
+                }
+            };
+            loadPreview();
+        } else {
+            setPreviewContent('');
+        }
+    }, [selectedRequest, activeTab, previewLang]);
 
     const fetchRequests = async () => {
         const { data, error } = await supabase
@@ -169,7 +236,7 @@ const LetterDashboard = () => {
         return matchesSearch && matchesArea && matchesDate;
     });
 
-    const generatePDF = async (req: LetterRequest, returnBlob: boolean = false) => {
+    const generatePDF = async (req: LetterRequest, returnBlob: boolean = false, targetLang: 'mr' | 'en' = 'mr') => {
         const doc = new jsPDF();
 
         // 1. Fetch Letter Type Details to get the template
@@ -193,25 +260,62 @@ const LetterDashboard = () => {
             templateContent = `This is to certify that Mr./Ms. {{name}},\nresiding at {{address}}, is a resident of Ward 12\nto the best of my knowledge.\n\nThis letter is issued upon their request for the purpose of {{purpose}}.\nI wish them all the best for their future endeavors.`;
         }
 
+        // Translate dynamic details based on targetLang
+        let translatedDetails = { ...req.details };
+        toast.loading('Preparing document...', { id: 'pdf-prep' });
+        try {
+            for (const key of Object.keys(translatedDetails)) {
+                const val = translatedDetails[key];
+                if (typeof val === 'string' && val.trim() !== '') {
+                    // Always try to translate names and text if the target language is different from the likely source
+                    if (targetLang === 'mr' && /[a-zA-Z]/.test(val)) {
+                        console.log(`PDF Translating ${key} to mr:`, val);
+                        translatedDetails[key] = await translateText(val, 'mr');
+                    } else if (targetLang === 'en' && /[\u0900-\u097F]/.test(val)) {
+                        console.log(`PDF Translating ${key} to en:`, val);
+                        translatedDetails[key] = await translateText(val, 'en');
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Variable translation failed", e);
+        } finally {
+            toast.dismiss('pdf-prep');
+        }
+
         // 2. Hydrate Template with Request Data
         let filledContent = templateContent
-            .replace(/{{name}}/g, req.details?.name || 'Unknown')
-            .replace(/{{address}}/g, req.details?.text || 'the address provided')
-            .replace(/{{purpose}}/g, req.type)
+            .replace(/{{name}}/g, translatedDetails?.name || 'Unknown')
+            .replace(/{{address}}/g, translatedDetails?.text || 'the address provided')
+            .replace(/{{purpose}}/g, targetLang === 'mr' ? await translateText(req.type, 'mr') : req.type)
             .replace(/{{date}}/g, format(new Date(), 'dd/MM/yyyy'));
 
-        // Dynamically replace any other custom placeholders that exist in req.details
-        if (req.details) {
-            Object.keys(req.details).forEach(key => {
+        // Dynamically replace any other custom placeholders that exist in translatedDetails
+        if (translatedDetails) {
+            Object.keys(translatedDetails).forEach(key => {
                 if (!['name', 'text', 'purpose', 'subject', 'mobile'].includes(key)) {
                     const regex = new RegExp(`{{${key}}}`, 'g');
-                    filledContent = filledContent.replace(regex, req.details[key] || '');
+                    filledContent = filledContent.replace(regex, translatedDetails[key] || '');
                 }
             });
         }
 
-        // Check if the content is in Marathi (contains Devanagari script)
-        const isMarathi = /[अ-ज्ञ]/.test(filledContent);
+        // Translate content if target language is English and content contains Marathi
+        let isMarathi = targetLang === 'mr' && /[अ-ज्ञ]/.test(filledContent);
+
+        if (targetLang === 'en' && /[अ-ज्ञ]/.test(filledContent)) {
+            toast.loading('Translating PDF to English...', { id: 'pdf-translate' });
+            try {
+                // translateName checks first name etc, but we want full translation here 
+                // Using existing translateText directly on the filled content
+                filledContent = await translateText(filledContent, 'en', 'mr');
+            } catch (e) {
+                console.error("Translation failed", e);
+            } finally {
+                toast.dismiss('pdf-translate');
+            }
+            isMarathi = false; // Force English labels
+        }
 
         // Translations for dynamic parts
         const dateLabel = isMarathi ? 'दिनांक:' : 'Date:';
@@ -472,7 +576,7 @@ const LetterDashboard = () => {
                                         }}
                                     >
                                         <span className="text-sm text-slate-700">
-                                            <TranslatedText text={item.area} />
+                                            {item.area}
                                         </span>
                                         <span className="text-xs bg-brand-50 text-brand-700 px-2 py-0.5 rounded-full">{item.count}</span>
                                     </div>
@@ -541,23 +645,23 @@ const LetterDashboard = () => {
                                 >
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800">
-                                            {translatedTypes[req.type] || req.type}
+                                            {req.type}
                                         </h3>
                                         <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
                                             {req.status}
                                         </span>
                                     </div>
                                     <p className="text-sm text-slate-600 mt-1">
-                                        <TranslatedText text={req.details?.name || req.user_id} />
+                                        {req.details?.name || req.user_id}
                                     </p>
                                     {req.details?.subject && (
                                         <p className="text-sm text-slate-500 font-medium line-clamp-1 mt-0.5">
-                                            <TranslatedText text={req.details.subject} />
+                                            {req.details.subject}
                                         </p>
                                     )}
                                     {req.area && (
                                         <p className="text-xs text-brand-600 mt-1">
-                                            <TranslatedText text={req.area} />
+                                            {req.area}
                                         </p>
                                     )}
                                     <div className="flex justify-between items-center mt-2">
@@ -606,7 +710,7 @@ const LetterDashboard = () => {
                                 >
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-slate-800">
-                                            <TranslatedText text={letter.title} />
+                                            {letter.title}
                                         </h3>
                                         <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
                                             {letter.file_type.includes('pdf') ? 'PDF' : 'Image'}
@@ -614,12 +718,12 @@ const LetterDashboard = () => {
                                     </div>
                                     {letter.description && (
                                         <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                                            <TranslatedText text={letter.description} />
+                                            {letter.description}
                                         </p>
                                     )}
                                     {letter.area && (
                                         <p className="text-xs text-brand-600 mt-1">
-                                            <TranslatedText text={letter.area} />
+                                            {letter.area}
                                         </p>
                                     )}
                                     <div className="flex justify-between items-center mt-2">
@@ -674,40 +778,74 @@ const LetterDashboard = () => {
                             <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
                                 <div>
                                     <h2 className="text-xl font-bold text-slate-900">
-                                        {translatedTypes[selectedRequest.type] || selectedRequest.type}
+                                        <TranslatedText text={selectedRequest.type} />
                                     </h2>
                                     <p className="text-sm text-slate-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => generatePDF(selectedRequest)}
-                                        className="ns-btn-primary"
-                                    >
-                                        <Printer className="w-4 h-4" /> {t('letters.generate_pdf')}
-                                    </button>
                                 </div>
                             </div>
 
                             <div className="flex-1 py-6 space-y-4">
                                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
-                                    <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
-                                    {selectedRequest.details?.subject && (
-                                        <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.subject')}:</span> <TranslatedText text={selectedRequest.details.subject} /></p>
-                                    )}
-                                    <p className="text-slate-800 mt-2"><span className="font-semibold">{t('letters.address')}:</span></p>
-                                    <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
-                                        <TranslatedText text={selectedRequest.details?.text || ''} />
-                                    </p>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <div className="flex items-center gap-4">
+                                            <h4 className="text-xs font-bold uppercase text-slate-500">Letter Preview</h4>
 
-                                    {(selectedRequest.details?.purpose || selectedRequest.details?.reason) && (
-                                        <>
-                                            <p className="text-slate-800 mt-2"><span className="font-semibold">{t('office.purpose')}:</span></p>
-                                            <p className="bg-white p-3 rounded-xl border border-slate-200 mt-1 text-sm text-slate-700">
-                                                <TranslatedText text={selectedRequest.details?.purpose || selectedRequest.details?.reason || ''} />
-                                            </p>
-                                        </>
+                                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                                                <button
+                                                    onClick={() => setPreviewLang('mr')}
+                                                    className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'mr' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                    Marathi
+                                                </button>
+                                                <button
+                                                    onClick={() => setPreviewLang('en')}
+                                                    className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'en' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                >
+                                                    English
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => generatePDF(selectedRequest, false, 'mr')}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition flex items-center gap-1.5"
+                                            >
+                                                <Printer className="w-3.5 h-3.5" /> PDF (Marathi)
+                                            </button>
+                                            <button
+                                                onClick={() => generatePDF(selectedRequest, false, 'en')}
+                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5"
+                                            >
+                                                <Printer className="w-3.5 h-3.5" /> PDF (English)
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {previewLoading ? (
+                                        <div className="animate-pulse space-y-2 p-6 bg-white rounded-lg border border-slate-200">
+                                            <div className="h-4 bg-slate-200 rounded w-full"></div>
+                                            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                                            <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white p-6 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap font-serif text-sm leading-relaxed max-h-[400px] overflow-y-auto shadow-inner">
+                                            {previewContent}
+                                        </div>
                                     )}
+                                </div>
+
+                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 opacity-70">
+                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
+                                    <div className="text-sm grid grid-cols-2 gap-2">
+                                        <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
+                                        {selectedRequest.details?.subject && (
+                                            <p className="text-slate-800"><span className="font-semibold">{t('letters.subject')}:</span> <TranslatedText text={selectedRequest.details.subject} /></p>
+                                        )}
+                                        <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('letters.address')}:</span> <TranslatedText text={selectedRequest.details?.text || ''} /></p>
+                                        {(selectedRequest.details?.purpose || selectedRequest.details?.reason) && (
+                                            <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('office.purpose')}:</span> <TranslatedText text={selectedRequest.details?.purpose || selectedRequest.details?.reason || ''} /></p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

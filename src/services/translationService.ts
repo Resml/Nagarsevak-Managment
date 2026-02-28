@@ -6,6 +6,16 @@
 const API_URL = "https://translate.googleapis.com/translate_a/single";
 
 const translationCache = new Map<string, string>();
+const MAX_CACHE_SIZE = 500;
+
+const addToCache = (key: string, value: string) => {
+    if (translationCache.size >= MAX_CACHE_SIZE) {
+        // Remove the oldest entry (Map iterates in insertion order)
+        const firstKey = translationCache.keys().next().value;
+        if (firstKey) translationCache.delete(firstKey);
+    }
+    translationCache.set(key, value);
+};
 
 /**
  * Custom overrides for specific terms that APIs often mistranslate.
@@ -84,9 +94,59 @@ export const translateText = async (
     // Special Case: If the entire text was protected and replaced, return the replacement directly
     if (protections.length === 1 && textToTranslate.trim() === protections[0].placeholder) {
         const result = protections[0].replacement;
-        translationCache.set(cacheKey, result);
+        addToCache(cacheKey, result);
         return result;
     }
+
+    // --- NEW: Chunking Logic for Long Text ---
+    // Google Translate / Proxies often fail with 414 URI Too Long for texts > ~800 chars
+    if (textToTranslate.length > 500) {
+        // Split by double newline (paragraphs) or single newline
+        const delimiter = textToTranslate.includes('\n\n') ? '\n\n' : '\n';
+        const rawChunks = textToTranslate.split(delimiter);
+
+        if (rawChunks.length > 1) {
+            let currentChunk = '';
+            const optimizedChunks: string[] = [];
+
+            for (const piece of rawChunks) {
+                if (currentChunk.length + piece.length > 500) {
+                    if (currentChunk) optimizedChunks.push(currentChunk);
+                    currentChunk = piece;
+                } else {
+                    currentChunk = currentChunk ? currentChunk + delimiter + piece : piece;
+                }
+            }
+            if (currentChunk) optimizedChunks.push(currentChunk);
+
+            try {
+                // Translate chunks in parallel for maximum speed
+                const chunkPromises = optimizedChunks.map(chunk => {
+                    if (chunk.trim() === '') return Promise.resolve(chunk);
+                    return translateText(chunk, targetLang, sourceLang);
+                });
+
+                const translatedChunks = await Promise.all(chunkPromises);
+
+                let finalTranslated = translatedChunks.join(delimiter);
+
+                // Restore protected terms for the combined result
+                protections.forEach(({ placeholder, replacement }) => {
+                    const restoreRegex = new RegExp(`\\[\\s*\\[\\s*_${protections.indexOf(protections.find(p => p.placeholder === placeholder)!)}_\\s*\\]\\s*\\]`, 'g');
+                    finalTranslated = finalTranslated.replace(restoreRegex, replacement);
+                    finalTranslated = finalTranslated.replace(placeholder, replacement);
+                });
+
+                addToCache(cacheKey, finalTranslated);
+                return finalTranslated;
+
+            } catch (e) {
+                console.error("Chunk translation failed", e);
+                return text;
+            }
+        }
+    }
+    // --- END NEW Logic ---
 
     try {
         let response;
@@ -101,7 +161,7 @@ export const translateText = async (
             });
             response = await fetch(`/api/translate?${params.toString()}`);
         } else {
-            // Use CORS Proxy in Development
+            // Direct call to Google Translate API (It natively supports CORS for GET requests)
             const params = new URLSearchParams({
                 client: "gtx",
                 sl: sourceLang,
@@ -111,8 +171,7 @@ export const translateText = async (
             });
 
             const googleUrl = `${API_URL}?${params.toString()}`;
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(googleUrl)}`;
-            response = await fetch(proxyUrl);
+            response = await fetch(googleUrl);
         }
 
         if (!response.ok) {
@@ -120,10 +179,10 @@ export const translateText = async (
             return text;
         }
 
-        const data = await response.json();
+        const parsedData = await response.json();
 
-        if (data && data[0]) {
-            let translatedText = data[0]
+        if (parsedData && parsedData[0]) {
+            let translatedText = parsedData[0]
                 .map((segment: any) => segment[0])
                 .join("");
 
@@ -139,7 +198,7 @@ export const translateText = async (
                     translatedText = translatedText.replace(placeholder, replacement);
                 });
 
-                translationCache.set(cacheKey, translatedText);
+                addToCache(cacheKey, translatedText);
                 return translatedText;
             }
         }

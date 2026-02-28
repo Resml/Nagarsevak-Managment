@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save, Search, User, Loader2, PlusCircle, Phone, X } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext'; // Import Tenant Context
+import { useFormDraft } from '../../hooks/useFormDraft';
 import type { Voter } from '../../types';
 
 const LetterForm = () => {
@@ -16,9 +17,11 @@ const LetterForm = () => {
 
     const [loading, setLoading] = useState(false);
     const [types, setTypes] = useState<{ name: string, name_marathi?: string, template_content?: string }[]>([]);
-    const [dynamicFields, setDynamicFields] = useState<Record<string, string>>({});
+
+    const [dynamicFields, setDynamicFields, clearDynamicDraft] = useFormDraft<Record<string, string>>('draft_letter_dynamic', {});
     const [templateFields, setTemplateFields] = useState<string[]>([]);
-    const [formData, setFormData] = useState({
+
+    const [formData, setFormData, clearFormDraft] = useFormDraft('draft_letter_main', {
         firstName: '',
         middleName: '',
         lastName: '',
@@ -362,6 +365,13 @@ const LetterForm = () => {
 
             if (error) throw error;
             toast.success(id ? 'Request updated successfully' : t('staff.list.success_add').replace('Staff member', 'Request'));
+
+            // Clear drafts upon successful submission
+            if (!id) {
+                clearFormDraft();
+                clearDynamicDraft();
+            }
+
             navigate('/dashboard/letters');
         } catch (err) {
             console.error('Error saving letter request:', err);

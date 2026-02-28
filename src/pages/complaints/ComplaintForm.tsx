@@ -7,6 +7,7 @@ import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Che
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useFormDraft } from '../../hooks/useFormDraft';
 
 const ComplaintForm = () => {
     const { t, language } = useLanguage();
@@ -19,24 +20,26 @@ const ComplaintForm = () => {
     const prefillVoterName = location.state?.voterName || '';
 
     // State for linked voter
-    const [selectedVoterId, setSelectedVoterId] = useState<string | null>(prefillVoterId || null);
+    const [selectedVoterId, setSelectedVoterId, clearVoterIdDraft] = useFormDraft<string | null>('draft_complaint_voter_id', prefillVoterId || null);
 
     // Form State
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [type, setType] = useState<ComplaintType>('Other');
-    const [ward, setWard] = useState('12'); // Default to 12 for MVP
-    const [area, setArea] = useState('');
-    const [peopleAffected, setPeopleAffected] = useState('');
+    const [title, setTitle, clearTitleDraft] = useFormDraft('draft_complaint_title', '');
+    const [description, setDescription, clearDescDraft] = useFormDraft('draft_complaint_desc', '');
+    const [type, setType, clearTypeDraft] = useFormDraft<ComplaintType>('draft_complaint_type', 'Other');
+    const [ward, setWard, clearWardDraft] = useFormDraft('draft_complaint_ward', '12'); // Default to 12 for MVP
+    const [area, setArea, clearAreaDraft] = useFormDraft('draft_complaint_area', '');
+    const [peopleAffected, setPeopleAffected, clearAffectedDraft] = useFormDraft('draft_complaint_affected', '');
+
+    // Media State (not drafted because File objects can't be easily JSON serialized)
     const [photos, setPhotos] = useState<string[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const [uploading, setUploading] = useState(false);
 
     // Voter Details State
-    const [firstName, setFirstName] = useState('');
-    const [middleName, setMiddleName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [mobile, setMobile] = useState('+91 ');
+    const [firstName, setFirstName, clearFNameDraft] = useFormDraft('draft_complaint_fname', '');
+    const [middleName, setMiddleName, clearMNameDraft] = useFormDraft('draft_complaint_mname', '');
+    const [lastName, setLastName, clearLNameDraft] = useFormDraft('draft_complaint_lname', '');
+    const [mobile, setMobile, clearMobileDraft] = useFormDraft('draft_complaint_mobile', '+91 ');
 
     // Voter Search Modal State
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -303,6 +306,20 @@ const ComplaintForm = () => {
 
             if (error) throw error;
             toast.success('Complaint submitted successfully!');
+
+            // Clear all drafts upon success
+            clearVoterIdDraft();
+            clearTitleDraft();
+            clearDescDraft();
+            clearTypeDraft();
+            clearWardDraft();
+            clearAreaDraft();
+            clearAffectedDraft();
+            clearFNameDraft();
+            clearMNameDraft();
+            clearLNameDraft();
+            clearMobileDraft();
+
             navigate(-1);
         } catch (err) {
             console.error('Error submitting complaint:', err);
