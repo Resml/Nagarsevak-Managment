@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2 } from 'lucide-react';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { AIAnalysisService, AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
@@ -35,6 +35,7 @@ const Tasks = () => {
     const [staffList, setStaffList] = useState<any[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -422,6 +423,23 @@ const Tasks = () => {
                 </div>
             </div>
 
+            {/* View Mode Toggle */}
+            <div className="flex justify-end">
+                <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                    >
+                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                    <button
+                        onClick={() => setViewMode('report')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                    >
+                        <FileText className="w-4 h-4" /> {t('common.report')}
+                    </button>
+                </div>
+            </div>
+
             {/* Task Form Modal */}
             {showForm && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -566,107 +584,158 @@ const Tasks = () => {
             )}
 
             {/* Tasks List */}
-            <div className="grid gap-4">
-                {loading ? (
-                    <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="ns-card p-5">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="space-y-2">
-                                        <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
-                                        <div className="flex gap-2">
-                                            <div className="h-5 w-24 bg-slate-200 rounded-full animate-pulse" />
-                                            <div className="h-5 w-32 bg-slate-200 rounded-full animate-pulse" />
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">Tasks {t('common.report')} ({filteredTasks.length})</h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address / Office</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned To</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredTasks.map(task => (
+                                    <tr key={task.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 text-sm font-semibold text-slate-800">{formatTaskTitle(task.title)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.priority === 'High' ? 'bg-red-100 text-red-700' :
+                                                    task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                                        'bg-green-100 text-green-700'
+                                                }`}>{task.priority}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
+                                                }`}>{task.status}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{task.due_date || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500">{task.address || task.office_name || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500">{task.assigned_to || task.meet_person_name || '-'}</td>
+                                    </tr>
+                                ))}
+                                {filteredTasks.length === 0 && (
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No tasks found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid gap-4">
+                    {loading ? (
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="ns-card p-5">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="space-y-2">
+                                            <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
+                                            <div className="flex gap-2">
+                                                <div className="h-5 w-24 bg-slate-200 rounded-full animate-pulse" />
+                                                <div className="h-5 w-32 bg-slate-200 rounded-full animate-pulse" />
+                                            </div>
                                         </div>
+                                        <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
                                     </div>
-                                    <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
+                                    <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse mb-2 mt-4" />
+                                    <div className="h-4 w-1/2 bg-slate-200 rounded animate-pulse mb-4" />
+                                    <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center">
+                                        <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+                                        <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                                    </div>
                                 </div>
-                                <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse mb-2 mt-4" />
-                                <div className="h-4 w-1/2 bg-slate-200 rounded animate-pulse mb-4" />
-                                <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center">
-                                    <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
-                                    <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                            ))}
+                        </div>
+                    ) : filteredTasks.map(task => (
+                        <div key={task.id} className="ns-card p-5 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between items-start mb-2">
+                                <div>
+                                    <h3 className="font-semibold text-slate-900 text-lg">
+                                        {renderDynamicTitle(task.title)}
+                                    </h3>
+                                    <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+                                        <span className={clsx(
+                                            "px-2 py-0.5 rounded-full text-xs font-medium",
+                                            task.priority === 'High' ? "bg-red-100 text-red-700" :
+                                                task.priority === 'Medium' ? "bg-yellow-100 text-yellow-700" :
+                                                    "bg-green-100 text-green-700"
+                                        )}>
+                                            {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')} {t('tasks.priority_label')}
+                                        </span>
+                                        {task.due_date && (
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" /> {task.due_date}
+                                            </span>
+                                        )}
+                                        {task.office_name && (
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                                <Building2 className="w-3 h-3" /> <TranslatedText text={task.office_name} />
+                                            </span>
+                                        )}
+                                        {task.address && (
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                                <MapPin className="w-3 h-3" /> <TranslatedText text={task.address} />
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : filteredTasks.map(task => (
-                    <div key={task.id} className="ns-card p-5 hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-2">
-                            <div>
-                                <h3 className="font-semibold text-slate-900 text-lg">
-                                    {renderDynamicTitle(task.title)}
-                                </h3>
-                                <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
+                                <div className="flex flex-col items-end gap-2">
                                     <span className={clsx(
-                                        "px-2 py-0.5 rounded-full text-xs font-medium",
-                                        task.priority === 'High' ? "bg-red-100 text-red-700" :
-                                            task.priority === 'Medium' ? "bg-yellow-100 text-yellow-700" :
-                                                "bg-green-100 text-green-700"
+                                        "px-3 py-1 rounded-full text-xs font-medium",
+                                        task.status === 'Completed' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
                                     )}>
-                                        {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')} {t('tasks.priority_label')}
+                                        {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                     </span>
-                                    {task.due_date && (
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" /> {task.due_date}
-                                        </span>
-                                    )}
-                                    {task.office_name && (
-                                        <span className="flex items-center gap-1 text-slate-600">
-                                            <Building2 className="w-3 h-3" /> <TranslatedText text={task.office_name} />
-                                        </span>
-                                    )}
-                                    {task.address && (
-                                        <span className="flex items-center gap-1 text-slate-600">
-                                            <MapPin className="w-3 h-3" /> <TranslatedText text={task.address} />
-                                        </span>
-                                    )}
                                 </div>
                             </div>
-                            <div className="flex flex-col items-end gap-2">
-                                <span className={clsx(
-                                    "px-3 py-1 rounded-full text-xs font-medium",
-                                    task.status === 'Completed' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                                )}>
-                                    {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
+                            <p className="text-slate-600 text-sm mb-4">
+                                <TranslatedText text={task.description} />
+                            </p>
+
+                            <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center text-sm">
+                                <span className="text-slate-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" /> {t('tasks.created')} {new Date(task.created_at).toLocaleDateString()}
                                 </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleEdit(task)}
+                                        className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                        title={t('common.edit')}
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(task)}
+                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title={t('common.delete')}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                        <p className="text-slate-600 text-sm mb-4">
-                            <TranslatedText text={task.description} />
-                        </p>
+                    ))}
 
-                        <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center text-sm">
-                            <span className="text-slate-500 flex items-center gap-1">
-                                <Clock className="w-3 h-3" /> {t('tasks.created')} {new Date(task.created_at).toLocaleDateString()}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleEdit(task)}
-                                    className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
-                                    title={t('common.edit')}
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteClick(task)}
-                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    title={t('common.delete')}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                    {filteredTasks.length === 0 && !loading && (
+                        <div className="text-center py-12 text-slate-500 ns-card border-dashed">
+                            <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                            <p>{t('tasks.no_tasks')}</p>
                         </div>
-                    </div>
-                ))}
-
-                {filteredTasks.length === 0 && !loading && (
-                    <div className="text-center py-12 text-slate-500 ns-card border-dashed">
-                        <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <p>{t('tasks.no_tasks')}</p>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {/* Delete Confirmation Modal */}
             {deleteTarget && (

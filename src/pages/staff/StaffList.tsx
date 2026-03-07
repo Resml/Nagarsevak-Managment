@@ -2,11 +2,12 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
-import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer } from 'lucide-react';
 import StaffProfile from './StaffProfile';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { TranslatedText } from '../../components/TranslatedText';
 
 
 const StaffList = () => {
@@ -19,6 +20,7 @@ const StaffList = () => {
     const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     const AVAILABLE_PERMISSIONS = useMemo(() => [
         // Daily Work
@@ -381,11 +383,34 @@ const StaffList = () => {
                     </div>
                 </div>
 
+                {/* View Mode Toggle */}
+                <div className="flex justify-end mt-2">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-xl"></div>)}
                     </div>
-                ) : (
+                ) : viewMode === 'grid' ? (
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredStaff.length > 0 ? (
                             filteredStaff.map((member) => (
@@ -399,14 +424,14 @@ const StaffList = () => {
                                             <User className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-gray-900 leading-tight">{member.name}</h3>
+                                            <h3 className="font-bold text-gray-900 leading-tight"><TranslatedText text={member.name} /></h3>
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 <span className="inline-flex items-center text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                                                    {member.role}
+                                                    <TranslatedText text={member.role} />
                                                 </span>
                                                 {member.area && (
                                                     <span className="inline-flex items-center text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded">
-                                                        {member.area}
+                                                        <TranslatedText text={member.area} />
                                                     </span>
                                                 )}
                                             </div>
@@ -447,6 +472,70 @@ const StaffList = () => {
                                 </p>
                             </div>
                         )}
+                    </div>
+                ) : (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                            <h3 className="font-semibold text-gray-800">
+                                {t('staff.tabs.office')} - {t('common.report')} ({filteredStaff.length})
+                            </h3>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                            >
+                                <Printer className="w-4 h-4" /> Print
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto print:overflow-visible">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50 print:bg-gray-100">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Role</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keywords/Categories</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {filteredStaff.length > 0 ? filteredStaff.map((member) => (
+                                        <tr key={member.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedStaff(member)}>
+                                            <td className="px-6 py-4 text-sm text-gray-800">
+                                                <div className="font-semibold"><TranslatedText text={member.name} /></div>
+                                                <div className="text-xs text-gray-500"><TranslatedText text={member.role} /></div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
+                                                {member.mobile}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                {member.area || <span className="text-gray-400 italic">N/A</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-600">
+                                                <div className="flex flex-wrap gap-1">
+                                                    {member.keywords && member.keywords.length > 0 ? (
+                                                        member.keywords.slice(0, 3).map((k, i) => (
+                                                            <span key={i} className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded text-[10px] font-medium border border-blue-100">
+                                                                {k}
+                                                            </span>
+                                                        ))
+                                                    ) : (
+                                                        <span className="text-gray-400 italic text-[10px]">None</span>
+                                                    )}
+                                                    {member.keywords && member.keywords.length > 3 && (
+                                                        <span className="text-[10px] text-gray-500 items-center flex">+{member.keywords.length - 3}</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan={4} className="px-6 py-12 text-center text-gray-500 italic">
+                                                {t('staff.list.no_members')}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

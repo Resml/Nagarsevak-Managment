@@ -74,24 +74,24 @@ const PermissionGuard = ({ children, permission }: { children: React.ReactNode; 
 
   if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
 
-  // If no user, ProtectedRoute will handle it, but safety check:
   if (!user) return <Navigate to="/login" replace />;
 
-  // Admin always has access
-  if (user.role === 'admin') return <>{children}</>;
+  // Admin-level roles always have full access
+  const adminRoles = ['admin', 'nagarsevak', 'amdar', 'khasdar', 'minister'];
+  if (adminRoles.includes(user.role) && !user.isStaff) return <>{children}</>;
 
-  // Staff check
-  if (user.role === 'staff') {
-    if (user.permissions?.includes(permission)) {
+  // Staff check — must have the specific permission
+  if (user.isStaff) {
+    const perms = user.permissions;
+    if (Array.isArray(perms) && perms.includes(permission)) {
       return <>{children}</>;
-    } else {
-      // No permission, redirect to dashboard
-      return <Navigate to="/" replace />;
     }
+    // No permission → redirect to dashboard
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // Fallback (e.g., other roles? assume no access for safety)
-  return <Navigate to="/" replace />;
+  // Any other unknown role → no access
+  return <Navigate to="/dashboard" replace />;
 };
 
 function App() {

@@ -16,87 +16,115 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        let currentUserId: string | null = null;
+        let staffChannel: ReturnType<typeof supabase.channel> | null = null;
+
+        const loadUser = async (sessionUser: { id: string; email?: string; user_metadata?: any }) => {
+            currentUserId = sessionUser.id;
+
+            // Fetch role from user_tenant_mapping
+            const { data: mappingData } = await supabase
+                .from('user_tenant_mapping')
+                .select('role')
+                .eq('user_id', sessionUser.id)
+                .single();
+            const userRole = mappingData?.role || 'staff';
+
+            // Fetch permissions from staff table
+            const { data: staffData } = await supabase
+                .from('staff')
+                .select('permissions')
+                .eq('id', sessionUser.id)
+                .maybeSingle();
+
+            const permissions: string[] = (staffData?.permissions && Array.isArray(staffData.permissions))
+                ? staffData.permissions
+                : [];
+
+            console.log('[AuthContext] Resolved user:', {
+                id: sessionUser.id,
+                email: sessionUser.email,
+                role: userRole,
+                permissions,
+                isStaff: !!staffData,
+            });
+
+            setUser({
+                id: sessionUser.id,
+                name: sessionUser.user_metadata?.name || sessionUser.email?.split('@')[0] || 'User',
+                email: sessionUser.email || '',
+                role: userRole,
+                permissions,
+                isStaff: !!staffData,
+            });
+            setIsLoading(false);
+
+            // Set up real-time subscription for staff permissions changes
+            // Clean up any previous subscription first
+            if (staffChannel) {
+                supabase.removeChannel(staffChannel);
+            }
+
+            if (staffData) {
+                // Only subscribe if user is a staff member
+                staffChannel = supabase
+                    .channel(`staff-permissions-${sessionUser.id}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'staff',
+                            filter: `id=eq.${sessionUser.id}`,
+                        },
+                        (payload) => {
+                            console.log('[AuthContext] Staff permissions updated in real-time:', payload.new);
+                            const updatedPermissions: string[] = Array.isArray(payload.new.permissions)
+                                ? payload.new.permissions
+                                : [];
+                            setUser((prev) =>
+                                prev
+                                    ? { ...prev, permissions: updatedPermissions }
+                                    : prev
+                            );
+                        }
+                    )
+                    .subscribe();
+            }
+        };
+
         // Check active session
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session?.user) {
-                // Fetch the user's role from the mapping table
-                supabase
-                    .from('user_tenant_mapping')
-                    .select('role')
-                    .eq('user_id', session.user.id)
-                    .single()
-                    .then(async ({ data, error }) => {
-                        const userRole = data?.role || 'staff'; // Default to staff if not found
-
-                        let permissions: string[] = [];
-                        // Try to fetch permissions from staff table
-                        const { data: staffData } = await supabase
-                            .from('staff')
-                            .select('permissions')
-                            .eq('id', session.user.id)
-                            .maybeSingle();
-
-                        if (staffData?.permissions) {
-                            permissions = staffData.permissions;
-                        }
-
-                        setUser({
-                            id: session.user.id,
-                            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                            email: session.user.email || '',
-                            role: userRole,
-                            permissions
-                        });
-                        setIsLoading(false);
-                    });
+                loadUser(session.user);
             } else {
                 setIsLoading(false);
             }
         });
 
-        // Listen for changes
+        // Listen for auth state changes (login/logout)
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
-                // Fetch role again on auth change
-                supabase
-                    .from('user_tenant_mapping')
-                    .select('role')
-                    .eq('user_id', session.user.id)
-                    .single()
-                    .then(async ({ data }) => {
-                        const userRole = data?.role || 'staff';
-
-                        let permissions: string[] = [];
-                        // Try to fetch permissions from staff table
-                        const { data: staffData } = await supabase
-                            .from('staff')
-                            .select('permissions')
-                            .eq('id', session.user.id)
-                            .maybeSingle();
-
-                        if (staffData?.permissions) {
-                            permissions = staffData.permissions;
-                        }
-
-                        setUser({
-                            id: session.user.id,
-                            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-                            email: session.user.email || '',
-                            role: userRole,
-                            permissions
-                        });
-                        setIsLoading(false);
-                    });
+                loadUser(session.user);
             } else {
+                currentUserId = null;
+                if (staffChannel) {
+                    supabase.removeChannel(staffChannel);
+                    staffChannel = null;
+                }
                 setUser(null);
                 setIsLoading(false);
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            subscription.unsubscribe();
+            if (staffChannel) supabase.removeChannel(staffChannel);
+        };
     }, []);
+
 
     const login = async (email: string, password: string) => {
         setIsLoading(true);

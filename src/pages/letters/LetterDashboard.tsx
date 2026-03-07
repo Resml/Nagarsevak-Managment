@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
@@ -70,6 +70,9 @@ const LetterDashboard = () => {
     const [previewContent, setPreviewContent] = useState<string>('');
     const [previewLoading, setPreviewLoading] = useState(false);
     const [previewLang, setPreviewLang] = useState<'mr' | 'en'>('mr');
+
+    // View Mode State
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     useEffect(() => {
         fetchRequests();
@@ -592,34 +595,60 @@ const LetterDashboard = () => {
                     </div>
                 </div>
 
-                {/* Tab Navigation */}
-                <div className="flex gap-2 border-b border-slate-200">
-                    <button
-                        onClick={() => {
-                            setActiveTab('outgoing');
-                            setSelectedRequest(null);
-                            setSelectedIncoming(null);
-                        }}
-                        className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'outgoing'
-                            ? 'border-brand-600 text-brand-700'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                    >
-                        {t('letters.outgoing')} ({requests.length})
-                    </button>
-                    <button
-                        onClick={() => {
-                            setActiveTab('incoming');
-                            setSelectedRequest(null);
-                            setSelectedIncoming(null);
-                        }}
-                        className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'incoming'
-                            ? 'border-brand-600 text-brand-700'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
-                            }`}
-                    >
-                        {t('letters.incoming')} ({incomingLetters.length})
-                    </button>
+                {/* Tab Navigation & View Mode Toggle */}
+                <div className="flex justify-between items-center border-b border-slate-200">
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                setActiveTab('outgoing');
+                                setSelectedRequest(null);
+                                setSelectedIncoming(null);
+                            }}
+                            className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'outgoing'
+                                ? 'border-brand-600 text-brand-700'
+                                : 'border-transparent text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            {t('letters.outgoing')} ({requests.length})
+                        </button>
+                        <button
+                            onClick={() => {
+                                setActiveTab('incoming');
+                                setSelectedRequest(null);
+                                setSelectedIncoming(null);
+                            }}
+                            className={`px-6 py-3 font-semibold transition border-b-2 ${activeTab === 'incoming'
+                                ? 'border-brand-600 text-brand-700'
+                                : 'border-transparent text-slate-500 hover:text-slate-700'
+                                }`}
+                        >
+                            {t('letters.incoming')} ({incomingLetters.length})
+                        </button>
+                    </div>
+
+                    {/* View Mode Toggle */}
+                    <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2 mb-2">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'report' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                        {viewMode === 'report' && (
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+                                title="Print Report"
+                            >
+                                <Printer className="w-4 h-4" /> Print
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Search & Filters */}
@@ -701,326 +730,409 @@ const LetterDashboard = () => {
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-                {/* List */}
-                <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
-                    {activeTab === 'outgoing' ? (
-                        <>
-                            {loading ? (
-                                <div className="space-y-2 p-4">
-                                    {[1, 2, 3, 4, 5].map((i) => (
-                                        <div key={i} className="p-4 border-b border-slate-200/70">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
-                                                <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
-                                            </div>
-                                            <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-2" />
-                                            <div className="h-3 w-20 bg-slate-200 rounded animate-pulse" />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : filteredRequests.map(req => (
-                                <div
-                                    key={req.id}
-                                    onClick={() => setSelectedRequest(req)}
-                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="font-bold text-slate-800">
-                                            {language === 'mr' ? (CUSTOM_TRANSLATIONS[req.type] || req.type) : req.type}
-                                        </h3>
-                                        <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                                            {req.status}
-                                        </span>
-                                    </div>
-                                    <p className="text-sm text-slate-600 mt-1">
-                                        {req.details?.name || req.user_id}
-                                    </p>
-                                    {req.details?.subject && (
-                                        <p className="text-sm text-slate-500 font-medium line-clamp-1 mt-0.5">
-                                            {req.details.subject}
-                                        </p>
-                                    )}
-                                    {req.area && (
-                                        <p className="text-xs text-brand-600 mt-1">
-                                            {req.area}
-                                        </p>
-                                    )}
-                                    <div className="flex justify-between items-center mt-2">
-                                        <p className="text-xs text-slate-500">{format(new Date(req.created_at), 'PP p')}</p>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => navigate(`/dashboard/letters/edit/${req.id}`)}
-                                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
-                                                title={t('common.edit')}
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteTarget({ id: req.id, type: 'outgoing', name: req.details?.name || 'Request' })}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                title={t('common.delete')}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {filteredRequests.length === 0 && !loading && (
-                                <div className="p-8 text-center flex flex-col items-center justify-center h-64">
-                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
-                                        <FileText className="w-8 h-8 text-slate-400" />
-                                    </div>
-                                    <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
-                                    <Link
-                                        to="/dashboard/letters/new"
-                                        className="ns-btn-primary"
-                                    >
-                                        <Plus className="w-4 h-4" /> {t('letters.new_request')}
-                                    </Link>
-                                </div>
-                            )}
-                        </>
-                    ) : (
-                        <>
-                            {incomingLetters.map(letter => (
-                                <div
-                                    key={letter.id}
-                                    onClick={() => setSelectedIncoming(letter)}
-                                    className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedIncoming?.id === letter.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <h3 className="font-bold text-slate-800">
-                                            {letter.title}
-                                        </h3>
-                                        <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                                            {letter.file_type.includes('pdf') ? 'PDF' : 'Image'}
-                                        </span>
-                                    </div>
-                                    {letter.description && (
-                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
-                                            {letter.description}
-                                        </p>
-                                    )}
-                                    {letter.area && (
-                                        <p className="text-xs text-brand-600 mt-1">
-                                            {letter.area}
-                                        </p>
-                                    )}
-                                    <div className="flex justify-between items-center mt-2">
-                                        <p className="text-xs text-slate-500">{format(new Date(letter.received_date), 'PP')}</p>
-                                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => {
-                                                    setEditingIncoming(letter);
-                                                    setShowUploadModal(true);
-                                                }}
-                                                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
-                                                title={t('common.edit')}
-                                            >
-                                                <Edit2 className="w-3.5 h-3.5" />
-                                            </button>
-                                            <button
-                                                onClick={() => setDeleteTarget({ id: letter.id, type: 'incoming', name: letter.title })}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
-                                                title={t('common.delete')}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {incomingLetters.length === 0 && (
-                                <div className="p-8 text-center flex flex-col items-center justify-center h-64">
-                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
-                                        <Upload className="w-8 h-8 text-slate-400" />
-                                    </div>
-                                    <p className="text-slate-500 mb-4">No incoming letters uploaded yet</p>
-                                    <button
-                                        onClick={() => {
-                                            setEditingIncoming(null);
-                                            setShowUploadModal(true);
-                                        }}
-                                        className="ns-btn-primary"
-                                    >
-                                        <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200/70">
+                            <thead className="bg-slate-50">
+                                {activeTab === 'outgoing' ? (
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.type')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.name')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.subject')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.area')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.status')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.date')}</th>
+                                    </tr>
+                                ) : (
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.title')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.description')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.area')}</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.date')}</th>
+                                    </tr>
+                                )}
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200/70">
+                                {activeTab === 'outgoing' ? (
+                                    filteredRequests.map((req, index) => (
+                                        <tr key={req.id} className="hover:bg-slate-50">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">{index + 1}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <div className="text-sm font-bold text-slate-900">
+                                                    {language === 'mr' ? (CUSTOM_TRANSLATIONS[req.type] || req.type) : req.type}
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-900">{req.details?.name || req.user_id}</td>
+                                            <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">{req.details?.subject || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{req.area || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                                    {req.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
+                                                {format(new Date(req.created_at), 'PP p')}
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    incomingLetters.map((letter, index) => (
+                                        <tr key={letter.id} className="hover:bg-slate-50">
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">{index + 1}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm font-bold text-slate-900">
+                                                <TranslatedText text={letter.title} />
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">{letter.description || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{letter.area || '-'}</td>
+                                            <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
+                                                {format(new Date(letter.received_date), 'PP')}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                                {activeTab === 'outgoing' && filteredRequests.length === 0 && !loading && (
+                                    <tr>
+                                        <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                            {t('letters.no_requests')}
+                                        </td>
+                                    </tr>
+                                )}
+                                {activeTab === 'incoming' && incomingLetters.length === 0 && (
+                                    <tr>
+                                        <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                                            No incoming letters found
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-
-                {/* Preview */}
-                <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col">
-                    {activeTab === 'outgoing' && selectedRequest ? (
-                        <>
-                            <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-900">
-                                        <TranslatedText text={selectedRequest.type} />
-                                    </h2>
-                                    <p className="text-sm text-slate-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex-1 py-6 space-y-4">
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <div className="flex items-center gap-4">
-                                            <h4 className="text-xs font-bold uppercase text-slate-500">Letter Preview</h4>
-
-                                            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+            ) : (
+                <div className="grid md:grid-cols-3 gap-6">
+                    {/* List */}
+                    <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
+                        {activeTab === 'outgoing' ? (
+                            <>
+                                {loading ? (
+                                    <div className="space-y-2 p-4">
+                                        {[1, 2, 3, 4, 5].map((i) => (
+                                            <div key={i} className="p-4 border-b border-slate-200/70">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+                                                    <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+                                                </div>
+                                                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse mb-2" />
+                                                <div className="h-3 w-20 bg-slate-200 rounded animate-pulse" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : filteredRequests.map(req => (
+                                    <div
+                                        key={req.id}
+                                        onClick={() => setSelectedRequest(req)}
+                                        className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="font-bold text-slate-800">
+                                                {language === 'mr' ? (CUSTOM_TRANSLATIONS[req.type] || req.type) : req.type}
+                                            </h3>
+                                            <span className={`text-xs px-2 py-0.5 rounded ${req.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                                                {req.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-slate-600 mt-1">
+                                            {req.details?.name || req.user_id}
+                                        </p>
+                                        {req.details?.subject && (
+                                            <p className="text-sm text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                                {req.details.subject}
+                                            </p>
+                                        )}
+                                        {req.area && (
+                                            <p className="text-xs text-brand-600 mt-1">
+                                                {req.area}
+                                            </p>
+                                        )}
+                                        <div className="flex justify-between items-center mt-2">
+                                            <p className="text-xs text-slate-500">{format(new Date(req.created_at), 'PP p')}</p>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    onClick={() => setPreviewLang('mr')}
-                                                    className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'mr' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    onClick={() => navigate(`/dashboard/letters/edit/${req.id}`)}
+                                                    className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                                                    title={t('common.edit')}
                                                 >
-                                                    Marathi
+                                                    <Edit2 className="w-3.5 h-3.5" />
                                                 </button>
                                                 <button
-                                                    onClick={() => setPreviewLang('en')}
-                                                    className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'en' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    onClick={() => setDeleteTarget({ id: req.id, type: 'outgoing', name: req.details?.name || 'Request' })}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                    title={t('common.delete')}
                                                 >
-                                                    English
+                                                    <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => generatePDF(selectedRequest, false, 'mr')}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition flex items-center gap-1.5"
-                                            >
-                                                <Printer className="w-3.5 h-3.5" /> PDF (Marathi)
-                                            </button>
-                                            <button
-                                                onClick={() => generatePDF(selectedRequest, false, 'en')}
-                                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5"
-                                            >
-                                                <Printer className="w-3.5 h-3.5" /> PDF (English)
-                                            </button>
-                                        </div>
                                     </div>
-
-                                    {previewLoading ? (
-                                        <div className="animate-pulse space-y-2 p-6 bg-white rounded-lg border border-slate-200">
-                                            <div className="h-4 bg-slate-200 rounded w-full"></div>
-                                            <div className="h-4 bg-slate-200 rounded w-5/6"></div>
-                                            <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+                                ))}
+                                {filteredRequests.length === 0 && !loading && (
+                                    <div className="p-8 text-center flex flex-col items-center justify-center h-64">
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                            <FileText className="w-8 h-8 text-slate-400" />
                                         </div>
-                                    ) : (
-                                        <div className="bg-white p-6 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap font-serif text-sm leading-relaxed max-h-[400px] overflow-y-auto shadow-inner">
-                                            {previewContent}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 opacity-70">
-                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
-                                    <div className="text-sm grid grid-cols-2 gap-2">
-                                        <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
-                                        {selectedRequest.details?.subject && (
-                                            <p className="text-slate-800"><span className="font-semibold">{t('letters.subject')}:</span> <TranslatedText text={selectedRequest.details.subject} /></p>
-                                        )}
-                                        <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('letters.address')}:</span> <TranslatedText text={selectedRequest.details?.text || ''} /></p>
-                                        {(selectedRequest.details?.purpose || selectedRequest.details?.reason) && (
-                                            <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('office.purpose')}:</span> <TranslatedText text={selectedRequest.details?.purpose || selectedRequest.details?.reason || ''} /></p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="pt-4 border-t border-slate-200/70 flex justify-end gap-3">
-                                {selectedRequest.status === 'Pending' && (
-                                    <>
-                                        <button
-                                            onClick={() => updateStatus(selectedRequest.id, 'Rejected')}
-                                            className="ns-btn-ghost border border-red-200 text-red-700"
+                                        <p className="text-slate-500 mb-4">{t('letters.no_requests')}</p>
+                                        <Link
+                                            to="/dashboard/letters/new"
+                                            className="ns-btn-primary"
                                         >
-                                            <XCircle className="w-4 h-4" /> {t('letters.reject')}
-                                        </button>
-                                        <button
-                                            onClick={() => updateStatus(selectedRequest.id, 'Approved', selectedRequest)}
-                                            className="ns-btn-primary bg-green-600 hover:bg-green-700"
-                                        >
-                                            <CheckCircle className="w-4 h-4" /> {t('letters.approve')}
-                                        </button>
-                                    </>
-                                )}
-                                {selectedRequest.status !== 'Pending' && (
-                                    <div className="flex items-center gap-2 text-slate-500">
-                                        <CheckCircle className="w-5 h-5 text-green-500" />
-                                        Request is {selectedRequest.status}
+                                            <Plus className="w-4 h-4" /> {t('letters.new_request')}
+                                        </Link>
                                     </div>
                                 )}
-                            </div>
-                        </>
-                    ) : activeTab === 'incoming' && selectedIncoming ? (
-                        <>
-                            <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-900">
-                                        <TranslatedText text={selectedIncoming.title} />
-                                    </h2>
-                                    <p className="text-sm text-slate-500">
-                                        {t('letters.received_date')}: {format(new Date(selectedIncoming.received_date), 'PPP')}
-                                    </p>
-                                </div>
-                                <a
-                                    href={selectedIncoming.scanned_file_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="ns-btn-primary"
-                                >
-                                    <ExternalLink className="w-4 h-4" /> {t('letters.view_document')}
-                                </a>
-                            </div>
-
-                            <div className="flex-1 py-6 space-y-4">
-                                {selectedIncoming.description && (
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.description')}</h4>
-                                        <p className="text-slate-700"><TranslatedText text={selectedIncoming.description} /></p>
-                                    </div>
-                                )}
-
-                                {selectedIncoming.area && (
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.area')}</h4>
-                                        <p className="text-slate-700"><TranslatedText text={selectedIncoming.area} /></p>
-                                    </div>
-                                )}
-
-                                {/* Document Preview */}
-                                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                    <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Document Preview</h4>
-                                    {selectedIncoming.file_type.includes('image') ? (
-                                        <img
-                                            src={selectedIncoming.scanned_file_url}
-                                            alt={selectedIncoming.title}
-                                            className="w-full rounded-lg border border-slate-200"
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center bg-white p-8 rounded-lg border border-slate-200">
-                                            <div className="text-center">
-                                                <FileText className="w-16 h-16 text-slate-400 mx-auto mb-3" />
-                                                <p className="text-slate-600 font-semibold">PDF Document</p>
-                                                <p className="text-sm text-slate-500 mt-1">Click "View Document" to open</p>
+                            </>
+                        ) : (
+                            <>
+                                {incomingLetters.map(letter => (
+                                    <div
+                                        key={letter.id}
+                                        onClick={() => setSelectedIncoming(letter)}
+                                        className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedIncoming?.id === letter.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <h3 className="font-bold text-slate-800">
+                                                {letter.title}
+                                            </h3>
+                                            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                                                {letter.file_type.includes('pdf') ? 'PDF' : 'Image'}
+                                            </span>
+                                        </div>
+                                        {letter.description && (
+                                            <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                                {letter.description}
+                                            </p>
+                                        )}
+                                        {letter.area && (
+                                            <p className="text-xs text-brand-600 mt-1">
+                                                {letter.area}
+                                            </p>
+                                        )}
+                                        <div className="flex justify-between items-center mt-2">
+                                            <p className="text-xs text-slate-500">{format(new Date(letter.received_date), 'PP')}</p>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingIncoming(letter);
+                                                        setShowUploadModal(true);
+                                                    }}
+                                                    className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-colors"
+                                                    title={t('common.edit')}
+                                                >
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteTarget({ id: letter.id, type: 'incoming', name: letter.title })}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                                                    title={t('common.delete')}
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
                                             </div>
                                         </div>
+                                    </div>
+                                ))}
+                                {incomingLetters.length === 0 && (
+                                    <div className="p-8 text-center flex flex-col items-center justify-center h-64">
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                            <Upload className="w-8 h-8 text-slate-400" />
+                                        </div>
+                                        <p className="text-slate-500 mb-4">No incoming letters uploaded yet</p>
+                                        <button
+                                            onClick={() => {
+                                                setEditingIncoming(null);
+                                                setShowUploadModal(true);
+                                            }}
+                                            className="ns-btn-primary"
+                                        >
+                                            <Upload className="w-4 h-4" /> {t('letters.upload_incoming')}
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+
+                    {/* Preview */}
+                    <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col">
+                        {activeTab === 'outgoing' && selectedRequest ? (
+                            <>
+                                <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-900">
+                                            <TranslatedText text={selectedRequest.type} />
+                                        </h2>
+                                        <p className="text-sm text-slate-500">{t('letters.request_from')}: {selectedRequest.user_id}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 py-6 space-y-4">
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <div className="flex items-center gap-4">
+                                                <h4 className="text-xs font-bold uppercase text-slate-500">Letter Preview</h4>
+
+                                                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                                                    <button
+                                                        onClick={() => setPreviewLang('mr')}
+                                                        className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'mr' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Marathi
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setPreviewLang('en')}
+                                                        className={`px-3 py-1 text-xs font-medium rounded-md transition ${previewLang === 'en' ? 'bg-white shadow text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        English
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => generatePDF(selectedRequest, false, 'mr')}
+                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition flex items-center gap-1.5"
+                                                >
+                                                    <Printer className="w-3.5 h-3.5" /> PDF (Marathi)
+                                                </button>
+                                                <button
+                                                    onClick={() => generatePDF(selectedRequest, false, 'en')}
+                                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5"
+                                                >
+                                                    <Printer className="w-3.5 h-3.5" /> PDF (English)
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {previewLoading ? (
+                                            <div className="animate-pulse space-y-2 p-6 bg-white rounded-lg border border-slate-200">
+                                                <div className="h-4 bg-slate-200 rounded w-full"></div>
+                                                <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                                                <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-white p-6 rounded-lg border border-slate-200 text-slate-800 whitespace-pre-wrap font-serif text-sm leading-relaxed max-h-[400px] overflow-y-auto shadow-inner">
+                                                {previewContent}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70 opacity-70">
+                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.request_details')}</h4>
+                                        <div className="text-sm grid grid-cols-2 gap-2">
+                                            <p className="text-slate-800"><span className="font-semibold">{t('letters.name')}:</span> <TranslatedText text={selectedRequest.details?.name || ''} /></p>
+                                            {selectedRequest.details?.subject && (
+                                                <p className="text-slate-800"><span className="font-semibold">{t('letters.subject')}:</span> <TranslatedText text={selectedRequest.details.subject} /></p>
+                                            )}
+                                            <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('letters.address')}:</span> <TranslatedText text={selectedRequest.details?.text || ''} /></p>
+                                            {(selectedRequest.details?.purpose || selectedRequest.details?.reason) && (
+                                                <p className="text-slate-800 col-span-2"><span className="font-semibold">{t('office.purpose')}:</span> <TranslatedText text={selectedRequest.details?.purpose || selectedRequest.details?.reason || ''} /></p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-200/70 flex justify-end gap-3">
+                                    {selectedRequest.status === 'Pending' && (
+                                        <>
+                                            <button
+                                                onClick={() => updateStatus(selectedRequest.id, 'Rejected')}
+                                                className="ns-btn-ghost border border-red-200 text-red-700"
+                                            >
+                                                <XCircle className="w-4 h-4" /> {t('letters.reject')}
+                                            </button>
+                                            <button
+                                                onClick={() => updateStatus(selectedRequest.id, 'Approved', selectedRequest)}
+                                                className="ns-btn-primary bg-green-600 hover:bg-green-700"
+                                            >
+                                                <CheckCircle className="w-4 h-4" /> {t('letters.approve')}
+                                            </button>
+                                        </>
+                                    )}
+                                    {selectedRequest.status !== 'Pending' && (
+                                        <div className="flex items-center gap-2 text-slate-500">
+                                            <CheckCircle className="w-5 h-5 text-green-500" />
+                                            Request is {selectedRequest.status}
+                                        </div>
                                     )}
                                 </div>
+                            </>
+                        ) : activeTab === 'incoming' && selectedIncoming ? (
+                            <>
+                                <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-900">
+                                            <TranslatedText text={selectedIncoming.title} />
+                                        </h2>
+                                        <p className="text-sm text-slate-500">
+                                            {t('letters.received_date')}: {format(new Date(selectedIncoming.received_date), 'PPP')}
+                                        </p>
+                                    </div>
+                                    <a
+                                        href={selectedIncoming.scanned_file_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ns-btn-primary"
+                                    >
+                                        <ExternalLink className="w-4 h-4" /> {t('letters.view_document')}
+                                    </a>
+                                </div>
+
+                                <div className="flex-1 py-6 space-y-4">
+                                    {selectedIncoming.description && (
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                            <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.description')}</h4>
+                                            <p className="text-slate-700"><TranslatedText text={selectedIncoming.description} /></p>
+                                        </div>
+                                    )}
+
+                                    {selectedIncoming.area && (
+                                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                            <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">{t('letters.area')}</h4>
+                                            <p className="text-slate-700"><TranslatedText text={selectedIncoming.area} /></p>
+                                        </div>
+                                    )}
+
+                                    {/* Document Preview */}
+                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                        <h4 className="text-xs font-bold uppercase text-slate-500 mb-2">Document Preview</h4>
+                                        {selectedIncoming.file_type.includes('image') ? (
+                                            <img
+                                                src={selectedIncoming.scanned_file_url}
+                                                alt={selectedIncoming.title}
+                                                className="w-full rounded-lg border border-slate-200"
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center bg-white p-8 rounded-lg border border-slate-200">
+                                                <div className="text-center">
+                                                    <FileText className="w-16 h-16 text-slate-400 mx-auto mb-3" />
+                                                    <p className="text-slate-600 font-semibold">PDF Document</p>
+                                                    <p className="text-sm text-slate-500 mt-1">Click "View Document" to open</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                                <FileText className="w-16 h-16 mb-4 opacity-20" />
+                                <p>{activeTab === 'outgoing' ? t('letters.select_request') : 'Select an incoming letter'}</p>
                             </div>
-                        </>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                            <FileText className="w-16 h-16 mb-4 opacity-20" />
-                            <p>{activeTab === 'outgoing' ? t('letters.select_request') : 'Select an incoming letter'}</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Upload Modal */}
             {

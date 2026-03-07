@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Lightbulb, ThumbsUp, MapPin, Calendar, Wand2, User, X, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Lightbulb, ThumbsUp, MapPin, Calendar, Wand2, User, X, Search, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { toast } from 'sonner';
@@ -31,6 +31,7 @@ const PossibleImprovements = () => {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     const [newImprovement, setNewImprovement] = useState({
         title: '',
@@ -228,13 +229,37 @@ const PossibleImprovements = () => {
                         <p className="text-slate-500 text-sm">{t('improvements.subtitle')}</p>
                     </div>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="ns-btn-primary"
-                >
-                    <Plus className="w-4 h-4" />
-                    <span>{t('improvements.propose_new')}</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'report' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                        {viewMode === 'report' && (
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                title="Print Report"
+                            >
+                                <Printer className="w-4 h-4" /> Print
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="ns-btn-primary"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>{t('improvements.propose_new')}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Filters Grid */}
@@ -340,82 +365,147 @@ const PossibleImprovements = () => {
                 })}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {loading ? (
-                    <>
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="ns-card p-5 animate-pulse">
-                                <div className="h-4 w-1/4 bg-slate-200 rounded mb-4"></div>
-                                <div className="h-6 w-3/4 bg-slate-200 rounded mb-2"></div>
-                                <div className="h-4 w-full bg-slate-100 rounded mb-4"></div>
-                                <div className="h-32 bg-slate-50 rounded mb-4"></div>
-                            </div>
-                        ))}
-                    </>
-                ) : filteredImprovements.map((item) => (
-                    <div
-                        key={item.id}
-                        onClick={() => navigate(`/dashboard/ward/improvements/${item.id}`)}
-                        className="ns-card p-5 hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer"
-                    >
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Lightbulb className="w-24 h-24 text-brand-500 transform rotate-12" />
-                        </div>
-
-                        <div className="relative z-10">
-                            <div className="flex justify-between items-start mb-3">
-                                <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Complete' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                        item.status === 'Planned' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                            'bg-orange-50 text-orange-700 border-orange-200'
-                                    }`}>
-                                    {item.status === 'Complete' ? t('improvements.status_complete') :
-                                        item.status === 'In Progress' ? t('improvements.status_in_progress') :
-                                            item.status === 'Planned' ? t('improvements.status_planned') :
-                                                t('improvements.status_pending')}
-                                </span>
-                                <div className="flex items-center text-xs text-slate-500">
-                                    <Calendar className="w-3 h-3 mr-1" />
-                                    {new Date(item.created_at).toLocaleDateString()}
-                                </div>
-                            </div>
-
-                            <h3 className="text-lg font-bold text-slate-900 mb-2"><TranslatedText text={item.title} /></h3>
-                            <p className="text-slate-600 text-sm mb-4 line-clamp-3"><TranslatedText text={item.description} /></p>
-
-                            <div className="space-y-2 mb-4">
-                                {item.location && (
-                                    <div className="flex items-center text-xs text-slate-500">
-                                        <MapPin className="w-3 h-3 mr-1" />
-                                        <TranslatedText text={item.location} />
-                                        {item.area && <span>, <TranslatedText text={item.area} /></span>}
-                                    </div>
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.form_title')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.form_location')} / Area</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.votes')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('complaints.table.date')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredImprovements.map((item, index) => (
+                                    <tr key={item.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/ward/improvements/${item.id}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{index + 1}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.title} />
+                                            </div>
+                                            <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
+                                                <TranslatedText text={item.description} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.location} />
+                                                {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Complete' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                    item.status === 'Planned' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                        'bg-orange-50 text-orange-700 border-orange-200'
+                                                }`}>
+                                                {item.status === 'Complete' ? t('improvements.status_complete') :
+                                                    item.status === 'In Progress' ? t('improvements.status_in_progress') :
+                                                        item.status === 'Planned' ? t('improvements.status_planned') :
+                                                            t('improvements.status_pending')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-bold text-brand-600">{item.votes} <span className="text-xs font-normal text-slate-500 ml-1">{t('improvements.votes')}</span></div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900">{format(new Date(item.created_at), 'MMM d, yyyy')}</div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredImprovements.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                                            {t('work_history.no_records')}
+                                        </td>
+                                    </tr>
                                 )}
-                                {item.metadata?.people_benefited && (
-                                    <div className="flex items-center text-xs text-brand-600 font-medium">
-                                        <User className="w-3 h-3 mr-1" />
-                                        {item.metadata.people_benefited} {t('work_history.people_benefited')}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-2xl font-bold text-brand-600">{item.votes}</span>
-                                    <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t('improvements.votes')}</span>
-                                </div>
-                                <button
-                                    onClick={(e) => handleVote(e, item.id, item.votes)}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors border border-slate-200 hover:border-brand-200 text-sm font-medium"
-                                >
-                                    <ThumbsUp className="w-4 h-4" />
-                                    {t('improvements.vote_btn')}
-                                </button>
-                            </div>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-                ))}
-            </div>
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {loading ? (
+                        <>
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="ns-card p-5 animate-pulse">
+                                    <div className="h-4 w-1/4 bg-slate-200 rounded mb-4"></div>
+                                    <div className="h-6 w-3/4 bg-slate-200 rounded mb-2"></div>
+                                    <div className="h-4 w-full bg-slate-100 rounded mb-4"></div>
+                                    <div className="h-32 bg-slate-50 rounded mb-4"></div>
+                                </div>
+                            ))}
+                        </>
+                    ) : filteredImprovements.map((item) => (
+                        <div
+                            key={item.id}
+                            onClick={() => navigate(`/dashboard/ward/improvements/${item.id}`)}
+                            className="ns-card p-5 hover:shadow-md transition-shadow relative overflow-hidden group cursor-pointer"
+                        >
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <Lightbulb className="w-24 h-24 text-brand-500 transform rotate-12" />
+                            </div>
+
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Complete' ? 'bg-green-50 text-green-700 border-green-200' :
+                                        item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                            item.status === 'Planned' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                'bg-orange-50 text-orange-700 border-orange-200'
+                                        }`}>
+                                        {item.status === 'Complete' ? t('improvements.status_complete') :
+                                            item.status === 'In Progress' ? t('improvements.status_in_progress') :
+                                                item.status === 'Planned' ? t('improvements.status_planned') :
+                                                    t('improvements.status_pending')}
+                                    </span>
+                                    <div className="flex items-center text-xs text-slate-500">
+                                        <Calendar className="w-3 h-3 mr-1" />
+                                        {new Date(item.created_at).toLocaleDateString()}
+                                    </div>
+                                </div>
+
+                                <h3 className="text-lg font-bold text-slate-900 mb-2"><TranslatedText text={item.title} /></h3>
+                                <p className="text-slate-600 text-sm mb-4 line-clamp-3"><TranslatedText text={item.description} /></p>
+
+                                <div className="space-y-2 mb-4">
+                                    {item.location && (
+                                        <div className="flex items-center text-xs text-slate-500">
+                                            <MapPin className="w-3 h-3 mr-1" />
+                                            <TranslatedText text={item.location} />
+                                            {item.area && <span>, <TranslatedText text={item.area} /></span>}
+                                        </div>
+                                    )}
+                                    {item.metadata?.people_benefited && (
+                                        <div className="flex items-center text-xs text-brand-600 font-medium">
+                                            <User className="w-3 h-3 mr-1" />
+                                            {item.metadata.people_benefited} {t('work_history.people_benefited')}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl font-bold text-brand-600">{item.votes}</span>
+                                        <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">{t('improvements.votes')}</span>
+                                    </div>
+                                    <button
+                                        onClick={(e) => handleVote(e, item.id, item.votes)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors border border-slate-200 hover:border-brand-200 text-sm font-medium"
+                                    >
+                                        <ThumbsUp className="w-4 h-4" />
+                                        {t('improvements.vote_btn')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Add Modal */}
             {showModal && (

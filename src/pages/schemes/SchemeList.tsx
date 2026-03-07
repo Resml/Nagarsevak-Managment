@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper } from 'lucide-react';
+import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper, LayoutGrid, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -35,6 +35,7 @@ const SchemeList = () => {
     const [deleteTarget, setDeleteTarget] = useState<Scheme | null>(null);
     const [applyingScheme, setApplyingScheme] = useState<Scheme | null>(null);
     const [showApplications, setShowApplications] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Helper to split "English / Marathi" text based on current language
     const getLocalizedData = (text: string) => {
@@ -260,6 +261,25 @@ const SchemeList = () => {
                 )}
             </div>
 
+            {/* View Mode Toggle */}
+            {!showApplications && (
+                <div className="flex justify-end">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {showApplications ? (
                 <SchemeBeneficiaryList />
             ) : loading ? (
@@ -280,6 +300,47 @@ const SchemeList = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            ) : viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">Schemes {t('common.report')} ({schemesToDisplay.length})</h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Scheme Name</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Eligibility</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Benefits</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {schemesToDisplay.map((scheme, idx) => (
+                                    <tr key={scheme.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 text-sm text-slate-400">{idx + 1}</td>
+                                        <td className="px-6 py-4 text-sm font-semibold text-slate-800">{getLocalizedData(scheme.name)}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.description)}</div></td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{scheme.category || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.eligibility)}</div></td>
+                                        <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.benefits)}</div></td>
+                                    </tr>
+                                ))}
+                                {schemesToDisplay.length === 0 && (
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No schemes found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : (
                 <div className="grid gap-4">

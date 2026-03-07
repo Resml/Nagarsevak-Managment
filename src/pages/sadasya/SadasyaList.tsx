@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, PlusCircle, X, Trash2, Home, Edit2 } from 'lucide-react';
+import { Search, Filter, Phone, MapPin, UserCheck, User, Plus, PlusCircle, X, Trash2, Home, Edit2, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CUSTOM_TRANSLATIONS } from '../../services/translationService';
@@ -29,6 +29,7 @@ const SadasyaList = () => {
     const [showAreaSuggestions, setShowAreaSuggestions] = useState(false);
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
     const [filterVoter, setFilterVoter] = useState<'all' | 'voter' | 'non-voter'>('all');
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Refs for click outside
     const areaWrapperRef = useRef<HTMLDivElement>(null);
@@ -690,151 +691,224 @@ const SadasyaList = () => {
                     </div>
                 </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block ns-card overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-200/70">
-                            <thead className="bg-slate-50">
-                                <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.member')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.contact')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.area_address')}</th>
-
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.joined_date')}</th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-slate-200/70">
-                                {filteredSadasyas.length > 0 ? (
-                                    filteredSadasyas.map((member) => (
-                                        <tr
-                                            key={member.id}
-                                            className="hover:bg-slate-50 transition-colors cursor-pointer"
-                                            onClick={() => setSelectedMember(member)}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center">
-                                                    <div className="h-10 w-10 flex-shrink-0 bg-brand-50 rounded-full flex items-center justify-center text-brand-600 shadow-sm border border-brand-100">
-                                                        <User className="w-5 h-5" />
-                                                    </div>
-                                                    <div className="ml-4">
-                                                        <div className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">
-                                                            {getDisplayName(member)}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${member.isVoter ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
-                                                                {member.isVoter ? t('sadasya.is_voter') : t('sadasya.is_member')}
-                                                            </span>
-                                                            {member.age > 0 && (
-                                                                <span className="text-xs text-slate-500 border-l border-slate-300 pl-2">
-                                                                    {t('sadasya.age_label')}: {member.age}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center text-sm text-slate-600">
-                                                    <Phone className="w-4 h-4 mr-2 text-slate-400" />
-                                                    {member.mobile}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center mb-1 gap-2">
-                                                    {member.area ? (
-                                                        <span className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">{getDisplayArea(member.area)}</span>
-                                                    ) : (
-                                                        <span className="text-sm font-medium text-slate-500 italic">{t('sadasya.no_area') || "No Area"}</span>
-                                                    )}
-                                                    {member.ward && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Ward {member.ward}</span>}
-                                                </div>
-                                                <div className="flex items-center text-xs text-slate-500">
-                                                    <MapPin className="w-3 h-3 mr-1 text-slate-400 flex-shrink-0" />
-                                                    <span className="truncate max-w-[200px]" title={getDisplayAddress(member)}>
-                                                        {getDisplayAddress(member)}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                                                {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}
-                                            </td>
-
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <td colSpan={4} className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center justify-center">
-                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
-                                                <User className="w-8 h-8 text-slate-400" />
-                                            </div>
-                                            <p className="text-slate-500 mb-4">{t('No Members') || "No members found."}</p>
-                                            <button
-                                                onClick={() => {
-                                                    setIsModalOpen(true);
-                                                    initVoterList();
-                                                }}
-                                                className="ns-btn-primary"
-                                            >
-                                                <Plus className="w-4 h-4" /> {t('sadasya.add_member')}
-                                            </button>
-                                        </div>
-                                    </td>
-                                )}
-                            </tbody>
-                        </table>
+                {/* View Mode Toggle */}
+                <div className="flex justify-end">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
                     </div>
                 </div>
 
-                {/* Mobile Card View */}
-                <div className="md:hidden space-y-4">
-                    {filteredSadasyas.map((member) => (
-                        <div key={member.id} className="ns-card p-4 flex flex-col gap-3">
-                            <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-brand-50 text-brand-700 rounded-2xl border border-brand-100 flex items-center justify-center font-bold">
-                                        {member.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-semibold text-slate-900">{getDisplayName(member)}</h3>
-                                        <p className="text-xs text-slate-500">{t('sadasya.age_label')}: {member.age}</p>
-                                    </div>
-                                </div>
-                                {member.isVoter ? (
-                                    <span className="px-2 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded flex items-center gap-1">
-                                        <UserCheck className="w-3 h-3" /> Voter
-                                    </span>
-                                ) : (
-                                    <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-semibold rounded flex items-center gap-1">
-                                        <User className="w-3 h-3" /> Member
-                                    </span>
-                                )}
-                            </div>
+                {viewMode === 'report' ? (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                            <h3 className="font-semibold text-slate-800">Members {t('common.report')} ({filteredSadasyas.length})</h3>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            >
+                                <Printer className="w-4 h-4" /> Print
+                            </button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Mobile</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Area / Ward</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {filteredSadasyas.map((member, idx) => (
+                                        <tr key={member.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setSelectedMember(member)}>
+                                            <td className="px-4 py-3 text-sm text-slate-400">{idx + 1}</td>
+                                            <td className="px-4 py-3 text-sm font-semibold text-slate-800">{getDisplayName(member)}</td>
+                                            <td className="px-4 py-3 text-sm text-slate-500">{member.mobile}</td>
+                                            <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">
+                                                {getDisplayArea(member.area) || '-'}
+                                                {member.ward && <span className="ml-1 text-xs text-slate-400">(Ward {member.ward})</span>}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getDisplayAddress(member) || '-'}</div></td>
+                                            <td className="px-4 py-3 text-sm">
+                                                <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${member.isVoter ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
+                                                    {member.isVoter ? t('sadasya.is_voter') : t('sadasya.is_member')}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">
+                                                {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredSadasyas.length === 0 && (
+                                        <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">No members found</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Desktop Table View */}
+                        <div className="hidden md:block ns-card overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-slate-200/70">
+                                    <thead className="bg-slate-50">
+                                        <tr>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.member')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.contact')}</th>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.area_address')}</th>
 
-                            <div className="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-200/70">
-                                <div className="flex items-center gap-2">
-                                    <Phone className="w-4 h-4 text-slate-400" />
-                                    <span>{member.mobile}</span>
-                                </div>
-                                <div className="flex items-start gap-2">
-                                    <MapPin className="w-4 h-4 text-slate-400 mt-0.5" />
-                                    <div className="flex flex-col">
-                                        {member.area && <span className="font-bold text-slate-900">{getDisplayArea(member.area)}</span>}
-                                        <span className="line-clamp-2">{getDisplayAddress(member)}</span>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                                    <span>{t('sadasya.joined')}: {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}</span>
-                                </div>
+                                            <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.joined_date')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-slate-200/70">
+                                        {filteredSadasyas.length > 0 ? (
+                                            filteredSadasyas.map((member) => (
+                                                <tr
+                                                    key={member.id}
+                                                    className="hover:bg-slate-50 transition-colors cursor-pointer"
+                                                    onClick={() => setSelectedMember(member)}
+                                                >
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center">
+                                                            <div className="h-10 w-10 flex-shrink-0 bg-brand-50 rounded-full flex items-center justify-center text-brand-600 shadow-sm border border-brand-100">
+                                                                <User className="w-5 h-5" />
+                                                            </div>
+                                                            <div className="ml-4">
+                                                                <div className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">
+                                                                    {getDisplayName(member)}
+                                                                </div>
+                                                                <div className="flex items-center gap-2 mt-0.5">
+                                                                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${member.isVoter ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-600'}`}>
+                                                                        {member.isVoter ? t('sadasya.is_voter') : t('sadasya.is_member')}
+                                                                    </span>
+                                                                    {member.age > 0 && (
+                                                                        <span className="text-xs text-slate-500 border-l border-slate-300 pl-2">
+                                                                            {t('sadasya.age_label')}: {member.age}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center text-sm text-slate-600">
+                                                            <Phone className="w-4 h-4 mr-2 text-slate-400" />
+                                                            {member.mobile}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center mb-1 gap-2">
+                                                            {member.area ? (
+                                                                <span className="text-sm font-medium text-slate-900 group-hover:text-brand-700 transition-colors">{getDisplayArea(member.area)}</span>
+                                                            ) : (
+                                                                <span className="text-sm font-medium text-slate-500 italic">{t('sadasya.no_area') || "No Area"}</span>
+                                                            )}
+                                                            {member.ward && <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">Ward {member.ward}</span>}
+                                                        </div>
+                                                        <div className="flex items-center text-xs text-slate-500">
+                                                            <MapPin className="w-3 h-3 mr-1 text-slate-400 flex-shrink-0" />
+                                                            <span className="truncate max-w-[200px]" title={getDisplayAddress(member)}>
+                                                                {getDisplayAddress(member)}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                                        {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}
+                                                    </td>
+
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <td colSpan={4} className="px-6 py-12 text-center">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 mb-3">
+                                                        <User className="w-8 h-8 text-slate-400" />
+                                                    </div>
+                                                    <p className="text-slate-500 mb-4">{t('No Members') || "No members found."}</p>
+                                                    <button
+                                                        onClick={() => {
+                                                            setIsModalOpen(true);
+                                                            initVoterList();
+                                                        }}
+                                                        className="ns-btn-primary"
+                                                    >
+                                                        <Plus className="w-4 h-4" /> {t('sadasya.add_member')}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    ))}
-                    {filteredSadasyas.length === 0 && (
-                        <div className="py-12 text-center text-slate-500 ns-card border-dashed">
-                            No members found.
+
+                        {/* Mobile Card View */}
+                        <div className="md:hidden space-y-4">
+                            {filteredSadasyas.map((member) => (
+                                <div key={member.id} className="ns-card p-4 flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-brand-50 text-brand-700 rounded-2xl border border-brand-100 flex items-center justify-center font-bold">
+                                                {member.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-slate-900">{getDisplayName(member)}</h3>
+                                                <p className="text-xs text-slate-500">{t('sadasya.age_label')}: {member.age}</p>
+                                            </div>
+                                        </div>
+                                        {member.isVoter ? (
+                                            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded flex items-center gap-1">
+                                                <UserCheck className="w-3 h-3" /> Voter
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-1 bg-yellow-50 text-yellow-700 text-xs font-semibold rounded flex items-center gap-1">
+                                                <User className="w-3 h-3" /> Member
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2 text-sm text-slate-600 pt-2 border-t border-slate-200/70">
+                                        <div className="flex items-center gap-2">
+                                            <Phone className="w-4 h-4 text-slate-400" />
+                                            <span>{member.mobile}</span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <MapPin className="w-4 h-4 text-slate-400 mt-0.5" />
+                                            <div className="flex flex-col">
+                                                {member.area && <span className="font-bold text-slate-900">{getDisplayArea(member.area)}</span>}
+                                                <span className="line-clamp-2">{getDisplayAddress(member)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
+                                            <span>{t('sadasya.joined')}: {format(new Date(member.registeredAt), 'MMM d, yyyy', { locale: language === 'mr' ? mr : undefined })}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {filteredSadasyas.length === 0 && (
+                                <div className="py-12 text-center text-slate-500 ns-card border-dashed">
+                                    No members found.
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-            </div >
+                    </>
+                )}
+            </div>
         );
     };
 

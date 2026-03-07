@@ -35,7 +35,9 @@ export const translations = {
             delete_confirm: "Delete Item?",
             delete_warning_item: "Are you sure you want to delete '{item}'? This action cannot be undone.",
             delete_warning: "will be permanently deleted. This action cannot be undone.",
-            deleted: "Deleted successfully"
+            deleted: "Deleted successfully",
+            grid: "Grid",
+            report: "Report"
         },
         complaints: {
             title: "Requests & Complaints",
@@ -1546,7 +1548,9 @@ export const translations = {
             delete_confirm: "डिलीट करायचे आहे का?",
             delete_warning_item: "तुम्ही नक्की '{item}' डिलीट करू इच्छिता का? ही क्रिया पूर्ववत करता येणार नाही.",
             delete_warning: "कायमचे हटवले जाईल. ही क्रिया पूर्ववत करता येणार नाही.",
-            deleted: "यशस्वीरित्या हटवले"
+            deleted: "यशस्वीरित्या हटवले",
+            grid: "ग्रीड",
+            report: "रिपोर्ट"
         },
         complaints: {
             title: "तक्रारी आणि विनंती",

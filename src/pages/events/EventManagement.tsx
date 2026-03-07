@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
-import { Calendar, Clock, MapPin, Plus, Search, Send, Users, Wand2, X, Check, Loader2, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, MapPin, Plus, Search, Send, Users, Wand2, X, Check, Loader2, ChevronDown, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -403,6 +404,9 @@ const EventManagement = () => {
     const [dateSearch, setDateSearch] = useState('');
     const [showDateDropdown, setShowDateDropdown] = useState(false);
 
+    // View Mode
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+
     // Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [creating, setCreating] = useState(false);
@@ -589,6 +593,29 @@ const EventManagement = () => {
                         )}
                     </div>
                 </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex justify-end mt-2">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {loading ? (
@@ -613,7 +640,7 @@ const EventManagement = () => {
                         </div>
                     ))}
                 </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
                 <div className="grid gap-4">
                     {filteredEvents.map((event) => (
                         <div
@@ -671,6 +698,63 @@ const EventManagement = () => {
                             {t('events.no_events')}
                         </div>
                     )}
+                </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">
+                            {t('events.title')} - {t('common.report')} ({filteredEvents.length})
+                        </h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto print:overflow-visible">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50 print:bg-slate-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date & Time</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Event Name & Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location/Area</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Target Audience</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredEvents.length > 0 ? filteredEvents.map((event) => (
+                                    <tr key={event.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/dashboard/events/${event.id}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                            <div className="font-medium text-slate-900">{format(new Date(event.event_date), 'MMM d, yyyy')}</div>
+                                            <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><Clock className="w-3 h-3" /> {event.event_time}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-800 max-w-xs">
+                                            <div className="font-medium text-slate-900"><TranslatedText text={event.title} /></div>
+                                            <div className="text-xs text-slate-500 mt-0.5">{event.type}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600 max-w-xs">
+                                            <div className="font-medium truncate"><TranslatedText text={event.area || 'N/A'} /></div>
+                                            <div className="text-xs text-slate-500 truncate" title={event.location}><TranslatedText text={event.location} /></div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                            {event.target_audience === 'All' ? (
+                                                <span className="text-slate-500">All</span>
+                                            ) : (
+                                                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium">{event.target_audience}</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
+                                            {t('events.no_events')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 

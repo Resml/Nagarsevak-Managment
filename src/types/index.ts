@@ -8,6 +8,7 @@ export interface User {
   avatar?: string;
   assignedWard?: string; // For staff restricted to specific wards
   permissions?: string[];
+  isStaff?: boolean; // true if user exists in staff table (used for permission enforcement)
 }
 
 export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified' | 'Admission' | 'Medical' | 'Financial';

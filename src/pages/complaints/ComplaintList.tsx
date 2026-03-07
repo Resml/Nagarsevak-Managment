@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
@@ -19,6 +19,7 @@ const ComplaintList = () => {
     const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help'>(
         (location.state as any)?.tab === 'Personal Help' ? 'Personal Help' : 'Complaints'
     );
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Derived state for translation - simplified and more robust matching AppLayout logic
     const isTranslated = language === 'mr';
@@ -363,6 +364,29 @@ const ComplaintList = () => {
                     </div>
                 </div>
 
+                {/* View Mode Toggle */}
+                <div className="flex justify-end mb-2">
+                    <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                    </div>
+                </div>
+
                 {/* Tabs */}
                 <div className="border-b border-gray-200 overflow-x-auto">
                     <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
@@ -525,86 +549,167 @@ const ComplaintList = () => {
                 </div>
             </div>
 
-            <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
-                {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => {
-                    return (
-                        <div
-                            key={complaint.id}
-                            onClick={() => navigate(`/dashboard/complaints/${complaint.id}`)}
-                            className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group"
-                        >
-                            <div className="flex justify-between items-start mb-3">
-                                <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap", getStatusColor(complaint.status))}>
-                                    {complaint.status === 'InProgress' ? t('complaints.status.in_progress') :
-                                        complaint.status === 'Pending' ? t('complaints.status.pending') :
-                                            complaint.status === 'Assigned' ? t('complaints.status.assigned') :
-                                                complaint.status === 'Resolved' ? t('complaints.status.resolved') :
-                                                    t('complaints.status.closed')}
-                                </span>
-                                <div className="flex items-center gap-2">
-                                    <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ml-2", getTypeColor(complaint.type))}>
-                                        {/* Helper to translate known types dynamically */}
-                                        {['Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'SelfIdentified', 'Other', 'Complaint', 'Help', 'Personal Help'].includes(complaint.type)
-                                            ? t(`complaints.form.types.${complaint.type == 'Personal Help' ? 'personal_help' : complaint.type.toLowerCase().replace(/ /g, '_')}`)
-                                            : complaint.type}
+            {viewMode === 'grid' ? (
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+                    {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => {
+                        return (
+                            <div
+                                key={complaint.id}
+                                onClick={() => navigate(`/dashboard/complaints/${complaint.id}`)}
+                                className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group"
+                            >
+                                <div className="flex justify-between items-start mb-3">
+                                    <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap", getStatusColor(complaint.status))}>
+                                        {complaint.status === 'InProgress' ? t('complaints.status.in_progress') :
+                                            complaint.status === 'Pending' ? t('complaints.status.pending') :
+                                                complaint.status === 'Assigned' ? t('complaints.status.assigned') :
+                                                    complaint.status === 'Resolved' ? t('complaints.status.resolved') :
+                                                        t('complaints.status.closed')}
                                     </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ml-2", getTypeColor(complaint.type))}>
+                                            {/* Helper to translate known types dynamically */}
+                                            {['Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'SelfIdentified', 'Other', 'Complaint', 'Help', 'Personal Help'].includes(complaint.type)
+                                                ? t(`complaints.form.types.${complaint.type == 'Personal Help' ? 'personal_help' : complaint.type.toLowerCase().replace(/ /g, '_')}`)
+                                                : complaint.type}
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            {complaint.staff && complaint.status === 'Assigned' && (
-                                <div className="mb-2 text-xs text-blue-700 font-medium bg-blue-50/50 border border-blue-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit">
-                                    <User className="w-3.5 h-3.5" />
-                                    {complaint.staff.name} {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
-                                </div>
-                            )}
-
-                            {complaint.voter && (
-                                <div className="mb-2 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded flex items-center gap-1 w-fit border border-gray-100">
-                                    <User className="w-3 h-3" />
-                                    {language === 'mr' && complaint.voter.name_marathi
-                                        ? complaint.voter.name_marathi
-                                        : (complaint.voter.name_english || complaint.voter.name_marathi)}
-                                    {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
-                                </div>
-                            )}
-
-                            <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
-                                <TranslatedText text={complaint.title} />
-                            </h3>
-                            <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
-                                <TranslatedText text={complaint.description} />
-                            </p>
-
-                            <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-                                <div className="flex items-center space-x-1">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>{format(new Date(complaint.createdAt), 'MMM d, h:mm a')}</span>
-                                </div>
-                                {complaint.location && (
-                                    <div className="flex items-center space-x-1 max-w-[50%]">
-                                        <MapPin className="w-3 h-3 flex-shrink-0" />
-                                        <TranslatedText
-                                            text={(complaint.area ? `${complaint.area}, ` : '') + complaint.location}
-                                            className="truncate"
-                                        />
+                                {complaint.staff && complaint.status === 'Assigned' && (
+                                    <div className="mb-2 text-xs text-blue-700 font-medium bg-blue-50/50 border border-blue-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit">
+                                        <User className="w-3.5 h-3.5" />
+                                        {complaint.staff.name} {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
                                     </div>
                                 )}
+
+                                {complaint.voter && (
+                                    <div className="mb-2 text-xs text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded flex items-center gap-1 w-fit border border-gray-100">
+                                        <User className="w-3 h-3" />
+                                        {language === 'mr' && complaint.voter.name_marathi
+                                            ? complaint.voter.name_marathi
+                                            : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                        {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
+                                    </div>
+                                )}
+
+                                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-1">
+                                    <TranslatedText text={complaint.title} />
+                                </h3>
+                                <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1">
+                                    <TranslatedText text={complaint.description} />
+                                </p>
+
+                                <div className="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+                                    <div className="flex items-center space-x-1">
+                                        <Calendar className="w-3 h-3" />
+                                        <span>{format(new Date(complaint.createdAt), 'MMM d, h:mm a')}</span>
+                                    </div>
+                                    {complaint.location && (
+                                        <div className="flex items-center space-x-1 max-w-[50%]">
+                                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                                            <TranslatedText
+                                                text={(complaint.area ? `${complaint.area}, ` : '') + complaint.location}
+                                                className="truncate"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        );
+                    }) : (
+                        <div className="col-span-full w-full py-12 text-center text-gray-500 bg-white rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center">
+                            <p className="mb-4">{t('complaints.no_requests')} "{filterStatus !== 'All' ? filterStatus : ''}"</p>
+                            <Link
+                                to="/dashboard/complaints/new"
+                                className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm flex items-center gap-2"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>{t('complaints.new_request')}</span>
+                            </Link>
                         </div>
-                    );
-                }) : (
-                    <div className="col-span-full w-full py-12 text-center text-gray-500 bg-white rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center">
-                        <p className="mb-4">{t('complaints.no_requests')} "{filterStatus !== 'All' ? filterStatus : ''}"</p>
-                        <Link
-                            to="/dashboard/complaints/new"
-                            className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm flex items-center gap-2"
+                    )}
+                </div>
+            ) : (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
+                        <h3 className="font-semibold text-gray-800">
+                            {isTranslated ? <span className="notranslate">अहवाल दृश्य</span> : 'Report View'} ({filteredComplaints.length})
+                        </h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
                         >
-                            <Plus className="w-4 h-4" />
-                            <span>{t('complaints.new_request')}</span>
-                        </Link>
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
                     </div>
-                )}
-            </div>
+                    <div className="overflow-x-auto print:overflow-visible">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50 print:bg-gray-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Citizen Info</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title & Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location/Area</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => (
+                                    <tr key={complaint.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/dashboard/complaints/${complaint.id}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {format(new Date(complaint.createdAt), 'MMM d, yyyy')}<br />
+                                            <span className="text-xs text-gray-400">{format(new Date(complaint.createdAt), 'h:mm a')}</span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand-600">
+                                            #{complaint.id}
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-800">
+                                            <div className="font-medium">
+                                                {language === 'mr' && complaint.voter?.name_marathi
+                                                    ? complaint.voter.name_marathi
+                                                    : (complaint.voter?.name_english || complaint.voter?.name_marathi || 'Anonymous')}
+                                            </div>
+                                            <div className="text-xs text-gray-500">{complaint.voter?.mobile || 'N/A'}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-800 max-w-xs truncate">
+                                            <div className="font-medium truncate" title={typeof complaint.title === 'string' ? complaint.title : ''}><TranslatedText text={complaint.title} /></div>
+                                            <div className="text-xs text-gray-500 capitalize">{complaint.type}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                                            <div className="font-medium truncate"><TranslatedText text={complaint.area || 'N/A'} /></div>
+                                            <div className="text-xs text-gray-500 truncate" title={typeof complaint.location === 'string' ? complaint.location : ''}><TranslatedText text={complaint.location || 'N/A'} /></div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                            {complaint.staff ? (
+                                                <>
+                                                    <div className="font-medium">{complaint.staff.name}</div>
+                                                    <div className="text-xs text-gray-500">{complaint.staff.mobile}</div>
+                                                </>
+                                            ) : (
+                                                <span className="text-gray-400 italic">Unassigned</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={clsx("px-2.5 py-1 rounded-full text-xs font-medium border", getStatusColor(complaint.status))}>
+                                                {complaint.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 italic">
+                                            {t('complaints.no_requests')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

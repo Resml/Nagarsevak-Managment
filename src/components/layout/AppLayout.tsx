@@ -515,10 +515,13 @@ const AppLayout = () => {
                 if (entry.kind === 'group') {
                   const checkPermission = (perm?: string) => {
                     if (!perm) return true;
-                    if (!isAdmin && user?.role === 'staff' && user.permissions) {
-                      return user.permissions.includes(perm);
+                    // If this user is in the staff table, enforce their specific permissions
+                    if (user?.isStaff) {
+                      const perms = user.permissions;
+                      if (!Array.isArray(perms) || perms.length === 0) return false;
+                      return perms.includes(perm);
                     }
-                    return true; // Admin, minister, etc. or no restrictions
+                    return true; // Non-staff (admins, nagarsevak, etc.) always have full access
                   };
 
                   if (entry.permission && !checkPermission(entry.permission)) return null;
@@ -569,8 +572,10 @@ const AppLayout = () => {
 
                   const checkPermission = (perm?: string) => {
                     if (!perm) return true;
-                    if (!isAdmin && user?.role === 'staff' && user.permissions) {
-                      return user.permissions.includes(perm);
+                    if (user?.isStaff) {
+                      const perms = user.permissions;
+                      if (!Array.isArray(perms) || perms.length === 0) return false;
+                      return perms.includes(perm);
                     }
                     return true;
                   };

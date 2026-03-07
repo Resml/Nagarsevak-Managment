@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft } from 'lucide-react';
+import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { type Voter } from '../../types';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
@@ -35,6 +35,7 @@ const VoterList = () => {
     const [selectedAnalysisNames, setSelectedAnalysisNames] = useState<string[]>([]);
     const [selectedCasteForBulk, setSelectedCasteForBulk] = useState('');
     const [isAllocating, setIsAllocating] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Suggestions State
     const [addressSuggestions, setAddressSuggestions] = useState<{ address: string; count: number }[]>([]);
@@ -645,6 +646,23 @@ const VoterList = () => {
                 </div>
             </div>
 
+            {/* View Mode Toggle */}
+            <div className="flex justify-end">
+                <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                    >
+                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                    <button
+                        onClick={() => setViewMode('report')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                    >
+                        <FileText className="w-4 h-4" /> {t('common.report')}
+                    </button>
+                </div>
+            </div>
+
             {loading ? (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -664,6 +682,57 @@ const VoterList = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            ) : viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">Voters {t('common.report')} ({totalCount !== null ? totalCount : voters.length})</h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">EPIC No</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Age</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Gender</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ward / Booth</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Caste</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {voters.map((voter, idx) => (
+                                    <tr key={voter.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/dashboard/voters/${voter.id}`)}>                                        <td className="px-4 py-3 text-sm text-slate-400">{voter.serial_no || idx + 1}</td>
+                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800">{getDisplayName(voter)}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.epicNo || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.age || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.gender || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getDisplayAddress(voter)}</div></td>
+                                        <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
+                                    </tr>
+                                ))}
+                                {voters.length === 0 && (
+                                    <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">No voters found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    {totalCount !== null && voters.length < totalCount && (
+                        <div className="p-4 border-t border-slate-200 text-center">
+                            <button onClick={handleLoadMore} disabled={loadingMore} className="ns-btn-secondary text-sm">
+                                {loadingMore ? 'Loading...' : `Load More (${voters.length} of ${totalCount})`}
+                            </button>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <>

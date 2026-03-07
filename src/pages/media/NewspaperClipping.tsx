@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Newspaper, Trash2, X, Upload, Search, Edit2 } from 'lucide-react';
+import { Plus, Newspaper, Trash2, X, Upload, Search, Edit2, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { GalleryService } from '../../services/galleryService';
 import { type GalleryItem, type GalleryCategory } from '../../types';
@@ -16,6 +16,7 @@ const NewspaperClipping = () => {
     const [filterDate, setFilterDate] = useState('');
     const [uploading, setUploading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     const [formData, setFormData] = useState<{
         title: string;
@@ -222,6 +223,25 @@ const NewspaperClipping = () => {
                 )}
             </div>
 
+            {/* View Mode Toggle */}
+            <div className="flex justify-end">
+                <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+                    <button
+                        onClick={() => setViewMode('grid')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"
+                            }`}
+                    >
+                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                    <button
+                        onClick={() => setViewMode('report')}
+                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"
+                            }`}
+                    >
+                        <FileText className="w-4 h-4" /> {t('common.report')}
+                    </button>
+                </div>
+            </div>
+
             {/* Grid */}
             {loading ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -238,7 +258,7 @@ const NewspaperClipping = () => {
                         </div>
                     ))}
                 </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {getFilteredItems().map(item => (
                         <div key={item.id} className="ns-card overflow-hidden group">
@@ -294,155 +314,217 @@ const NewspaperClipping = () => {
                         </div>
                     )}
                 </div>
+            ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">
+                            {t('newspaper.title')} - {t('common.report')} ({getFilteredItems().length})
+                        </h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                        >
+                            <Printer className="w-4 h-4" /> Print
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto print:overflow-visible">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50 print:bg-slate-100">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Thumbnail</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title & Description</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {getFilteredItems().length > 0 ? getFilteredItems().map((item) => (
+                                    <tr key={item.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 font-medium">
+                                            {item.date}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="h-12 w-16 bg-slate-100 rounded overflow-hidden border border-slate-200">
+                                                <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-800">
+                                            <div className="font-semibold">{item.titleKey ? t(item.titleKey) : <TranslatedText text={item.title} />}</div>
+                                            {item.description && (
+                                                <div className="text-xs text-slate-500 mt-1 max-w-md line-clamp-2">
+                                                    {item.descriptionKey ? t(item.descriptionKey) : <TranslatedText text={item.description} />}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${(item.sentiment || 'positive') === 'positive' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                {(item.sentiment || 'positive') === 'positive' ? t('newspaper.positive_news') : t('newspaper.negative_news')}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan={4} className="px-6 py-12 text-center text-slate-500 italic">
+                                            No newspaper clippings found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             )}
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="ns-card w-full max-w-lg overflow-hidden">
+                            <div className="flex justify-between items-center p-6 border-b border-slate-200/70">
+                                <h2 className="text-xl font-bold text-slate-900">
+                                    {editingId ? t('newspaper.edit_clipping') : t('newspaper.add_clipping')}
+                                </h2>
+                                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
 
-            {/* Add/Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="ns-card w-full max-w-lg overflow-hidden">
-                        <div className="flex justify-between items-center p-6 border-b border-slate-200/70">
-                            <h2 className="text-xl font-bold text-slate-900">
-                                {editingId ? t('newspaper.edit_clipping') : t('newspaper.add_clipping')}
-                            </h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleAdd} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('newspaper.type_label')}</label>
-                                    <select
-                                        className="ns-input mt-1"
-                                        value={formData.sentiment}
-                                        onChange={e => setFormData({ ...formData, sentiment: e.target.value as 'positive' | 'negative' })}
-                                    >
-                                        <option value="positive">{t('newspaper.positive_news')}</option>
-                                        <option value="negative">{t('newspaper.negative_news')}</option>
-                                    </select>
+                            <form onSubmit={handleAdd} className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('newspaper.type_label')}</label>
+                                        <select
+                                            className="ns-input mt-1"
+                                            value={formData.sentiment}
+                                            onChange={e => setFormData({ ...formData, sentiment: e.target.value as 'positive' | 'negative' })}
+                                        >
+                                            <option value="positive">{t('newspaper.positive_news')}</option>
+                                            <option value="negative">{t('newspaper.negative_news')}</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('gallery.date')}</label>
+                                        <input
+                                            type="date" required
+                                            className="ns-input mt-1"
+                                            value={formData.date}
+                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                        />
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('gallery.date')}</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('gallery.image_title')}</label>
                                     <input
-                                        type="date" required
+                                        type="text" required
                                         className="ns-input mt-1"
-                                        value={formData.date}
-                                        onChange={e => setFormData({ ...formData, date: e.target.value })}
+                                        value={formData.title}
+                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
+                                        placeholder={t('newspaper.title_placeholder')}
                                     />
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('gallery.image_title')}</label>
-                                <input
-                                    type="text" required
-                                    className="ns-input mt-1"
-                                    value={formData.title}
-                                    onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder={t('newspaper.title_placeholder')}
-                                />
-                            </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('gallery.image_label')}</label>
+                                    <div className="mt-1 space-y-3">
+                                        <div className="flex items-center justify-center w-full">
+                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                                    {uploading ? (
+                                                        <p className="text-sm text-slate-500">{t('gallery.uploading')}</p>
+                                                    ) : formData.imageUrl ? (
+                                                        <img src={formData.imageUrl} alt="preview" className="h-28 object-contain" />
+                                                    ) : (
+                                                        <>
+                                                            <Upload className="w-8 h-8 mb-3 text-slate-400" />
+                                                            <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">{t('gallery.click_upload')}</span></p>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+                                            </label>
+                                        </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('gallery.image_label')}</label>
-                                <div className="mt-1 space-y-3">
-                                    <div className="flex items-center justify-center w-full">
-                                        <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
-                                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                {uploading ? (
-                                                    <p className="text-sm text-slate-500">{t('gallery.uploading')}</p>
-                                                ) : formData.imageUrl ? (
-                                                    <img src={formData.imageUrl} alt="preview" className="h-28 object-contain" />
-                                                ) : (
-                                                    <>
-                                                        <Upload className="w-8 h-8 mb-3 text-slate-400" />
-                                                        <p className="mb-2 text-sm text-slate-500"><span className="font-semibold">{t('gallery.click_upload')}</span></p>
-                                                    </>
-                                                )}
+                                        <div className="relative">
+                                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                <div className="w-full border-t border-gray-300"></div>
                                             </div>
-                                            <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-                                        </label>
-                                    </div>
-
-                                    <div className="relative">
-                                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                            <div className="w-full border-t border-gray-300"></div>
+                                            <div className="relative flex justify-center">
+                                                <span className="px-2 bg-white text-sm text-slate-500">{t('gallery.use_url')}</span>
+                                            </div>
                                         </div>
-                                        <div className="relative flex justify-center">
-                                            <span className="px-2 bg-white text-sm text-slate-500">{t('gallery.use_url')}</span>
-                                        </div>
-                                    </div>
 
-                                    <div className="flex rounded-md shadow-sm">
-                                        <input
-                                            type="url"
-                                            className="ns-input rounded-r-none"
-                                            value={formData.imageUrl}
-                                            onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                                            placeholder="https://..."
-                                        />
-                                        <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm">
-                                            URL
-                                        </span>
+                                        <div className="flex rounded-md shadow-sm">
+                                            <input
+                                                type="url"
+                                                className="ns-input rounded-r-none"
+                                                value={formData.imageUrl}
+                                                onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                                                placeholder="https://..."
+                                            />
+                                            <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm">
+                                                URL
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('gallery.desc')}</label>
-                                <textarea
-                                    rows={3}
-                                    className="ns-input mt-1"
-                                    value={formData.description}
-                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder={t('newspaper.desc_placeholder')}
-                                />
-                            </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700">{t('gallery.desc')}</label>
+                                    <textarea
+                                        rows={3}
+                                        className="ns-input mt-1"
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                        placeholder={t('newspaper.desc_placeholder')}
+                                    />
+                                </div>
 
-                            <button
-                                type="submit"
-                                disabled={uploading || !formData.imageUrl}
-                                className="ns-btn-primary w-full justify-center disabled:opacity-50"
-                            >
-                                {uploading ? t('gallery.uploading') : editingId ? t('newspaper.edit_clipping') : t('newspaper.add_clipping')}
-                            </button>
-                        </form>
+                                <button
+                                    type="submit"
+                                    disabled={uploading || !formData.imageUrl}
+                                    className="ns-btn-primary w-full justify-center disabled:opacity-50"
+                                >
+                                    {uploading ? t('gallery.uploading') : editingId ? t('newspaper.edit_clipping') : t('newspaper.add_clipping')}
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Delete Confirmation Modal */}
-            {deleteTarget && (
-                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
-                        <div className="text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-6 h-6 text-red-600" />
+            {
+                deleteTarget && (
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
+                            <div className="text-center">
+                                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Trash2 className="w-6 h-6 text-red-600" />
+                                </div>
+                                <h3 className="text-lg font-bold text-slate-900">Delete Clipping?</h3>
+                                <p className="text-slate-500 mt-2 text-sm">
+                                    Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>?
+                                </p>
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900">Delete Clipping?</h3>
-                            <p className="text-slate-500 mt-2 text-sm">
-                                Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.title}</span>?
-                            </p>
-                        </div>
-                        <div className="flex gap-3 pt-2">
-                            <button
-                                onClick={() => setDeleteTarget(null)}
-                                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
-                            >
-                                Delete
-                            </button>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setDeleteTarget(null)}
+                                    className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmDelete}
+                                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                                >
+                                    Delete
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

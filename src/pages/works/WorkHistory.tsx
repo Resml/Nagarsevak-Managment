@@ -6,7 +6,7 @@ import { AIService } from '../../services/aiService';
 import { FeedbackService } from '../../services/feedbackService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
-import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight, Download, Check } from 'lucide-react';
+import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight, Download, Check, LayoutGrid, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { AhwalReportGenerator } from './AhwalReportGenerator';
@@ -32,6 +32,7 @@ const WorkHistory = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Feedback State
     const [feedbackStats, setFeedbackStats] = useState<Record<string, { count: number, average: string }>>({});
@@ -281,6 +282,28 @@ const WorkHistory = () => {
                         <p className="text-sm text-slate-500">{t('work_history.subtitle')}</p>
                     </div>
                     <div className="flex gap-3">
+                        <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                            >
+                                <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                            <button
+                                onClick={() => setViewMode('report')}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'report' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
+                            >
+                                <FileText className="w-4 h-4" /> {t('common.report')}
+                            </button>
+                            {viewMode === 'report' && (
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                    title="Print Report"
+                                >
+                                    <Printer className="w-4 h-4" /> Print
+                                </button>
+                            )}
+                        </div>
                         {!selectionMode && (
                             <button
                                 onClick={toggleSelectionMode}
@@ -409,6 +432,84 @@ const WorkHistory = () => {
             {loading ? (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map(i => <div key={i} className="h-48 bg-slate-100 animate-pulse rounded-2xl"></div>)}
+                </div>
+            ) : viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('work_history.project_title')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('work_history.location')} / Area</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('complaints.table.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Reported By / Source</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('complaints.table.date')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredItems.map((item, index) => (
+                                    <tr key={item.id} className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectionMode && selectedWorkIds.has(item.id) ? 'bg-brand-50/50' : ''}`} onClick={() => handleCardClick(item)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                            {selectionMode ? (
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id) ? 'bg-brand-600 border-brand-600 text-white' : 'border-slate-300'}`}>
+                                                    {selectedWorkIds.has(item.id) && <Check className="w-3 h-3" />}
+                                                </div>
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.title} />
+                                            </div>
+                                            <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
+                                                <TranslatedText text={item.description} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.location} />
+                                                {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {getStatusBadge(item.status, item.source)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                                                {getSourceIcon(item.source)}
+                                                <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
+                                            </div>
+                                            {item.citizenName && (
+                                                <div className="text-sm text-blue-600 font-medium">
+                                                    {item.citizenName}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900">{format(new Date(item.date), 'MMM d, yyyy')}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {item.amount ? (
+                                                <div className="text-sm font-medium text-green-600">₹ {item.amount}</div>
+                                            ) : (
+                                                <span className="text-slate-400">--</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredItems.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                            {t('work_history.no_records')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
