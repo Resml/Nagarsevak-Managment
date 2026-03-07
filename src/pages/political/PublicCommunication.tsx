@@ -53,7 +53,14 @@ const PublicCommunication = () => {
 
         newSocket.on('connect', () => {
             console.log('Connected to Bot Server from Communication Page');
+            // Join the tenant room so the bot knows this socket belongs to this tenant
+            newSocket.emit('join_tenant', { tenantId });
             setBotStatus('connected');
+        });
+
+        newSocket.on('status', (status: string) => {
+            if (status === 'connected') setBotStatus('connected');
+            else if (status === 'disconnected' || status === 'failed') setBotStatus('disconnected');
         });
 
         newSocket.on('disconnect', () => {
@@ -196,48 +203,43 @@ const PublicCommunication = () => {
             return;
         }
 
-        setSending(true);
-
-        // 1. Filter selected voters who actually have a mobile number
+        // Filter selected voters who actually have a mobile number
         const targetVoters = voters.filter(v => selectedVoterIds.has(v.id) && v.mobile && v.mobile.length >= 10);
 
         if (targetVoters.length === 0) {
             toast.error(t('communication_page.error_no_mobile'));
-            setSending(false);
             return;
         }
 
         const numbers = targetVoters.map(v => {
-            // Basic sanitization: remove spaces, dashes, ensure 91 prefix if missing but length is 10
             let num = v.mobile!.replace(/\D/g, '');
             if (num.length === 10) num = '91' + num;
             return num;
         });
 
-        // 2. Emit Socket Event
-        if (socket && socket.connected) {
-            // In a real scenario, we might want to batch this or send it to a specific 'broadcast' endpoint
-            // For now, let's assume the bot listens to 'send_bulk_message'
-            socket.emit('send_bulk_message', {
-                numbers,
-                message,
-                tenantId
-            });
+        if (!socket || !socket.connected) {
+            toast.warning(t('communication_page.bot_not_connected_warning'));
+            return;
+        }
 
-            // Simulate success for UI feedback (since socket is fire-and-forget mostly)
-            setTimeout(() => {
-                toast.success(t('communication_page.success_queued', { count: numbers.length }));
-                setSending(false);
+        setSending(true);
+        toast.loading(`Sending to ${numbers.length} people...`, { id: 'bulk-send' });
+
+        // Listen for one-time result from bot
+        socket.once('bulk_message_result', (result: { success: boolean; sent?: number; failed?: number; error?: string }) => {
+            setSending(false);
+            toast.dismiss('bulk-send');
+            if (result.success) {
+                toast.success(`✅ Sent to ${result.sent} people${result.failed ? `, ${result.failed} failed` : ''}`);
                 setMessage('');
                 setSelectedVoterIds(new Set());
                 setSelectAll(false);
-            }, 1000);
+            } else {
+                toast.error(result.error || 'Failed to send messages');
+            }
+        });
 
-        } else {
-            console.warn('Bot not connected. Logging payload:', { numbers, message });
-            toast.warning(t('communication_page.bot_not_connected_warning'));
-            setSending(false);
-        }
+        socket.emit('send_bulk_message', { numbers, message, tenantId });
     };
 
     const handleSendSMS = () => {

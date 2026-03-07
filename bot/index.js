@@ -899,6 +899,49 @@ io.on('connection', (socket) => {
         logoutSession(tenantId);
     });
 
+    // --- Bulk WhatsApp Message Sender (Public Communication Page) ---
+    socket.on('send_bulk_message', async ({ numbers, message, tenantId }) => {
+        if (!tenantId || !numbers || !message) {
+            socket.emit('bulk_message_result', { success: false, error: 'Missing required fields' });
+            return;
+        }
+
+        const session = sessions.get(tenantId);
+        if (!session || session.status !== 'connected' || !session.sock) {
+            socket.emit('bulk_message_result', { success: false, error: 'Bot not connected' });
+            return;
+        }
+
+        console.log(`[${tenantId}] Bulk message: sending to ${numbers.length} recipients`);
+
+        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+        let sent = 0;
+        let failed = 0;
+
+        (async () => {
+            for (const num of numbers) {
+                try {
+                    let clean = num.replace(/\D/g, '');
+                    if (clean.length === 10) clean = '91' + clean;
+                    if (!clean || clean.length < 11) { failed++; continue; }
+
+                    const jid = clean + '@s.whatsapp.net';
+                    await session.sock.sendMessage(jid, { text: message });
+                    sent++;
+                    console.log(`[${tenantId}] ✅ Bulk msg sent to ${clean}`);
+
+                    // 1-2s delay to avoid WhatsApp rate limiting
+                    await sleep(Math.floor(Math.random() * 1000) + 1000);
+                } catch (err) {
+                    console.error(`[${tenantId}] ❌ Failed to send to ${num}:`, err.message);
+                    failed++;
+                }
+            }
+            console.log(`[${tenantId}] Bulk send complete: ${sent} sent, ${failed} failed`);
+            socket.emit('bulk_message_result', { success: true, sent, failed });
+        })();
+    });
+
     socket.on('disconnect', () => {
         // console.log('Frontend disconnected', socket.id);
     });
