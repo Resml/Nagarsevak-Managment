@@ -156,10 +156,11 @@ router.post('/initiate', async (req, res) => {
 });
 
 // -----------------------------------------------------------------------
-// GET /api/sarvam-call/twiml/:callBatchId
+// ALL /api/sarvam-call/twiml/:callBatchId
 // Twilio calls this when the recipient picks up — returns the TwiML with audio
 // -----------------------------------------------------------------------
-router.get('/twiml/:callBatchId', (req, res) => {
+router.all('/twiml/:callBatchId', (req, res) => {
+    console.log(`[SarvamCall] Twilio requested TwiML for batch ${req.params.callBatchId}`);
     const { callBatchId } = req.params;
     const entry = audioStore[callBatchId];
 
@@ -189,10 +190,11 @@ router.get('/twiml/:callBatchId', (req, res) => {
 });
 
 // -----------------------------------------------------------------------
-// GET /api/sarvam-call/audio/:callBatchId
+// ALL /api/sarvam-call/audio/:callBatchId
 // Serves the raw WAV audio file to Twilio
 // -----------------------------------------------------------------------
-router.get('/audio/:callBatchId', (req, res) => {
+router.all('/audio/:callBatchId', (req, res) => {
+    console.log(`[SarvamCall] Twilio fetching audio for batch ${req.params.callBatchId}`);
     const { callBatchId } = req.params;
     const entry = audioStore[callBatchId];
 

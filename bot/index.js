@@ -85,6 +85,7 @@ const PORT = process.env.PORT || 4000;
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded (Twilio webhooks)
 
 // --- Root Route for Health Check ---
 app.get('/', (req, res) => {
