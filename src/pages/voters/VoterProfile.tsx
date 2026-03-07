@@ -164,7 +164,6 @@ const VoterProfile = () => {
 
         try {
             const updates = {
-                name: editForm.name,
                 name_english: editForm.name,
                 name_marathi: editForm.name_marathi,
                 mobile: editForm.mobile ? editForm.mobile : null,
@@ -172,7 +171,6 @@ const VoterProfile = () => {
                 dob: editForm.dob ? editForm.dob : null,
                 profession: editForm.profession,
                 gender: editForm.gender,
-                address: editForm.address,
                 address_english: editForm.address,
                 address_marathi: editForm.address_marathi,
                 current_address_english: editForm.current_address_english,

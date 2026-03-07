@@ -514,20 +514,64 @@ const PublicCommunication = () => {
 
                     {/* Left: Voter Selector */}
                     <div className="flex-1 ns-card flex flex-col overflow-hidden min-h-[400px]">
+                        {/* Header */}
                         <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-purple-500" /> Select Voters to Call
-                                </h3>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    {selectedVoterIds.size > 0 ? `${selectedVoterIds.size} selected` : 'Click voters below to select'}
-                                </p>
-                            </div>
+                            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <Users className="w-4 h-4 text-purple-500" /> Select Voters to Call
+                            </h3>
                             <button onClick={handleSelectAllVisible} className="text-xs font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1">
                                 {selectAll ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                                Select All
+                                {selectAll ? 'Clear All' : 'Select All'}
+                                {selectedVoterIds.size > 0 && <span className="ml-1 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-[10px] font-bold">{selectedVoterIds.size}</span>}
                             </button>
                         </div>
+
+                        {/* Search Filters */}
+                        <div className="p-2 border-b border-slate-100 grid grid-cols-2 gap-2">
+                            <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name..."
+                                    value={nameFilter}
+                                    onChange={e => setNameFilter(e.target.value)}
+                                    className="ns-input pl-8 w-full text-xs py-1.5"
+                                />
+                            </div>
+                            <div className="relative">
+                                <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by address..."
+                                    value={addressFilter}
+                                    onChange={e => setAddressFilter(e.target.value)}
+                                    className="ns-input pl-8 w-full text-xs py-1.5"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Home className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <input
+                                    type="text"
+                                    placeholder="House No."
+                                    value={houseNoFilter}
+                                    onChange={e => setHouseNoFilter(e.target.value)}
+                                    className="ns-input pl-8 w-full text-xs py-1.5"
+                                />
+                            </div>
+                            <div className="relative">
+                                <User className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
+                                <select
+                                    value={genderFilter}
+                                    onChange={e => setGenderFilter(e.target.value)}
+                                    className="ns-input pl-8 w-full text-xs py-1.5 appearance-none bg-white"
+                                >
+                                    <option value="">All Genders</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="flex-1 overflow-y-auto p-2">
                             {loading ? (
                                 <div className="flex items-center justify-center h-40"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>

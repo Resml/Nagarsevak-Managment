@@ -3,16 +3,13 @@ const router = express.Router();
 const twilio = require('twilio');
 const axios = require('axios');
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+// dotenv already loaded by bot/index.js
+
 
 // Twilio client
-const twilioClient = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-);
+const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID;
+const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_FROM = process.env.TWILIO_PHONE_NUMBER;
-
-// Sarvam
 const SARVAM_API_KEY = process.env.VITE_SARVAM_KEY;
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 
@@ -20,6 +17,14 @@ const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 const supabase = createClient(
     process.env.VITE_SUPABASE_URL,
     process.env.VITE_SUPABASE_ANON_KEY
+);
+
+// Log startup config (no sensitive values)
+console.log('[SarvamCall] Route loaded. Config check:',
+    'TWILIO_SID:', TWILIO_SID ? '✅ set' : '❌ MISSING',
+    'TWILIO_TOKEN:', TWILIO_TOKEN ? '✅ set' : '❌ MISSING',
+    'TWILIO_FROM:', TWILIO_FROM || '❌ MISSING',
+    'SARVAM_KEY:', SARVAM_API_KEY ? '✅ set' : '❌ MISSING'
 );
 
 // In-memory store for TTS audio (keyed by callId, cleaned up after use)
@@ -36,12 +41,15 @@ router.post('/initiate', async (req, res) => {
         return res.status(400).json({ error: 'tenantId, numbers[], and message are required' });
     }
 
-    if (!TWILIO_FROM) {
-        return res.status(500).json({ error: 'TWILIO_PHONE_NUMBER not configured' });
+    if (!TWILIO_FROM || !TWILIO_SID || !TWILIO_TOKEN) {
+        return res.status(500).json({ error: 'Twilio credentials not configured on server. Please add TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER to Render environment variables.' });
     }
     if (!SARVAM_API_KEY) {
-        return res.status(500).json({ error: 'VITE_SARVAM_KEY not configured' });
+        return res.status(500).json({ error: 'VITE_SARVAM_KEY not configured on server.' });
     }
+
+    // Init Twilio client here (to use latest env vars)
+    const twilioClient = twilio(TWILIO_SID, TWILIO_TOKEN);
 
     console.log(`[SarvamCall][${tenantId}] Starting AI calls to ${numbers.length} recipients`);
 
