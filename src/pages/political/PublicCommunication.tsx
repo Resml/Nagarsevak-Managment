@@ -108,6 +108,8 @@ const PublicCommunication = () => {
                 .from('voters')
                 .select('*', { count: 'exact' })
                 .eq('tenant_id', tenantId)
+                .not('mobile', 'is', null)
+                .neq('mobile', '')
                 .range(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE - 1);
 
             if (nameFilter) query = query.or(`name_english.ilike.%${nameFilter}%,name_marathi.ilike.%${nameFilter}%`);
@@ -357,10 +359,9 @@ const PublicCommunication = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('call')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-purple-50 text-purple-700 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
                     >
-                        <Phone className="w-4 h-4" /> AI Call
-                        <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full">Sarvam</span>
+                        <Phone className="w-4 h-4" /> Voice Call
                     </button>
                     <button
                         onClick={() => setActiveTab('history')}
@@ -372,11 +373,11 @@ const PublicCommunication = () => {
                 </div>
             </div>
 
-            {/* ---- SEND TAB ---- */}
-            {activeTab === 'send' && (
+            {/* ---- SHARED SEARCH & SELECTION BAR (For Message & Call Tabs) ---- */}
+            {(activeTab === 'send' || activeTab === 'call') && (
                 <>
-                    {/* Filters */}
-                    <div className="ns-card p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 flex-none">
+                    {/* Search Filters */}
+                    <div className="ns-card p-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 flex-none mb-4">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
@@ -408,8 +409,8 @@ const PublicCommunication = () => {
                         </div>
                     </div>
 
-                    {/* Selection Bar */}
-                    <div className="flex items-center justify-between px-1 flex-none">
+                    {/* Selection Counter */}
+                    <div className="flex items-center justify-between px-1 flex-none mb-4">
                         <div className="flex items-center gap-4">
                             <button onClick={handleSelectAllVisible} className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-brand-700">
                                 {selectAll ? <CheckSquare className="w-5 h-5 text-brand-600" /> : <Square className="w-5 h-5 text-slate-400" />}
@@ -417,11 +418,16 @@ const PublicCommunication = () => {
                             </button>
                             <span className="text-sm text-slate-500">{t('communication_page.total_records')}: {totalCount || 0}</span>
                         </div>
-                        <div className="text-sm font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-lg">
+                        <div className="text-sm font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-lg border border-brand-100">
                             {selectedVoterIds.size} {t('communication_page.selected')}
                         </div>
                     </div>
+                </>
+            )}
 
+            {/* ---- SEND TAB ---- */}
+            {activeTab === 'send' && (
+                <>
                     {/* Voter List + Composer */}
                     <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
                         {/* Left: Voter List */}
@@ -514,85 +520,31 @@ const PublicCommunication = () => {
 
                     {/* Left: Voter Selector */}
                     <div className="flex-1 ns-card flex flex-col overflow-hidden min-h-[400px]">
-                        {/* Header */}
-                        <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                <Users className="w-4 h-4 text-purple-500" /> Select Voters to Call
-                            </h3>
-                            <button onClick={handleSelectAllVisible} className="text-xs font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1">
-                                {selectAll ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
-                                {selectAll ? 'Clear All' : 'Select All'}
-                                {selectedVoterIds.size > 0 && <span className="ml-1 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-[10px] font-bold">{selectedVoterIds.size}</span>}
-                            </button>
-                        </div>
-
-                        {/* Search Filters */}
-                        <div className="p-2 border-b border-slate-100 grid grid-cols-2 gap-2">
-                            <div className="relative">
-                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by name..."
-                                    value={nameFilter}
-                                    onChange={e => setNameFilter(e.target.value)}
-                                    className="ns-input pl-8 w-full text-xs py-1.5"
-                                />
-                            </div>
-                            <div className="relative">
-                                <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by address..."
-                                    value={addressFilter}
-                                    onChange={e => setAddressFilter(e.target.value)}
-                                    className="ns-input pl-8 w-full text-xs py-1.5"
-                                />
-                            </div>
-                            <div className="relative">
-                                <Home className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-                                <input
-                                    type="text"
-                                    placeholder="House No."
-                                    value={houseNoFilter}
-                                    onChange={e => setHouseNoFilter(e.target.value)}
-                                    className="ns-input pl-8 w-full text-xs py-1.5"
-                                />
-                            </div>
-                            <div className="relative">
-                                <User className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 w-3.5 h-3.5" />
-                                <select
-                                    value={genderFilter}
-                                    onChange={e => setGenderFilter(e.target.value)}
-                                    className="ns-input pl-8 w-full text-xs py-1.5 appearance-none bg-white"
-                                >
-                                    <option value="">All Genders</option>
-                                    <option value="M">Male</option>
-                                    <option value="F">Female</option>
-                                </select>
-                            </div>
-                        </div>
-
                         <div className="flex-1 overflow-y-auto p-2">
                             {loading ? (
-                                <div className="flex items-center justify-center h-40"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div>
+                                <div className="flex items-center justify-center h-40"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                             ) : voters.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                    <Users className="w-10 h-10 mb-2 opacity-40" />
-                                    <p>No voters found</p>
+                                    <Users className="w-12 h-12 mb-2 opacity-50" />
+                                    <p>{t('communication_page.no_voters')}</p>
                                 </div>
                             ) : (
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     {voters.map(v => (
                                         <div
                                             key={v.id}
                                             onClick={() => toggleSelectVoter(v.id)}
-                                            className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${selectedVoterIds.has(v.id) ? 'bg-purple-50 border-purple-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
+                                            className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${selectedVoterIds.has(v.id) ? 'bg-brand-50 border-brand-200' : 'bg-white border-slate-100 hover:bg-slate-50'}`}
                                         >
-                                            <div className="flex items-center gap-2">
-                                                {selectedVoterIds.has(v.id) ? <CheckSquare className="w-4 h-4 text-purple-600 shrink-0" /> : <Square className="w-4 h-4 text-slate-300 shrink-0" />}
+                                            <div className="flex items-center gap-3">
+                                                {selectedVoterIds.has(v.id) ? <CheckSquare className="w-5 h-5 text-brand-600 shrink-0" /> : <Square className="w-5 h-5 text-slate-300 shrink-0" />}
                                                 <div>
-                                                    <p className="text-sm font-medium text-slate-800">{getDisplayName(v)}</p>
-                                                    <p className="text-xs text-slate-500">{v.mobile || 'No mobile'}</p>
+                                                    <h4 className={`font-semibold text-sm ${selectedVoterIds.has(v.id) ? 'text-brand-900' : 'text-slate-700'}`}>{getDisplayName(v)}</h4>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                        <span>{t('voters.ward')}: {v.ward}</span>
+                                                        <span>•</span>
+                                                        <span>{v.mobile || t('voter_profile.no_mobile')}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                             {/* Call result status badge */}
@@ -603,7 +555,7 @@ const PublicCommunication = () => {
                                                 return <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1"><Clock className="w-3 h-3" />Pending</span>;
                                             })()}
                                             {!callResults.find(r => r.mobile === v.mobile?.replace(/\D/g, '')) && v.mobile && (
-                                                <span className="text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">MOBILE ✓</span>
+                                                <span className="text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded-full">MOBILE ✓</span>
                                             )}
                                         </div>
                                     ))}
@@ -617,12 +569,12 @@ const PublicCommunication = () => {
                         <div className="ns-card p-5">
                             {/* Header */}
                             <div className="flex items-center gap-3 mb-5">
-                                <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                                    <Phone className="w-5 h-5 text-purple-600" />
+                                <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
+                                    <Phone className="w-5 h-5 text-brand-600" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-slate-800">AI Voice Call</h3>
-                                    <p className="text-xs text-slate-500">Powered by Sarvam AI (Bulbul) + Twilio</p>
+                                    <h3 className="font-bold text-slate-800">Voice Call</h3>
+                                    <p className="text-xs text-slate-500">Draft your message for automatic calls</p>
                                 </div>
                             </div>
 
@@ -640,7 +592,7 @@ const PublicCommunication = () => {
                                         <button
                                             key={lang.code}
                                             onClick={() => setCallLanguage(lang.code)}
-                                            className={`p-2.5 rounded-lg border text-center transition-all ${callLanguage === lang.code ? 'bg-purple-50 border-purple-300 text-purple-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
+                                            className={`p-2.5 rounded-lg border text-center transition-all ${callLanguage === lang.code ? 'bg-brand-50 border-brand-300 text-brand-700' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'}`}
                                         >
                                             <div className="font-bold text-sm">{lang.label}</div>
                                             <div className="text-[10px] text-slate-500">{lang.sublabel}</div>
@@ -652,7 +604,7 @@ const PublicCommunication = () => {
                             {/* Message Composer */}
                             <div className="mb-4">
                                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                                    Message to Speak {callLanguage === 'mr-IN' && <span className="text-purple-600">(Type in Marathi मराठी)</span>}
+                                    Message to Speak {callLanguage === 'mr-IN' && <span className="text-brand-600">(Type in Marathi)</span>}
                                 </label>
                                 <textarea
                                     value={callMessage}
@@ -664,10 +616,10 @@ const PublicCommunication = () => {
                             </div>
 
                             {/* Summary */}
-                            <div className="bg-purple-50 rounded-lg p-3 mb-4 text-sm">
+                            <div className="bg-slate-50 rounded-lg p-3 mb-4 text-sm border border-slate-200">
                                 <div className="flex justify-between text-slate-600">
                                     <span>Selected voters</span>
-                                    <span className="font-bold text-purple-700">{selectedVoterIds.size}</span>
+                                    <span className="font-bold text-brand-700">{selectedVoterIds.size}</span>
                                 </div>
                                 <div className="flex justify-between text-slate-600 mt-1">
                                     <span>With mobile number</span>
@@ -681,16 +633,11 @@ const PublicCommunication = () => {
                             <button
                                 onClick={handleAICall}
                                 disabled={calling || selectedVoterIds.size === 0}
-                                className="w-full py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ background: calling ? '#7c3aed80' : 'linear-gradient(135deg, #7c3aed, #9333ea)' }}
+                                className="w-full ns-btn-primary flex items-center justify-center gap-2 py-3"
                             >
                                 {calling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
-                                {calling ? 'Generating Audio & Calling...' : `📞 Start AI Calls (${selectedVoterIds.size})`}
+                                {calling ? 'Generating Audio & Calling...' : `Start Voice Calls (${selectedVoterIds.size})`}
                             </button>
-
-                            <p className="text-xs text-slate-400 mt-3 text-center">
-                                Calls are made via Twilio · Audio generated by Sarvam Bulbul v2
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -729,10 +676,12 @@ const PublicCommunication = () => {
                                     >
                                         <div className="flex items-center gap-4">
                                             {/* Channel Icon */}
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${log.channel === 'whatsapp' ? 'bg-green-100' : 'bg-blue-100'}`}>
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${log.channel === 'whatsapp' ? 'bg-green-100' : log.channel === 'call' ? 'bg-brand-100' : 'bg-blue-100'}`}>
                                                 {log.channel === 'whatsapp'
                                                     ? <Smartphone className="w-5 h-5 text-green-600" />
-                                                    : <MessageSquare className="w-5 h-5 text-blue-600" />}
+                                                    : log.channel === 'call'
+                                                        ? <Phone className="w-5 h-5 text-brand-600" />
+                                                        : <MessageSquare className="w-5 h-5 text-blue-600" />}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-slate-800 text-sm line-clamp-1 max-w-xs">
