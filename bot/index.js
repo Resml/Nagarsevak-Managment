@@ -938,6 +938,22 @@ io.on('connection', (socket) => {
                 }
             }
             console.log(`[${tenantId}] Bulk send complete: ${sent} sent, ${failed} failed`);
+
+            // Save to message_logs table for History tab
+            try {
+                await supabase.from('message_logs').insert({
+                    tenant_id: tenantId,
+                    channel: 'whatsapp',
+                    message,
+                    recipients: numbers.length,
+                    sent_count: sent,
+                    failed_count: failed,
+                    created_by: 'Admin'
+                });
+            } catch (logErr) {
+                console.error(`[${tenantId}] Failed to save message log:`, logErr.message);
+            }
+
             socket.emit('bulk_message_result', { success: true, sent, failed });
         })();
     });
