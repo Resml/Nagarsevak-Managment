@@ -766,92 +766,51 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 const cleanText = (text || '').trim();
 
                 // --- LID Resolution Fix ---
-                // If message is from a LID (Linked Device), try to resolve to Phone JID
+                // If message is from a LID (Linked Device), resolve to real Phone JID.
                 let resolvedFrom = from;
                 if (from.endsWith('@lid')) {
                     console.log(`[${tenantId}] Received message from LID: ${from}. Attempting to resolve to Phone JID.`);
 
-                    // --- Cache Check ---
-                    // 0. Check in-memory cache first
+                    // STRATEGY 1: In-memory LID cache (fastest, persists across messages in same session)
                     if (lidCache[from]) {
                         resolvedFrom = lidCache[from];
                         console.log(`[${tenantId}] LID Cache Hit: ${from} -> ${resolvedFrom}`);
-                    } else {
-                        // Search in store checks
-                        // 1. Check if we can find a contact with this LID
-                        if (baileysStore && baileysStore.contacts) {
-                            const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
-                            if (contact && contact.id) {
-                                resolvedFrom = contact.id;
-                                lidCache[from] = resolvedFrom; // Update Cache
-                                console.log(`[${tenantId}] Resolved LID ${from} to ${resolvedFrom}`);
+                    }
+                    // STRATEGY 2: msg.key.participant — WhatsApp always sets this to the real phone JID
+                    // on messages coming from linked devices. This is the most reliable source.
+                    else if (msg.key.participant && msg.key.participant.endsWith('@s.whatsapp.net')) {
+                        resolvedFrom = msg.key.participant;
+                        lidCache[from] = resolvedFrom; // Cache it for future messages from this LID
+                        console.log(`[${tenantId}] Resolved LID ${from} via msg.key.participant -> ${resolvedFrom}`);
+                    }
+                    // STRATEGY 3: Search the in-memory contact store (populated after contacts.upsert events)
+                    else if (baileysStore && baileysStore.contacts && Object.keys(baileysStore.contacts).length > 0) {
+                        const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
+                        if (contact && contact.id) {
+                            resolvedFrom = contact.id;
+                            lidCache[from] = resolvedFrom;
+                            console.log(`[${tenantId}] Resolved LID ${from} via contact store -> ${resolvedFrom}`);
+                        }
+                    }
+                    // STRATEGY 4: Fuzzy-match against active staff sessions (MenuNavigator)
+                    else {
+                        const nav = sessions.get(tenantId)?.menuNavigator;
+                        if (nav && nav.userSessions) {
+                            const activeStaffSessions = Object.entries(nav.userSessions).filter(([, sess]) =>
+                                sess.currentMenu === 'STAFF_TASK_DATE_ESTIMATE'
+                            );
+                            if (activeStaffSessions.length === 1) {
+                                resolvedFrom = activeStaffSessions[0][0];
+                                lidCache[from] = resolvedFrom;
+                                console.log(`[${tenantId}] Fuzzy matched LID ${from} to active staff session ${resolvedFrom}`);
                             } else {
-                                // Fallback: If we sent a message to a phone number recently, maybe we can map it? 
-                                // Hard to do reliably.
-                                console.warn(`[${tenantId}] Could not resolve LID to Phone JID. Session lookup might fail.`);
-
-                                // Debug: Print some contacts to see structure (limit output)
-                                // const sample = Object.values(baileysStore.contacts).slice(0, 3);
-                                // console.log(`[${tenantId}] Sample contacts:`, JSON.stringify(sample));
-
-                                // --- Fallback Strategy ---
-                                // If we can't resolve LID to Phone JID (e.g. contacts not synced yet),
-                                // we need to check if there is an active session for this LID itself.
-                                // Staff assignment sets session on PhoneJID.
-                                // If we can't map LID -> PhoneJID, we can't find the session.
-
-                                // HACK: Try to find ANY session that has the currentMenu set to STAFF_TASK_DATE_ESTIMATE
-                                // This is risky if multiple staff are active, but better than being stuck.
-                                // A safer bet: If we assume only 1 active staff task per tenant for now (unlikely), or...
-
-                                // BETTER FALLBACK:
-                                // Refer to `menuNavigator` sessions directly.
-                                const nav = sessions.get(tenantId)?.menuNavigator;
-                                if (nav && nav.userSessions) {
-                                    // Search for an active staff session
-                                    const activeStaffSessions = Object.entries(nav.userSessions).filter(([id, sess]) => {
-                                        return sess.currentMenu === 'STAFF_TASK_DATE_ESTIMATE';
-                                    });
-
-                                    if (activeStaffSessions.length === 1) {
-                                        // Found exactly one active staff session!
-                                        // We can reasonably assume this LID belongs to this staff member.
-                                        resolvedFrom = activeStaffSessions[0][0];
-                                        lidCache[from] = resolvedFrom; // Update Cache (Critical for subsequent commands like COMPLETE)
-                                        console.log(`[${tenantId}] Fuzzy matched LID ${from} to active staff session ${resolvedFrom}`);
-
-                                        // Optional: Link them in memory for future?
-                                        // For now, just using it is enough to unblock.
-                                    } else if (activeStaffSessions.length > 1) {
-                                        console.warn(`[${tenantId}] Multiple staff active. Cannot fuzzy match LID ${from}.`);
-                                    } else {
-                                        console.warn(`[${tenantId}] No active staff sessions found. LID ${from} remains unresolved.`);
-                                    }
-                                }
+                                console.warn(`[${tenantId}] Could not resolve LID ${from} — will use LID as-is`);
                             }
-                        } else {
-                            console.warn(`[${tenantId}] Contact store is empty or undefined. Cannot resolve LID.`);
                         }
                     }
                 }
 
                 console.log(`[${tenantId}] [DEBUG] Message from ${resolvedFrom} (Original: ${from}) | Media: ${isMedia} | Text: ${cleanText}`);
-
-                // --- Session Migration Hack (Optional) ---
-                // If we are using valid resolvedFrom (Phone ID) but the session is empty/default,
-                // and we originally had a session on... wait.
-                // The issue is simply `resolvedFrom` remaining as `from` (LID) when resolution fails.
-                // So `handleMessage` looks up session for LID, finds nothing (default Main Menu),
-                // and thus hits "Invalid Option".
-
-                // If we cannot resolve, we MUST send a message asking them to reply from their phone?
-                // Or we just improved the Store so it SHOULD work.
-
-                // If it STILL fails, it means `baileysStore.contacts` is empty.
-                // Log the size of contacts to be sure.
-                if (baileysStore && baileysStore.contacts) {
-                    console.log(`[${tenantId}] Contact Store Size: ${Object.keys(baileysStore.contacts).length}`);
-                }
 
                 // If we receive a message, we are clearly connected
                 if (sessions.get(tenantId)?.status !== 'connected') {
