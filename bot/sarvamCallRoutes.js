@@ -95,7 +95,10 @@ router.post('/initiate', async (req, res) => {
     }
 
     // 3. Build the TwiML webhook URL (Twilio will call this when the call connects)
-    const botBaseUrl = process.env.VITE_BOT_API_URL || `http://localhost:${process.env.PORT || 4000}`;
+    // Use the incoming request host so it naturally works on localhost or Render
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers.host;
+    const botBaseUrl = `${protocol}://${host}`;
     const twimlUrl = `${botBaseUrl}/api/sarvam-call/twiml/${callBatchId}`;
 
     // 4. Initiate calls via Twilio (with delay between each)
@@ -172,7 +175,9 @@ router.get('/twiml/:callBatchId', (req, res) => {
 
     // Serve the Sarvam-generated audio as a base64 WAV
     // Twilio supports Play with a URL — we serve the raw WAV
-    const botBaseUrl = process.env.VITE_BOT_API_URL || `http://localhost:${process.env.PORT || 4000}`;
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers.host;
+    const botBaseUrl = `${protocol}://${host}`;
     const audioUrl = `${botBaseUrl}/api/sarvam-call/audio/${callBatchId}`;
 
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
