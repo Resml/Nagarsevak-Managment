@@ -170,6 +170,10 @@ async function logoutSession(tenantId) {
 const vapiRoutes = require('./vapiRoutes');
 app.use('/api/vapi', vapiRoutes);
 
+// --- Sarvam AI + Twilio Calling Routes ---
+const sarvamCallRoutes = require('./sarvamCallRoutes');
+app.use('/api/sarvam-call', sarvamCallRoutes);
+
 // --- API Routes ---
 app.post('/api/broadcast', async (req, res) => {
     const { eventId, tenantId } = req.body;
