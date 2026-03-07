@@ -175,6 +175,10 @@ app.use('/api/vapi', vapiRoutes);
 const sarvamCallRoutes = require('./sarvamCallRoutes');
 app.use('/api/sarvam-call', sarvamCallRoutes);
 
+// --- 2-Way AI Voice Calling Routes (Inbound) ---
+const aiCallRoutes = require('./aiCallRoutes');
+app.use('/api/inbound-ai', aiCallRoutes);
+
 // --- API Routes ---
 app.post('/api/broadcast', async (req, res) => {
     const { eventId, tenantId } = req.body;
