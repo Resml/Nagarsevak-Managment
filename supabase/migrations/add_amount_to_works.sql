@@ -1,0 +1,3 @@
+
+-- Add amount column to works table
+ALTER TABLE works ADD COLUMN IF NOT EXISTS amount NUMERIC;

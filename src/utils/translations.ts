@@ -263,7 +263,13 @@ export const translations = {
             ward_info_constituency: "Ward Info (Constituency)",
             ward_map: "Ward Map",
             public_communication: "Public Communication",
-            voter_forms: "Voter Forms"
+            voter_forms: "Voter Forms",
+            send_sms: "Send SMS",
+            whatsapp_msg: "WhatsApp Message",
+            voice_call: "Voice Call",
+            ai_voice_call: "AI Voice Call",
+            conference_room: "Conference Room",
+            whatsapp_calling: "WhatsApp Calling"
         },
         voter_forms: {
             title: "Voter Registration Forms",
@@ -1776,7 +1782,13 @@ export const translations = {
             ward_info_constituency: "प्रभाग माहिती (मतदारसंघ)",
             ward_map: "प्रभाग नकाशा",
             public_communication: "जनसंवाद",
-            voter_forms: "मतदार अर्ज"
+            voter_forms: "मतडर अर्ज",
+            send_sms: "SMS पाठवा",
+            whatsapp_msg: "व्हॉट्सॲप संदेश",
+            voice_call: "व्हॉइस कॉल",
+            ai_voice_call: "AI व्हॉइस कॉल",
+            conference_room: "कॉन्फरन्स रूम",
+            whatsapp_calling: "व्हॉट्सॲप कॉलिंग"
         },
         voter_forms: {
             title: "मतदार नोंदणी अर्ज",

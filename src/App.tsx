@@ -55,6 +55,12 @@ const AddVoter = lazy(() => import('./pages/political/AddVoter'));
 const FriendsRelatives = lazy(() => import('./pages/political/FriendsRelatives'));
 const WardInfoConstituency = lazy(() => import('./pages/political/WardInfoConstituency'));
 const PublicCommunication = lazy(() => import('./pages/political/PublicCommunication'));
+const SMSCommunication = lazy(() => import('./pages/communication/SMSCommunication'));
+const WhatsAppCommunication = lazy(() => import('./pages/communication/WhatsAppCommunication'));
+const VoiceCall = lazy(() => import('./pages/communication/VoiceCall'));
+const AIVoiceCall = lazy(() => import('./pages/communication/AIVoiceCall'));
+const ConferenceRoom = lazy(() => import('./pages/communication/ConferenceRoom'));
+const WhatsAppCalling = lazy(() => import('./pages/communication/WhatsAppCalling'));
 const VoterForms = lazy(() => import('./pages/political/VoterForms'));
 const ProfileSettings = lazy(() => import('./pages/settings/ProfileSettings'));
 
@@ -175,6 +181,14 @@ function App() {
             <Route path="political/ward-info" element={<PermissionGuard permission="voters"><WardInfoConstituency /></PermissionGuard>} />
 
             <Route path="political/public-communication" element={<PermissionGuard permission="public_comm"><PublicCommunication /></PermissionGuard>} />
+
+            {/* Communication Routes */}
+            <Route path="communication/sms" element={<PermissionGuard permission="public_comm"><SMSCommunication /></PermissionGuard>} />
+            <Route path="communication/whatsapp" element={<PermissionGuard permission="public_comm"><WhatsAppCommunication /></PermissionGuard>} />
+            <Route path="communication/voice" element={<PermissionGuard permission="public_comm"><VoiceCall /></PermissionGuard>} />
+            <Route path="communication/ai-voice" element={<PermissionGuard permission="public_comm"><AIVoiceCall /></PermissionGuard>} />
+            <Route path="communication/conference" element={<PermissionGuard permission="public_comm"><ConferenceRoom /></PermissionGuard>} />
+            <Route path="communication/whatsapp-call" element={<PermissionGuard permission="public_comm"><WhatsAppCalling /></PermissionGuard>} />
             <Route path="political/voter-forms" element={<PermissionGuard permission="voters"><VoterForms /></PermissionGuard>} />
 
             <Route path="settings/profile" element={<PermissionGuard permission="profile_settings"><ProfileSettings /></PermissionGuard>} />
