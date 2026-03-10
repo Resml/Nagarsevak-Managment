@@ -333,7 +333,7 @@ const AppLayout = () => {
           { to: '/dashboard/communication/voice', icon: Phone, label: t('nav.voice_call'), show: true, permission: 'public_comm' },
           { to: '/dashboard/communication/ai-voice', icon: Wand2, label: t('nav.ai_voice_call'), show: true, permission: 'public_comm' },
           { to: '/dashboard/communication/conference', icon: Users, label: t('nav.conference_room'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/whatsapp-call', icon: Phone, label: t('nav.whatsapp_calling'), show: true, permission: 'public_comm' },
+          { to: '/dashboard/communication/whatsapp-call', icon: Phone, label: t('nav.whatsapp_call'), show: true, permission: 'public_comm' },
         ],
       },
     ],

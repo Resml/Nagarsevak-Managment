@@ -269,7 +269,7 @@ export const translations = {
             voice_call: "Voice Call",
             ai_voice_call: "AI Voice Call",
             conference_room: "Conference Room",
-            whatsapp_calling: "WhatsApp Calling"
+            whatsapp_call: "WhatsApp Call"
         },
         voter_forms: {
             title: "Voter Registration Forms",
@@ -1788,7 +1788,7 @@ export const translations = {
             voice_call: "व्हॉइस कॉल",
             ai_voice_call: "AI व्हॉइस कॉल",
             conference_room: "कॉन्फरन्स रूम",
-            whatsapp_calling: "व्हॉट्सॲप कॉलिंग"
+            whatsapp_call: "व्हॉट्सॲप कॉल"
         },
         voter_forms: {
             title: "मतदार नोंदणी अर्ज",
