@@ -98,11 +98,14 @@ const WhatsAppCommunication = () => {
                 address_marathi: row.address_marathi,
                 ward: row.ward_no || '-',
                 part_no: row.part_no,
+                booth: row.part_no || '-',
+                epicNo: row.epic_no || '-',
                 epic_no: row.epic_no,
                 mobile: row.mobile,
                 house_no: row.house_no,
                 caste: row.caste,
-                is_friend_relative: row.is_friend_relative
+                is_friend_relative: row.is_friend_relative,
+                history: []
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);

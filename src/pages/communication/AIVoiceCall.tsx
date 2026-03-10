@@ -59,8 +59,13 @@ const AIVoiceCall = () => {
                 name_english: row.name_english,
                 name_marathi: row.name_marathi,
                 mobile: row.mobile,
-                ward: row.ward_no,
-                address: row.address_english
+                age: row.age || 0,
+                gender: row.gender || 'M',
+                address: row.address_english || row.address_marathi || '',
+                ward: row.ward_no || '-',
+                booth: row.part_no || '-',
+                epicNo: row.epic_no || '-',
+                history: []
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);

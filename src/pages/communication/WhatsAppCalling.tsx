@@ -41,7 +41,14 @@ const WhatsAppCalling = () => {
                 name: row.name_english || row.name_marathi,
                 mobile: row.mobile,
                 name_marathi: row.name_marathi,
-                name_english: row.name_english
+                name_english: row.name_english,
+                age: row.age || 0,
+                gender: row.gender || 'M',
+                address: row.address_english || row.address_marathi || '',
+                ward: row.ward_no || '-',
+                booth: row.part_no || '-',
+                epicNo: row.epic_no || '-',
+                history: []
             })));
         } catch (err) { console.error(err); } finally { setLoading(false); }
     }, [tenantId]);
