@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
-import { Shield, User, Lock, ArrowRight, Briefcase, Users, Eye, EyeOff, Globe } from 'lucide-react';
+import { useTenant } from '../context/TenantContext'; // Added
+import { Shield, User, Lock, ArrowRight, Briefcase, Eye, EyeOff, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import loginHero from '../assets/login_hero.jpg';
@@ -10,6 +11,7 @@ import loginHero from '../assets/login_hero.jpg';
 const Login = () => {
     const { login, user, isLoading } = useAuth();
     const { t, language, setLanguage } = useLanguage();
+    const { tenant } = useTenant(); // Added
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'nagarsevak' | 'amdar' | 'khasdar' | 'minister' | null>(null);
     const [subRole, setSubRole] = useState<'nagarsevak' | 'staff'>('nagarsevak');
@@ -18,11 +20,48 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    React.useEffect(() => {
+    // Dynamic Role Detection
+    const detectedInfo = useMemo(() => {
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split('.')[0];
+        const searchParams = new URLSearchParams(window.location.search);
+        const queryMode = searchParams.get('mode') || searchParams.get('role');
+        const roles = ['nagarsevak', 'amdar', 'khasdar', 'minister'];
+        
+        // 1. Check if query parameter specifies a role (Easiest for testing)
+        if (queryMode && roles.includes(queryMode)) {
+            return { enforcedRole: queryMode as any, allowedRoles: [queryMode] };
+        }
+
+        // 2. Check if subdomain is a direct role
+        if (roles.includes(subdomain)) {
+            return { enforcedRole: subdomain as any, allowedRoles: [subdomain] };
+        }
+
+        // 3. Otherwise use tenant config
+        const allowed = tenant?.config?.allowed_roles as string[] | undefined;
+        if (allowed && allowed.length > 0) {
+            return { 
+                enforcedRole: allowed.length === 1 ? allowed[0] as any : null, 
+                allowedRoles: allowed 
+            };
+        }
+
+        return { enforcedRole: null, allowedRoles: null };
+    }, [tenant]);
+
+    useEffect(() => {
         if (user && !isLoading) {
             navigate('/dashboard');
         }
     }, [user, isLoading, navigate]);
+
+    // Apply enforced role on mount or when detectedInfo changes
+    useEffect(() => {
+        if (detectedInfo.enforcedRole) {
+            setActiveTab(detectedInfo.enforcedRole);
+        }
+    }, [detectedInfo.enforcedRole]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,53 +136,63 @@ const Login = () => {
                         {!activeTab ? (
                             /* Step 1: Role Selection */
                             <div className="grid grid-cols-2 gap-3 mb-8 fade-in-up">
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('nagarsevak')}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
-                                >
-                                    <Shield className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
-                                    <span className="text-sm font-semibold">Nagarsevak</span>
-                                </button>
+                                {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('nagarsevak')) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('nagarsevak')}
+                                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
+                                    >
+                                        <Shield className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <span className="text-sm font-semibold">Nagarsevak</span>
+                                    </button>
+                                )}
 
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('amdar')}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
-                                >
-                                    <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
-                                    <span className="text-sm font-semibold">Amdar</span>
-                                </button>
+                                {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('amdar')) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('amdar')}
+                                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
+                                    >
+                                        <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <span className="text-sm font-semibold">Amdar</span>
+                                    </button>
+                                )}
 
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('khasdar')}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
-                                >
-                                    <Globe className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
-                                    <span className="text-sm font-semibold">Khasdar</span>
-                                </button>
+                                {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('khasdar')) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('khasdar')}
+                                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
+                                    >
+                                        <Globe className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <span className="text-sm font-semibold">Khasdar</span>
+                                    </button>
+                                )}
 
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTab('minister')}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
-                                >
-                                    <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
-                                    <span className="text-sm font-semibold">Minister</span>
-                                </button>
+                                {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('minister')) && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('minister')}
+                                        className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
+                                    >
+                                        <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <span className="text-sm font-semibold">Minister</span>
+                                    </button>
+                                )}
                             </div>
                         ) : (
 
                             /* Step 2: Login Form */
                             <div className="fade-in-up">
-                                <button
-                                    onClick={() => setActiveTab(null)}
-                                    className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 mb-6 group"
-                                >
-                                    <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-                                    <span>Back to Role Selection</span>
-                                </button>
+                                {!detectedInfo.enforcedRole && (
+                                    <button
+                                        onClick={() => setActiveTab(null)}
+                                        className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-600 mb-6 group"
+                                    >
+                                        <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
+                                        <span>Back to Role Selection</span>
+                                    </button>
+                                )}
 
                                 {/* Sub-role Toggle for Nagarsevak */}
                                 {activeTab === 'nagarsevak' && (
