@@ -311,15 +311,6 @@ const AppLayout = () => {
           { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
         ],
       },
-      // 8) Analysis Strategy
-      {
-        kind: 'item',
-        to: '/dashboard/analysis-strategy',
-        icon: LineChart,
-        label: t('nav.analysis_strategy'),
-        show: true,
-        permission: 'analysis',
-      },
       // 8) Public Communication
       {
         kind: 'group',
@@ -336,18 +327,20 @@ const AppLayout = () => {
           { to: '/dashboard/communication/whatsapp-call', icon: Phone, label: t('nav.whatsapp_call'), show: true, permission: 'public_comm' },
         ],
       },
+      // 9) Analysis Strategy
+      {
+        kind: 'item',
+        to: '/dashboard/analysis-strategy',
+        icon: LineChart,
+        label: t('nav.analysis_strategy'),
+        show: true,
+        permission: 'analysis',
+      },
     ],
     [isAdmin, isAdminOrStaff, t],
   );
 
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    daily_work: true,
-    ward_info: true,
-    municipal: true,
-    media: true,
-    programs: true,
-    political: true,
-  });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const navContainerRef = useRef<HTMLElement>(null);
   const activeItemRef = useRef<HTMLAnchorElement | null>(null);
