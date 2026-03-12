@@ -58,12 +58,12 @@ const WhatsAppCalling = () => {
     const handleWhatsAppCall = (voter: Voter) => {
         if (!voter.mobile) return;
         if (botStatus !== 'connected') {
-            toast.warning('Bot is not connected. Attempting local WhatsApp redirect...');
+            toast.warning(t('communication_page.error_bot_not_connected_local'));
             window.open(`https://wa.me/${voter.mobile.replace(/\D/g, '')}`, '_blank');
             return;
         }
 
-        toast.info(`Initiating WhatsApp call to ${voter.name}...`);
+        toast.info(t('communication_page.initiating_wa_call', { name: (language === 'mr' ? voter.name_marathi : voter.name_english) || voter.name || '' }));
         // Emit call event if bot supports it
         socket.emit('initiate_whatsapp_call', { number: voter.mobile.replace(/\D/g, ''), tenantId });
     };
@@ -73,20 +73,20 @@ const WhatsAppCalling = () => {
             <div className="flex justify-between items-start flex-none">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Smartphone className="w-7 h-7 text-green-600" />
+                        <Smartphone className="w-7 h-7 text-brand-600" />
                         {t('nav.whatsapp_call')}
                     </h1>
-                    <p className="text-slate-500 text-sm mt-1">Initiate voice calls via WhatsApp to voters.</p>
+                    <p className="text-slate-500 text-sm mt-1">{t('communication_page.wa_call_subtitle')}</p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${botStatus === 'connected' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                     <div className={`w-2 h-2 rounded-full ${botStatus === 'connected' ? 'bg-green-600' : 'bg-red-600'}`} />
-                    {botStatus === 'connected' ? 'Bot Active' : 'Bot Inactive'}
+                    {botStatus === 'connected' ? t('communication_page.bot_active') : t('communication_page.bot_inactive')}
                 </div>
             </div>
 
             <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit">
-                <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>Make Call</button>
-                <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>History</button>
+                <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.make_call')}</button>
+                <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
             </div>
 
             {activeTab === 'call' ? (
@@ -96,13 +96,13 @@ const WhatsAppCalling = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {voters.map(voter => (
-                                <div key={voter.id} className="p-4 rounded-xl border border-slate-100 bg-white hover:border-green-200 hover:shadow-md transition-all flex flex-col justify-between">
+                                <div key={voter.id} className="p-4 rounded-xl border border-slate-100 bg-white hover:border-brand-200 hover:shadow-md transition-all flex flex-col justify-between">
                                     <div>
                                         <h4 className="font-bold text-slate-800">{language === 'mr' ? voter.name_marathi : voter.name_english}</h4>
                                         <p className="text-xs text-slate-500 mt-1">{voter.mobile}</p>
                                     </div>
-                                    <button onClick={() => handleWhatsAppCall(voter)} className="mt-4 w-full bg-green-50 text-green-600 font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-600 hover:text-white transition-all">
-                                        <Smartphone className="w-4 h-4" /> WhatsApp Call
+                                    <button onClick={() => handleWhatsAppCall(voter)} className="mt-4 w-full bg-brand-50 text-brand-600 font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-brand-600 hover:text-white transition-all">
+                                        <Smartphone className="w-4 h-4" /> {t('communication_page.wa_call_btn')}
                                     </button>
                                 </div>
                             ))}
@@ -112,7 +112,7 @@ const WhatsAppCalling = () => {
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
                     <History className="w-12 h-12 mb-3 opacity-30" />
-                    <p>WhatsApp call history will appear here.</p>
+                    <p>{t('communication_page.wa_call_history_hint')}</p>
                 </div>
             )}
         </div>

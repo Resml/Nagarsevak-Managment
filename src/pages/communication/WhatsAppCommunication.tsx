@@ -109,7 +109,7 @@ const WhatsAppCommunication = () => {
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);
-        } catch (err) { console.error(err); toast.error('Failed to load voters'); } finally { setLoading(false); setLoadingMore(false); }
+        } catch (err) { console.error(err); toast.error(t('communication_page.error_load_voters')); } finally { setLoading(false); setLoadingMore(false); }
     }, [tenantId, nameFilter, addressFilter, houseNoFilter, ageFilter, genderFilter, casteFilter]);
 
     useEffect(() => {
@@ -124,7 +124,7 @@ const WhatsAppCommunication = () => {
             const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'whatsapp').order('sent_at', { ascending: false }).limit(100);
             if (error) throw error;
             setLogs(data || []);
-        } catch (err) { console.error(err); toast.error('Failed to load WhatsApp history'); } finally { setLogsLoading(false); }
+        } catch (err) { console.error(err); toast.error(t('communication_page.error_load_wa_history')); } finally { setLogsLoading(false); }
     }, [tenantId]);
 
     useEffect(() => { if (activeTab === 'history') fetchLogs(); }, [activeTab, fetchLogs]);
@@ -160,13 +160,13 @@ const WhatsAppCommunication = () => {
         socket.once('bulk_message_result', async (res: any) => {
             setSending(false);
             if (res.success) {
-                toast.success(`WhatsApp sent to ${res.sent} voters`);
+                toast.success(t('communication_page.success_wa_sent', { count: res.sent }));
                 setMessage('');
                 setSelectedVoterIds(new Set());
                 setSelectAll(false);
                 if (activeTab === 'history') fetchLogs();
             } else {
-                toast.error(res.error || 'Failed to send WhatsApp');
+                toast.error(res.error || t('communication_page.error_wa_failed'));
             }
         });
         socket.emit('send_bulk_message', { numbers, message, tenantId });
@@ -177,20 +177,20 @@ const WhatsAppCommunication = () => {
             <div className="flex justify-between items-start flex-none">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Smartphone className="w-7 h-7 text-green-600" />
+                        <Smartphone className="w-7 h-7 text-brand-600" />
                         {t('nav.whatsapp_msg')}
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">{t('communication_page.subtitle')}</p>
                 </div>
                 <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${botStatus === 'connected' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
                     <div className={`w-2 h-2 rounded-full ${botStatus === 'connected' ? 'bg-green-600' : 'bg-red-600'}`} />
-                    {botStatus === 'connected' ? 'Bot Active' : 'Bot Inactive'}
+                    {botStatus === 'connected' ? t('communication_page.bot_active') : t('communication_page.bot_inactive')}
                 </div>
             </div>
 
             <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit">
-                <button onClick={() => setActiveTab('send')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'send' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>Send WhatsApp</button>
-                <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>History</button>
+                <button onClick={() => setActiveTab('send')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'send' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.send_whatsapp')}</button>
+                <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
             </div>
 
             {activeTab === 'send' ? (
@@ -254,21 +254,21 @@ const WhatsAppCommunication = () => {
                                         </div>
                                     ))}
                                     {totalCount !== null && voters.length < totalCount && (
-                                        <button onClick={() => { const next = page + 1; setPage(next); fetchVoters(next, false); }} className="w-full py-3 text-sm text-brand-600 font-medium hover:bg-brand-50 rounded-lg">Load More</button>
+                                        <button onClick={() => { const next = page + 1; setPage(next); fetchVoters(next, false); }} className="w-full py-3 text-sm text-brand-600 font-medium hover:bg-brand-50 rounded-lg">{t('communication_page.load_more')}</button>
                                     )}
                                 </div>
                             )}
                         </div>
 
                         <div className="w-full lg:w-1/3 flex flex-col gap-4">
-                            <div className="ns-card p-4 flex flex-col h-full bg-green-50/30 border-green-100">
+                            <div className="ns-card p-4 flex flex-col h-full bg-brand-50/30 border-brand-100">
                                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <Send className="w-4 h-4 text-green-600" /> Compose WhatsApp
+                                    <Send className="w-4 h-4 text-brand-600" /> {t('communication_page.compose_whatsapp')}
                                 </h3>
-                                <textarea value={message} onChange={e => setMessage(e.target.value)} className="ns-input flex-1 w-full p-3 resize-none mb-4 min-h-[150px] border-green-200 focus:ring-green-500" placeholder="Type your WhatsApp message..." />
-                                <button onClick={handleSendWhatsApp} disabled={sending || selectedVoterIds.size === 0} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-200 disabled:opacity-50 transition-all">
+                                <textarea value={message} onChange={e => setMessage(e.target.value)} className="ns-input flex-1 w-full p-3 resize-none mb-4 min-h-[150px] border-brand-200 focus:ring-brand-500" placeholder={t('communication_page.whatsapp_placeholder')} />
+                                <button onClick={handleSendWhatsApp} disabled={sending || selectedVoterIds.size === 0} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-brand-200 disabled:opacity-50 transition-all">
                                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Smartphone className="w-5 h-5" />}
-                                    Send WhatsApp
+                                    {t('communication_page.send_whatsapp')}
                                 </button>
                             </div>
                         </div>
@@ -279,16 +279,16 @@ const WhatsAppCommunication = () => {
                     {logsLoading ? (
                         <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                     ) : logs.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500">No WhatsApp logs found.</div>
+                        <div className="text-center py-10 text-slate-500">{t('communication_page.no_wa_logs')}</div>
                     ) : (
                         logs.map(log => (
                             <div key={log.id} className="ns-card p-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <p className="text-sm font-semibold text-slate-800">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
-                                        <p className="text-xs text-slate-500">{log.recipients} Recipients • {log.sent_count} Sent</p>
+                                        <p className="text-xs text-slate-500">{log.recipients} {t('communication_page.recipients')} • {log.sent_count} {t('communication_page.sent')}</p>
                                     </div>
-                                    <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded">WhatsApp</span>
+                                    <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('communication_page.channel_wa')}</span>
                                 </div>
                                 <p className="text-sm text-slate-600 line-clamp-2">{log.message}</p>
                             </div>

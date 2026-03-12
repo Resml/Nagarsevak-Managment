@@ -69,8 +69,11 @@ const AIVoiceCall = () => {
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);
-        } catch (err) { console.error(err); } finally { setLoading(false); }
-    }, [tenantId, nameFilter, addressFilter]);
+        } catch (err) { 
+            console.error(err);
+            toast.error(t('communication_page.error_load_voters'));
+        } finally { setLoading(false); }
+    }, [tenantId, nameFilter, addressFilter, t]);
 
     useEffect(() => { fetchVoters(0, true); }, [fetchVoters]);
 
@@ -80,8 +83,11 @@ const AIVoiceCall = () => {
             const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'call').order('sent_at', { ascending: false }).limit(100);
             if (error) throw error;
             setLogs(data || []);
-        } catch (err) { console.error(err); } finally { setLogsLoading(false); }
-    }, [tenantId]);
+        } catch (err) { 
+            console.error(err);
+            toast.error(t('communication_page.error_load_wa_history'));
+        } finally { setLogsLoading(false); }
+    }, [tenantId, t]);
 
     useEffect(() => { if (activeTab === 'history') fetchLogs(); }, [activeTab, fetchLogs]);
 
@@ -100,16 +106,16 @@ const AIVoiceCall = () => {
     };
 
     const handleAICall = async () => {
-        if (selectedVoterIds.size === 0) { toast.error('Please select at least one voter.'); return; }
-        if (!callMessage.trim()) { toast.error('Please enter a message to speak.'); return; }
+        if (selectedVoterIds.size === 0) { toast.error(t('communication_page.error_select_voter')); return; }
+        if (!callMessage.trim()) { toast.error(t('communication_page.error_msg_required')); return; }
 
         const targetVoters = voters.filter(v => selectedVoterIds.has(v.id) && v.mobile && v.mobile.length >= 10);
-        if (targetVoters.length === 0) { toast.error('No selected voters have valid mobile numbers.'); return; }
+        if (targetVoters.length === 0) { toast.error(t('communication_page.error_no_mobile')); return; }
 
         const numbers = targetVoters.map(v => ({ mobile: v.mobile!.replace(/\D/g, ''), name: language === 'mr' ? v.name_marathi : v.name_english }));
 
         setCalling(true);
-        toast.loading(`Initiating ${numbers.length} AI calls...`, { id: 'ai-call' });
+        toast.loading(t('communication_page.initiating_calls', { count: numbers.length }), { id: 'ai-call' });
 
         try {
             const BOT_URL = import.meta.env.VITE_BOT_API_URL || 'https://nagarsevak-managment-1.onrender.com';
@@ -121,9 +127,9 @@ const AIVoiceCall = () => {
             const data = await res.json();
 
             toast.dismiss('ai-call');
-            if (!res.ok || !data.success) { toast.error(data.error || 'Failed to initiate calls'); }
+            if (!res.ok || !data.success) { toast.error(data.error || t('communication_page.error_wa_failed')); }
             else {
-                toast.success(`${numbers.length} calls initiated!`);
+                toast.success(t('communication_page.success_ai_calls', { count: numbers.length }));
                 setCallMessage('');
                 setSelectedVoterIds(new Set());
                 setSelectAll(false);
@@ -136,14 +142,14 @@ const AIVoiceCall = () => {
         <div className="space-y-6 flex flex-col h-full">
             <div className="flex-none">
                 <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Phone className="w-7 h-7 text-indigo-600" />
+                    <Phone className="w-7 h-7 text-brand-600" />
                     {t('nav.ai_voice_call')}
                 </h1>
-                <p className="text-slate-500 text-sm mt-1">Automatic AI-powered voice calls with custom messages.</p>
+                <p className="text-slate-500 text-sm mt-1">{t('communication_page.ai_call_subtitle')}</p>
 
                 <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
-                    <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>Initiate AI Call</button>
-                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>History</button>
+                    <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.initiate_ai_call')}</button>
+                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
             </div>
 
@@ -152,16 +158,16 @@ const AIVoiceCall = () => {
                     <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                         <div className="relative flex-none">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input type="text" placeholder="Search voters..." value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
+                            <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
                         </div>
 
                         <div className="flex items-center justify-between flex-none">
                             <button onClick={handleSelectAllVisible} className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-brand-700">
                                 {selectAll ? <CheckSquare className="w-5 h-5 text-brand-600" /> : <Square className="w-5 h-5 text-slate-400" />}
-                                Select All ({voters.length})
+                                {t('communication_page.select_all_visible')} ({voters.length})
                             </button>
                             <div className="text-sm font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-lg border border-brand-100">
-                                {selectedVoterIds.size} Selected
+                                {selectedVoterIds.size} {t('communication_page.selected')}
                             </div>
                         </div>
 
@@ -187,14 +193,14 @@ const AIVoiceCall = () => {
                     </div>
 
                     <div className="w-full lg:w-2/5 flex flex-col gap-4">
-                        <div className="ns-card p-5 flex flex-col h-full bg-indigo-50/20 border-indigo-100">
-                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Phone className="w-4 h-4 text-indigo-600" /> Call Settings</h3>
+                        <div className="ns-card p-5 flex flex-col h-full bg-brand-50/20 border-brand-100">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Phone className="w-4 h-4 text-brand-600" /> {t('communication_page.call_settings')}</h3>
 
                             <div className="mb-4">
-                                <label className="block text-xs font-semibold text-slate-600 mb-2">Select Language</label>
+                                <label className="block text-xs font-semibold text-slate-600 mb-2">{t('communication_page.select_call_lang')}</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[{ code: 'mr-IN', label: 'मराठी' }, { code: 'hi-IN', label: 'हिंदी' }, { code: 'en-IN', label: 'English' }].map(l => (
-                                        <button key={l.code} onClick={() => setCallLanguage(l.code)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${callLanguage === l.code ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200'}`}>
+                                        <button key={l.code} onClick={() => setCallLanguage(l.code)} className={`p-2 rounded-lg border text-xs font-bold transition-all ${callLanguage === l.code ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-200'}`}>
                                             {l.label}
                                         </button>
                                     ))}
@@ -202,11 +208,11 @@ const AIVoiceCall = () => {
                             </div>
 
                             <div className="flex-1 flex flex-col">
-                                <label className="block text-xs font-semibold text-slate-600 mb-2">Message to Speak</label>
-                                <textarea value={callMessage} onChange={e => setCallMessage(e.target.value)} className="ns-input flex-1 w-full p-3 resize-none mb-4 min-h-[150px] border-indigo-200 focus:ring-indigo-500" placeholder="Hello, I am calling from..." />
-                                <button onClick={handleAICall} disabled={calling || selectedVoterIds.size === 0} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-100 disabled:opacity-50">
+                                <label className="block text-xs font-semibold text-slate-600 mb-2">{t('communication_page.msg_to_speak')}</label>
+                                <textarea value={callMessage} onChange={e => setCallMessage(e.target.value)} className="ns-input flex-1 w-full p-3 resize-none mb-4 min-h-[150px] border-brand-200 focus:ring-brand-500" placeholder={t('communication_page.msg_placeholder')} />
+                                <button onClick={handleAICall} disabled={calling || selectedVoterIds.size === 0} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-brand-100 disabled:opacity-50">
                                     {calling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
-                                    Start AI Calls
+                                    {t('communication_page.start_ai_calls')}
                                 </button>
                             </div>
                         </div>
@@ -222,9 +228,9 @@ const AIVoiceCall = () => {
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <p className="text-sm font-semibold text-slate-800">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
-                                        <p className="text-xs text-slate-500">{log.recipients} Recipients • {log.sent_count} Calls</p>
+                                        <p className="text-xs text-slate-500">{log.recipients} {t('communication_page.recipients')} • {log.sent_count} {t('communication_page.calls_label')}</p>
                                     </div>
-                                    <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase rounded">AI Voice Call</span>
+                                    <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('nav.ai_voice_call')}</span>
                                 </div>
                                 <p className="text-sm text-slate-600 line-clamp-2">{log.message}</p>
                             </div>

@@ -204,8 +204,8 @@ const SMSCommunication = () => {
                 <p className="text-slate-500 text-sm mt-1">{t('communication_page.subtitle')}</p>
 
                 <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
-                    <button onClick={() => setActiveTab('send')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'send' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>Send SMS</button>
-                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>History</button>
+                    <button onClick={() => setActiveTab('send')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'send' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_send')}</button>
+                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
             </div>
 
@@ -275,7 +275,7 @@ const SMSCommunication = () => {
                                         </div>
                                     ))}
                                     {totalCount !== null && voters.length < totalCount && (
-                                        <button onClick={() => { const next = page + 1; setPage(next); fetchVoters(next, false); }} className="w-full py-3 text-sm text-brand-600 font-medium hover:bg-brand-50 rounded-lg">Load More</button>
+                                        <button onClick={() => { const next = page + 1; setPage(next); fetchVoters(next, false); }} className="w-full py-3 text-sm text-brand-600 font-medium hover:bg-brand-50 rounded-lg">{t('communication_page.load_more')}</button>
                                     )}
                                 </div>
                             )}
@@ -307,16 +307,16 @@ const SMSCommunication = () => {
                     {logsLoading ? (
                         <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                     ) : logs.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500">No message logs found.</div>
+                        <div className="text-center py-10 text-slate-500">{t('communication_page.no_logs')}</div>
                     ) : (
                         logs.map(log => (
                             <div key={log.id} className="ns-card p-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
                                         <p className="text-sm font-semibold text-slate-800">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
-                                        <p className="text-xs text-slate-500">{log.recipients} Recipients • {log.sent_count} Sent</p>
+                                        <p className="text-xs text-slate-500">{log.recipients} {t('communication_page.recipients')} • {log.sent_count} {t('communication_page.sent')}</p>
                                     </div>
-                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase rounded">SMS</span>
+                                    <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('communication_page.channel_sms')}</span>
                                 </div>
                                 <p className="text-sm text-slate-600 line-clamp-2">{log.message}</p>
                             </div>

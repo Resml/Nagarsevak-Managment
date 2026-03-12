@@ -353,9 +353,8 @@ const AppLayout = () => {
   const activeItemRef = useRef<HTMLAnchorElement | null>(null);
   const isInitialMount = useRef(true);
 
-  // Auto-scroll to active item and expand its group
+  // Auto-expand group containing active route on path change
   useEffect(() => {
-    // Auto-expand group containing active route first
     const currentPath = location.pathname;
     navItems.forEach((entry) => {
       if (entry.kind === 'group') {
@@ -369,8 +368,10 @@ const AppLayout = () => {
         }
       }
     });
+  }, [location.pathname, navItems]);
 
-    // Scroll to active item after a brief delay to ensure DOM is ready
+  // Scroll to active item on path change
+  useEffect(() => {
     const scrollTimeout = setTimeout(() => {
       if (activeItemRef.current && navContainerRef.current) {
         activeItemRef.current.scrollIntoView({
@@ -379,10 +380,10 @@ const AppLayout = () => {
         });
         isInitialMount.current = false;
       }
-    }, 100); // Small delay to ensure group expansion completes
+    }, 150); // Small delay to ensure group expansion completes
 
     return () => clearTimeout(scrollTimeout);
-  }, [location.pathname, navItems, openGroups]);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout();

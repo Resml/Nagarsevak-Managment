@@ -61,8 +61,11 @@ const VoiceCall = () => {
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);
-        } catch (err) { console.error(err); } finally { setLoading(false); }
-    }, [tenantId, nameFilter, addressFilter]);
+        } catch (err) { 
+            console.error(err);
+            toast.error(t('communication_page.error_load_voters'));
+        } finally { setLoading(false); }
+    }, [tenantId, nameFilter, addressFilter, t]);
 
     useEffect(() => { fetchVoters(0, true); }, [fetchVoters]);
 
@@ -72,8 +75,11 @@ const VoiceCall = () => {
             const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'call').order('sent_at', { ascending: false }).limit(100);
             if (error) throw error;
             setLogs(data || []);
-        } catch (err) { console.error(err); } finally { setLogsLoading(false); }
-    }, [tenantId]);
+        } catch (err) { 
+            console.error(err);
+            toast.error(t('communication_page.error_load_wa_history')); // Reusing WA history error for general comm history
+        } finally { setLogsLoading(false); }
+    }, [tenantId, t]);
 
     useEffect(() => { if (activeTab === 'history') fetchLogs(); }, [activeTab, fetchLogs]);
 
@@ -84,7 +90,7 @@ const VoiceCall = () => {
         supabase.from('message_logs').insert({
             tenant_id: tenantId,
             channel: 'call',
-            message: 'Manual Voice Call Initiated',
+            message: t('communication_page.manual_call_log'),
             recipients: 1,
             sent_count: 1,
             failed_count: 0,
@@ -96,14 +102,14 @@ const VoiceCall = () => {
         <div className="space-y-6 flex flex-col h-full">
             <div className="flex-none">
                 <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Phone className="w-7 h-7 text-blue-600" />
+                    <Phone className="w-7 h-7 text-brand-600" />
                     {t('nav.voice_call')}
                 </h1>
-                <p className="text-slate-500 text-sm mt-1">Initiate voice calls to voters directly.</p>
+                <p className="text-slate-500 text-sm mt-1">{t('communication_page.voice_subtitle')}</p>
 
                 <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
-                    <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>Make Call</button>
-                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>History</button>
+                    <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.make_call')}</button>
+                    <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
             </div>
 
@@ -112,7 +118,7 @@ const VoiceCall = () => {
                     <div className="flex gap-3 flex-none">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <input type="text" placeholder="Search by name..." value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
+                            <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
                         </div>
                     </div>
 
@@ -122,13 +128,13 @@ const VoiceCall = () => {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {voters.map(voter => (
-                                    <div key={voter.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between group hover:border-blue-200 hover:bg-blue-50/30 transition-all">
+                                    <div key={voter.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between group hover:border-brand-200 hover:bg-brand-50/30 transition-all">
                                         <div>
                                             <h4 className="font-bold text-slate-800">{language === 'mr' ? voter.name_marathi : voter.name_english}</h4>
                                             <p className="text-xs text-slate-500 mt-1">{voter.mobile}</p>
                                         </div>
-                                        <button onClick={() => handleCall(voter.mobile!)} className="mt-4 w-full bg-white border border-slate-200 text-blue-600 font-semibold py-2 rounded-lg shadow-sm group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-all flex items-center justify-center gap-2">
-                                            <Phone className="w-4 h-4" /> Call Now
+                                        <button onClick={() => handleCall(voter.mobile!)} className="mt-4 w-full bg-white border border-slate-200 text-brand-600 font-semibold py-2 rounded-lg shadow-sm group-hover:bg-brand-600 group-hover:text-white group-hover:border-brand-600 transition-all flex items-center justify-center gap-2">
+                                            <Phone className="w-4 h-4" /> {t('communication_page.call_now')}
                                         </button>
                                     </div>
                                 ))}
@@ -147,7 +153,7 @@ const VoiceCall = () => {
                                     <p className="text-sm font-semibold">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
                                     <p className="text-xs text-slate-500">{log.message}</p>
                                 </div>
-                                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold uppercase rounded">Manual Call</span>
+                                <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('communication_page.manual_call')}</span>
                             </div>
                         ))
                     )}
