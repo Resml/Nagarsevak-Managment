@@ -33,9 +33,13 @@ const Login = () => {
             return { enforcedRole: queryMode as any, allowedRoles: [queryMode] };
         }
 
+        // Map specific subdomains like 'amadar' to role 'amdar'
+        let mappedSubdomain = subdomain;
+        if (mappedSubdomain === 'amadar') mappedSubdomain = 'amdar';
+
         // 2. Check if subdomain is a direct role
-        if (roles.includes(subdomain)) {
-            return { enforcedRole: subdomain as any, allowedRoles: [subdomain] };
+        if (roles.includes(mappedSubdomain)) {
+            return { enforcedRole: mappedSubdomain as any, allowedRoles: [mappedSubdomain] };
         }
 
         // 3. Otherwise use tenant config

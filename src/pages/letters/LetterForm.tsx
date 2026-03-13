@@ -6,12 +6,14 @@ import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save, Search, User, Loader2, PlusCircle, Phone, X } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext'; // Import Tenant Context
+import { useAuth } from '../../context/AuthContext';
 import { useFormDraft } from '../../hooks/useFormDraft';
 import type { Voter } from '../../types';
 
 const LetterForm = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant(); // Use Tenant ID
+    const { user } = useAuth();
     const navigate = useNavigate();
     const { id } = useParams();
 
@@ -116,9 +118,24 @@ const LetterForm = () => {
         const fetchTypes = async () => {
             const { data } = await supabase.from('letter_types').select('name, name_marathi, template_content').order('name');
             if (data && data.length > 0) {
-                setTypes(data);
-                // Only set default type if there is no draft type already saved
-                setFormData(prev => ({ ...prev, type: prev.type || data[0].name }));
+                // Filter types based on role: amdar specific templates should only be visible to amdar users
+                const isAmdar = user?.role === 'amdar';
+                const filteredData = data.filter(type => {
+                    const name = (type.name || '').toLowerCase();
+                    const nameMarathi = (type.name_marathi || '').toLowerCase();
+                    const isAmdarTemplate = name.includes('amdar') || nameMarathi.includes('amdar') || nameMarathi.includes('आमदार');
+                    
+                    if (isAmdarTemplate && !isAmdar) return false;
+                    return true;
+                });
+                
+                setTypes(filteredData);
+                // Only set default type if there is no draft type already saved, and picking from filtered list
+                if (filteredData.length > 0) {
+                    setFormData(prev => ({ ...prev, type: prev.type || filteredData[0].name }));
+                } else {
+                    setFormData(prev => ({ ...prev, type: prev.type || '' }));
+                }
             } else {
                 // Fallback defaults if DB empty
                 const defaults = [
@@ -131,7 +148,7 @@ const LetterForm = () => {
             }
         };
         fetchTypes();
-    }, []);
+    }, [user]);
 
     // Extract dynamic fields when type changes
     useEffect(() => {

@@ -1799,7 +1799,7 @@ export const translations = {
             govt_schemes: "सरकारी योजना",
             letters: "पत्र व्यवहार - आवक - जावक",
             task_management: "दैनंदिनी",
-            work_history: "विकासाची कामे केलेली",
+            work_history: "विकासाची केलेली कामे",
             whatsapp_bot: "व्हॉट्सअॅप बॉट",
             social_analytics: "सोशल मीडिया",
             events_invites: "कार्यक्रम आणि आमंत्रणे",
