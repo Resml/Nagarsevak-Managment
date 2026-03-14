@@ -6,6 +6,9 @@ import { useTenant } from '../../context/TenantContext';
 import { type Voter } from '../../types';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import VoiceCallTutorial from '../../components/tutorial/VoiceCallTutorial';
 
 const PAGE_SIZE = 50;
 
@@ -22,6 +25,7 @@ interface MessageLog {
 const VoiceCall = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
 
     const [activeTab, setActiveTab] = useState<'call' | 'history'>('call');
     const [voters, setVoters] = useState<Voter[]>([]);
@@ -61,7 +65,7 @@ const VoiceCall = () => {
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);
-        } catch (err) { 
+        } catch (err) {
             console.error(err);
             toast.error(t('communication_page.error_load_voters'));
         } finally { setLoading(false); }
@@ -75,7 +79,7 @@ const VoiceCall = () => {
             const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'call').order('sent_at', { ascending: false }).limit(100);
             if (error) throw error;
             setLogs(data || []);
-        } catch (err) { 
+        } catch (err) {
             console.error(err);
             toast.error(t('communication_page.error_load_wa_history')); // Reusing WA history error for general comm history
         } finally { setLogsLoading(false); }
@@ -101,13 +105,27 @@ const VoiceCall = () => {
     return (
         <div className="space-y-6 flex flex-col h-full">
             <div className="flex-none">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Phone className="w-7 h-7 text-brand-600" />
-                    {t('nav.voice_call')}
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">{t('communication_page.voice_subtitle')}</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="tutorial-voice-header">
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <Phone className="w-7 h-7 text-brand-600" />
+                            {t('nav.voice_call')}
+                        </h1>
+                        <p className="text-slate-500 text-sm mt-1">{t('communication_page.voice_subtitle')}</p>
+                    </div>
 
-                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn ns-btn-secondary tutorial-voice-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                        >
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            {language === 'mr' ? 'मदत' : 'Help'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit tutorial-voice-tabs">
                     <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.make_call')}</button>
                     <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
@@ -115,7 +133,7 @@ const VoiceCall = () => {
 
             {activeTab === 'call' ? (
                 <>
-                    <div className="flex gap-3 flex-none">
+                    <div className="flex gap-3 flex-none tutorial-voice-search">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
@@ -126,7 +144,7 @@ const VoiceCall = () => {
                         {loading ? (
                             <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 tutorial-voice-list">
                                 {voters.map(voter => (
                                     <div key={voter.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between group hover:border-brand-200 hover:bg-brand-50/30 transition-all">
                                         <div>
@@ -143,7 +161,7 @@ const VoiceCall = () => {
                     </div>
                 </>
             ) : (
-                <div className="flex-1 overflow-y-auto space-y-3">
+                <div className="flex-1 overflow-y-auto space-y-3 tutorial-voice-history">
                     {logsLoading ? (
                         <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                     ) : (
@@ -159,6 +177,7 @@ const VoiceCall = () => {
                     )}
                 </div>
             )}
+            <VoiceCallTutorial />
         </div>
     );
 };

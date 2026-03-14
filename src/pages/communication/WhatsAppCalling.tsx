@@ -6,6 +6,9 @@ import { useTenant } from '../../context/TenantContext';
 import { type Voter } from '../../types';
 import { toast } from 'sonner';
 import { io } from 'socket.io-client';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import WhatsAppCallingTutorial from '../../components/tutorial/WhatsAppCallingTutorial';
 
 const PAGE_SIZE = 50;
 const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
@@ -13,6 +16,7 @@ const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_
 const WhatsAppCalling = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [activeTab, setActiveTab] = useState<'call' | 'history'>('call');
     const [voters, setVoters] = useState<Voter[]>([]);
     const [loading, setLoading] = useState(false);
@@ -70,27 +74,36 @@ const WhatsAppCalling = () => {
 
     return (
         <div className="space-y-6 flex flex-col h-full">
-            <div className="flex justify-between items-start flex-none">
-                <div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-none">
+                <div className="tutorial-wacall-header">
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Smartphone className="w-7 h-7 text-brand-600" />
                         {t('nav.whatsapp_call')}
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">{t('communication_page.wa_call_subtitle')}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${botStatus === 'connected' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                    <div className={`w-2 h-2 rounded-full ${botStatus === 'connected' ? 'bg-green-600' : 'bg-red-600'}`} />
-                    {botStatus === 'connected' ? t('communication_page.bot_active') : t('communication_page.bot_inactive')}
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn ns-btn-secondary tutorial-wacall-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                    >
+                        <HelpCircle className="w-4 h-4 mr-2" />
+                        {language === 'mr' ? 'मदत' : 'Help'}
+                    </button>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 tutorial-wacall-status ${botStatus === 'connected' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                        <div className={`w-2 h-2 rounded-full ${botStatus === 'connected' ? 'bg-green-600' : 'bg-red-600'}`} />
+                        {botStatus === 'connected' ? t('communication_page.bot_active') : t('communication_page.bot_inactive')}
+                    </div>
                 </div>
             </div>
 
-            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit">
+            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit tutorial-wacall-tabs">
                 <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.make_call')}</button>
                 <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
             </div>
 
             {activeTab === 'call' ? (
-                <div className="flex-1 ns-card overflow-y-auto p-4">
+                <div className="flex-1 ns-card overflow-y-auto p-4 tutorial-wacall-list">
                     {loading ? (
                         <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                     ) : (
@@ -115,6 +128,7 @@ const WhatsAppCalling = () => {
                     <p>{t('communication_page.wa_call_history_hint')}</p>
                 </div>
             )}
+            <WhatsAppCallingTutorial />
         </div>
     );
 };

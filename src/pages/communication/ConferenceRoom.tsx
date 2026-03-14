@@ -4,6 +4,9 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { toast } from 'sonner';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import ConferenceTutorial from '../../components/tutorial/ConferenceTutorial';
 
 interface Room {
     id: string;
@@ -14,8 +17,9 @@ interface Room {
 }
 
 const ConferenceRoom = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [activeTab, setActiveTab] = useState<'rooms' | 'history'>('rooms');
     const [loading, setLoading] = useState(false);
     const [rooms, setRooms] = useState<Room[]>([]);
@@ -30,26 +34,35 @@ const ConferenceRoom = () => {
 
     return (
         <div className="space-y-6 flex flex-col h-full">
-            <div className="flex justify-between items-start flex-none">
-                <div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-none">
+                <div className="tutorial-conference-header">
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Users className="w-7 h-7 text-brand-600" />
                         {t('nav.conference_room')}
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">{t('communication_page.conf_subtitle')}</p>
                 </div>
-                <button className="ns-btn-primary flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> {t('communication_page.create_new_room')}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn ns-btn-secondary tutorial-conference-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                    >
+                        <HelpCircle className="w-4 h-4 mr-2" />
+                        {language === 'mr' ? 'मदत' : 'Help'}
+                    </button>
+                    <button className="ns-btn-primary flex items-center gap-2 tutorial-conference-create">
+                        <Plus className="w-4 h-4" /> {t('communication_page.create_new_room')}
+                    </button>
+                </div>
             </div>
 
-            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit">
+            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 flex-none w-fit tutorial-conference-tabs">
                 <button onClick={() => setActiveTab('rooms')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'rooms' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.active_rooms')}</button>
                 <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.past_meetings')}</button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-conference-list">
                     {rooms.map(room => (
                         <div key={room.id} className="ns-card p-6 flex flex-col justify-between hover:border-brand-200 transition-all border-l-4 border-l-brand-500">
                             <div>
@@ -81,6 +94,7 @@ const ConferenceRoom = () => {
                     </div>
                 )}
             </div>
+            <ConferenceTutorial />
         </div>
     );
 };
