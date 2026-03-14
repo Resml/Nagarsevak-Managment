@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import clsx from 'clsx';
 import { toast } from 'sonner';
 import { Plus, Image as ImageIcon, Newspaper, Trash2, X, Upload, Search, Edit2 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { GalleryService } from '../../services/galleryService';
 import { type GalleryItem, type GalleryCategory } from '../../types';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import GalleryTutorial from '../../components/tutorial/GalleryTutorial';
+import { HelpCircle } from 'lucide-react';
 
 const Gallery = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const [items, setItems] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -146,31 +151,40 @@ const Gallery = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-gallery-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('gallery.title')}</h1>
                         <p className="text-slate-500">{t('gallery.subtitle')}</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditingId(null);
-                            setFormData({
-                                title: '',
-                                category: 'Event',
-                                imageUrl: '',
-                                description: '',
-                                date: new Date().toISOString().split('T')[0]
-                            });
-                            setIsModalOpen(true);
-                        }}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>{t('gallery.add_photo')}</span>
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-gallery-help shadow-sm"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                setEditingId(null);
+                                setFormData({
+                                    title: '',
+                                    category: 'Event',
+                                    imageUrl: '',
+                                    description: '',
+                                    date: new Date().toISOString().split('T')[0]
+                                });
+                                setIsModalOpen(true);
+                            }}
+                            className="ns-btn-primary tutorial-gallery-add"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>{t('gallery.add_photo')}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="ns-card p-4 flex flex-col sm:flex-row gap-4">
+                <div className="ns-card p-4 flex flex-col sm:flex-row gap-4 tutorial-gallery-filters">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
@@ -218,9 +232,9 @@ const Gallery = () => {
                     ))}
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {getFilteredItems().map(item => (
-                        <div key={item.id} className="ns-card overflow-hidden group">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-gallery-list">
+                    {getFilteredItems().map((item, index) => (
+                        <div key={item.id} className={clsx("ns-card overflow-hidden group", index === 0 && "tutorial-gallery-card")}>
                             <div className="relative aspect-video bg-slate-100 overflow-hidden">
                                 <img
                                     src={item.imageUrl}
@@ -421,6 +435,7 @@ const Gallery = () => {
                     </div>
                 )
             }
+            <GalleryTutorial />
         </div >
     );
 };

@@ -5,6 +5,9 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { supabase } from '../../services/supabaseClient';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import SocialTutorial from '../../components/tutorial/SocialTutorial';
+import { HelpCircle } from 'lucide-react';
 
 // Mock Data for demonstration
 const MOCK_POSTS = [
@@ -51,8 +54,9 @@ const MOCK_POSTS = [
 ];
 
 const SocialDashboard = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant(); // Added tenantId
+    const { startTutorial } = useTutorial();
     const [posts, setPosts] = useState<typeof MOCK_POSTS>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [platformFilter, setPlatformFilter] = useState<'All' | 'Facebook' | 'Instagram'>('All');
@@ -108,24 +112,33 @@ const SocialDashboard = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
+                <div className="tutorial-social-header">
                     <h1 className="text-2xl font-bold text-slate-900">{t('social.title')}</h1>
                     <p className="text-slate-500">{t('social.subtitle')}</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg transition-colors font-medium shadow-sm">
-                        <Facebook className="w-4 h-4" />
-                        {t('social.connect_fb')}
+                <div className="flex flex-col md:flex-row items-center gap-3">
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-social-help shadow-sm"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg transition-opacity font-medium shadow-sm">
-                        <Instagram className="w-4 h-4" />
-                        {t('social.connect_ig')}
-                    </button>
+                    <div className="flex gap-2 tutorial-social-connect">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg transition-colors font-medium shadow-sm">
+                            <Facebook className="w-4 h-4" />
+                            {t('social.connect_fb')}
+                        </button>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg transition-opacity font-medium shadow-sm">
+                            <Instagram className="w-4 h-4" />
+                            {t('social.connect_ig')}
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 tutorial-social-stats">
                 <div className="ns-card p-4 flex items-center gap-4">
                     <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
                         <Eye className="w-6 h-6" />
@@ -166,7 +179,7 @@ const SocialDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Posts Feed */}
-                <div className="lg:col-span-2 space-y-4">
+                <div className="lg:col-span-2 space-y-4 tutorial-social-posts">
                     <div className="flex items-center justify-between">
                         <h2 className="text-lg font-bold text-slate-900">{t('social.all_posts')}</h2>
                         <div className="flex gap-2">
@@ -265,7 +278,7 @@ const SocialDashboard = () => {
                         <p className="text-sm text-brand-50">Consistent posting has increased engagement significantly.</p>
                     </div>
 
-                    <div className="ns-card p-5">
+                    <div className="ns-card p-5 tutorial-social-birthdays">
                         <div className="flex items-center gap-2 mb-4">
                             <Users className="w-5 h-5 text-brand-600" />
                             <h3 className="font-bold text-slate-800">{t('social.birthdays')}</h3>
@@ -294,6 +307,7 @@ const SocialDashboard = () => {
                     </div>
                 </div>
             </div>
+            <SocialTutorial />
         </div>
     );
 };
