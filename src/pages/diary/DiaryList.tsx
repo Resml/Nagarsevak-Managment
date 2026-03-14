@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2 } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useTutorial } from '../../context/TutorialContext';
+import DiaryTutorial from '../../components/tutorial/DiaryTutorial';
 import { DiaryService } from '../../services/diaryService';
 import { AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -11,6 +13,7 @@ import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types
 const DiaryList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [entries, setEntries] = useState<DiaryEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -174,22 +177,31 @@ const DiaryList = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-diary-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('diary.title')}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-slate-500">{t('diary.subtitle')}</p>
                             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                {t('diary.found')}: {filteredEntries.length}
+                                {t('diary.found') || 'Found'}: {filteredEntries.length}
                             </span>
                         </div>
                     </div>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>{t('diary.add_entry')}</span>
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-diary-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="ns-btn-primary"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>{t('diary.add_entry')}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
@@ -556,6 +568,7 @@ const DiaryList = () => {
                     </div>
                 </div>
             )}
+            <DiaryTutorial />
         </div>
     );
 };

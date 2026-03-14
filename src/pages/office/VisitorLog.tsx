@@ -2,7 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
-import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X, Loader2, User, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import VisitorTutorial from '../../components/tutorial/VisitorTutorial';
+import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X, Loader2, User, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import type { Voter } from '../../types';
@@ -30,6 +32,7 @@ interface Visitor {
 const VisitorLog = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [formData, setFormData] = useState({
@@ -382,16 +385,23 @@ const VisitorLog = () => {
     return (
         <>
             <div className="space-y-6">
-                <div className="sticky top-0 z-30 bg-slate-50 py-2">
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <div className="sticky top-0 z-30 bg-slate-50 py-2 flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2 tutorial-visitor-header">
                         <Users className="w-7 h-7 text-brand-700" /> {t('office.visitor_log')}
                     </h1>
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-visitor-help shadow-sm"
+                    >
+                        <HelpCircle className="w-5 h-5 text-brand-600" />
+                        <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                    </button>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-6">
                     {/* Check-in Form */}
                     <div className="md:col-span-1">
-                        <div className="ns-card p-6 sticky top-24">
+                        <div className="ns-card p-6 sticky top-24 tutorial-visitor-form">
                             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-slate-500" /> {editingId ? t('office.edit_visitor') : t('office.new_visitor_title')}
                             </h2>
@@ -409,8 +419,8 @@ const VisitorLog = () => {
                                         <button
                                             type="button"
                                             onClick={() => setIsVoterSearchOpen(true)}
-                                            className="mt-1 px-3 py-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 transition-colors border border-brand-200"
                                             title={t('complaints.search_voter') || "Search form Voter List"}
+                                            className="mt-1 px-3 py-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 transition-colors border border-brand-200 tutorial-visitor-voter-search"
                                         >
                                             <Search className="w-5 h-5" />
                                         </button>
@@ -560,7 +570,7 @@ const VisitorLog = () => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                                    <div className="md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 tutorial-visitor-view">
                                         <button
                                             onClick={() => setViewMode('grid')}
                                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
@@ -591,7 +601,7 @@ const VisitorLog = () => {
                                         <input
                                             type="text"
                                             placeholder={t('office.search_placeholder')}
-                                            className="ns-input pl-9 text-sm w-full"
+                                            className="ns-input pl-9 text-sm w-full tutorial-visitor-search"
                                             value={searchQuery}
                                             onChange={e => setSearchQuery(e.target.value)}
                                         />
@@ -603,7 +613,7 @@ const VisitorLog = () => {
                                         <input
                                             type="text"
                                             placeholder={t('office.filter_area')}
-                                            className="ns-input pl-9 text-sm w-full"
+                                            className="ns-input pl-9 text-sm w-full tutorial-visitor-area"
                                             value={areaSearch}
                                             onChange={e => {
                                                 setAreaSearch(e.target.value);
@@ -638,7 +648,7 @@ const VisitorLog = () => {
                                         <input
                                             type="text"
                                             placeholder={t('office.filter_date')}
-                                            className="ns-input pl-9 text-sm w-full"
+                                            className="ns-input pl-9 text-sm w-full tutorial-visitor-date"
                                             value={dateSearch}
                                             onChange={e => {
                                                 setDateSearch(e.target.value);
@@ -669,7 +679,7 @@ const VisitorLog = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 p-4 overflow-y-auto flex-1 h-[600px] md:h-auto space-y-3">
+                            <div className="bg-slate-50 p-4 overflow-y-auto flex-1 h-[600px] md:h-auto space-y-3 tutorial-visitor-list">
                                 {viewMode === 'report' ? (
                                     <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                                         <div className="overflow-x-auto">
@@ -849,7 +859,7 @@ const VisitorLog = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div >
 
                 {/* Delete Confirmation Modal */}
                 {
@@ -1052,6 +1062,7 @@ const VisitorLog = () => {
                     )
                 }
             </div>
+            <VisitorTutorial />
         </>
     );
 };

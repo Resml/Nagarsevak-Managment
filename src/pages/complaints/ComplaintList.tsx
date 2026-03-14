@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
 
 const ComplaintList = () => {
     const { t, language } = useLanguage();
@@ -20,6 +22,7 @@ const ComplaintList = () => {
         (location.state as any)?.tab === 'Personal Help' ? 'Personal Help' : 'Complaints'
     );
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const { startTutorial } = useTutorial();
 
     // Derived state for translation - simplified and more robust matching AppLayout logic
     const isTranslated = language === 'mr';
@@ -326,8 +329,9 @@ const ComplaintList = () => {
 
     return (
         <div className="space-y-6">
+            <ComplaintTutorial />
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 tutorial-complaint-header">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
                             {isTranslated ? (
@@ -346,9 +350,16 @@ const ComplaintList = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-complaint-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
                         <Link
                             to={activeTab === 'Personal Help' ? '/dashboard/personal-requests/new' : '/dashboard/complaints/new'}
-                            className="ns-btn-primary"
+                            className="ns-btn-primary tutorial-complaint-new"
                         >
                             <Plus className="w-4 h-4" />
                             <span>
@@ -365,7 +376,7 @@ const ComplaintList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end mb-2">
+                <div className="flex justify-end mb-2 tutorial-complaint-view">
                     <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -388,7 +399,7 @@ const ComplaintList = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="border-b border-gray-200 overflow-x-auto">
+                <div className="border-b border-gray-200 overflow-x-auto tutorial-complaint-tabs">
                     <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
                         <button
                             onClick={() => setActiveTab('Complaints')}
@@ -419,7 +430,7 @@ const ComplaintList = () => {
 
 
                 {/* Search and Filters */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-4 tutorial-complaint-search">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* General Search */}
                         <div className="relative">
@@ -513,7 +524,7 @@ const ComplaintList = () => {
                     </div>
 
                     {/* Status Filters */}
-                    <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide">
+                    <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide tutorial-complaint-status">
                         {(activeTab === 'Personal Help'
                             ? ['All', 'Pending', 'Resolved']
                             : ['All', 'Pending', 'Assigned', 'InProgress', 'Resolved']
@@ -550,7 +561,7 @@ const ComplaintList = () => {
             </div>
 
             {viewMode === 'grid' ? (
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full tutorial-complaint-list">
                     {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => {
                         return (
                             <div
@@ -631,7 +642,7 @@ const ComplaintList = () => {
                     )}
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden tutorial-complaint-list">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
                         <h3 className="font-semibold text-gray-800">
                             {isTranslated ? <span className="notranslate">अहवाल दृश्य</span> : 'Report View'} ({filteredComplaints.length})

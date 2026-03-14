@@ -16,9 +16,12 @@ import {
     Plus,
     Search,
     UserPlus,
+    HelpCircle,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import { DashboardTutorial } from '../../components/tutorial/DashboardTutorial';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -34,6 +37,7 @@ const Dashboard = () => {
     });
     const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null }>>([]);
     const [dailyBriefing, setDailyBriefing] = useState<string>('');
+    const { startTutorial } = useTutorial();
 
     // Reload briefing when language changes
     useEffect(() => {
@@ -114,8 +118,9 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-8">
+            <DashboardTutorial />
             {/* Header Section */}
-            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 tutorial-header">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">{t('dashboard.title')}</h1>
@@ -126,7 +131,14 @@ const Dashboard = () => {
                             <RefreshCw className="w-4 h-4" />
                             <span className="hidden sm:inline">{t('dashboard.refresh')}</span>
                         </button>
-                        <button className="ns-btn-primary" onClick={() => navigate('/dashboard/complaints/new')}>
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-dashboard-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button className="ns-btn-primary tutorial-new-request" onClick={() => navigate('/dashboard/complaints/new')}>
                             <Plus className="w-4 h-4" /> {t('complaints.new_request') || 'New Request'}
                         </button>
                     </div>
@@ -134,7 +146,7 @@ const Dashboard = () => {
             </div>
 
             {/* Quick actions */}
-            <div className="ns-card p-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+            <div className="ns-card p-4 flex flex-col sm:flex-row gap-3 sm:items-center tutorial-quick-actions">
                 <div className="text-sm text-slate-600">
                     {t('dashboard.quick_actions')}
                 </div>
@@ -156,7 +168,7 @@ const Dashboard = () => {
 
             {/* AI Insight Banner */}
             {(dailyBriefing || stats.total === 0) && (
-                <div className="ns-card p-6">
+                <div className="ns-card p-6 tutorial-ai-insight">
                     <div className="flex gap-3 items-start">
                         <div className="p-2 bg-brand-50 rounded-xl border border-brand-100">
                             <Sparkles className="w-5 h-5 text-brand-700" />
@@ -172,7 +184,7 @@ const Dashboard = () => {
             )}
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 tutorial-stats">
                 <StatCard title={t('dashboard.total_citizens')} value={stats.voters} icon={Users} accent="border-sky-100 bg-sky-50 text-sky-700" />
                 <StatCard title={t('dashboard.pending_issues')} value={stats.pending} icon={AlertCircle} accent="border-red-100 bg-red-50 text-red-700" />
                 <StatCard title={t('dashboard.in_progress')} value={stats.inProgress} icon={Activity} accent="border-amber-100 bg-amber-50 text-amber-700" />
@@ -183,7 +195,7 @@ const Dashboard = () => {
             <div className="grid lg:grid-cols-3 gap-8">
 
                 {/* Visual Chart Area (Simple CSS Bars) */}
-                <div className="lg:col-span-2 ns-card p-6">
+                <div className="lg:col-span-2 ns-card p-6 tutorial-status-chart">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-lg font-bold text-slate-900">{t('dashboard.status_overview')}</h2>
                         <button onClick={() => navigate('/dashboard/complaints')} className="text-sm text-brand-700 font-semibold hover:underline">
@@ -232,7 +244,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Recent Activity Feed */}
-                <div className="ns-card p-6 overflow-hidden flex flex-col">
+                <div className="ns-card p-6 overflow-hidden flex flex-col tutorial-live-activity">
                     <h2 className="text-lg font-bold text-slate-900 mb-4">{t('dashboard.live_activity')}</h2>
                     <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[400px]">
                         {recentActivity.map((activity) => (
