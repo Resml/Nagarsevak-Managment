@@ -196,7 +196,7 @@ const DiaryList = () => {
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
-                            className="ns-btn-primary"
+                            className="ns-btn-primary tutorial-diary-add"
                         >
                             <Plus className="w-5 h-5" />
                             <span>{t('diary.add_entry')}</span>
@@ -206,7 +206,7 @@ const DiaryList = () => {
 
                 {/* Filters */}
                 <div className="ns-card p-4 flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
+                    <div className="relative flex-1 tutorial-diary-search">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
@@ -217,7 +217,7 @@ const DiaryList = () => {
                         />
                     </div>
 
-                    <div className="relative flex-1">
+                    <div className="relative flex-1 tutorial-diary-area">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
@@ -253,7 +253,7 @@ const DiaryList = () => {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 tutorial-diary-filter">
                         <Filter className="text-slate-400 w-5 h-5" />
                         <select
                             className="ns-input"
@@ -272,7 +272,7 @@ const DiaryList = () => {
             </div>
 
             {/* List */}
-            <div className="space-y-4">
+            <div className="space-y-4 tutorial-diary-list">
                 {loading ? (
                     <>
                         {[1, 2, 3].map((i) => (

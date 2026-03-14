@@ -17,8 +17,10 @@
 
 import { useState, useCallback } from 'react';
 import { GoogleMap, LoadScript, Polygon, Marker } from '@react-google-maps/api';
-import { X, MapPin, Navigation, Share2, Map as MapIcon } from 'lucide-react';
+import { X, MapPin, Navigation, Share2, Map as MapIcon, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTutorial } from '../../context/TutorialContext';
+import WardMapTutorial from '../../components/tutorial/WardMapTutorial';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 
@@ -44,7 +46,8 @@ interface PlaceDetails {
 }
 
 const WardMap = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [isTracing, setIsTracing] = useState(false);
     const [customBoundary, setCustomBoundary] = useState<{ lat: number; lng: number }[]>([]);
@@ -184,19 +187,29 @@ const WardMap = () => {
 
     return (
         <div className="flex flex-col h-[calc(100vh-10rem)] bg-slate-50">
-            {/* Header Section */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <MapIcon className="w-8 h-8 text-brand-600" />
-                    {t('ward_map.title') || 'Ward Map'}
-                </h1>
-                <p className="text-slate-500 mt-1">
-                    {t('ward_map.subtitle') || 'View geographic details of the ward'}
-                </p>
+            <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 tutorial-map-header">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <MapIcon className="w-8 h-8 text-brand-600" />
+                        {t('ward_map.title') || 'Ward Map'}
+                    </h1>
+                    <p className="text-slate-500 mt-1">
+                        {t('ward_map.subtitle') || 'View geographic details of the ward'}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-map-help shadow-sm"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Map Container */}
-            <div className="flex-1 w-full relative rounded-2xl overflow-hidden shadow-sm border border-slate-200">
+            <div className="flex-1 w-full relative rounded-2xl overflow-hidden shadow-sm border border-slate-200 tutorial-map-container">
                 <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY} libraries={['places']}>
                     {/* <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
                         <div className="pointer-events-auto flex flex-col gap-2">
@@ -390,6 +403,7 @@ const WardMap = () => {
                     )}
                 </LoadScript>
             </div>
+            <WardMapTutorial />
         </div>
     );
 };
