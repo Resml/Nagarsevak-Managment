@@ -12,6 +12,9 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { AIService } from '../../services/aiService';
 import type { Voter } from '../../types';
 import { VoterService } from '../../services/voterService';
+import { useTutorial } from '../../context/TutorialContext';
+import EventTutorial from '../../components/tutorial/EventTutorial';
+import { HelpCircle } from 'lucide-react';
 
 interface Event {
     id: string;
@@ -386,7 +389,8 @@ const InviteModal = ({ event, tenantId, onClose }: InviteModalProps) => {
 // ─── Main Component ────────────────────────────────────────────────────────────
 const EventManagement = () => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const { user } = useAuth();
     const { tenantId } = useTenant();
     const isAdmin = user?.role === 'admin';
@@ -536,7 +540,7 @@ const EventManagement = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-event-header">
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             {t('events.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
@@ -545,15 +549,24 @@ const EventManagement = () => {
                         </h1>
                         <p className="text-sm text-slate-500">{t('events.subtitle')}</p>
                     </div>
-                    {isAdmin && (
-                        <button onClick={() => setIsCreateModalOpen(true)} className="ns-btn-primary">
-                            <Plus className="w-4 h-4" /> {t('events.create_btn')}
+                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-event-help shadow-sm"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
                         </button>
-                    )}
+                        {isAdmin && (
+                            <button onClick={() => setIsCreateModalOpen(true)} className="ns-btn-primary tutorial-event-create">
+                                <Plus className="w-4 h-4" /> {t('events.create_btn')}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 tutorial-event-filters">
                     <div className="md:col-span-6 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input type="text" placeholder={t('events.search_placeholder')} className="ns-input pl-10 w-full" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -595,7 +608,7 @@ const EventManagement = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-2 tutorial-event-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -641,8 +654,8 @@ const EventManagement = () => {
                     ))}
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid gap-4">
-                    {filteredEvents.map((event) => (
+                <div className="grid gap-4 tutorial-event-list">
+                    {filteredEvents.map((event, index) => (
                         <div
                             key={event.id}
                             onClick={() => navigate(`/dashboard/events/${event.id}`)}
@@ -681,7 +694,10 @@ const EventManagement = () => {
                                         e.stopPropagation();
                                         setInviteEvent(event);
                                     }}
-                                    className="flex-1 md:w-40 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-sm font-medium text-sm"
+                                    className={clsx(
+                                        "flex-1 md:w-40 bg-green-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition shadow-sm font-medium text-sm",
+                                        index === 0 && "tutorial-event-invite"
+                                    )}
                                 >
                                     <Send className="w-4 h-4" />
                                     {t('events.send_invites')}
@@ -854,6 +870,7 @@ const EventManagement = () => {
                     </div>
                 </div>
             )}
+            <EventTutorial />
         </div>
     );
 };

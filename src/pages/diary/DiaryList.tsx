@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useTutorial } from '../../context/TutorialContext';
+import DiaryTutorial from '../../components/tutorial/DiaryTutorial';
 import { DiaryService } from '../../services/diaryService';
 import { AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -12,6 +14,7 @@ import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types
 const DiaryList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [entries, setEntries] = useState<DiaryEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -180,7 +183,7 @@ const DiaryList = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-diary-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('diary.title')}</h1>
                         <div className="flex items-center gap-2 mt-2">
                             <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
@@ -210,18 +213,27 @@ const DiaryList = () => {
                             )}
                         </div>
                     </div>
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>{t('diary.add_entry')}</span>
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-diary-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="ns-btn-primary tutorial-diary-add"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>{t('diary.add_entry')}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
                 <div className="ns-card p-4 flex flex-col sm:flex-row gap-4">
-                    <div className="relative flex-1">
+                    <div className="relative flex-1 tutorial-diary-search">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
@@ -232,7 +244,7 @@ const DiaryList = () => {
                         />
                     </div>
 
-                    <div className="relative flex-1">
+                    <div className="relative flex-1 tutorial-diary-area">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
@@ -268,7 +280,7 @@ const DiaryList = () => {
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 tutorial-diary-filter">
                         <Filter className="text-slate-400 w-5 h-5" />
                         <select
                             className="ns-input"
@@ -665,6 +677,7 @@ const DiaryList = () => {
                     </div>
                 </div>
             )}
+            <DiaryTutorial />
         </div>
     );
 };

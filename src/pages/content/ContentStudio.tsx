@@ -5,13 +5,17 @@ import { useLanguage } from '../../context/LanguageContext';
 import { AIService, type ContentType, type ToneType, type LanguageType } from '../../services/aiService';
 import { AIHistoryService } from '../../services/aiHistoryService';
 import { type AIHistoryItem } from '../../types';
+import { useTutorial } from '../../context/TutorialContext';
+import ContentStudioTutorial from '../../components/tutorial/ContentStudioTutorial';
+import { HelpCircle } from 'lucide-react';
 
 const ContentStudio = () => {
-    const { t } = useLanguage();
+    const { t, language: uiLanguage } = useLanguage();
+    const { startTutorial } = useTutorial();
     const [topic, setTopic] = useState('');
     const [contentType, setContentType] = useState<ContentType>('Speech');
     const [tone, setTone] = useState<ToneType>('Enthusiastic');
-    const [language, setLanguage] = useState<LanguageType>('Marathi');
+    const [aiLanguage, setAiLanguage] = useState<LanguageType>('Marathi');
 
     const [generatedContent, setGeneratedContent] = useState('');
     const [loading, setLoading] = useState(false);
@@ -42,7 +46,7 @@ const ContentStudio = () => {
 
         setLoading(true);
         try {
-            const content = await AIService.generateContent(topic, contentType, tone, language);
+            const content = await AIService.generateContent(topic, contentType, tone, aiLanguage);
             setGeneratedContent(content);
             setCopied(false);
 
@@ -51,7 +55,7 @@ const ContentStudio = () => {
                 title: topic,
                 contentType: contentType,
                 tone: tone,
-                language: language,
+                language: aiLanguage,
                 generatedContent: content,
                 messages: [] // Placeholder for future chat context
             });
@@ -70,7 +74,7 @@ const ContentStudio = () => {
         setTopic(item.title);
         setContentType(item.contentType as ContentType);
         setTone((item.tone as ToneType) || 'Formal');
-        setLanguage((item.language as LanguageType) || 'English');
+        setAiLanguage((item.language as LanguageType) || 'English');
         setGeneratedContent(item.generatedContent);
     };
 
@@ -85,7 +89,7 @@ const ContentStudio = () => {
             {/* Main Content Area */}
             <div className="flex-1 overflow-y-auto pr-2">
                 <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 tutorial-ai-header">
                         <div className="p-3 bg-brand-50 border border-brand-100 rounded-xl">
                             <Wand2 className="w-7 h-7 text-brand-700" />
                         </div>
@@ -95,12 +99,20 @@ const ContentStudio = () => {
                         </div>
                     </div>
 
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-ai-help shadow-sm"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>{uiLanguage === 'mr' ? 'मदत' : 'Help'}</span>
+                    </button>
+
                     {/* Mobile History Toggle (Visible on small screens if we implement response design later, currently desktop focused) */}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
                     {/* Input Section */}
-                    <div className="ns-card p-6 h-fit">
+                    <div className="ns-card p-6 h-fit tutorial-ai-input">
                         <h2 className="text-lg font-semibold mb-4 flex items-center">
                             <PenTool className="w-5 h-5 mr-2 text-slate-500" />
                             {t('content_studio.title')}
@@ -155,8 +167,8 @@ const ContentStudio = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('content_studio.language_label')}</label>
                                 <select
                                     className="ns-input"
-                                    value={language}
-                                    onChange={(e) => setLanguage(e.target.value as LanguageType)}
+                                    value={aiLanguage}
+                                    onChange={(e) => setAiLanguage(e.target.value as LanguageType)}
                                 >
                                     <option value="Marathi">मराठी (Marathi)</option>
                                     <option value="English">English</option>
@@ -167,7 +179,7 @@ const ContentStudio = () => {
                             <button
                                 type="submit"
                                 disabled={loading || !topic}
-                                className="ns-btn-primary w-full justify-center py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="ns-btn-primary w-full justify-center py-2.5 disabled:opacity-50 disabled:cursor-not-allowed tutorial-ai-generate"
                             >
                                 {loading ? (
                                     <>
@@ -185,7 +197,7 @@ const ContentStudio = () => {
                     </div>
 
                     {/* Output Section */}
-                    <div className="ns-card p-6 flex flex-col min-h-[400px]">
+                    <div className="ns-card p-6 flex flex-col min-h-[400px] tutorial-ai-output">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-semibold text-slate-900">{t('content_studio.result_title')}</h2>
                             {generatedContent && (
@@ -225,7 +237,7 @@ const ContentStudio = () => {
             </div>
 
             {/* History Sidebar - Desktop */}
-            <div className="w-full lg:w-80 ns-card overflow-hidden flex flex-col lg:h-full min-h-[400px]">
+            <div className="w-full lg:w-80 ns-card overflow-hidden flex flex-col lg:h-full min-h-[400px] tutorial-ai-history">
                 <div className="p-4 border-b border-slate-200/70 bg-slate-50 space-y-3">
                     <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-slate-700 flex items-center">
@@ -316,6 +328,7 @@ const ContentStudio = () => {
                     )}
                 </div>
             </div>
+            <ContentStudioTutorial />
         </div>
     );
 };

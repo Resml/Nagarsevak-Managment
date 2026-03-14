@@ -6,6 +6,9 @@ import { useTenant } from '../../context/TenantContext';
 import { type Voter } from '../../types';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import SMSTutorial from '../../components/tutorial/SMSTutorial';
 
 const PAGE_SIZE = 50;
 
@@ -22,6 +25,7 @@ interface MessageLog {
 const SMSCommunication = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
 
     const [activeTab, setActiveTab] = useState<'send' | 'history'>('send');
     const [voters, setVoters] = useState<Voter[]>([]);
@@ -197,13 +201,27 @@ const SMSCommunication = () => {
     return (
         <div className="space-y-6 flex flex-col h-full">
             <div className="flex-none">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <MessageSquare className="w-7 h-7 text-brand-600" />
-                    {t('nav.send_sms')}
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">{t('communication_page.subtitle')}</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="tutorial-sms-header">
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <MessageSquare className="w-7 h-7 text-brand-600" />
+                            {t('nav.send_sms')}
+                        </h1>
+                        <p className="text-slate-500 text-sm mt-1">{t('communication_page.subtitle')}</p>
+                    </div>
 
-                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn ns-btn-secondary tutorial-sms-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                        >
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            {language === 'mr' ? 'मदत' : 'Help'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit tutorial-sms-tabs">
                     <button onClick={() => setActiveTab('send')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'send' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_send')}</button>
                     <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
@@ -211,7 +229,7 @@ const SMSCommunication = () => {
 
             {activeTab === 'send' ? (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 flex-none">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3 flex-none tutorial-sms-filters">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
@@ -253,7 +271,7 @@ const SMSCommunication = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
+                    <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden tutorial-sms-list">
                         <div className="flex-1 ns-card overflow-y-auto p-2">
                             {loading ? (
                                 <div className="flex items-center justify-center h-40"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
@@ -281,7 +299,7 @@ const SMSCommunication = () => {
                             )}
                         </div>
 
-                        <div className="w-full lg:w-1/3 flex flex-col gap-4">
+                        <div className="w-full lg:w-1/3 flex flex-col gap-4 tutorial-sms-compose">
                             <div className="ns-card p-4 flex flex-col h-full">
                                 <h3 className="font-bold text-slate-800 mb-4">{t('communication_page.compose_message')}</h3>
                                 <textarea
@@ -293,7 +311,7 @@ const SMSCommunication = () => {
                                 <button
                                     onClick={handleSendSMS}
                                     disabled={sending || selectedVoterIds.size === 0}
-                                    className="w-full ns-btn-primary py-3 flex items-center justify-center gap-2"
+                                    className="w-full ns-btn-primary py-3 flex items-center justify-center gap-2 tutorial-sms-send"
                                 >
                                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                     {t('nav.send_sms')}
@@ -324,6 +342,7 @@ const SMSCommunication = () => {
                     )}
                 </div>
             )}
+            <SMSTutorial />
         </div>
     );
 };

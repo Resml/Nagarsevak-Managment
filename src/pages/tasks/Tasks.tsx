@@ -10,8 +10,9 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 
 const Tasks = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [tasks, setTasks] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
@@ -351,7 +352,7 @@ const Tasks = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-task-header">
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             {t('tasks.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
@@ -360,15 +361,22 @@ const Tasks = () => {
                         </h1>
                         <p className="text-sm text-slate-500">{t('tasks.subtitle')}</p>
                     </div>
-                    <div className="flex gap-2">
-                        <label className={`ns-btn-ghost border border-slate-200 cursor-pointer ${isScanning ? 'opacity-70 pointer-events-none' : ''}`}>
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-task-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <label className={`ns-btn-ghost border border-slate-200 cursor-pointer tutorial-task-scan ${isScanning ? 'opacity-70 pointer-events-none' : ''}`}>
                             {isScanning ? <Sparkles className="w-4 h-4 animate-spin text-brand-600" /> : <Camera className="w-4 h-4" />}
                             <span className="text-sm font-medium">{isScanning ? t('tasks.scanning') : t('tasks.scan_doc')}</span>
                             <input type="file" accept="image/*" className="hidden" onChange={handleScan} disabled={isScanning} />
                         </label>
                         <button
                             onClick={() => setShowForm(true)}
-                            className="ns-btn-primary"
+                            className="ns-btn-primary tutorial-task-add"
                         >
                             <Plus className="w-4 h-4" /> {t('tasks.new_task')}
                         </button>
@@ -385,7 +393,7 @@ const Tasks = () => {
                             placeholder={t('work_history.search_placeholder') || "Search tasks..."}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="ns-input pl-10 w-full"
+                            className="ns-input pl-10 w-full tutorial-task-search"
                         />
                     </div>
 
@@ -394,7 +402,7 @@ const Tasks = () => {
                         <input
                             type="text"
                             placeholder={t('work_history.search_area') || "Search Area"}
-                            className="ns-input w-full bg-white shadow-sm"
+                            className="ns-input w-full bg-white shadow-sm tutorial-task-area"
                             value={areaSearch}
                             onFocus={() => { setShowAreaDropdown(true); setShowDateDropdown(false); }}
                             onChange={(e) => setAreaSearch(e.target.value)}
@@ -426,7 +434,7 @@ const Tasks = () => {
                         <input
                             type="text"
                             placeholder={t('work_history.filter_date') || "Filter Date"}
-                            className="ns-input w-full bg-white shadow-sm"
+                            className="ns-input w-full bg-white shadow-sm tutorial-task-date"
                             value={dateSearch}
                             onFocus={() => { setShowDateDropdown(true); setShowAreaDropdown(false); }}
                             onChange={(e) => setDateSearch(e.target.value)}
@@ -781,6 +789,13 @@ const Tasks = () => {
                                                     {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                                 </span>
                                             </div>
+                                            <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
+                                        </div>
+                                        <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse mb-2 mt-4" />
+                                        <div className="h-4 w-1/2 bg-slate-200 rounded animate-pulse mb-4" />
+                                        <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center">
+                                            <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+                                            <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
                                         </div>
 
                                         <p className="text-slate-600 text-sm mb-4">
@@ -871,6 +886,22 @@ const Tasks = () => {
                                     )}>
                                         {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                     </span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleEdit(task)}
+                                            className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                            title={t('common.edit')}
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClick(task)}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title={t('common.delete')}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                                 
                                 <p className="text-slate-600 text-sm mb-4 line-clamp-3">
@@ -964,8 +995,9 @@ const Tasks = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
+            <TaskTutorial />
         </div>
     );
 };

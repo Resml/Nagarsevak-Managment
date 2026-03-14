@@ -8,11 +8,15 @@ import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import TeamTutorial from '../../components/tutorial/TeamTutorial';
 
 
 const StaffList = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -289,29 +293,40 @@ const StaffList = () => {
                 <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{t('staff.title')}</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <p className="text-sm text-gray-500">{t('staff.subtitle')}</p>
-                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                    {t('staff.list.found')}: {filteredStaff.length}
-                                </span>
-                                {filteredStaff.length !== staffInCurrentTab.length && (
-                                    <span className="text-xs text-slate-400">
-                                        of {staffInCurrentTab.length}
+                            <div className="tutorial-team-header">
+                                <h1 className="text-2xl font-bold text-gray-900">{t('staff.title')}</h1>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <p className="text-sm text-gray-500">{t('staff.subtitle')}</p>
+                                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                                        {t('staff.list.found')}: {filteredStaff.length}
                                     </span>
-                                )}
+                                    {filteredStaff.length !== staffInCurrentTab.length && (
+                                        <span className="text-xs text-slate-400">
+                                            of {staffInCurrentTab.length}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="ns-btn-primary"
-                        >
-                            <Plus className="w-4 h-4" /> {t('staff.add_staff')}
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <button
+                                onClick={startTutorial}
+                                className="ns-btn ns-btn-secondary tutorial-team-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                            >
+                                <HelpCircle className="w-4 h-4 mr-2" />
+                                {language === 'mr' ? 'मदत' : 'Help'}
+                            </button>
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="ns-btn-primary tutorial-team-add"
+                            >
+                                <Plus className="w-4 h-4 mr-2" /> {t('staff.add_staff')}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto">
+                    <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto tutorial-team-tabs">
                         {[
                             { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
                             { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
@@ -334,7 +349,7 @@ const StaffList = () => {
                 </div>
 
                 {/* Search Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 tutorial-team-filters">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -384,7 +399,7 @@ const StaffList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end mt-2">
+                <div className="flex justify-end mt-2 tutorial-team-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -411,7 +426,7 @@ const StaffList = () => {
                         {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-xl"></div>)}
                     </div>
                 ) : viewMode === 'grid' ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-team-list">
                         {filteredStaff.length > 0 ? (
                             filteredStaff.map((member) => (
                                 <div
@@ -801,6 +816,7 @@ const StaffList = () => {
                     </div>
                 </div>
             )}
+            <TeamTutorial />
         </>
     );
 };

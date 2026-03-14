@@ -3,13 +3,15 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
 import IncomingLetterUpload from './IncomingLetterUpload';
+import { useTutorial } from '../../context/TutorialContext';
+import { LetterTutorial } from '../../components/tutorial/LetterTutorial';
 
 interface LetterRequest {
     id: string;
@@ -41,6 +43,7 @@ const LetterDashboard = () => {
     const { t, language } = useLanguage(); // Get language
     const { tenantId, tenant } = useTenant();
     const navigate = useNavigate();
+    const { startTutorial } = useTutorial();
     const [requests, setRequests] = useState<LetterRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedRequest, setSelectedRequest] = useState<LetterRequest | null>(null);
@@ -555,8 +558,9 @@ const LetterDashboard = () => {
 
     return (
         <div className="space-y-6">
+            <LetterTutorial />
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 tutorial-letter-header">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             <FileText className="w-7 h-7 text-brand-700" /> {t('letters.title')}
@@ -565,7 +569,14 @@ const LetterDashboard = () => {
                             </span>
                         </h1>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 tutorial-letter-actions">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-letter-help shadow-sm"
+                        >
+                            <HelpCircle className="w-5 h-5 text-brand-600" />
+                            <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
                         {activeTab === 'outgoing' ? (
                             <>
                                 <Link
@@ -597,7 +608,7 @@ const LetterDashboard = () => {
 
                 {/* Tab Navigation & View Mode Toggle */}
                 <div className="flex justify-between items-center border-b border-slate-200">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 tutorial-letter-tabs">
                         <button
                             onClick={() => {
                                 setActiveTab('outgoing');
@@ -627,7 +638,7 @@ const LetterDashboard = () => {
                     </div>
 
                     {/* View Mode Toggle */}
-                    <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2 mb-2">
+                    <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1 rounded-lg border border-slate-200 mr-2 mb-2 tutorial-letter-view">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
@@ -652,7 +663,7 @@ const LetterDashboard = () => {
                 </div>
 
                 {/* Search & Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 tutorial-letter-search">
                     {/* Main Search */}
                     <div className="md:col-span-6 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -814,7 +825,7 @@ const LetterDashboard = () => {
             ) : (
                 <div className="grid md:grid-cols-3 gap-6">
                     {/* List */}
-                    <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto">
+                    <div className="ns-card overflow-hidden md:col-span-1 h-[calc(100vh-12rem)] overflow-y-auto tutorial-letter-list">
                         {activeTab === 'outgoing' ? (
                             <>
                                 {loading ? (
@@ -965,7 +976,7 @@ const LetterDashboard = () => {
                     </div>
 
                     {/* Preview */}
-                    <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col">
+                    <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col tutorial-letter-preview">
                         {activeTab === 'outgoing' && selectedRequest ? (
                             <>
                                 <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">

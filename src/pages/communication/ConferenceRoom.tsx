@@ -236,6 +236,7 @@ const InviteVoterModal = ({ meeting, tenantId, onClose, onSent }: InviteVoterMod
                     </div>
                 </div>
             </div>
+            <ConferenceTutorial />
         </div>
     );
 };

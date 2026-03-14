@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import WardProblemsTutorial from '../../components/tutorial/WardProblemsTutorial';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
@@ -13,6 +15,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 const WardWiseProblem = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
@@ -285,7 +288,7 @@ const WardWiseProblem = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-ward-header">
                         <h1 className="text-2xl font-bold text-gray-900">{t('nav.ward_problem')}</h1>
                         <div className="flex items-center gap-2 mt-1">
                             <p className="text-sm text-gray-500">{t('complaints.subtitle')}</p>
@@ -295,7 +298,7 @@ const WardWiseProblem = () => {
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 shadow-sm">
+                        <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-gray-200 shadow-sm tutorial-ward-view">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}
@@ -317,13 +320,22 @@ const WardWiseProblem = () => {
                                 </button>
                             )}
                         </div>
-                        <Link
-                            to="/dashboard/complaints/new?type=SelfIdentified"
-                            className="ns-btn-primary"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>{t('complaints.new_request')}</span>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={startTutorial}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-ward-help shadow-sm"
+                            >
+                                <HelpCircle className="w-4 h-4" />
+                                <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                            </button>
+                            <Link
+                                to="/dashboard/complaints/new?type=SelfIdentified"
+                                className="ns-btn-primary tutorial-ward-new"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>{t('complaints.new_request')}</span>
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
@@ -331,7 +343,7 @@ const WardWiseProblem = () => {
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* General Search */}
-                        <div className="relative">
+                        <div className="relative tutorial-ward-search">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
@@ -343,7 +355,7 @@ const WardWiseProblem = () => {
                         </div>
 
                         {/* Area Search with Dropdown */}
-                        <div className="relative">
+                        <div className="relative tutorial-ward-area">
                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
@@ -381,7 +393,7 @@ const WardWiseProblem = () => {
                         </div>
 
                         {/* Date Search with Dropdown */}
-                        <div className="relative">
+                        <div className="relative tutorial-ward-date">
                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                             <input
                                 type="text"
@@ -420,7 +432,7 @@ const WardWiseProblem = () => {
                     </div>
 
                     {/* Status Filters */}
-                    <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide">
+                    <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide tutorial-ward-status">
                         {['All', 'Pending', 'Assigned', 'InProgress', 'Resolved'].map((status) => (
                             <button
                                 key={status}
@@ -445,7 +457,7 @@ const WardWiseProblem = () => {
             </div>
 
             {viewMode === 'report' ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden tutorial-ward-list">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
@@ -514,7 +526,7 @@ const WardWiseProblem = () => {
                     </div>
                 </div>
             ) : (
-                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full tutorial-ward-list">
                     {filteredComplaints.length > 0 ? filteredComplaints.map((complaint) => {
                         return (
                             <div
@@ -591,6 +603,7 @@ const WardWiseProblem = () => {
                     )}
                 </div>
             )}
+            <WardProblemsTutorial />
         </div >
     );
 };

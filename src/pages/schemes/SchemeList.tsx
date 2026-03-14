@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper, LayoutGrid, Printer } from 'lucide-react';
+import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper, LayoutGrid, Printer, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useTutorial } from '../../context/TutorialContext';
+import GovtSchemesTutorial from '../../components/tutorial/GovtSchemesTutorial';
 import SchemeMatcher from './SchemeMatcher';
 import SchemeApplicationModal from './SchemeApplicationModal';
 import SchemeBeneficiaryList from './SchemeBeneficiaryList';
@@ -24,6 +26,7 @@ interface Scheme {
 const SchemeList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant(); // Added tenantId
+    const { startTutorial } = useTutorial();
     const navigate = useNavigate();
     const [schemes, setSchemes] = useState<Scheme[]>([]);
     const [loading, setLoading] = useState(true);
@@ -165,15 +168,22 @@ const SchemeList = () => {
                         <div className="p-2 bg-brand-50 rounded-xl border border-brand-100 hidden sm:flex">
                             <Newspaper className="w-6 h-6 text-brand-700" />
                         </div>
-                        <div className="border-l-4 border-brand-600 pl-3 md:border-l-0 md:pl-0">
+                        <div className="border-l-4 border-brand-600 pl-3 md:border-l-0 md:pl-0 tutorial-schemes-header">
                             <h1 className="text-2xl font-bold text-slate-900 leading-tight">{t('schemes.title')}</h1>
                             <p className="text-sm text-slate-500 mt-0.5">{t('schemes.subtitle')}</p>
                         </div>
                     </div>
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-schemes-help shadow-sm"
+                    >
+                        <HelpCircle className="w-5 h-5 text-brand-600" />
+                        <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
+                    </button>
                 </div>
 
                 {/* Tab Navigation */}
-                <div className="flex gap-2 border-b border-slate-200">
+                <div className="flex gap-2 border-b border-slate-200 tutorial-schemes-tabs">
                     <button
                         onClick={() => setShowApplications(false)}
                         className={`px-6 py-3 font-semibold transition border-b-2 ${!showApplications
@@ -199,7 +209,7 @@ const SchemeList = () => {
                     <div className="space-y-4">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             {/* Category Filters */}
-                            <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide w-full sm:w-auto sm:flex-1 sm:mr-4">
+                            <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide w-full sm:w-auto sm:flex-1 sm:mr-4 tutorial-schemes-categories">
                                 {categories.map((cat) => (
                                     <button
                                         key={cat.id}
@@ -225,7 +235,7 @@ const SchemeList = () => {
                                             setShowMatcher(true);
                                         }
                                     }}
-                                    className={`flex-1 sm:flex-none ${filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}`}
+                                    className={`flex-1 sm:flex-none tutorial-schemes-matcher ${filteredSchemes ? "ns-btn-ghost border border-slate-200" : "ns-btn-primary"}`}
                                 >
                                     {filteredSchemes ? (
                                         <>
@@ -239,7 +249,7 @@ const SchemeList = () => {
                                 </button>
                                 <Link
                                     to="/dashboard/schemes/new"
-                                    className="ns-btn-primary flex-1 sm:flex-none"
+                                    className="ns-btn-primary flex-1 sm:flex-none tutorial-schemes-add"
                                 >
                                     <Plus className="w-4 h-4" /> {t('schemes.add_scheme')}
                                 </Link>
@@ -247,7 +257,7 @@ const SchemeList = () => {
                         </div>
 
                         {/* Search Bar */}
-                        <div className="relative w-full">
+                        <div className="relative w-full tutorial-schemes-search">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
                                 type="text"
@@ -263,7 +273,7 @@ const SchemeList = () => {
 
             {/* View Mode Toggle */}
             {!showApplications && (
-                <div className="flex justify-end">
+                <div className="flex justify-end tutorial-schemes-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -344,7 +354,7 @@ const SchemeList = () => {
                     </div>
                 </div>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 tutorial-schemes-list">
                     {schemesToDisplay.map((scheme) => (
                         <div key={scheme.id} className="ns-card overflow-hidden hover:shadow-md transition">
                             <div
@@ -488,6 +498,7 @@ const SchemeList = () => {
                     </div>
                 </div>
             )}
+            <GovtSchemesTutorial />
         </div>
     );
 };

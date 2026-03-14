@@ -6,6 +6,9 @@ import { useTenant } from '../../context/TenantContext';
 import { type Voter } from '../../types';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { HelpCircle } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import AIVoiceTutorial from '../../components/tutorial/AIVoiceTutorial';
 
 const PAGE_SIZE = 50;
 
@@ -22,6 +25,7 @@ interface MessageLog {
 const AIVoiceCall = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
 
     const [activeTab, setActiveTab] = useState<'call' | 'history'>('call');
     const [voters, setVoters] = useState<Voter[]>([]);
@@ -69,7 +73,7 @@ const AIVoiceCall = () => {
             }));
             if (reset) setVoters(mappedVoters);
             else setVoters(prev => [...prev, ...mappedVoters]);
-        } catch (err) { 
+        } catch (err) {
             console.error(err);
             toast.error(t('communication_page.error_load_voters'));
         } finally { setLoading(false); }
@@ -83,7 +87,7 @@ const AIVoiceCall = () => {
             const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'call').order('sent_at', { ascending: false }).limit(100);
             if (error) throw error;
             setLogs(data || []);
-        } catch (err) { 
+        } catch (err) {
             console.error(err);
             toast.error(t('communication_page.error_load_wa_history'));
         } finally { setLogsLoading(false); }
@@ -141,13 +145,27 @@ const AIVoiceCall = () => {
     return (
         <div className="space-y-6 flex flex-col h-full">
             <div className="flex-none">
-                <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <Phone className="w-7 h-7 text-brand-600" />
-                    {t('nav.ai_voice_call')}
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">{t('communication_page.ai_call_subtitle')}</p>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div className="tutorial-aivoice-header">
+                        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <Phone className="w-7 h-7 text-brand-600" />
+                            {t('nav.ai_voice_call')}
+                        </h1>
+                        <p className="text-slate-500 text-sm mt-1">{t('communication_page.ai_call_subtitle')}</p>
+                    </div>
 
-                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn ns-btn-secondary tutorial-aivoice-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                        >
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            {language === 'mr' ? 'मदत' : 'Help'}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 mt-4 w-fit tutorial-aivoice-tabs">
                     <button onClick={() => setActiveTab('call')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'call' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.initiate_ai_call')}</button>
                     <button onClick={() => setActiveTab('history')} className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'history' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}>{t('communication_page.tabs_history')}</button>
                 </div>
@@ -156,7 +174,7 @@ const AIVoiceCall = () => {
             {activeTab === 'call' ? (
                 <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden">
                     <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                        <div className="relative flex-none">
+                        <div className="relative flex-none tutorial-aivoice-search">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                             <input type="text" placeholder={t('communication_page.search_placeholder')} value={nameFilter} onChange={e => setNameFilter(e.target.value)} className="ns-input pl-9 w-full text-sm" />
                         </div>
@@ -171,7 +189,7 @@ const AIVoiceCall = () => {
                             </div>
                         </div>
 
-                        <div className="flex-1 ns-card overflow-y-auto p-2">
+                        <div className="flex-1 ns-card overflow-y-auto p-2 tutorial-aivoice-list">
                             {loading ? (
                                 <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
                             ) : (
@@ -192,7 +210,7 @@ const AIVoiceCall = () => {
                         </div>
                     </div>
 
-                    <div className="w-full lg:w-2/5 flex flex-col gap-4">
+                    <div className="w-full lg:w-2/5 flex flex-col gap-4 tutorial-aivoice-settings">
                         <div className="ns-card p-5 flex flex-col h-full bg-brand-50/20 border-brand-100">
                             <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2"><Phone className="w-4 h-4 text-brand-600" /> {t('communication_page.call_settings')}</h3>
 
@@ -207,10 +225,10 @@ const AIVoiceCall = () => {
                                 </div>
                             </div>
 
-                            <div className="flex-1 flex flex-col">
+                            <div className="flex-1 flex flex-col tutorial-aivoice-compose">
                                 <label className="block text-xs font-semibold text-slate-600 mb-2">{t('communication_page.msg_to_speak')}</label>
                                 <textarea value={callMessage} onChange={e => setCallMessage(e.target.value)} className="ns-input flex-1 w-full p-3 resize-none mb-4 min-h-[150px] border-brand-200 focus:ring-brand-500" placeholder={t('communication_page.msg_placeholder')} />
-                                <button onClick={handleAICall} disabled={calling || selectedVoterIds.size === 0} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-brand-100 disabled:opacity-50">
+                                <button onClick={handleAICall} disabled={calling || selectedVoterIds.size === 0} className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-brand-100 disabled:opacity-50 tutorial-aivoice-start">
                                     {calling ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
                                     {t('communication_page.start_ai_calls')}
                                 </button>
@@ -238,6 +256,7 @@ const AIVoiceCall = () => {
                     )}
                 </div>
             )}
+            <AIVoiceTutorial />
         </div>
     );
 };

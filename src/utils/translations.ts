@@ -247,7 +247,7 @@ export const translations = {
             daily_work: "Daily Work Section",
             complaints: "Complaints & Grievances",
             letters: "Letters & Applications",
-            tasks: "Dairy",
+            tasks: "Diary",
             visitors: "Visitor Log",
             schemes: "Government Schemes",
             ward_info: "Ward Information Section",
@@ -286,7 +286,7 @@ export const translations = {
             complaints: "Requests & Complaints",
             govt_schemes: "Govt Schemes",
             letters: "Letters",
-            task_management: "Dairy",
+            task_management: "Diary",
             work_history: "Work History",
             whatsapp_bot: "WhatsApp Bot",
             social_analytics: "Social Analytics",
@@ -1154,7 +1154,7 @@ export const translations = {
             }
         },
         tasks: {
-            title: "Dairy",
+            title: "Diary",
             subtitle: "Assign and track team tasks",
             new_task: "New Task",
             scan_doc: "Scan Doc",

@@ -4,9 +4,13 @@ import { ResultService } from '../../services/resultService';
 import { type ElectionResult } from '../../types';
 
 import { useLanguage } from '../../context/LanguageContext';
+import { useTutorial } from '../../context/TutorialContext';
+import ResultTutorial from '../../components/tutorial/ResultTutorial';
+import { HelpCircle } from 'lucide-react';
 
 const ResultAnalysis = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const [ward, setWard] = useState('');
     const [availableWards, setAvailableWards] = useState<string[]>([]);
     const [results, setResults] = useState<ElectionResult[]>([]);
@@ -89,13 +93,20 @@ const ResultAnalysis = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                    <div>
+                    <div className="tutorial-result-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('election.title')}</h1>
                         <p className="text-slate-600">{t('election.performance_report')} <span className="font-semibold text-brand-700">{selectedCandidate}</span></p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-result-help shadow-sm"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-result-ward">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('voters.ward')}:</span>
                             <select
                                 className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 min-w-[140px]"
@@ -108,7 +119,7 @@ const ResultAnalysis = () => {
                             </select>
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-result-candidate">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('election.analyze_for')}</span>
                             <select
                                 className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 min-w-[200px]"
@@ -125,7 +136,7 @@ const ResultAnalysis = () => {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 tutorial-result-stats">
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
                         <span className="text-slate-500 text-sm">{t('election.total_votes')}</span>
@@ -164,7 +175,7 @@ const ResultAnalysis = () => {
             </div>
 
             {/* Detailed Table */}
-            <div className="ns-card overflow-hidden">
+            <div className="ns-card overflow-hidden tutorial-result-detailed">
                 <div className="p-6 border-b border-slate-200/70">
                     <h2 className="text-lg font-semibold text-slate-900">{t('election.booth_performance')}</h2>
                 </div>
@@ -218,6 +229,7 @@ const ResultAnalysis = () => {
                     </table>
                 </div>
             </div>
+            <ResultTutorial />
         </div>
     );
 };

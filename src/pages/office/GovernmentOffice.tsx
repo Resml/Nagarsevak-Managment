@@ -7,11 +7,15 @@ import { Search, MapPin, Phone, User, Building2, ExternalLink, X, Wrench, Briefc
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
+import { useTutorial } from '../../context/TutorialContext';
+import GovOfficeTutorial from '../../components/tutorial/GovOfficeTutorial';
+import { HelpCircle } from 'lucide-react';
 import clsx from 'clsx';
 
 const GovernmentOfficePage = () => {
-    const { t } = useLanguage();
-    const { tenantId } = useTenant(); // Added tenantId
+    const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [activeTab, setActiveTab] = useState<'Offices' | 'Cooperative'>('Offices');
 
     // Offices State
@@ -202,34 +206,43 @@ const GovernmentOfficePage = () => {
             {/* Sticky Header Section */}
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 -mx-4 px-4 sm:-mx-8 sm:px-8 border-b border-slate-200/60 mb-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
+                    <div className="tutorial-office-header">
                         <h1 className="text-2xl font-bold text-slate-900">
                             {activeTab === 'Offices' ? t('government_office.title') : t('government_office.employee_title')}
                         </h1>
                         <p className="text-slate-500">{t('government_office.subtitle')}</p>
                     </div>
-                    {activeTab === 'Offices' ? (
+                    <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setIsOfficeModalOpen(true)}
-                            className="ns-btn-primary w-full md:w-auto justify-center"
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-office-help shadow-sm"
                         >
-                            <Plus className="w-4 h-4" />
-                            <span>{t('government_office.add_office')}</span>
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
                         </button>
-                    ) : (
-                        <button
-                            onClick={() => setIsStaffModalOpen(true)}
-                            className="ns-btn-primary w-full md:w-auto justify-center"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>{t('staff.add_staff')}</span>
-                        </button>
-                    )}
+                        {activeTab === 'Offices' ? (
+                            <button
+                                onClick={() => setIsOfficeModalOpen(true)}
+                                className="ns-btn-primary w-full md:w-auto justify-center tutorial-office-add"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>{t('government_office.add_office')}</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setIsStaffModalOpen(true)}
+                                className="ns-btn-primary w-full md:w-auto justify-center tutorial-office-add"
+                            >
+                                <Plus className="w-4 h-4" />
+                                <span>{t('staff.add_staff')}</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
+            <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto shadow-sm tutorial-office-tabs">
                 {[
                     { id: 'Offices', label: t('government_office.title'), icon: Building2 },
                     { id: 'Cooperative', label: t('staff.tabs.cooperative'), icon: Wrench }
@@ -251,7 +264,7 @@ const GovernmentOfficePage = () => {
             </div>
 
             {/* Search */}
-            <div className="relative">
+            <div className="relative tutorial-office-search">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input
                     type="text"
@@ -272,7 +285,7 @@ const GovernmentOfficePage = () => {
                             ))}
                         </div>
                     ) : filteredOffices.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-office-list">
                             {filteredOffices.map((office) => (
                                 <div key={office.id} className="ns-card hover:shadow-md transition-shadow duration-200 flex flex-col h-full">
                                     <div className="p-6 flex-1 space-y-4">
@@ -343,7 +356,7 @@ const GovernmentOfficePage = () => {
                             {[1, 2, 3].map(i => <div key={i} className="h-48 bg-gray-100 animate-pulse rounded-xl"></div>)}
                         </div>
                     ) : filteredStaff.length > 0 ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-office-list">
                             {filteredStaff.map((member) => (
                                 <div key={member.id} className="ns-card p-5 hover:shadow-md transition-shadow group relative">
                                     <div className="flex justify-between items-start mb-4">
@@ -623,6 +636,7 @@ const GovernmentOfficePage = () => {
                     </div>
                 </div>
             )}
+            <GovOfficeTutorial />
         </div>
     );
 };

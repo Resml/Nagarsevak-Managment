@@ -5,11 +5,15 @@ import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { BudgetService } from '../../services/budgetService';
 import { type BudgetRecord } from '../../types';
+import { useTutorial } from '../../context/TutorialContext';
+import WardBudgetTutorial from '../../components/tutorial/WardBudgetTutorial';
+import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const BudgetDashboard = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
+    const { startTutorial } = useTutorial();
     const [stats, setStats] = useState({
         total: 0,
         utilized: 0,
@@ -172,29 +176,38 @@ const BudgetDashboard = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-budget-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('budget.title')}</h1>
                         <p className="text-slate-500">{t('budget.subtitle')}</p>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200">
-                        <Calendar className="w-4 h-4 text-slate-400 ml-1" />
-                        <select
-                            className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700"
-                            value={year}
-                            onChange={(e) => setYear(e.target.value)}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-budget-year">
+                            <Calendar className="w-4 h-4 text-slate-400 ml-1" />
+                            <select
+                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700"
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                            >
+                                <option value="2024-2025">FY 2024-2025</option>
+                                <option value="2023-2024">FY 2023-2024</option>
+                                <option value="2022-2023">FY 2022-2023</option>
+                            </select>
+                        </div>
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-budget-help shadow-sm"
                         >
-                            <option value="2024-2025">FY 2024-2025</option>
-                            <option value="2023-2024">FY 2023-2024</option>
-                            <option value="2022-2023">FY 2022-2023</option>
-                        </select>
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
                     </div>
                 </div>
             </div>
 
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="ns-card p-6">
+                <div className="ns-card p-6 tutorial-budget-allocated">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-medium text-slate-500">{t('budget.allocated')}</h3>
                         <div className="p-2 bg-sky-50 border border-sky-100 rounded-xl text-sky-700">
@@ -208,7 +221,7 @@ const BudgetDashboard = () => {
                     </p>
                 </div>
 
-                <div className="ns-card p-6">
+                <div className="ns-card p-6 tutorial-budget-utilized">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-medium text-slate-500">{t('budget.utilized')}</h3>
                         <div className="p-2 bg-brand-50 border border-brand-100 rounded-xl text-brand-700">
@@ -225,7 +238,7 @@ const BudgetDashboard = () => {
                     <p className="text-xs text-slate-500 mt-1">{utilizationPercentage.toFixed(1)}% utilized</p>
                 </div>
 
-                <div className="ns-card p-6">
+                <div className="ns-card p-6 tutorial-budget-remaining">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-sm font-medium text-slate-500">{t('budget.remaining')}</h3>
                         <div className="p-2 bg-green-50 border border-green-100 rounded-xl text-green-700">
@@ -239,7 +252,7 @@ const BudgetDashboard = () => {
 
             {/* Search and Filter Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="relative">
+                <div className="relative tutorial-budget-search">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                     <input
                         type="text"
@@ -282,12 +295,12 @@ const BudgetDashboard = () => {
             </div>
 
             {/* Budget Heads */}
-            <div className="ns-card">
+            <div className="ns-card tutorial-budget-table">
                 <div className="p-6 border-b border-slate-200/70 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-slate-900">{t('budget.budget_heads')}</h2>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="ns-btn-primary"
+                        className="ns-btn-primary tutorial-budget-add"
                     >
                         <Plus className="w-4 h-4" />
                         <span>{t('budget.add_allocation')}</span>
@@ -538,6 +551,7 @@ const BudgetDashboard = () => {
                     </div>
                 </div>
             )}
+            <WardBudgetTutorial />
         </div>
     );
 };

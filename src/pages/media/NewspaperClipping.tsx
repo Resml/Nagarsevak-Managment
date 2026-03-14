@@ -5,9 +5,13 @@ import { useLanguage } from '../../context/LanguageContext';
 import { GalleryService } from '../../services/galleryService';
 import { type GalleryItem, type GalleryCategory } from '../../types';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import NewspaperTutorial from '../../components/tutorial/NewspaperTutorial';
+import { HelpCircle } from 'lucide-react';
 
 const NewspaperClipping = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const [activeSection, setActiveSection] = useState<'positive' | 'negative'>('positive');
     const [items, setItems] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -147,32 +151,41 @@ const NewspaperClipping = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
+                <div className="tutorial-newspaper-header">
                     <h1 className="text-2xl font-bold text-slate-900">{t('newspaper.title')}</h1>
                     <p className="text-slate-500">{t('newspaper.subtitle')}</p>
                 </div>
-                <button
-                    onClick={() => {
-                        setEditingId(null);
-                        setFormData({
-                            title: '',
-                            category: 'Newspaper',
-                            sentiment: activeSection,
-                            imageUrl: '',
-                            description: '',
-                            date: new Date().toISOString().split('T')[0]
-                        });
-                        setIsModalOpen(true);
-                    }}
-                    className="ns-btn-primary"
-                >
-                    <Plus className="w-5 h-5" />
-                    <span>{t('newspaper.add_clipping')}</span>
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <button
+                        onClick={startTutorial}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-newspaper-help shadow-sm"
+                    >
+                        <HelpCircle className="w-4 h-4" />
+                        <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingId(null);
+                            setFormData({
+                                title: '',
+                                category: 'Newspaper',
+                                sentiment: activeSection,
+                                imageUrl: '',
+                                description: '',
+                                date: new Date().toISOString().split('T')[0]
+                            });
+                            setIsModalOpen(true);
+                        }}
+                        className="ns-btn-primary w-full sm:w-auto tutorial-newspaper-add"
+                    >
+                        <Plus className="w-5 h-5" />
+                        <span>{t('newspaper.add_clipping')}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Sections */}
-            <div className="flex space-x-4 border-b border-slate-200">
+            <div className="flex space-x-4 border-b border-slate-200 tutorial-newspaper-sections">
                 <button
                     onClick={() => setActiveSection('positive')}
                     className={`pb-4 px-2 font-medium text-sm transition-colors relative ${activeSection === 'positive'
@@ -194,7 +207,7 @@ const NewspaperClipping = () => {
             </div>
 
             {/* Filters */}
-            <div className="ns-card p-4 flex flex-col sm:flex-row gap-4">
+            <div className="ns-card p-4 flex flex-col sm:flex-row gap-4 tutorial-newspaper-filters">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                     <input
@@ -225,7 +238,7 @@ const NewspaperClipping = () => {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex justify-end">
+            <div className="flex justify-end tutorial-newspaper-view">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                     <button
                         onClick={() => setViewMode('grid')}
@@ -260,7 +273,7 @@ const NewspaperClipping = () => {
                     ))}
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-newspaper-list">
                     {getFilteredItems().map(item => (
                         <div key={item.id} className="ns-card overflow-hidden group">
                             <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
@@ -324,7 +337,7 @@ const NewspaperClipping = () => {
                     )}
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden tutorial-newspaper-list">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
                         <h3 className="font-semibold text-slate-800">
                             {t('newspaper.title')} - {t('common.report')} ({getFilteredItems().length})
@@ -538,6 +551,7 @@ const NewspaperClipping = () => {
                     </div>
                 )
             }
+            <NewspaperTutorial />
         </div >
     );
 };

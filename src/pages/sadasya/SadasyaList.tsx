@@ -10,6 +10,9 @@ import { supabase } from '../../services/supabaseClient';
 import { format } from 'date-fns';
 import { mr } from '../../utils/marathiLocale';
 import SadasyaProfile from './SadasyaProfile';
+import { useTutorial } from '../../context/TutorialContext';
+import SadasyaTutorial from '../../components/tutorial/SadasyaTutorial';
+import { HelpCircle } from 'lucide-react';
 
 const getGenderDisplay = (gender: string) => {
     switch (gender) {
@@ -22,6 +25,7 @@ const getGenderDisplay = (gender: string) => {
 
 const SadasyaList = () => {
     const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const { tenantId } = useTenant();
     const [searchTerm, setSearchTerm] = useState('');
     const [areaSearch, setAreaSearch] = useState('');
@@ -574,7 +578,7 @@ const SadasyaList = () => {
             <div className="space-y-6">
                 <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
+                        <div className="tutorial-sadasya-header">
                             <h1 className="text-2xl font-bold text-slate-900">{t('sadasya.title')}</h1>
                             <div className="flex items-center gap-2 mt-1">
                                 <p className="text-slate-500">{t('sadasya.subtitle')}</p>
@@ -588,22 +592,31 @@ const SadasyaList = () => {
                                 )}
                             </div>
                         </div>
-                        <button
-                            onClick={() => {
-                                setIsModalOpen(true);
-                                setEditingSadasyaId(null); // Reset edit mode
-                                initVoterList();
-                                setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' }); // Clear form
-                            }}
-                            className="ns-btn-primary"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>{t('sadasya.add_member')}</span>
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <button
+                                onClick={startTutorial}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-sadasya-help shadow-sm"
+                            >
+                                <HelpCircle className="w-4 h-4" />
+                                <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsModalOpen(true);
+                                    setEditingSadasyaId(null); // Reset edit mode
+                                    initVoterList();
+                                    setManualForm({ firstName: '', middleName: '', lastName: '', mobile: '+91 ', age: '', gender: '', ward: '', address: '', area: '' }); // Clear form
+                                }}
+                                className="ns-btn-primary tutorial-sadasya-add"
+                            >
+                                <Plus className="w-5 h-5" />
+                                <span>{t('sadasya.add_member')}</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Filters */}
-                    <div className="ns-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="ns-card p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 tutorial-sadasya-filters">
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                             <input
@@ -692,7 +705,7 @@ const SadasyaList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end">
+                <div className="flex justify-end tutorial-sadasya-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -775,7 +788,7 @@ const SadasyaList = () => {
                                             <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('sadasya.joined_date')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white divide-y divide-slate-200/70">
+                                    <tbody className="bg-white divide-y divide-slate-200/70 tutorial-sadasya-list">
                                         {filteredSadasyas.length > 0 ? (
                                             filteredSadasyas.map((member) => (
                                                 <tr
@@ -1275,6 +1288,7 @@ const SadasyaList = () => {
                     </div>
                 )
             }
+            <SadasyaTutorial />
         </>
     );
 };

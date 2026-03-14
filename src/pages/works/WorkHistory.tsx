@@ -10,6 +10,9 @@ import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, Heart
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { AhwalReportGenerator } from './AhwalReportGenerator';
+import { useTutorial } from '../../context/TutorialContext';
+import WorkHistoryTutorial from '../../components/tutorial/WorkHistoryTutorial';
+import { HelpCircle } from 'lucide-react';
 
 interface WorkItem {
     id: string;
@@ -26,8 +29,9 @@ interface WorkItem {
 
 const WorkHistory = () => {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant(); // Added tenantId
+    const { startTutorial } = useTutorial();
     const [items, setItems] = useState<WorkItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -272,7 +276,7 @@ const WorkHistory = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-work-header">
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             {t('work_history.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
@@ -282,7 +286,7 @@ const WorkHistory = () => {
                         <p className="text-sm text-slate-500">{t('work_history.subtitle')}</p>
                     </div>
                     <div className="flex gap-3">
-                        <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm tutorial-work-view">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'grid' ? 'bg-brand-50 text-brand-700 shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}
@@ -307,14 +311,21 @@ const WorkHistory = () => {
                         {!selectionMode && (
                             <button
                                 onClick={toggleSelectionMode}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors tutorial-work-ahwal"
                             >
                                 <FileText className="w-4 h-4" /> {t('work_history.generate_ahwal') || 'Generate Ahwal'}
                             </button>
                         )}
                         <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-work-help shadow-sm"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button
                             onClick={() => setShowModal(true)}
-                            className="ns-btn-primary"
+                            className="ns-btn-primary tutorial-work-new"
                         >
                             <Plus className="w-4 h-4" /> {t('work_history.add_work')}
                         </button>
@@ -354,7 +365,7 @@ const WorkHistory = () => {
                 {/* Filters Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     {/* Main Search */}
-                    <div className="md:col-span-6 relative">
+                    <div className="md:col-span-6 relative tutorial-work-search">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                         <input
                             type="text"
@@ -366,7 +377,7 @@ const WorkHistory = () => {
                     </div>
 
                     {/* Area Search */}
-                    <div className="md:col-span-3 relative dropdown-container">
+                    <div className="md:col-span-3 relative dropdown-container tutorial-work-area">
                         <input
                             type="text"
                             placeholder={t('work_history.search_area')}
@@ -398,7 +409,7 @@ const WorkHistory = () => {
                     </div>
 
                     {/* Date Search */}
-                    <div className="md:col-span-3 relative dropdown-container">
+                    <div className="md:col-span-3 relative dropdown-container tutorial-work-date">
                         <input
                             type="text"
                             placeholder={t('work_history.filter_date')}
@@ -456,243 +467,237 @@ const WorkHistory = () => {
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id) ? 'bg-brand-600 border-brand-600 text-white' : 'border-slate-300'}`}>
                                                     {selectedWorkIds.has(item.id) && <Check className="w-3 h-3" />}
                                                 </div>
-                                            ) : (
-                                                index + 1
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-slate-900">
-                                                <TranslatedText text={item.title} />
-                                            </div>
-                                            <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
-                                                <TranslatedText text={item.description} />
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="text-sm font-medium text-slate-900">
-                                                <TranslatedText text={item.location} />
-                                                {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(item.status, item.source)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                                                <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
+                                                    <TranslatedText text={item.description} />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm font-medium text-slate-900">
+                                                    <TranslatedText text={item.location} />
+                                                    {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {getStatusBadge(item.status, item.source)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                                                    {getSourceIcon(item.source)}
+                                                    <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
+                                                </div>
+                                                {item.citizenName && (
+                                                    <div className="text-sm text-blue-600 font-medium">
+                                                        {item.citizenName}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="text-sm text-slate-900">{format(new Date(item.date), 'MMM d, yyyy')}</div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {item.amount ? (
+                                                    <div className="text-sm font-medium text-green-600">₹ {item.amount}</div>
+                                                ) : (
+                                                    <span className="text-slate-400">--</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {filteredItems.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                                {t('work_history.no_records')}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredItems.map((item) => (
+                            <div
+                                key={item.id}
+                                className={`ns-card overflow-hidden hover:shadow-md transition-all flex flex-col h-full cursor-pointer group relative ${selectionMode && selectedWorkIds.has(item.id)
+                                    ? 'ring-2 ring-brand-500 bg-brand-50/30'
+                                    : ''
+                                    }`}
+                                onClick={() => handleCardClick(item)}
+                            >
+                                {selectionMode && (
+                                    <div className="absolute top-4 right-4 z-10 pointer-events-none">
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id)
+                                            ? 'bg-brand-600 border-brand-600 text-white'
+                                            : 'border-slate-300 bg-white/80'
+                                            }`}>
+                                            {selectedWorkIds.has(item.id) && <Check className="w-3.5 h-3.5" />}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="p-5 flex flex-col h-full">
+                                    <div className="flex justify-between items-start mb-3">
+                                        {getStatusBadge(item.status, item.source)}
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200/70">
                                                 {getSourceIcon(item.source)}
                                                 <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-700 transition-colors flex justify-between items-start">
+                                        <TranslatedText text={item.title} />
+                                        <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-400" />
+                                    </h3>
+                                    <p className="text-sm text-slate-600 mb-4 line-clamp-3"><TranslatedText text={item.description} /></p>
+
+                                    <div className="mt-auto pt-3 border-t border-slate-200/70">
+                                        {item.source === 'Manual' && feedbackStats[item.id.replace('work-', '')] && (
+                                            <div className="mb-3 flex items-center justify-between text-xs font-semibold bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100">
+                                                <span>{feedbackStats[item.id.replace('work-', '')].count} {t('work_history.feedback')}</span>
+                                                <span>{feedbackStats[item.id.replace('work-', '')].average} ★</span>
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            <div className="flex items-center text-xs text-slate-500 gap-1">
+                                                <Clock className="w-3 h-3" />
+                                                <span>{format(new Date(item.date), 'MMM d, yyyy')}</span>
+                                            </div>
+                                            <div className="flex items-center text-xs text-slate-500 gap-1">
+                                                <MapPin className="w-3 h-3" />
+                                                <span className="truncate"><TranslatedText text={item.location} /> {item.area ? `(${item.area})` : ''}</span>
+                                            </div>
                                             {item.citizenName && (
-                                                <div className="text-sm text-blue-600 font-medium">
-                                                    {item.citizenName}
+                                                <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">
+                                                    <User className="w-3 h-3" />
+                                                    <span>{t('work_history.for_citizen')} {item.citizenName}</span>
                                                 </div>
                                             )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-slate-900">{format(new Date(item.date), 'MMM d, yyyy')}</div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {item.amount ? (
-                                                <div className="text-sm font-medium text-green-600">₹ {item.amount}</div>
-                                            ) : (
-                                                <span className="text-slate-400">--</span>
+                                            {item.amount && (
+                                                <div className="flex items-center text-xs text-green-600 gap-1 font-medium">
+                                                    <span>₹ {item.amount}</span>
+                                                </div>
                                             )}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {filteredItems.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                            {t('work_history.no_records')}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        {filteredItems.length === 0 && (
+                            <div className="col-span-full text-center py-10 text-slate-500 ns-card border-dashed">
+                                {t('work_history.no_records')}
+                            </div>
+                        )}
                     </div>
-                </div>
-            ) : (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredItems.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`ns-card overflow-hidden hover:shadow-md transition-all flex flex-col h-full cursor-pointer group relative ${selectionMode && selectedWorkIds.has(item.id)
-                                ? 'ring-2 ring-brand-500 bg-brand-50/30'
-                                : ''
-                                }`}
-                            onClick={() => handleCardClick(item)}
-                        >
-                            {selectionMode && (
-                                <div className="absolute top-4 right-4 z-10 pointer-events-none">
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id)
-                                        ? 'bg-brand-600 border-brand-600 text-white'
-                                        : 'border-slate-300 bg-white/80'
-                                        }`}>
-                                        {selectedWorkIds.has(item.id) && <Check className="w-3.5 h-3.5" />}
-                                    </div>
-                                </div>
-                            )}
+                )}
 
-                            <div className="p-5 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-3">
-                                    {getStatusBadge(item.status, item.source)}
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center gap-1 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-xl border border-slate-200/70">
-                                            {getSourceIcon(item.source)}
-                                            <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-brand-700 transition-colors flex justify-between items-start">
-                                    <TranslatedText text={item.title} />
-                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-brand-400" />
-                                </h3>
-                                <p className="text-sm text-slate-600 mb-4 line-clamp-3"><TranslatedText text={item.description} /></p>
-
-                                <div className="mt-auto pt-3 border-t border-slate-200/70">
-                                    {item.source === 'Manual' && feedbackStats[item.id.replace('work-', '')] && (
-                                        <div className="mb-3 flex items-center justify-between text-xs font-semibold bg-brand-50 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-100">
-                                            <span>{feedbackStats[item.id.replace('work-', '')].count} {t('work_history.feedback')}</span>
-                                            <span>{feedbackStats[item.id.replace('work-', '')].average} ★</span>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-2">
-                                        <div className="flex items-center text-xs text-slate-500 gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            <span>{format(new Date(item.date), 'MMM d, yyyy')}</span>
-                                        </div>
-                                        <div className="flex items-center text-xs text-slate-500 gap-1">
-                                            <MapPin className="w-3 h-3" />
-                                            <span className="truncate"><TranslatedText text={item.location} /> {item.area ? `(${item.area})` : ''}</span>
-                                        </div>
-                                        {item.citizenName && (
-                                            <div className="flex items-center text-xs text-blue-600 gap-1 font-medium">
-                                                <User className="w-3 h-3" />
-                                                <span>{t('work_history.for_citizen')} {item.citizenName}</span>
-                                            </div>
-                                        )}
-                                        {item.amount && (
-                                            <div className="flex items-center text-xs text-green-600 gap-1 font-medium">
-                                                <span>₹ {item.amount}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    {filteredItems.length === 0 && (
-                        <div className="col-span-full text-center py-10 text-slate-500 ns-card border-dashed">
-                            {t('work_history.no_records')}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Add Work Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="ns-card max-w-lg w-full p-6">
-                        <h2 className="text-xl font-bold mb-4 text-slate-900">{t('work_history.modal_title')}</h2>
-                        <form onSubmit={handleAddWork} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('work_history.project_title')}</label>
-                                <input
-                                    type="text" required
-                                    className="ns-input mt-1"
-                                    value={newWork.title}
-                                    onChange={e => setNewWork({ ...newWork, title: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700">{t('work_history.description')}</label>
-                                <div className="relative">
-                                    <textarea
-                                        className="ns-input mt-1 pr-10"
-                                        rows={3}
-                                        value={newWork.description}
-                                        onChange={e => setNewWork({ ...newWork, description: e.target.value })}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleAutoGenerate}
-                                        disabled={generatingAI || !newWork.title}
-                                        className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
-                                        title="Auto draft description"
-                                    >
-                                        <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
-                                    </button>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint')}</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                {/* Add Work Modal */}
+                {showModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="ns-card max-w-lg w-full p-6">
+                            <h2 className="text-xl font-bold mb-4 text-slate-900">{t('work_history.modal_title')}</h2>
+                            <form onSubmit={handleAddWork} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.location')}</label>
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.project_title')}</label>
                                     <input
-                                        type="text"
+                                        type="text" required
                                         className="ns-input mt-1"
-                                        value={newWork.location}
-                                        onChange={e => setNewWork({ ...newWork, location: e.target.value })}
+                                        value={newWork.title}
+                                        onChange={e => setNewWork({ ...newWork, title: e.target.value })}
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.area_locality')}</label>
-                                    <input
-                                        type="text"
-                                        className="ns-input mt-1"
-                                        value={newWork.area}
-                                        onChange={e => setNewWork({ ...newWork, area: e.target.value })}
-                                    />
+                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.description')}</label>
+                                    <div className="relative">
+                                        <textarea
+                                            className="ns-input mt-1 pr-10"
+                                            rows={3}
+                                            value={newWork.description}
+                                            onChange={e => setNewWork({ ...newWork, description: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAutoGenerate}
+                                            disabled={generatingAI || !newWork.title}
+                                            className="absolute right-2 bottom-2 text-brand-700 hover:text-brand-800 disabled:opacity-50"
+                                            title="Auto draft description"
+                                        >
+                                            <Wand2 className={`w-5 h-5 ${generatingAI ? 'animate-spin' : ''}`} />
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">{t('work_history.auto_draft_hint')}</p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
+                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.location')}</label>
                                         <input
-                                            type="date"
+                                            type="text"
                                             className="ns-input mt-1"
-                                            value={newWork.completion_date}
-                                            onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
+                                            value={newWork.location}
+                                            onChange={e => setNewWork({ ...newWork, location: e.target.value })}
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>
+                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.area_locality')}</label>
+                                        <input
+                                            type="text"
+                                            className="ns-input mt-1"
+                                            value={newWork.area}
+                                            onChange={e => setNewWork({ ...newWork, area: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
+                                            <input
+                                                type="date"
+                                                className="ns-input mt-1"
+                                                value={newWork.completion_date}
+                                                onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>
+                                            <input
+                                                type="number"
+                                                className="ns-input mt-1"
+                                                placeholder={t('work_history.people_benefited_placeholder')}
+                                                value={newWork.peopleBenefited}
+                                                onChange={e => setNewWork({ ...newWork, peopleBenefited: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700">{t('work_history.total_amount_spent')}</label>
                                         <input
                                             type="number"
                                             className="ns-input mt-1"
-                                            placeholder={t('work_history.people_benefited_placeholder')}
-                                            value={newWork.peopleBenefited}
-                                            onChange={e => setNewWork({ ...newWork, peopleBenefited: e.target.value })}
+                                            placeholder={t('work_history.amount_placeholder')}
+                                            value={newWork.amount}
+                                            onChange={e => setNewWork({ ...newWork, amount: e.target.value })}
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700">{t('work_history.total_amount_spent')}</label>
-                                    <input
-                                        type="number"
-                                        className="ns-input mt-1"
-                                        placeholder={t('work_history.amount_placeholder')}
-                                        value={newWork.amount}
-                                        onChange={e => setNewWork({ ...newWork, amount: e.target.value })}
-                                    />
+                                <div className="flex justify-end gap-2 pt-4">
+                                    <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">{t('work_history.cancel')}</button>
+                                    <button type="submit" className="ns-btn-primary">{t('work_history.save_project')}</button>
                                 </div>
-                            </div>
-                            <div className="flex justify-end gap-2 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="ns-btn-ghost border border-slate-200">{t('work_history.cancel')}</button>
-                                <button type="submit" className="ns-btn-primary">{t('work_history.save_project')}</button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {showAhwalPreview && (
-                <AhwalReportGenerator
-                    selectedWorks={filteredItems.filter(item => selectedWorkIds.has(item.id))}
-                    onClose={() => setShowAhwalPreview(false)}
-                />
-            )}
+                {showAhwalPreview && (
+                    <AhwalReportGenerator
+                        selectedWorks={filteredItems.filter(item => selectedWorkIds.has(item.id))}
+                        onClose={() => setShowAhwalPreview(false)}
+                    />
+                )}
+            </div>
+            <WorkHistoryTutorial />
         </div>
     );
 };

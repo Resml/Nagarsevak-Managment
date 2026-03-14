@@ -8,9 +8,13 @@ import { useTenant } from '../../context/TenantContext';
 import type { Survey, Voter } from '../../types';
 import { toast } from 'sonner';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTutorial } from '../../context/TutorialContext';
+import { HelpCircle } from 'lucide-react';
+import SurveyTutorial from '../../components/tutorial/SurveyTutorial';
 
 const SurveyDashboard = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const { tenantId } = useTenant();
     const navigate = useNavigate();
     const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -246,23 +250,32 @@ const SurveyDashboard = () => {
         <div className="space-y-6 animate-fade-in-up">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex justify-between items-center">
-                    <div>
+                    <div className="tutorial-surveys-header">
                         <h1 className="text-2xl font-bold text-gray-900">
                             {t('surveys.title')}
                         </h1>
                         <p className="text-slate-500">{t('surveys.subtitle')}</p>
                     </div>
-                    <button
-                        onClick={() => navigate('/dashboard/surveys/new')}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-5 h-5" />
-                        <span>{t('surveys.create_survey')}</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-surveys-help shadow-sm"
+                        >
+                            <HelpCircle className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
+                        </button>
+                        <button
+                            onClick={() => navigate('/dashboard/surveys/new')}
+                            className="ns-btn-primary tutorial-surveys-create"
+                        >
+                            <Plus className="w-5 h-5" />
+                            <span>{t('surveys.create_survey')}</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 tutorial-surveys-filters">
                     {/* Main Search */}
                     <div className="md:col-span-8 relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -310,7 +323,7 @@ const SurveyDashboard = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 tutorial-surveys-stats">
                 <div className="ns-card p-6">
                     <div className="flex items-center space-x-4">
                         <div className="p-3 bg-sky-50 border border-sky-100 text-sky-700 rounded-xl">
@@ -348,7 +361,7 @@ const SurveyDashboard = () => {
                 </div>
             </div>
 
-            <div className="ns-card overflow-hidden">
+            <div className="ns-card overflow-hidden tutorial-surveys-list">
                 <div className="p-6 border-b border-slate-200/70 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-slate-900">{t('surveys.recent_surveys')}</h2>
                     <span className="text-sm text-slate-500">
@@ -571,6 +584,7 @@ const SurveyDashboard = () => {
                     </div>
                 </div>
             )}
+            <SurveyTutorial />
         </div>
     );
 };
