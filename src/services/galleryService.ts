@@ -59,6 +59,36 @@ const DUMMY_GALLERY: GalleryItem[] = [
         descriptionKey: 'gallery.items.newspaper_2_desc',
         date: '2024-11-20',
         createdAt: new Date().toISOString()
+    },
+    {
+        id: '6',
+        title: 'प्रभाग 12 मध्ये सक्रिय नेतृत्वाखाली पायाभूत सुविधांना चालना मिळत आहे',
+        category: 'Newspaper',
+        imageUrl: 'https://picsum.photos/seed/n1/800/600',
+        description: 'प्रभाग 12 मधील रहिवाशांनी अलीकडेच स्थानिक नगरसेवकांनी सुरू केलेल्या पायाभूत सुविधांच्या सुधारणांचे कौतुक केले आहे.',
+        date: '2026-02-20',
+        sentiment: 'positive',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '7',
+        title: 'डिजिटल कंप्लेंट ॲप तक्रारींचे निराकरण करण्याची वेळ कमी करते',
+        category: 'Newspaper',
+        imageUrl: 'https://picsum.photos/seed/n2/800/600',
+        description: 'नगरसेवकांनी नव्याने सादर केलेल्या वॉर्ड मॅनेजमेंट ॲपने तक्रार निवारण वेळेत लक्षणीय घट केली आहे.',
+        date: '2026-02-20',
+        sentiment: 'positive',
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: '8',
+        title: '500 हून अधिक रहिवाशांना मोफत आरोग्य शिबिराचा लाभ',
+        category: 'Newspaper',
+        imageUrl: 'https://picsum.photos/seed/n3/800/600',
+        description: 'स्थानिक रुग्णालयांच्या सहकार्याने आयोजित मोफत वैद्यकीय तपासणी शिबिरात 500 हून अधिक रहिवाशांचा सहभाग होता.',
+        date: '2026-02-20',
+        sentiment: 'positive',
+        createdAt: new Date().toISOString()
     }
 ];
 
@@ -81,6 +111,14 @@ export const GalleryService = {
             // If DB empty, fallback to dummy
             if (!data || data.length === 0) {
                 const stored = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
+                
+                // Clear cache if it contains broken dummy data from previous attempts
+                const hasBrokenNewspaper = stored.some((s: any) => s.category === 'Newspaper' && s.imageUrl.includes('blob:'));
+                if (hasBrokenNewspaper) {
+                    localStorage.removeItem(GALLERY_STORAGE_KEY);
+                    return filteredDummy(category);
+                }
+
                 if (stored.length > 0) return stored;
                 return filteredDummy(category);
             }
@@ -219,8 +257,7 @@ export const GalleryService = {
             return data.publicUrl;
         } catch (error) {
             console.error('Error uploading image:', error);
-            // Fallback for demo/mock if storage fails or not set up
-            return URL.createObjectURL(file);
+            throw new Error('Image upload failed. Please try again.');
         }
     }
 };

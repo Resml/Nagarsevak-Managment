@@ -576,9 +576,9 @@ const VisitorLog = () => {
                                             <button
                                                 onClick={() => window.print()}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-                                                title="Print Report"
+                                                title={t('common.print')}
                                             >
-                                                <Printer className="w-4 h-4" /> Print
+                                                <Printer className="w-4 h-4" /> {t('common.print')}
                                             </button>
                                         )}
                                     </div>
@@ -676,12 +676,12 @@ const VisitorLog = () => {
                                             <table className="min-w-full divide-y divide-slate-200/70">
                                                 <thead className="bg-slate-50">
                                                     <tr>
-                                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.full_name')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.mobile')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.purpose')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.area')}</th>
-                                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Date & Time</th>
+                                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.date_time')}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-slate-200/70">
@@ -860,9 +860,9 @@ const VisitorLog = () => {
                                     <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <Trash2 className="w-6 h-6 text-red-600" />
                                     </div>
-                                    <h3 className="text-lg font-bold text-slate-900">Delete Visitor Log?</h3>
+                                    <h3 className="text-lg font-bold text-slate-900">{t('office.delete_title')}</h3>
                                     <p className="text-slate-500 mt-2 text-sm">
-                                        Are you sure you want to delete <span className="font-semibold text-slate-900">{deleteTarget.name}</span>? This action cannot be undone.
+                                        {t('office.delete_confirm').replace('{name}', deleteTarget.name)}
                                     </p>
                                 </div>
                                 <div className="flex gap-3 pt-2">
@@ -870,13 +870,13 @@ const VisitorLog = () => {
                                         onClick={() => setDeleteTarget(null)}
                                         className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium"
                                     >
-                                        Cancel
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         onClick={confirmDelete}
                                         className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
                                     >
-                                        Delete
+                                        {t('common.delete')}
                                     </button>
                                 </div>
                             </div>

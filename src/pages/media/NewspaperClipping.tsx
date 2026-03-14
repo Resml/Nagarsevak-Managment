@@ -17,6 +17,7 @@ const NewspaperClipping = () => {
     const [uploading, setUploading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     const [formData, setFormData] = useState<{
         title: string;
@@ -263,11 +264,19 @@ const NewspaperClipping = () => {
                     {getFilteredItems().map(item => (
                         <div key={item.id} className="ns-card overflow-hidden group">
                             <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.titleKey ? t(item.titleKey) : item.title}
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
+                                {imageErrors[item.id] ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50">
+                                        <Newspaper className="w-12 h-12 mb-2" />
+                                        <span className="text-xs font-medium text-slate-400">Image Not Available</span>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={item.imageUrl}
+                                        alt={item.titleKey ? t(item.titleKey) : item.title}
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                                    />
+                                )}
                                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                         onClick={() => handleEdit(item)}
@@ -323,18 +332,19 @@ const NewspaperClipping = () => {
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            title={t('common.print')}
                         >
-                            <Printer className="w-4 h-4" /> Print
+                            <Printer className="w-4 h-4" /> {t('common.print')}
                         </button>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50 print:bg-slate-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Thumbnail</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title & Description</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.date')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.thumbnail')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.title_desc')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.type')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -344,8 +354,12 @@ const NewspaperClipping = () => {
                                             {item.date}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="h-12 w-16 bg-slate-100 rounded overflow-hidden border border-slate-200">
-                                                <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                                            <div className="h-12 w-16 bg-slate-100 rounded overflow-hidden border border-slate-200 flex items-center justify-center">
+                                                {imageErrors[item.id] ? (
+                                                    <Newspaper className="w-6 h-6 text-slate-300" />
+                                                ) : (
+                                                    <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))} />
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-800">

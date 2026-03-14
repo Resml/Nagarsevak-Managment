@@ -22,14 +22,14 @@ const SchemeForm = () => {
     });
 
     const categories = [
-        { id: 'All', label: 'All' },
-        { id: 'Women', label: 'Women' },
-        { id: 'Student', label: 'Student' },
-        { id: 'Senior Citizen', label: 'Senior Citizen' },
-        { id: 'Farmer', label: 'Farmer' },
-        { id: 'Health', label: 'Health' },
-        { id: 'Youth', label: 'Youth' },
-        { id: 'Housing', label: 'Housing' },
+        { id: 'All', label: t('common.All') },
+        { id: 'Women', label: t('common.Women') },
+        { id: 'Student', label: t('common.Student') },
+        { id: 'Senior Citizen', label: t('common.Senior Citizen') },
+        { id: 'Farmer', label: t('common.Farmer') },
+        { id: 'Health', label: t('common.Health') },
+        { id: 'Youth', label: t('common.Youth') },
+        { id: 'Housing', label: t('common.Housing') },
     ];
 
     useEffect(() => {
@@ -129,7 +129,7 @@ const SchemeForm = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.report_columns.category') || 'Category'}</label>
                         <select
                             name="category"
                             value={formData.category}
@@ -140,7 +140,7 @@ const SchemeForm = () => {
                                 <option key={cat.id} value={cat.id}>{cat.label}</option>
                             ))}
                         </select>
-                        <p className="text-xs text-slate-500 mt-1">Select the target group for this scheme (helps with filtering in the Schemes list).</p>
+                        <p className="text-xs text-slate-500 mt-1">{t('schemes.form.category_help') || 'Select the target group for this scheme (helps with filtering in the Schemes list).'}</p>
                     </div>
 
                     <div>

@@ -619,7 +619,7 @@ const ComplaintDetail = () => {
                                 <span className="font-medium text-blue-600">
                                     {(language === 'mr' && complaint.voter?.name_marathi)
                                         ? complaint.voter.name_marathi
-                                        : (complaint.voter?.name_english || complaint.voter?.name_marathi || t('complaints.form.detail.anonymous'))}
+                                        : <TranslatedText text={complaint.voter?.name_english || complaint.voter?.name_marathi || t('complaints.form.detail.anonymous')} isName={true} />}
                                 </span>
                             </li>
                             {(complaint.voter?.mobile) && (
@@ -633,7 +633,7 @@ const ComplaintDetail = () => {
                                 <div>
                                     {staffList.find(s => s.id === assignee) ? (
                                         <div className="text-right">
-                                            <div className="font-medium text-slate-900">{staffList.find(s => s.id === assignee)?.name}</div>
+                                            <div className="font-medium text-slate-900"><TranslatedText text={staffList.find(s => s.id === assignee)?.name || ''} isName={true} /></div>
                                             <div className="text-xs text-brand-600 flex items-center justify-end gap-1">
                                                 <Phone className="w-3 h-3" />
                                                 {staffList.find(s => s.id === assignee)?.mobile}

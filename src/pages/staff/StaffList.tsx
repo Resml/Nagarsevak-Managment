@@ -477,23 +477,24 @@ const StaffList = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
                             <h3 className="font-semibold text-gray-800">
-                                {t('staff.tabs.office')} - {t('common.report')} ({filteredStaff.length})
+                                {t('staff.tabs.office')} - {t('common.report_view')} ({filteredStaff.length})
                             </h3>
                             <button
                                 onClick={() => window.print()}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                                title={t('common.print')}
                             >
-                                <Printer className="w-4 h-4" /> Print
+                                <Printer className="w-4 h-4" /> {t('common.print')}
                             </button>
                         </div>
                         <div className="overflow-x-auto print:overflow-visible">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50 print:bg-gray-100">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Role</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keywords/Categories</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.name_role')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.contact')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.keywords_categories')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">

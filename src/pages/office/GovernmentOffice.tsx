@@ -352,8 +352,12 @@ const GovernmentOfficePage = () => {
                                                 <Wrench className="w-6 h-6" />
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-gray-900 leading-tight">{member.name}</h3>
-                                                <p className="text-xs font-medium text-gray-500 mt-0.5">{member.role}</p>
+                                                <h3 className="font-bold text-gray-900 leading-tight">
+                                                    <TranslatedText text={member.name} isName={true} />
+                                                </h3>
+                                                <p className="text-xs font-medium text-gray-500 mt-0.5">
+                                                    <TranslatedText text={member.role} />
+                                                </p>
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
@@ -383,7 +387,7 @@ const GovernmentOfficePage = () => {
                                                 {member.keywords && member.keywords.length > 0 ? (
                                                     member.keywords.map((k, i) => (
                                                         <span key={i} className="bg-gray-50 px-2 py-0.5 rounded text-xs text-gray-500 border border-gray-100">
-                                                            {k}
+                                                            <TranslatedText text={k} />
                                                         </span>
                                                     ))
                                                 ) : (

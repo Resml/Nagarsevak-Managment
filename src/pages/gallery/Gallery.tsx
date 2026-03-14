@@ -15,6 +15,7 @@ const Gallery = () => {
     const [filterDate, setFilterDate] = useState('');
     const [uploading, setUploading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     const [formData, setFormData] = useState<{
         title: string;
@@ -222,11 +223,19 @@ const Gallery = () => {
                     {getFilteredItems().map(item => (
                         <div key={item.id} className="ns-card overflow-hidden group">
                             <div className="relative aspect-video bg-slate-100 overflow-hidden">
-                                <img
-                                    src={item.imageUrl}
-                                    alt={item.title}
-                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
+                                {imageErrors[item.id] ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50">
+                                        <ImageIcon className="w-12 h-12 mb-2" />
+                                        <span className="text-xs font-medium text-slate-400">Image Not Available</span>
+                                    </div>
+                                ) : (
+                                    <img
+                                        src={item.imageUrl}
+                                        alt={item.title}
+                                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
+                                    />
+                                )}
                                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                     <button
                                         onClick={() => handleEdit(item)}
