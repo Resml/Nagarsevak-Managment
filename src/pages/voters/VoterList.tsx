@@ -5,12 +5,16 @@ import { type Voter } from '../../types';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useTutorial } from '../../context/TutorialContext';
+import { HelpCircle } from 'lucide-react';
+import VoterTutorial from '../../components/tutorial/VoterTutorial';
 
 const PAGE_SIZE = 50;
 
 const VoterList = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
+    const { startTutorial } = useTutorial();
     const { tenantId } = useTenant();
     const [voters, setVoters] = useState<Voter[]>([]);
     const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -375,13 +379,15 @@ const VoterList = () => {
             <div className="flex flex-col gap-4 md:sticky md:top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">
-                            {isTagMode
-                                ? t('voters.tagging_mode_title')
-                                : showFriendsOnly
-                                    ? t('voters.friends_relatives_title')
-                                    : t('voters.title')}
-                        </h1>
+                        <div className="tutorial-voter-header">
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {isTagMode
+                                    ? t('voters.tagging_mode_title')
+                                    : showFriendsOnly
+                                        ? t('voters.friends_relatives_title')
+                                        : t('voters.title')}
+                            </h1>
+                        </div>
                         <div className="flex items-center gap-2">
                             <p className="text-sm text-slate-500">
                                 {isTagMode
@@ -425,7 +431,7 @@ const VoterList = () => {
                                         setShowFriendsOnly(next);
                                         if (next) setIsTagMode(false);
                                     }}
-                                    className={`ns-btn ${showFriendsOnly ? 'bg-brand-600 text-white border-brand-600' : 'ns-btn-secondary'}`}
+                                    className="ns-btn-secondary tutorial-voter-friends"
                                 >
                                     <Users className={`w-4 h-4 mr-2 ${showFriendsOnly ? 'text-white' : ''}`} />
                                     {t('voters.friends_relatives')}
@@ -436,15 +442,23 @@ const VoterList = () => {
                                         setShowAnalysisModal(true);
                                         fetchAnalysisData();
                                     }}
-                                    className="ns-btn ns-btn-secondary"
+                                    className="ns-btn ns-btn-secondary tutorial-voter-caste-btn"
                                 >
                                     <Filter className="w-4 h-4 mr-2" />
                                     {t('voters.caste_allocation')}
                                 </button>
 
                                 <button
+                                    onClick={startTutorial}
+                                    className="ns-btn ns-btn-secondary tutorial-voter-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                                >
+                                    <HelpCircle className="w-4 h-4 mr-2" />
+                                    {language === 'mr' ? 'मदत' : 'Help'}
+                                </button>
+
+                                <button
                                     onClick={() => navigate('/dashboard/political/add-voter')}
-                                    className="ns-btn-primary"
+                                    className="ns-btn-primary tutorial-voter-add"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     {t('voters.add_new')}
@@ -498,7 +512,7 @@ const VoterList = () => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 tutorial-voter-filters">
                     {/* Name Filter */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -647,7 +661,7 @@ const VoterList = () => {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex justify-end">
+            <div className="flex justify-end tutorial-voter-view">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                     <button
                         onClick={() => setViewMode('grid')}
@@ -974,6 +988,7 @@ const VoterList = () => {
                     </div>
                 </div>
             )}
+            <VoterTutorial />
         </div>
     );
 };

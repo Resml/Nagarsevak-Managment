@@ -21,13 +21,17 @@ import {
     Calendar,
     User,
     Pencil,
-    Trash2
+    Trash2,
+    HelpCircle
 } from 'lucide-react';
+import { useTutorial } from '../../context/TutorialContext';
+import VoterFormTutorial from '../../components/tutorial/VoterFormTutorial';
 
 const VoterForms: React.FC = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
     const { user } = useAuth();
+    const { startTutorial } = useTutorial();
 
     // State
     const [activeTab, setActiveTab] = useState<'forms' | 'applications'>('forms');
@@ -359,7 +363,7 @@ const VoterForms: React.FC = () => {
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <div>
+                    <div className="tutorial-voterforms-header">
                         <h1 className="text-2xl font-bold text-gray-900">
                             {t('voter_forms.title')}
                         </h1>
@@ -369,17 +373,26 @@ const VoterForms: React.FC = () => {
                             </p>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setShowLogModal(true)}
-                        className="ns-btn-primary"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t('voter_forms.log_application')}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={startTutorial}
+                            className="ns-btn ns-btn-secondary tutorial-voterforms-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                        >
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            {language === 'mr' ? 'मदत' : 'Help'}
+                        </button>
+                        <button
+                            onClick={() => setShowLogModal(true)}
+                            className="ns-btn-primary tutorial-voterforms-log"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            {t('voter_forms.log_application')}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Tab Navigation Moved Inside Sticky Header */}
-                <div className="border-b border-slate-200">
+                <div className="border-b border-slate-200 tutorial-voterforms-tabs">
                     <nav className="-mb-px flex gap-6" aria-label="Tabs">
                         <button
                             onClick={() => setActiveTab('forms')}
@@ -406,7 +419,7 @@ const VoterForms: React.FC = () => {
 
 
             {activeTab === 'forms' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500 tutorial-voterforms-cards">
                     {forms.map((form) => {
                         const Icon = form.icon;
                         const colors = colorClasses[form.color] || colorClasses.blue;
@@ -460,7 +473,7 @@ const VoterForms: React.FC = () => {
 
             {/* Application History Section - REFACTORED TO TAB */}
             {activeTab === 'applications' && (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 mb-12">
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 mb-12 tutorial-voterforms-history">
                     <div className="p-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-indigo-100 rounded-lg">
@@ -477,7 +490,7 @@ const VoterForms: React.FC = () => {
                     </div>
 
                     {/* Filters and Search */}
-                    <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div className="p-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row gap-4 justify-between items-center tutorial-voterforms-filters">
                         <div className="relative w-full sm:max-w-xs">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
@@ -830,6 +843,7 @@ const VoterForms: React.FC = () => {
                     </div>
                 </div>
             )}
+            <VoterFormTutorial />
         </div>
     );
 };
