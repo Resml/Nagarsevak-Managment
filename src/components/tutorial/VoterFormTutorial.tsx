@@ -80,6 +80,14 @@ const VoterFormTutorial: React.FC = () => {
                     primaryColor: '#0ea5e9',
                     zIndex: 1000,
                 },
+                overlay: {
+                    backdropFilter: 'blur(3px)',
+                    WebkitBackdropFilter: 'blur(3px)',
+                },
+                tooltip: {
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                },
                 tooltipContainer: {
                     textAlign: 'left',
                 },

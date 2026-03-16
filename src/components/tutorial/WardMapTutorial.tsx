@@ -111,6 +111,14 @@ export const WardMapTutorial: React.FC = () => {
                     textColor: '#334155', // slate-700
                     backgroundColor: '#ffffff',
                 },
+                overlay: {
+                    backdropFilter: 'blur(3px)',
+                    WebkitBackdropFilter: 'blur(3px)',
+                },
+                tooltip: {
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                },
                 tooltipContainer: {
                     textAlign: 'left'
                 },

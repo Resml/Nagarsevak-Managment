@@ -1,5 +1,5 @@
 import React from 'react';
-import Joyride, { STATUS } from 'react-joyride';
+import Joyride, { STATUS, ACTIONS } from 'react-joyride';
 import type { CallBackProps, Step } from 'react-joyride';
 import { useTutorial } from '../../context/TutorialContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -124,10 +124,10 @@ export const DashboardTutorial: React.FC = () => {
     ];
 
     const handleJoyrideCallback = (data: CallBackProps) => {
-        const { status } = data;
+        const { status, action } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-        if (finishedStatuses.includes(status)) {
+        if (finishedStatuses.includes(status) || action === ACTIONS.CLOSE) {
             stopTutorial();
         }
     };
@@ -155,6 +155,13 @@ export const DashboardTutorial: React.FC = () => {
                     primaryColor: '#0369a1', // Match theme (sky-700)
                     textColor: '#334155', // slate-700
                     backgroundColor: '#ffffff',
+                },
+                spotlight: {
+                    borderRadius: '16px',
+                },
+                tooltip: {
+                    borderRadius: '16px',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
                 },
                 tooltipContainer: {
                     textAlign: 'left'
