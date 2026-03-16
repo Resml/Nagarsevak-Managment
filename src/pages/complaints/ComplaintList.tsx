@@ -590,7 +590,7 @@ const ComplaintList = () => {
                                 {complaint.staff && complaint.status === 'Assigned' && (
                                     <div className="mb-2 text-xs text-blue-700 font-medium bg-blue-50/50 border border-blue-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit">
                                         <User className="w-3.5 h-3.5" />
-                                        {complaint.staff.name} {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
+                                        <TranslatedText text={complaint.staff.name || ''} isName={true} /> {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
                                     </div>
                                 )}
 
@@ -599,7 +599,7 @@ const ComplaintList = () => {
                                         <User className="w-3 h-3" />
                                         {language === 'mr' && complaint.voter.name_marathi
                                             ? complaint.voter.name_marathi
-                                            : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                            : <TranslatedText text={complaint.voter.name_english || complaint.voter.name_marathi || ''} isName={true} />}
                                         {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
                                     </div>
                                 )}
@@ -645,26 +645,26 @@ const ComplaintList = () => {
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden tutorial-complaint-list">
                     <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
                         <h3 className="font-semibold text-gray-800">
-                            {isTranslated ? <span className="notranslate">अहवाल दृश्य</span> : 'Report View'} ({filteredComplaints.length})
+                            {t('common.report_view')} ({filteredComplaints.length})
                         </h3>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
                         >
-                            <Printer className="w-4 h-4" /> Print
+                            <Printer className="w-4 h-4" /> {t('common.print')}
                         </button>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50 print:bg-gray-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Citizen Info</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title & Type</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location/Area</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.date_time')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.ticket_id')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.citizen_info')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.title_type')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.location_area')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.staff')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.status')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -681,7 +681,7 @@ const ComplaintList = () => {
                                             <div className="font-medium">
                                                 {language === 'mr' && complaint.voter?.name_marathi
                                                     ? complaint.voter.name_marathi
-                                                    : (complaint.voter?.name_english || complaint.voter?.name_marathi || 'Anonymous')}
+                                                    : <TranslatedText text={complaint.voter?.name_english || complaint.voter?.name_marathi || 'Anonymous'} isName={true} />}
                                             </div>
                                             <div className="text-xs text-gray-500">{complaint.voter?.mobile || 'N/A'}</div>
                                         </td>
@@ -696,7 +696,7 @@ const ComplaintList = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {complaint.staff ? (
                                                 <>
-                                                    <div className="font-medium">{complaint.staff.name}</div>
+                                                    <div className="font-medium"><TranslatedText text={complaint.staff.name || ''} isName={true} /></div>
                                                     <div className="text-xs text-gray-500">{complaint.staff.mobile}</div>
                                                 </>
                                             ) : (

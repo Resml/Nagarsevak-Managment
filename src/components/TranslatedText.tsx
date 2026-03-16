@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { translateText } from '../services/translationService';
+import { translateText, transliterateName } from '../services/translationService';
 
 interface TranslatedTextProps {
     text: string;
     className?: string;
+    isName?: boolean;
 }
 
-export const TranslatedText = ({ text, className }: TranslatedTextProps) => {
+export const TranslatedText = ({ text, className, isName = false }: TranslatedTextProps) => {
     const { language } = useLanguage();
     const [displayText, setDisplayText] = useState(text);
 
@@ -15,7 +16,7 @@ export const TranslatedText = ({ text, className }: TranslatedTextProps) => {
         let isMounted = true;
 
         const doTranslate = async () => {
-            if (language !== 'mr') {
+            if (language === 'en') {
                 setDisplayText(text);
                 return;
             }
@@ -24,8 +25,10 @@ export const TranslatedText = ({ text, className }: TranslatedTextProps) => {
                 // If text is short/empty, ignore
                 if (!text?.trim()) return;
 
-                const translated = await translateText(text, 'mr');
-                if (isMounted) setDisplayText(translated);
+                const convertedText = isName 
+                    ? await transliterateName(text, language)
+                    : await translateText(text, language);
+                if (isMounted) setDisplayText(convertedText);
             } catch (e) {
                 console.warn('Translation failed for component', e);
             }

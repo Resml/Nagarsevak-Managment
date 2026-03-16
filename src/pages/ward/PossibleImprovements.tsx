@@ -250,9 +250,9 @@ const PossibleImprovements = () => {
                             <button
                                 onClick={() => window.print()}
                                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                title="Print Report"
+                                title={t('common.print')}
                             >
-                                <Printer className="w-4 h-4" /> Print
+                                <Printer className="w-4 h-4" /> {t('common.print')}
                             </button>
                         )}
                     </div>
@@ -376,12 +376,59 @@ const PossibleImprovements = () => {
                 })}
             </div>
 
-            <div className="tutorial-improve-list">
-                {viewMode === 'report' ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200">
-                                <thead className="bg-slate-50">
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mt-6">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.form_title')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.location_area')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.votes')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.date')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredImprovements.map((item, index) => (
+                                    <tr key={item.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/ward/improvements/${item.id}`)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{index + 1}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.title} />
+                                            </div>
+                                            <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
+                                                <TranslatedText text={item.description} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900">
+                                                <TranslatedText text={item.location} />
+                                                {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium border ${item.status === 'Complete' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                    item.status === 'Planned' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                        'bg-orange-50 text-orange-700 border-orange-200'
+                                                }`}>
+                                                {item.status === 'Complete' ? t('improvements.status_complete') :
+                                                    item.status === 'In Progress' ? t('improvements.status_in_progress') :
+                                                        item.status === 'Planned' ? t('improvements.status_planned') :
+                                                            t('improvements.status_pending')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-bold text-brand-600">{item.votes} <span className="text-xs font-normal text-slate-500 ml-1">{t('improvements.votes')}</span></div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900">{format(new Date(item.created_at), 'MMM d, yyyy')}</div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredImprovements.length === 0 && (
                                     <tr>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('improvements.form_title')}</th>

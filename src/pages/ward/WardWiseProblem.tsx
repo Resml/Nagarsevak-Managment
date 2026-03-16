@@ -314,9 +314,9 @@ const WardWiseProblem = () => {
                                 <button
                                     onClick={() => window.print()}
                                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                                    title="Print Report"
+                                    title={t('common.print')}
                                 >
-                                    <Printer className="w-4 h-4" /> Print
+                                    <Printer className="w-4 h-4" /> {t('common.print')}
                                 </button>
                             )}
                         </div>
@@ -462,11 +462,11 @@ const WardWiseProblem = () => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">#</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.form.ward')} / Area</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.problem_title')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.status')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Voter / Submitter</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.citizen_info')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.date')}</th>
                                 </tr>
                             </thead>
@@ -495,7 +495,9 @@ const WardWiseProblem = () => {
                                         <td className="px-6 py-4">
                                             {complaint.voter ? (
                                                 <div className="text-sm text-gray-900">
-                                                    {language === 'mr' && complaint.voter.name_marathi ? complaint.voter.name_marathi : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                                    {language === 'mr' && complaint.voter.name_marathi
+                                                        ? complaint.voter.name_marathi
+                                                        : <TranslatedText text={complaint.voter.name_english || complaint.voter.name_marathi || ''} isName={true} />}
                                                     <div className="text-xs text-gray-500">{complaint.voter.mobile}</div>
                                                 </div>
                                             ) : (
@@ -503,7 +505,7 @@ const WardWiseProblem = () => {
                                             )}
                                             {complaint.staff && complaint.status === 'Assigned' && (
                                                 <div className="mt-1 text-xs text-blue-600">
-                                                    Assigned: {complaint.staff.name}
+                                                    Assigned: <TranslatedText text={complaint.staff.name || ''} isName={true} />
                                                 </div>
                                             )}
                                         </td>
@@ -550,7 +552,7 @@ const WardWiseProblem = () => {
                                 {complaint.staff && complaint.status === 'Assigned' && (
                                     <div className="mb-2 text-xs text-blue-700 font-medium bg-blue-50/50 border border-blue-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit">
                                         <User className="w-3.5 h-3.5" />
-                                        {complaint.staff.name} {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
+                                        <TranslatedText text={complaint.staff.name || ''} isName={true} /> {complaint.staff.mobile && `| ${complaint.staff.mobile}`}
                                     </div>
                                 )}
 
@@ -559,7 +561,7 @@ const WardWiseProblem = () => {
                                         <User className="w-3 h-3" />
                                         {language === 'mr' && complaint.voter.name_marathi
                                             ? complaint.voter.name_marathi
-                                            : (complaint.voter.name_english || complaint.voter.name_marathi)}
+                                            : <TranslatedText text={complaint.voter.name_english || complaint.voter.name_marathi || ''} isName={true} />}
                                         {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
                                     </div>
                                 )}

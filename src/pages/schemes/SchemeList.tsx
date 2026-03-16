@@ -314,24 +314,25 @@ const SchemeList = () => {
             ) : viewMode === 'report' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
-                        <h3 className="font-semibold text-slate-800">Schemes {t('common.report')} ({schemesToDisplay.length})</h3>
+                        <h3 className="font-semibold text-slate-800">{t('schemes.select_scheme')} {t('common.report_view')} ({schemesToDisplay.length})</h3>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            title={t('common.print')}
                         >
-                            <Printer className="w-4 h-4" /> Print
+                            <Printer className="w-4 h-4" /> {t('common.print')}
                         </button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Scheme Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Category</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Eligibility</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Benefits</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.scheme_name')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.description')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.category')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.eligibility')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.benefits')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -340,7 +341,7 @@ const SchemeList = () => {
                                         <td className="px-6 py-4 text-sm text-slate-400">{idx + 1}</td>
                                         <td className="px-6 py-4 text-sm font-semibold text-slate-800">{getLocalizedData(scheme.name)}</td>
                                         <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.description)}</div></td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{scheme.category || '-'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{scheme.category ? (t(`common.${scheme.category}`) || scheme.category) : '-'}</td>
                                         <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.eligibility)}</div></td>
                                         <td className="px-6 py-4 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getLocalizedData(scheme.benefits)}</div></td>
                                     </tr>

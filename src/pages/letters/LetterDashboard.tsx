@@ -748,7 +748,7 @@ const LetterDashboard = () => {
                             <thead className="bg-slate-50">
                                 {activeTab === 'outgoing' ? (
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.type')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.name')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.subject')}</th>
@@ -758,7 +758,7 @@ const LetterDashboard = () => {
                                     </tr>
                                 ) : (
                                     <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">#</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.title')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.description')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.area')}</th>

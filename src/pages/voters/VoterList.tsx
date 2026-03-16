@@ -700,26 +700,27 @@ const VoterList = () => {
             ) : viewMode === 'report' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
-                        <h3 className="font-semibold text-slate-800">Voters {t('common.report')} ({totalCount !== null ? totalCount : voters.length})</h3>
+                        <h3 className="font-semibold text-slate-800">{t('voters.title') || 'Voters'} {t('common.report_view')} ({totalCount !== null ? totalCount : voters.length})</h3>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            title={t('common.print')}
                         >
-                            <Printer className="w-4 h-4" /> Print
+                            <Printer className="w-4 h-4" /> {t('common.print')}
                         </button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">EPIC No</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Age</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Gender</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ward / Booth</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Caste</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.name')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.epic_no')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.age')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.gender')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.address')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.ward_booth')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.caste')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">

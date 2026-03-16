@@ -242,3 +242,94 @@ export const translateText = async (
         return text;
     }
 };
+
+const HONORIFIC_MAP: Record<string, Record<string, string>> = {
+    'mr': {
+        'Mr.': 'श्री.',
+        'Mr': 'श्री.',
+        'Mrs.': 'सौ.',
+        'Mrs': 'सौ.',
+        'Ms.': 'कु.',
+        'Ms': 'कु.',
+        'Miss': 'कु.'
+    },
+    'hi': {
+        'Mr.': 'श्री',
+        'Mr': 'श्री',
+        'Mrs.': 'श्रीमती',
+        'Mrs': 'श्रीमती',
+        'Ms.': 'सुश्री',
+        'Ms': 'सुश्री',
+        'Miss': 'सुश्री'
+    }
+};
+
+/**
+ * Transliterates a name phonetically instead of translating its meaning.
+ * e.g., "Sahil" -> "साहिल" (Instead of "Beach" / "बीछ")
+ */
+export const transliterateName = async (
+    text: string,
+    targetLang: string
+): Promise<string> => {
+    if (!text || !text.trim() || (targetLang !== 'mr' && targetLang !== 'hi')) return text;
+
+    const cacheKey = `transliterate_${text}_${targetLang}`;
+    if (translationCache.has(cacheKey)) {
+        return translationCache.get(cacheKey)!;
+    }
+
+    // Handle honorifics (Mr., Mrs., etc.)
+    let nameToTransliterate = text;
+    let honorificPrefix = '';
+
+    const langMap = HONORIFIC_MAP[targetLang];
+    if (langMap) {
+        // Sort keys by length descending to match Mr. before Mr
+        const prefixes = Object.keys(langMap).sort((a, b) => b.length - a.length);
+        for (const prefix of prefixes) {
+            if (text.startsWith(prefix)) {
+                honorificPrefix = langMap[prefix] + ' ';
+                nameToTransliterate = text.substring(prefix.length).trim();
+                break;
+            }
+        }
+    }
+
+    try {
+        // Use Google Input Tools API for phonetic transliteration
+        const response = await fetch(
+            `https://inputtools.google.com/request?text=${encodeURIComponent(nameToTransliterate)}&itc=${targetLang}-t-i0-und&num=1`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        );
+
+        if (!response.ok) {
+            console.warn(`Transliteration API error: ${response.statusText}`);
+            return text;
+        }
+
+        const data = await response.json();
+        
+        // Google Input Tools response format:
+        // ["SUCCESS", [["sahil", ["साहिल"], [], {"annotation":["साहिल"],"lexical_category":["NOUN"]}]]]
+        if (data[0] === 'SUCCESS' && data[1] && data[1][0] && data[1][0][1] && data[1][0][1][0]) {
+            // Reconstruct the full string if it was multiple words evaluated separately
+            // inputtools processes the whole string if passed together
+            const results = data[1].map((item: any) => item[1][0]);
+            const transliteratedText = honorificPrefix + results.join('');
+            
+            addToCache(cacheKey, transliteratedText);
+            return transliteratedText;
+        }
+        
+        return honorificPrefix + nameToTransliterate;
+    } catch (error) {
+        console.error("Transliteration service failed:", error);
+        return text; // Fallback to original text on failure
+    }
+};

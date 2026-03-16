@@ -675,7 +675,9 @@ const EventManagement = () => {
                                             <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs font-medium"><TranslatedText text={event.area} /></span>
                                         )}
                                         {event.target_audience && event.target_audience !== 'All' && (
-                                            <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">For: {event.target_audience}</span>
+                                            <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs font-semibold">
+                                                {t('events.audience_label')}: {t(`events.audiences.${event.target_audience}` as any) || event.target_audience}
+                                            </span>
                                         )}
                                         {event.type && (
                                             <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs font-medium">{event.type}</span>
@@ -719,23 +721,23 @@ const EventManagement = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
                         <h3 className="font-semibold text-slate-800">
-                            {t('events.title')} - {t('common.report')} ({filteredEvents.length})
+                            {t('events.title')} - {t('common.report_view')} ({filteredEvents.length})
                         </h3>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
                         >
-                            <Printer className="w-4 h-4" /> Print
+                            <Printer className="w-4 h-4" /> {t('common.print')}
                         </button>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50 print:bg-slate-100">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date & Time</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Event Name & Type</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location/Area</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Target Audience</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.date_time')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.title_type')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.location_area')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('events.audience_label')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -754,11 +756,12 @@ const EventManagement = () => {
                                             <div className="text-xs text-slate-500 truncate" title={event.location}><TranslatedText text={event.location} /></div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                            {event.target_audience === 'All' ? (
-                                                <span className="text-slate-500">All</span>
-                                            ) : (
-                                                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-medium">{event.target_audience}</span>
-                                            )}
+                                            <span className={clsx(
+                                                "px-2 py-1 rounded text-xs font-medium",
+                                                event.target_audience === 'All' ? "text-slate-500 bg-slate-100" : "bg-orange-100 text-orange-800"
+                                            )}>
+                                                {t(`events.audiences.${event.target_audience}` as any) || event.target_audience}
+                                            </span>
                                         </td>
                                     </tr>
                                 )) : (

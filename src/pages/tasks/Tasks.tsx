@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
-import { useTutorial } from '../../context/TutorialContext';
-import TaskTutorial from '../../components/tutorial/TaskTutorial';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2, LayoutGrid, FileText, Printer, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { AIAnalysisService, AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
@@ -38,7 +36,8 @@ const Tasks = () => {
     const [staffList, setStaffList] = useState<any[]>([]);
     const [deleteTarget, setDeleteTarget] = useState<{ id: string, title: string } | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [viewMode, setViewMode] = useState<'timeline' | 'grid' | 'report'>('timeline');
+    const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -321,6 +320,34 @@ const Tasks = () => {
         return matchesSearch && matchesArea && matchesDate;
     });
 
+    const timelineTasks = filteredTasks
+        .filter(task => {
+            if (!task.due_date) return false;
+            // Matches strict selectedDate
+            const taskDate = new Date(task.due_date);
+            return taskDate.getFullYear() === selectedDate.getFullYear() &&
+                taskDate.getMonth() === selectedDate.getMonth() &&
+                taskDate.getDate() === selectedDate.getDate();
+        })
+        .sort((a, b) => {
+            const timeA = a.due_time || '23:59';
+            const timeB = b.due_time || '23:59';
+            return timeA.localeCompare(timeB);
+        });
+
+    const isToday = (date: Date) => {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
+
+    const changeDate = (days: number) => {
+        const newDate = new Date(selectedDate);
+        newDate.setDate(newDate.getDate() + days);
+        setSelectedDate(newDate);
+    };
+
     return (
         <div className="space-y-6">
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
@@ -329,7 +356,7 @@ const Tasks = () => {
                         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             {t('tasks.title')}
                             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-700 border border-brand-200">
-                                {t('work_history.found') || 'Found'}: {filteredTasks.length}
+                                {t('work_history.found') || 'Found'}: {viewMode === 'timeline' ? timelineTasks.length : filteredTasks.length}
                             </span>
                         </h1>
                         <p className="text-sm text-slate-500">{t('tasks.subtitle')}</p>
@@ -433,21 +460,59 @@ const Tasks = () => {
                 </div>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex justify-end tutorial-task-view">
-                <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+            {/* View Mode & Date Navigator */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                {/* View Toggles */}
+                <div className="flex p-1 bg-slate-100 rounded-lg">
+                    <button
+                        onClick={() => setViewMode('timeline')}
+                        className={`px-4 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'timeline' ? "bg-white text-brand-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+                    >
+                        <Clock className="w-4 h-4" /> {t('tasks.timeline_view') || 'दैनंदिनी (Timeline)'}
+                    </button>
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`px-4 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-white text-brand-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                     >
-                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}
+                    </button>
                     <button
                         onClick={() => setViewMode('report')}
-                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`px-4 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-white text-brand-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
                     >
                         <FileText className="w-4 h-4" /> {t('common.report')}
                     </button>
                 </div>
+
+                {/* Date Navigator (Only show if in Timeline view) */}
+                {viewMode === 'timeline' && (
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setSelectedDate(new Date())}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors ${isToday(selectedDate) ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                        >
+                            {t('tasks.today') || 'Today'}
+                        </button>
+                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-0.5">
+                            <button
+                                onClick={() => changeDate(-1)}
+                                className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-colors"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                            <div className="flex items-center gap-2 px-3 py-1 bg-white mx-1 rounded-md border border-slate-100 font-medium text-slate-800 min-w-[140px] justify-center shadow-sm">
+                                <Calendar className="w-4 h-4 text-brand-500" />
+                                {format(selectedDate, 'MMM d, yyyy')}
+                            </div>
+                            <button
+                                onClick={() => changeDate(1)}
+                                className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-colors"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Task Form Modal */}
@@ -594,69 +659,135 @@ const Tasks = () => {
             )}
 
             {/* Tasks List */}
-            <div className="tutorial-task-list">
-                {viewMode === 'report' ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
-                            <h3 className="font-semibold text-slate-800">Tasks {t('common.report')} ({filteredTasks.length})</h3>
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                            >
-                                <Printer className="w-4 h-4" /> Print
-                            </button>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-slate-200">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Due Date</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address / Office</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Assigned To</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-slate-200">
-                                    {filteredTasks.map(task => (
-                                        <tr key={task.id} className="hover:bg-slate-50">
-                                            <td className="px-6 py-4 text-sm font-semibold text-slate-800">{formatTaskTitle(task.title)}</td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.priority === 'High' ? 'bg-red-100 text-red-700' :
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
+                        <h3 className="font-semibold text-slate-800">{t('tasks.title') || 'Tasks'} {t('common.report_view')} ({filteredTasks.length})</h3>
+                        <button
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            title={t('common.print')}
+                        >
+                            <Printer className="w-4 h-4" /> {t('common.print')}
+                        </button>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.title')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.priority')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.due_date')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.address_office')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.assigned_to')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredTasks.map(task => (
+                                    <tr key={task.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 text-sm font-semibold text-slate-800">{renderDynamicTitle(task.title)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.priority === 'High' ? 'bg-red-100 text-red-700' :
                                                     task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
                                                         'bg-green-100 text-green-700'
-                                                    }`}>{task.priority}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
-                                                    }`}>{task.status}</span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{task.due_date || '-'}</td>
-                                            <td className="px-6 py-4 text-sm text-slate-500">{task.address || task.office_name || '-'}</td>
-                                            <td className="px-6 py-4 text-sm text-slate-500">{task.assigned_to || task.meet_person_name || '-'}</td>
-                                        </tr>
-                                    ))}
-                                    {filteredTasks.length === 0 && (
-                                        <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No tasks found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                }`}>
+                                                {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${task.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'
+                                                }`}>
+                                                {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{task.due_date || '-'}</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500"><TranslatedText text={task.address || task.office_name || '-'} /></td>
+                                        <td className="px-6 py-4 text-sm text-slate-500"><TranslatedText text={task.assigned_to || task.meet_person_name || '-'} /></td>
+                                    </tr>
+                                ))}
+                                {filteredTasks.length === 0 && (
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No tasks found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                ) : (
-                    <div className="grid gap-4">
-                        {loading ? (
-                            <div className="space-y-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="ns-card p-5">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="space-y-2">
-                                                <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
-                                                <div className="flex gap-2">
-                                                    <div className="h-5 w-24 bg-slate-200 rounded-full animate-pulse" />
-                                                    <div className="h-5 w-32 bg-slate-200 rounded-full animate-pulse" />
+                </div>
+            ) : viewMode === 'timeline' ? (
+                /* TIMELINE VIEW */
+                <div className="relative border-l-[3px] border-slate-200 ml-20 md:ml-32 space-y-8 pb-12">
+                    {loading ? (
+                        [1, 2, 3].map(i => (
+                            <div key={i} className="relative pl-8 md:pl-12">
+                                <div className="absolute -left-[11px] top-1 w-5 h-5 rounded-full bg-slate-200 border-[3px] border-white animate-pulse" />
+                                <div className="ns-card p-5">
+                                    <div className="h-5 w-32 bg-slate-200 rounded animate-pulse mb-3" />
+                                    <div className="h-6 w-48 bg-slate-200 rounded animate-pulse mb-3" />
+                                    <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        ))
+                    ) : timelineTasks.length > 0 ? (
+                        timelineTasks.map((task, index) => {
+                            // Determine relative time status
+                            const taskTime = task.due_time ? new Date(`${task.due_date}T${task.due_time}`) : null;
+                            const now = new Date();
+                            const isPast = taskTime && taskTime < now;
+                            const isNext = !isPast && (index === 0 || (timelineTasks[index - 1].due_time && new Date(`${timelineTasks[index - 1].due_date}T${timelineTasks[index - 1].due_time}`) < now));
+
+                            return (
+                                <div key={task.id} className="relative pl-8 md:pl-12 transition-all">
+                                    {/* Timeline Dot */}
+                                    <div className={`absolute -left-[11px] top-1 w-5 h-5 rounded-full border-[3px] border-white z-10 
+                                            ${task.status === 'Completed' ? 'bg-green-500' :
+                                            isNext ? 'bg-brand-500 ring-4 ring-brand-100' :
+                                                isPast ? 'bg-slate-300' : 'bg-slate-300'}`}
+                                    />
+
+                                    {/* Timeline Connection Line (Colored if completed/passed) */}
+                                    {index !== timelineTasks.length - 1 && (
+                                        <div className={`absolute -left-[2px] top-6 bottom-[-2rem] w-[3px] -translate-x-1/2 
+                                                ${task.status === 'Completed' || isPast ? 'bg-slate-300' : 'bg-transparent'}`}
+                                        />
+                                    )}
+
+                                    {/* Time Label (Desktop usually) */}
+                                    <div className="absolute left-0 top-0.5 -translate-x-[120%] text-right w-24 hidden md:block">
+                                        <div className={`text-sm font-black ${isNext ? 'text-brand-700' : isPast ? 'text-brand-600' : 'text-brand-700'}`}>
+                                            {task.due_time ? format(new Date(`2000-01-01T${task.due_time}`), 'hh:mm a') : 'Anytime'}
+                                        </div>
+                                    </div>
+
+                                    {/* Task Card */}
+                                    <div className={`ns-card p-5 group transition-shadow ${isNext ? 'ring-2 ring-brand-500 shadow-md' : 'hover:shadow-md'}`}>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
+                                            <div>
+                                                {/* Mobile Time Label */}
+                                                <div className="flex items-center gap-2 mb-2 md:hidden">
+                                                    <Clock className={`w-4 h-4 ${isNext ? 'text-brand-700' : 'text-brand-600'}`} />
+                                                    <span className={`text-sm font-black ${isNext ? 'text-brand-700' : isPast ? 'text-brand-600' : 'text-brand-700'}`}>
+                                                        {task.due_time ? format(new Date(`2000-01-01T${task.due_time}`), 'hh:mm a') : 'Anytime'}
+                                                    </span>
                                                 </div>
+                                                <h3 className="font-bold text-slate-900 text-lg leading-tight">
+                                                    {renderDynamicTitle(task.title)}
+                                                </h3>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className={clsx(
+                                                    "px-2.5 py-0.5 rounded-md text-xs font-semibold",
+                                                    task.priority === 'High' ? "bg-red-50 text-red-700 border border-red-100" :
+                                                        task.priority === 'Medium' ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
+                                                            "bg-green-50 text-green-700 border border-green-100"
+                                                )}>
+                                                    {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')}
+                                                </span>
+                                                <span className={clsx(
+                                                    "px-2.5 py-0.5 rounded-md text-xs font-semibold border",
+                                                    task.status === 'Completed' ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-600 border-slate-200"
+                                                )}>
+                                                    {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
+                                                </span>
                                             </div>
                                             <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
                                         </div>
@@ -666,58 +797,94 @@ const Tasks = () => {
                                             <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
                                             <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : filteredTasks.map(task => (
-                            <div key={task.id} className="ns-card p-5 hover:shadow-md transition-shadow">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h3 className="font-semibold text-slate-900 text-lg">
-                                            {renderDynamicTitle(task.title)}
-                                        </h3>
-                                        <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
-                                            <span className={clsx(
-                                                "px-2 py-0.5 rounded-full text-xs font-medium",
-                                                task.priority === 'High' ? "bg-red-100 text-red-700" :
-                                                    task.priority === 'Medium' ? "bg-yellow-100 text-yellow-700" :
-                                                        "bg-green-100 text-green-700"
-                                            )}>
-                                                {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')} {t('tasks.priority_label')}
-                                            </span>
-                                            {task.due_date && (
-                                                <span className="flex items-center gap-1">
-                                                    <Calendar className="w-3 h-3" /> {task.due_date}
-                                                </span>
+
+                                        <p className="text-slate-600 text-sm mb-4">
+                                            <TranslatedText text={task.description} />
+                                        </p>
+
+                                        {/* Task Metadata Grid */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 bg-slate-50 rounded-lg p-3 text-sm">
+                                            {(task.address || task.office_name) && (
+                                                <div className="flex items-start gap-2 text-slate-700">
+                                                    <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                                                    <span className="font-medium"><TranslatedText text={task.office_name || task.address} /></span>
+                                                </div>
                                             )}
-                                            {task.office_name && (
-                                                <span className="flex items-center gap-1 text-slate-600">
-                                                    <Building2 className="w-3 h-3" /> <TranslatedText text={task.office_name} />
-                                                </span>
-                                            )}
-                                            {task.address && (
-                                                <span className="flex items-center gap-1 text-slate-600">
-                                                    <MapPin className="w-3 h-3" /> <TranslatedText text={task.address} />
-                                                </span>
+                                            {task.meet_person_name && (
+                                                <div className="flex items-start gap-2 text-slate-700">
+                                                    <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                                                    <span>{t('tasks.meet_person') || 'Meet'}: <span className="font-medium"><TranslatedText text={task.meet_person_name} /></span></span>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <span className={clsx(
-                                            "px-3 py-1 rounded-full text-xs font-medium",
-                                            task.status === 'Completed' ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"
-                                        )}>
-                                            {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
-                                        </span>
+
+                                        {/* Action Buttons */}
+                                        <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end gap-2 transition-opacity">
+                                            <button
+                                                onClick={() => handleEdit(task)}
+                                                className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                            >
+                                                <Edit2 className="w-3.5 h-3.5" /> {t('common.edit')}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteClick(task)}
+                                                className="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" /> {t('common.delete')}
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                                <p className="text-slate-600 text-sm mb-4">
-                                    <TranslatedText text={task.description} />
-                                </p>
-
-                                <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center text-sm">
-                                    <span className="text-slate-500 flex items-center gap-1">
-                                        <Clock className="w-3 h-3" /> {t('tasks.created')} {new Date(task.created_at).toLocaleDateString()}
+                            );
+                        })
+                    ) : (
+                        <div className="px-8 md:px-12 py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-300 ml-4 md:ml-0">
+                            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                            <p className="font-medium text-slate-600 mb-1">{t('work_history.no_timeline_tasks') || `No tasks scheduled for ${isToday(selectedDate) ? 'today' : format(selectedDate, 'MMM d')}`}</p>
+                            <button
+                                onClick={() => {
+                                    setNewTask(prev => ({ ...prev, due_date: format(selectedDate, 'yyyy-MM-dd') }));
+                                    setShowForm(true);
+                                }}
+                                className="mt-4 text-brand-600 hover:text-brand-700 font-medium text-sm inline-flex items-center gap-1"
+                            >
+                                <Plus className="w-4 h-4" /> {t('tasks.new_task')}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                /* GRID VIEW */
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {loading ? (
+                        [1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="ns-card p-5">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="space-y-2 w-full pr-4">
+                                        <div className="h-6 w-full bg-slate-200 rounded animate-pulse" />
+                                        <div className="flex gap-2">
+                                            <div className="h-5 w-20 bg-slate-200 rounded-full animate-pulse" />
+                                            <div className="h-5 w-24 bg-slate-200 rounded-full animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse shrink-0" />
+                                </div>
+                                <div className="h-4 w-full bg-slate-200 rounded animate-pulse mt-4 mb-2" />
+                                <div className="h-4 w-2/3 bg-slate-200 rounded animate-pulse" />
+                            </div>
+                        ))
+                    ) : filteredTasks.map(task => (
+                        <div key={task.id} className="ns-card flex flex-col hover:shadow-md transition-shadow">
+                            <div className="p-5 flex-1">
+                                <div className="flex justify-between items-start gap-4 mb-3">
+                                    <h3 className="font-semibold text-slate-900 text-lg line-clamp-2">
+                                        {renderDynamicTitle(task.title)}
+                                    </h3>
+                                    <span className={clsx(
+                                        "px-2.5 py-1 rounded-md text-xs font-semibold shrink-0 cursor-default",
+                                        task.status === 'Completed' ? "bg-green-50 text-green-700 border border-green-200" : "bg-slate-50 text-slate-700 border border-slate-200"
+                                    )}>
+                                        {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                     </span>
                                     <div className="flex gap-2">
                                         <button
@@ -736,44 +903,96 @@ const Tasks = () => {
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                                
+                                <p className="text-slate-600 text-sm mb-4 line-clamp-3">
+                                    <TranslatedText text={task.description} />
+                                </p>
 
-                        {filteredTasks.length === 0 && !loading && (
-                            <div className="text-center py-12 text-slate-500 ns-card border-dashed">
-                                <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                <p>{t('tasks.no_tasks')}</p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                                <div className="space-y-2 mt-auto">
+                                    <div className="flex items-center gap-2">
+                                        <span className={clsx(
+                                            "px-2 py-0.5 rounded-full text-xs font-medium",
+                                            task.priority === 'High' ? "bg-red-50 text-red-700" :
+                                                task.priority === 'Medium' ? "bg-yellow-50 text-yellow-700" :
+                                                    "bg-green-50 text-green-700"
+                                        )}>
+                                            {task.priority === 'High' ? t('tasks.priority_high') : task.priority === 'Medium' ? t('tasks.priority_medium') : t('tasks.priority_low')} {t('tasks.priority_label')}
+                                        </span>
+                                    </div>
+                                    
+                                    {(task.due_date || task.due_time) && (
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            <Calendar className="w-4 h-4 text-slate-400" />
+                                            <span>
+                                                {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : ''}
+                                                {task.due_date && task.due_time ? ' • ' : ''}
+                                                {task.due_time ? format(new Date(`2000-01-01T${task.due_time}`), 'hh:mm a') : ''}
+                                            </span>
+                                        </div>
+                                    )}
 
-                {/* Delete Confirmation Modal */}
-                {deleteTarget && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="ns-card max-w-sm w-full p-6 text-center">
-                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <AlertCircle className="w-6 h-6 text-red-600" />
+                                    {(task.office_name || task.address) && (
+                                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                                            {task.office_name ? <Building2 className="w-4 h-4 text-slate-400" /> : <MapPin className="w-4 h-4 text-slate-400" />}
+                                            <span className="truncate"><TranslatedText text={task.office_name || task.address} /></span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
-                            <p className="text-slate-600 mb-6">
-                                {t('common.delete_warning_item').replace('{item}', '')}
-                                <span className="font-semibold mx-1">{renderDynamicTitle(deleteTarget.title)}</span>?
-                            </p>
-                            <div className="flex gap-3 justify-center">
+
+                            <div className="px-5 py-3 border-t border-slate-100 bg-slate-50/50 flex justify-end items-center gap-2 rounded-b-xl">
                                 <button
-                                    onClick={() => setDeleteTarget(null)}
-                                    className="ns-btn-secondary"
+                                    onClick={() => handleEdit(task)}
+                                    className="p-2 text-slate-400 hover:text-brand-600 hover:bg-white rounded-lg transition-colors shadow-sm"
+                                    title={t('common.edit')}
                                 >
-                                    {t('common.cancel')}
+                                    <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={confirmDelete}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                                    onClick={() => handleDeleteClick(task)}
+                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-white rounded-lg transition-colors shadow-sm"
+                                    title={t('common.delete')}
                                 >
-                                    {t('common.delete')}
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
+                        </div>
+                    ))}
+
+                    {filteredTasks.length === 0 && !loading && (
+                        <div className="col-span-full text-center py-16 text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
+                            <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                            <p className="font-medium text-slate-600">{t('tasks.no_tasks') || 'No tasks found'}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="ns-card max-w-sm w-full p-6 text-center">
+                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-600" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
+                        <p className="text-slate-600 mb-6">
+                            {t('common.delete_warning_item').replace('{item}', '')}
+                            <span className="font-semibold mx-1">{renderDynamicTitle(deleteTarget.title)}</span>?
+                        </p>
+                        <div className="flex gap-3 justify-center">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                className="ns-btn-secondary"
+                            >
+                                {t('common.cancel')}
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                            >
+                                {t('common.delete')}
+                            </button>
                         </div>
                     </div>
                 )}

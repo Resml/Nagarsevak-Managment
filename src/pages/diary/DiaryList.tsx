@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, HelpCircle } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, LayoutGrid, FileText, Printer } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useTutorial } from '../../context/TutorialContext';
@@ -8,6 +8,7 @@ import DiaryTutorial from '../../components/tutorial/DiaryTutorial';
 import { DiaryService } from '../../services/diaryService';
 import { AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
+import { format } from 'date-fns';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
 
 const DiaryList = () => {
@@ -21,6 +22,7 @@ const DiaryList = () => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [filterType, setFilterType] = useState<MeetingType | 'All'>('All');
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,6 +141,10 @@ const DiaryList = () => {
         setExpandedId(expandedId === id ? null : id);
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     const getStatusColor = (status: DiaryStatus) => {
         switch (status) {
             case 'Raised': return 'bg-yellow-100 text-yellow-800';
@@ -179,11 +185,32 @@ const DiaryList = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="tutorial-diary-header">
                         <h1 className="text-2xl font-bold text-slate-900">{t('diary.title')}</h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <p className="text-slate-500">{t('diary.subtitle')}</p>
-                            <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                {t('diary.found') || 'Found'}: {filteredEntries.length}
-                            </span>
+                        <div className="flex items-center gap-2 mt-2">
+                            <div className="flex bg-white rounded-lg border border-slate-200 p-1 shadow-sm">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-brand-50 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    title={t('common.grid_view')}
+                                >
+                                    <LayoutGrid className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('report')}
+                                    className={`p-1.5 rounded-md transition-all ${viewMode === 'report' ? 'bg-brand-50 text-brand-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                    title={t('common.report_view')}
+                                >
+                                    <FileText className="w-5 h-5" />
+                                </button>
+                            </div>
+                            {viewMode === 'report' && (
+                                <button
+                                    onClick={handlePrint}
+                                    className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                                    title={t('common.print')}
+                                >
+                                    <Printer className="w-5 h-5" />
+                                </button>
+                            )}
                         </div>
                     </div>
                     <div className="flex gap-2">
@@ -272,116 +299,198 @@ const DiaryList = () => {
             </div>
 
             {/* List */}
-            <div className="space-y-4 tutorial-diary-list">
-                {loading ? (
-                    <>
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="ns-card overflow-hidden">
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start">
-                                        <div className="space-y-2 w-full">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
-                                                <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+            {viewMode === 'report' ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-transparent">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.date')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.meeting_type')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.subject')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.department')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.outcome')}</th>
+                                    <th className="px-6 py-4 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.beneficiaries')}</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-slate-200">
+                                {filteredEntries.map((entry, index) => (
+                                    <tr key={entry.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => toggleExpand(entry.id)}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{index + 1}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{format(new Date(entry.meetingDate), 'MMM d, yyyy')}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="ns-badge border-slate-200 bg-slate-50 text-slate-700">
+                                                {entry.meetingType}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900"><TranslatedText text={entry.subject} /></div>
+                                            {expandedId === entry.id && entry.description && (
+                                                <div className="text-xs text-slate-500 mt-1 max-w-xs break-words">
+                                                    <TranslatedText text={entry.description} />
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900 font-medium">
+                                                <TranslatedText text={entry.department || '--'} />
                                             </div>
-                                            <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse" />
-                                            <div className="h-4 w-1/4 bg-slate-200 rounded animate-pulse" />
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-600">
+                                                <TranslatedText text={entry.area || '--'} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusColor(entry.status)}`}>
+                                                {getStatusText(entry.status)}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-brand-600 font-semibold">
+                                                <TranslatedText text={entry.beneficiaries || '--'} />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredEntries.length === 0 && (
+                                    <tr>
+                                        <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
+                                            {t('diary.no_entries')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full">
+                    {loading ? (
+                        <>
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="ns-card overflow-hidden">
+                                    <div className="p-6">
+                                        <div className="flex justify-between items-start">
+                                            <div className="space-y-2 w-full">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="h-5 w-16 bg-slate-200 rounded-full animate-pulse" />
+                                                    <div className="h-4 w-24 bg-slate-200 rounded animate-pulse" />
+                                                </div>
+                                                <div className="h-6 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                                <div className="h-4 w-1/4 bg-slate-200 rounded animate-pulse" />
+                                            </div>
+                                            <div className="flex items-center gap-2 ml-4">
+                                                <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" />
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-2 ml-4">
-                                            <div className="h-6 w-20 bg-slate-200 rounded-full animate-pulse" />
-                                        </div>
+                                        <div className="mt-4 h-4 w-full bg-slate-200 rounded animate-pulse" />
+                                        <div className="mt-2 h-4 w-2/3 bg-slate-200 rounded animate-pulse" />
                                     </div>
-                                    <div className="mt-4 h-4 w-full bg-slate-200 rounded animate-pulse" />
-                                    <div className="mt-2 h-4 w-2/3 bg-slate-200 rounded animate-pulse" />
                                 </div>
-                            </div>
-                        ))}
-                    </>
-                ) : filteredEntries.length > 0 ? (
-                    filteredEntries.map(entry => (
-                        <div
-                            key={entry.id}
-                            className="ns-card overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
-                            onClick={() => toggleExpand(entry.id)}
-                        >
-                            <div className="p-6">
-                                <div className="flex justify-between items-start">
-                                    <div className="space-y-1">
+                            ))}
+                        </>
+                    ) : filteredEntries.length > 0 ? (
+                        filteredEntries.map(entry => (
+                            <div
+                                key={entry.id}
+                                className="ns-card overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
+                                onClick={() => toggleExpand(entry.id)}
+                            >
+                                <div className="p-5 flex-1">
+                                    <div className="flex justify-between items-start mb-3">
                                         <div className="flex items-center gap-2">
                                             <span className="ns-badge border-slate-200 bg-slate-50 text-slate-700">
                                                 {entry.meetingType}
                                             </span>
-                                            <span className="text-sm text-slate-500 flex items-center">
-                                                <Calendar className="w-3 h-3 mr-1" />
-                                                {entry.meetingDate}
+                                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(entry.status)}`}>
+                                                {getStatusText(entry.status)}
                                             </span>
                                         </div>
-                                        <h3 className="text-lg font-semibold text-slate-900"><TranslatedText text={entry.subject} /></h3>
+                                        <span className="text-xs text-slate-500 flex items-center">
+                                            <Calendar className="w-3 h-3 mr-1" />
+                                            {format(new Date(entry.meetingDate), 'MMM d, yyyy')}
+                                        </span>
+                                    </div>
+
+                                    <h3 className="text-base font-bold text-slate-900 mb-2 line-clamp-1">
+                                        <TranslatedText text={entry.subject} />
+                                    </h3>
+
+                                    {entry.description && (
+                                        <p className={`text-slate-600 text-sm mb-4 ${expandedId === entry.id ? '' : 'line-clamp-2'}`}>
+                                            <TranslatedText text={entry.description} />
+                                        </p>
+                                    )}
+
+                                    <div className="space-y-2">
                                         {entry.department && (
-                                            <p className="text-sm text-brand-600 font-medium"><TranslatedText text={entry.department} /> {t('diary.dept_label')}</p>
+                                            <div className="flex items-center gap-2 text-xs">
+                                                <span className="text-slate-500 font-medium">{t('diary.dept_label')}:</span>
+                                                <span className="text-brand-600 font-semibold"><TranslatedText text={entry.department} /></span>
+                                            </div>
+                                        )}
+                                        {entry.area && (
+                                            <div className="flex items-center gap-2 text-xs">
+                                                <span className="text-slate-500 font-medium">{t('diary.area')}:</span>
+                                                <span className="text-slate-700 font-semibold"><TranslatedText text={entry.area} /></span>
+                                            </div>
                                         )}
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(entry.status)}`}>
-                                            {getStatusText(entry.status)}
-                                        </span>
-                                        <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${expandedId === entry.id ? 'rotate-90' : ''}`} />
-                                    </div>
+
+                                    {expandedId === entry.id && (
+                                        <>
+                                            {entry.beneficiaries && (
+                                                <div className="mt-4 flex items-center gap-2 text-sm text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 w-full">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    <span className="font-semibold">{t('diary.beneficiaries')}: <TranslatedText text={entry.beneficiaries} /></span>
+                                                </div>
+                                            )}
+
+                                            {entry.response && (
+                                                <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+                                                    <p className="text-xs font-semibold text-slate-600 uppercase mb-1">{t('diary.official_response')}</p>
+                                                    <p className="text-sm text-slate-700"><TranslatedText text={entry.response} /></p>
+                                                </div>
+                                            )}
+
+                                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenModal(entry);
+                                                    }}
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                    {t('diary.edit')}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteClick(entry);
+                                                    }}
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    {t('diary.delete')}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-
-                                {entry.description && (
-                                    <p className={`mt-3 text-slate-600 text-sm whitespace-pre-wrap ${expandedId === entry.id ? '' : 'line-clamp-2'}`}><TranslatedText text={entry.description} /></p>
-                                )}
-
-                                {entry.beneficiaries && expandedId === entry.id && (
-                                    <div className="mt-3 flex items-center gap-2 text-sm text-brand-700 bg-brand-50 px-3 py-1.5 rounded-lg border border-brand-100 w-fit">
-                                        <CheckCircle className="w-4 h-4" />
-                                        <span className="font-semibold">{t('diary.beneficiaries')}: <TranslatedText text={entry.beneficiaries} /></span>
-                                    </div>
-                                )}
-
-                                {entry.response && expandedId === entry.id && (
-                                    <div className="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-200/70">
-                                        <p className="text-xs font-semibold text-slate-600 uppercase mb-1">{t('diary.official_response')}</p>
-                                        <p className="text-sm text-slate-700"><TranslatedText text={entry.response} /></p>
-                                    </div>
-                                )}
-
-                                {/* Actions (Visible when expanded) */}
-                                {expandedId === entry.id && (
-                                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleOpenModal(entry);
-                                            }}
-                                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                            {t('diary.edit')}
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteClick(entry);
-                                            }}
-                                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            {t('diary.delete')}
-                                        </button>
-                                    </div>
-                                )}
                             </div>
+                        ))
+                    ) : (
+                        <div className="col-span-full py-12 text-center ns-card border-dashed">
+                            <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                            <h3 className="text-lg font-medium text-slate-900">{t('diary.no_entries')}</h3>
                         </div>
-                    ))
-                ) : (
-                    <div className="text-center py-12 ns-card border-dashed">
-                        <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-slate-900">{t('diary.no_entries')}</h3>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
+            )}
 
             {/* Add/Edit Modal */}
             {isModalOpen && (
