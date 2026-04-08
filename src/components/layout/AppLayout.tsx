@@ -460,27 +460,27 @@ const AppLayout = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard')}
-                  className="flex items-center gap-3 text-left overflow-hidden group"
+                  className="flex items-center gap-4 text-left overflow-hidden group"
                 >
-                  <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-colors">
+                  <div className="h-16 w-16 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-md font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-all duration-300">
                     {branding?.profile_image ? (
                       <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      "N"
+                      <span className="text-2xl">N</span>
                     )}
                   </div>
-                  <div>
-                    <div className="font-display text-base font-bold leading-tight text-slate-900 whitespace-nowrap group-hover:text-brand-700 transition-colors">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="font-display text-xl font-bold leading-tight text-slate-900 truncate group-hover:text-brand-700 transition-colors">
                       {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
                     </div>
-                    <div className="text-xs text-slate-500 leading-tight whitespace-nowrap font-medium">
+                    <div className="text-sm text-slate-500 leading-tight truncate font-medium">
                       {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
                     </div>
                   </div>
                 </button>
               )}
               {isCollapsed && (
-                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate('/dashboard')}>
+                <div className="h-12 w-12 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-md font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-all duration-300" onClick={() => navigate('/dashboard')}>
                   {branding?.profile_image ? (
                     <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -698,20 +698,31 @@ const AppLayout = () => {
             <div className="mx-auto max-w-7xl px-4 md:px-8 py-6 md:py-8">
 
 
-              <div className="md:hidden flex items-center mb-6 bg-gradient-to-r from-brand-600 to-brand-700 p-4 rounded-2xl shadow-md text-white">
+              <div className="md:hidden flex items-center mb-6 bg-gradient-to-r from-brand-600 to-brand-700 p-4 rounded-2xl shadow-lg text-white">
                 <button
                   onClick={() => setSidebarOpen(true)}
-                  className="p-2 -ml-2 text-brand-100 hover:bg-white/10 rounded-lg transition-colors"
+                  className="p-2 -ml-2 text-brand-100 hover:bg-white/10 rounded-lg transition-colors shrink-0"
+                  aria-label="Open Menu"
                 >
                   <Menu className="w-6 h-6" />
                 </button>
-                <div className="ml-3 flex flex-col">
-                  <span className="font-bold text-lg leading-none drop-shadow-sm">
-                    {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
-                  </span>
-                  <span className="text-xs text-brand-100 opacity-90 font-medium">
-                    {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
-                  </span>
+                
+                <div className="ml-3 flex items-center gap-3 overflow-hidden">
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 overflow-hidden shadow-inner flex items-center justify-center">
+                    {branding?.profile_image ? (
+                      <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl font-bold">N</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-xl leading-tight drop-shadow-sm truncate">
+                      {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
+                    </span>
+                    <span className="text-sm text-brand-100 opacity-90 font-medium truncate">
+                      {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
