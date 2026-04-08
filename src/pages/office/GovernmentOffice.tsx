@@ -9,8 +9,10 @@ import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
 import { useTutorial } from '../../context/TutorialContext';
 import GovOfficeTutorial from '../../components/tutorial/GovOfficeTutorial';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, LayoutGrid, FileText, Download } from 'lucide-react';
 import clsx from 'clsx';
+import { GovOfficeReportGenerator } from './GovOfficeReportGenerator';
+import { StaffReportGenerator } from '../staff/StaffReportGenerator';
 
 const GovernmentOfficePage = () => {
     const { t, language } = useLanguage();
@@ -46,6 +48,10 @@ const GovernmentOfficePage = () => {
         keywords: ''
     });
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
+
+    // View State
+    const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showReport, setShowReport] = useState(false);
 
     useEffect(() => {
         loadOffices();
@@ -263,16 +269,49 @@ const GovernmentOfficePage = () => {
                 ))}
             </div>
 
-            {/* Search */}
-            <div className="relative tutorial-office-search">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                <input
-                    type="text"
-                    placeholder={activeTab === 'Offices' ? (t('government_office.search_placeholder') || "Search...") : (t('staff.list.search_name_mobile') || "Search Name or Mobile")}
-                    className="ns-input pl-10 w-full"
-                    value={activeTab === 'Offices' ? officeSearchTerm : staffSearchTerm}
-                    onChange={(e) => activeTab === 'Offices' ? setOfficeSearchTerm(e.target.value) : setStaffSearchTerm(e.target.value)}
-                />
+            {/* Search and View Mode Toggle */}
+            <div className="flex flex-col sm:flex-row gap-4 tutorial-office-search">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                        type="text"
+                        placeholder={activeTab === 'Offices' ? (t('government_office.search_placeholder') || "Search...") : (t('staff.list.search_name_mobile') || "Search Name or Mobile")}
+                        className="ns-input pl-10 w-full"
+                        value={activeTab === 'Offices' ? officeSearchTerm : staffSearchTerm}
+                        onChange={(e) => activeTab === 'Offices' ? setOfficeSearchTerm(e.target.value) : setStaffSearchTerm(e.target.value)}
+                    />
+                </div>
+                
+                <div className="flex justify-between items-center whitespace-nowrap">
+                    <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm mr-4">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" /> {t('common.grid')}
+                        </button>
+                        <button
+                            onClick={() => setViewMode('report')}
+                            className={clsx(
+                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            <FileText className="w-4 h-4" /> {t('common.report')}
+                        </button>
+                    </div>
+                    {viewMode === 'report' && (
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Content for Offices */}
@@ -637,6 +676,21 @@ const GovernmentOfficePage = () => {
                 </div>
             )}
             <GovOfficeTutorial />
+            
+            {showReport && activeTab === 'Offices' && (
+                <GovOfficeReportGenerator
+                    offices={filteredOffices}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
+
+            {showReport && activeTab === 'Cooperative' && (
+                <StaffReportGenerator
+                    staffList={filteredStaff}
+                    activeTab="Cooperative"
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };

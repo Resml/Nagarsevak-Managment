@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { toast } from 'sonner';
-import { Search, Filter, CheckCircle, XCircle, Clock, Trash2 } from 'lucide-react';
+import { Search, Filter, CheckCircle, XCircle, Clock, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
+import { SchemeReportGenerator } from '../../components/reports/SchemeReportGenerator';
 
 interface SchemeApplication {
     id: number;
@@ -28,6 +29,7 @@ const SchemeBeneficiaryList = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [deleteTarget, setDeleteTarget] = useState<SchemeApplication | null>(null);
     const [editTarget, setEditTarget] = useState<SchemeApplication | null>(null);
+    const [showReport, setShowReport] = useState(false);
 
     // Edit Modal State
     const [editStatus, setEditStatus] = useState<'Pending' | 'Approved' | 'Rejected'>('Pending');
@@ -166,15 +168,16 @@ const SchemeBeneficiaryList = () => {
                         onChange={e => setSearchQuery(e.target.value)}
                     />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                     {['All', 'Pending', 'Approved', 'Rejected'].map(status => (
                         <button
                             key={status}
                             onClick={() => setFilterStatus(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filterStatus === status
-                                ? 'bg-slate-800 text-white'
-                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                                }`}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                filterStatus === status
+                                    ? 'bg-slate-800 text-white'
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                            }`}
                         >
                             {status === 'All' ? t('schemes.beneficiary_list.all') :
                                 status === 'Pending' ? t('schemes.beneficiary_list.pending') :
@@ -182,6 +185,13 @@ const SchemeBeneficiaryList = () => {
                                         t('schemes.beneficiary_list.rejected')}
                         </button>
                     ))}
+                    <button
+                        onClick={() => setShowReport(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-brand-600 text-white hover:bg-brand-700 transition-colors shadow-sm"
+                        title="PDF डाउनलोड करा"
+                    >
+                        <Download className="w-4 h-4" /> PDF अहवाल
+                    </button>
                 </div>
             </div>
 
@@ -386,6 +396,14 @@ const SchemeBeneficiaryList = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* PDF Report Modal */}
+            {showReport && (
+                <SchemeReportGenerator
+                    applications={filteredApplications}
+                    onClose={() => setShowReport(false)}
+                />
             )}
         </div>
     );

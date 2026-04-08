@@ -4,7 +4,8 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTutorial } from '../../context/TutorialContext';
 import VisitorTutorial from '../../components/tutorial/VisitorTutorial';
-import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X, Loader2, User, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
+import { Users, Clock, Save, Phone, Search, UserCircle, MapPin, Calendar, Edit2, Trash2, ChevronRight, X, Loader2, User, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
+import { VisitorReportGenerator } from '../../components/reports/VisitorReportGenerator';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import type { Voter } from '../../types';
@@ -35,6 +36,8 @@ const VisitorLog = () => {
     const { startTutorial } = useTutorial();
     const [visitors, setVisitors] = useState<Visitor[]>([]);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showVisitorReport, setShowVisitorReport] = useState(false);
+    const [selectedVisitorsForReport, setSelectedVisitorsForReport] = useState<Visitor[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         mobile: '',
@@ -583,13 +586,25 @@ const VisitorLog = () => {
                                             <FileText className="w-4 h-4" /> {t('common.report')}
                                         </button>
                                         {viewMode === 'report' && (
-                                            <button
-                                                onClick={() => window.print()}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-                                                title={t('common.print')}
-                                            >
-                                                <Printer className="w-4 h-4" /> {t('common.print')}
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedVisitorsForReport(filteredVisitors);
+                                                        setShowVisitorReport(true);
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-brand-600 hover:bg-brand-50 hover:text-brand-700"
+                                                    title={t('work_history.download_pdf') || "Download PDF Report"}
+                                                >
+                                                    <Download className="w-4 h-4" /> PDF
+                                                </button>
+                                                <button
+                                                    onClick={() => window.print()}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+                                                    title={t('common.print')}
+                                                >
+                                                    <Printer className="w-4 h-4" /> {t('common.print')}
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -692,6 +707,7 @@ const VisitorLog = () => {
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.purpose')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('office.area')}</th>
                                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.report_columns.date_time')}</th>
+                                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.actions') || 'Actions'}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody className="bg-white divide-y divide-slate-200/70">
@@ -722,6 +738,19 @@ const VisitorLog = () => {
                                                             <td className="px-4 py-3 whitespace-nowrap">
                                                                 <div className="text-sm text-slate-900">{format(new Date(v.visit_date), 'MMM dd, yyyy')}</div>
                                                                 <div className="text-xs text-slate-500">{format(new Date(v.visit_date), 'h:mm a')}</div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setSelectedVisitorsForReport([v]);
+                                                                        setShowVisitorReport(true);
+                                                                    }}
+                                                                    className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                                    title={t('work_history.download_pdf') || 'Download PDF'}
+                                                                >
+                                                                    <Download className="w-4 h-4" />
+                                                                </button>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -1061,6 +1090,13 @@ const VisitorLog = () => {
                         </div>
                     )
                 }
+
+                {showVisitorReport && (
+                    <VisitorReportGenerator
+                        visitors={selectedVisitorsForReport}
+                        onClose={() => setShowVisitorReport(false)}
+                    />
+                )}
             </div>
             <VisitorTutorial />
         </>

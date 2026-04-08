@@ -9,9 +9,9 @@ import type { Survey, Voter } from '../../types';
 import { toast } from 'sonner';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
 import SurveyTutorial from '../../components/tutorial/SurveyTutorial';
-
+import { SurveyReportGenerator } from './SurveyReportGenerator';
 const SurveyDashboard = () => {
     const { t, language } = useLanguage();
     const { startTutorial } = useTutorial();
@@ -25,6 +25,7 @@ const SurveyDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [areaSearch, setAreaSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
+    const [showReport, setShowReport] = useState(false);
 
     // Delete State
     const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
@@ -363,10 +364,19 @@ const SurveyDashboard = () => {
 
             <div className="ns-card overflow-hidden tutorial-surveys-list">
                 <div className="p-6 border-b border-slate-200/70 flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-slate-900">{t('surveys.recent_surveys')}</h2>
-                    <span className="text-sm text-slate-500">
-                        {t('surveys.found')}: {filteredSurveys.length}
-                    </span>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-lg font-semibold text-slate-900">{t('surveys.recent_surveys')}</h2>
+                        <span className="text-sm text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {t('surveys.found')}: {filteredSurveys.length}
+                        </span>
+                    </div>
+                    
+                    <button
+                        onClick={() => setShowReport(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                    >
+                        <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                    </button>
                 </div>
 
                 {filteredSurveys.length === 0 ? (
@@ -585,6 +595,12 @@ const SurveyDashboard = () => {
                 </div>
             )}
             <SurveyTutorial />
+            {showReport && (
+                <SurveyReportGenerator
+                    surveys={filteredSurveys}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };

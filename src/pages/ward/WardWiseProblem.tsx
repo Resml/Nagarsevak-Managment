@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
+import { ComplaintReportGenerator } from '../../components/reports/ComplaintReportGenerator';
 import { useTutorial } from '../../context/TutorialContext';
 import WardProblemsTutorial from '../../components/tutorial/WardProblemsTutorial';
 import { format } from 'date-fns';
@@ -21,6 +22,8 @@ const WardWiseProblem = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
     const [loading, setLoading] = useState(true);
+    const [showReport, setShowReport] = useState(false);
+    const [selectedComplaintsForReport, setSelectedComplaintsForReport] = useState<Complaint[]>([]);
 
     // Search & Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -458,16 +461,30 @@ const WardWiseProblem = () => {
 
             {viewMode === 'report' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden tutorial-ward-list">
+                    <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <h3 className="font-semibold text-gray-800">{t('common.report_view')} ({filteredComplaints.length})</h3>
+                        <button
+                            onClick={() => {
+                                setSelectedComplaintsForReport(filteredComplaints);
+                                setShowReport(true);
+                            }}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-100 shadow-sm transition-colors"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'PDF अहवाल'}
+                        </button>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{
+                                        t('common.report_columns.sr_no')}
+                                    </th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.problem_title')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.status')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.title_type')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.status')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.citizen_info')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('complaints.table.date')}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('common.report_columns.date')}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -604,7 +621,15 @@ const WardWiseProblem = () => {
                 </div>
             )}
             <WardProblemsTutorial />
-        </div >
+
+            {showReport && (
+                <ComplaintReportGenerator
+                    complaints={selectedComplaintsForReport}
+                    onClose={() => setShowReport(false)}
+                    title={t('nav.ward_problem')}
+                />
+            )}
+        </div>
     );
 };
 

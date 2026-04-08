@@ -291,7 +291,9 @@ const ComplaintDetail = () => {
             }
 
             toast.success('Deleted successfully');
-            if (isAreaProblem) {
+            if (location.state?.from) {
+                navigate(location.state.from);
+            } else if (isAreaProblem || complaint.type === 'SelfIdentified') {
                 navigate('/dashboard/ward/problems');
             } else {
                 navigate('/dashboard/complaints');

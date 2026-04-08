@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useTutorial } from '../../context/TutorialContext';
@@ -10,6 +10,7 @@ import { AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
+import { DiaryReportGenerator } from './DiaryReportGenerator';
 
 const DiaryList = () => {
     const { t, language } = useLanguage();
@@ -23,6 +24,7 @@ const DiaryList = () => {
     const [filterType, setFilterType] = useState<MeetingType | 'All'>('All');
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showReport, setShowReport] = useState(false);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -203,13 +205,23 @@ const DiaryList = () => {
                                 </button>
                             </div>
                             {viewMode === 'report' && (
-                                <button
-                                    onClick={handlePrint}
-                                    className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
-                                    title={t('common.print')}
-                                >
-                                    <Printer className="w-5 h-5" />
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => setShowReport(true)}
+                                        className="p-1.5 bg-brand-50 border border-brand-200 text-brand-700 rounded-lg hover:bg-brand-100 transition-colors shadow-sm flex items-center gap-1 text-xs font-medium px-3"
+                                        title={t('work_history.download_pdf') || 'Download PDF'}
+                                    >
+                                        <Download className="w-4 h-4" />
+                                        {language === 'mr' ? 'PDF' : 'PDF'}
+                                    </button>
+                                    <button
+                                        onClick={handlePrint}
+                                        className="p-1.5 bg-white rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+                                        title={t('common.print')}
+                                    >
+                                        <Printer className="w-5 h-5" />
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -678,6 +690,12 @@ const DiaryList = () => {
                 </div>
             )}
             <DiaryTutorial />
+            {showReport && (
+                <DiaryReportGenerator
+                    entries={filteredEntries}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };

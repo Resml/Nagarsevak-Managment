@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import { Shield, ArrowRight, CheckCircle, Users, BarChart2, MessageSquare, Building2, Eye, LayoutDashboard, Globe, Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
 
 const LandingPage = () => {
@@ -12,6 +13,12 @@ const LandingPage = () => {
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
+            <Helmet>
+                <title>{language === 'mr' ? 'Krishnaniti - नगरसेवक व्यवस्थापन प्रणाली आणि जनसंपर्क' : 'Krishnaniti - Nagarsevak Management & Connect'}</title>
+                <meta name="description" content={language === 'mr' ? 'कृष्णनीती द्वारे नागरिक आणि लोकप्रतिनिधी यांच्यातील दरी कमी करा. वॉर्ड समस्या आणि विकास कार्ये कार्यक्षमतेने व्यवस्थापित करा.' : 'Bridge the gap between citizens and representatives with Krishnaniti. Efficiently manage ward issues and development.'} />
+                <link rel="canonical" href="https://krishnaniti.in/" />
+                {language === 'mr' && <link rel="alternate" hrefLang="mr" href="https://krishnaniti.in/" />}
+            </Helmet>
             {/* Navigation */}
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -247,16 +254,16 @@ const LandingPage = () => {
                         <div>
                             <h4 className="text-white font-semibold mb-4">{t('landing.footer.platform')}</h4>
                             <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="hover:text-brand-400 transition">{t('landing.footer.features')}</a></li>
-                                <li><a href="#" className="hover:text-brand-400 transition">{t('landing.footer.testimonials')}</a></li>
-                                <li><a href="#" className="hover:text-brand-400 transition">{t('landing.footer.pricing')}</a></li>
+                                <li><a href="#features" className="hover:text-brand-400 transition">{t('landing.footer.features')}</a></li>
+                                <li><a href="#testimonials" className="hover:text-brand-400 transition">{t('landing.footer.testimonials')}</a></li>
+                                <li><a href="/pricing" className="hover:text-brand-400 transition">{t('landing.footer.pricing')}</a></li>
                             </ul>
                         </div>
                         <div>
                             <h4 className="text-white font-semibold mb-4">{t('landing.footer.legal')}</h4>
                             <ul className="space-y-2 text-sm">
-                                <li><a href="#" className="hover:text-brand-400 transition">{t('landing.footer.privacy')}</a></li>
-                                <li><a href="#" className="hover:text-brand-400 transition">{t('landing.footer.terms')}</a></li>
+                                <li><a href="/privacy-policy" className="hover:text-brand-400 transition">{t('landing.footer.privacy')}</a></li>
+                                <li><a href="/terms-of-service" className="hover:text-brand-400 transition">{t('landing.footer.terms')}</a></li>
                             </ul>
                         </div>
                     </div>

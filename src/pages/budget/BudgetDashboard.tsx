@@ -7,8 +7,9 @@ import { BudgetService } from '../../services/budgetService';
 import { type BudgetRecord } from '../../types';
 import { useTutorial } from '../../context/TutorialContext';
 import WardBudgetTutorial from '../../components/tutorial/WardBudgetTutorial';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { BudgetReportGenerator } from './BudgetReportGenerator';
 
 const BudgetDashboard = () => {
     const { t, language } = useLanguage();
@@ -24,6 +25,7 @@ const BudgetDashboard = () => {
     const [year, setYear] = useState('2024-2025');
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showReport, setShowReport] = useState(false);
 
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedBudgetForUpdate, setSelectedBudgetForUpdate] = useState<{ id: string, current: number, new: number } | null>(null);
@@ -194,6 +196,12 @@ const BudgetDashboard = () => {
                                 <option value="2022-2023">FY 2022-2023</option>
                             </select>
                         </div>
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
                         <button
                             onClick={startTutorial}
                             className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-budget-help shadow-sm"
@@ -552,6 +560,13 @@ const BudgetDashboard = () => {
                 </div>
             )}
             <WardBudgetTutorial />
+            {showReport && (
+                <BudgetReportGenerator
+                    budgets={filteredBudgets}
+                    year={year}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };

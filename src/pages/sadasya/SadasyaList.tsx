@@ -12,8 +12,8 @@ import { mr } from '../../utils/marathiLocale';
 import SadasyaProfile from './SadasyaProfile';
 import { useTutorial } from '../../context/TutorialContext';
 import SadasyaTutorial from '../../components/tutorial/SadasyaTutorial';
-import { HelpCircle } from 'lucide-react';
-
+import { HelpCircle, Download } from 'lucide-react';
+import { SadasyaReportGenerator } from './SadasyaReportGenerator';
 const getGenderDisplay = (gender: string) => {
     switch (gender) {
         case 'M': return 'Male';
@@ -34,6 +34,7 @@ const SadasyaList = () => {
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
     const [filterVoter, setFilterVoter] = useState<'all' | 'voter' | 'non-voter'>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showReport, setShowReport] = useState(false);
 
     // Refs for click outside
     const areaWrapperRef = useRef<HTMLDivElement>(null);
@@ -705,7 +706,7 @@ const SadasyaList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end tutorial-sadasya-view">
+                <div className="flex justify-between items-center tutorial-sadasya-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -719,6 +720,14 @@ const SadasyaList = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
+                    {viewMode === 'report' && (
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
+                    )}
                 </div>
 
                 {viewMode === 'report' ? (
@@ -1289,6 +1298,12 @@ const SadasyaList = () => {
                 )
             }
             <SadasyaTutorial />
+            {showReport && (
+                <SadasyaReportGenerator
+                    sadasyas={filteredSadasyas}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </>
     );
 };

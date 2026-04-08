@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Video, Plus, X, Copy, Check, Send, Users, Calendar, Clock,
-    Loader2, Search, MapPin, LayoutGrid, FileText, Printer, Link2, ChevronRight
+    Loader2, Search, MapPin, LayoutGrid, FileText, Printer, Link2, ChevronRight, Download
 } from 'lucide-react';
+import { MeetingReportGenerator } from '../../components/reports/MeetingReportGenerator';
+import ConferenceTutorial from '../../components/tutorial/ConferenceTutorial';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
@@ -236,7 +238,6 @@ const InviteVoterModal = ({ meeting, tenantId, onClose, onSent }: InviteVoterMod
                     </div>
                 </div>
             </div>
-            <ConferenceTutorial />
         </div>
     );
 };
@@ -384,6 +385,8 @@ const ConferenceRoom = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [inviteMeeting, setInviteMeeting] = useState<ConferenceMeeting | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [showMeetingReport, setShowMeetingReport] = useState(false);
+    const [selectedMeetingsForReport, setSelectedMeetingsForReport] = useState<ConferenceMeeting[]>([]);
 
     const fetchMeetings = useCallback(async () => {
         setLoading(true);
@@ -531,9 +534,21 @@ const ConferenceRoom = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b bg-slate-50">
                         <h3 className="font-semibold text-slate-800">{t('communication_page.past_meetings')} — {t('common.report_view')} ({displayMeetings.length})</h3>
-                        <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedMeetingsForReport(displayMeetings);
+                                    setShowMeetingReport(true);
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-100 shadow-sm transition-colors"
+                                title={t('work_history.download_pdf') || 'Download PDF'}
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'PDF'}
+                            </button>
+                            <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
@@ -544,6 +559,7 @@ const ConferenceRoom = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_invited')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Link</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">{t('common.actions') || 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -573,9 +589,21 @@ const ConferenceRoom = () => {
                                                 </button>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedMeetingsForReport([meeting]);
+                                                    setShowMeetingReport(true);
+                                                }}
+                                                className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                title={t('work_history.download_pdf') || 'Download PDF'}
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 )) : (
-                                    <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">{t('communication_page.conf_no_meetings')}</td></tr>
+                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">{t('communication_page.conf_no_meetings')}</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -602,6 +630,13 @@ const ConferenceRoom = () => {
                     }}
                 />
             )}
+            {showMeetingReport && (
+                <MeetingReportGenerator
+                    meetings={selectedMeetingsForReport}
+                    onClose={() => setShowMeetingReport(false)}
+                />
+            )}
+            <ConferenceTutorial />
         </div>
     );
 };

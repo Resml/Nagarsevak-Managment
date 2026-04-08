@@ -74,6 +74,14 @@ export const CUSTOM_TRANSLATIONS: Record<string, string> = {
     "Domicile Certificate Recommendation": "अधिवास प्रमाणपत्र शिफारस",
     "EWS Certificate Recommendation": "EWS प्रमाणपत्र शिफारस",
 
+    // Staff Categories
+    "Waste Management": "कचरा व्यवस्थापन",
+    "Street Lighting": "पथदिवे",
+    "Water Distribution": "पाणी पुरवठा",
+    "Public Health": "सार्वजनिक आरोग्य",
+    "Road Construction": "रस्ते बांधकाम",
+    "Administration": "प्रशासन",
+
     // Work Descriptions
     "Met local residents and society members to spread awareness about government welfare schemes (health, education, pension). Assisted eligible citizens in understanding the application process.": "स्थानिक रहिवासी आणि संस्था सदस्यांच्या भेटी घेऊन शासकीय कल्याणकारी योजनांची (आरोग्य, शिक्षण, निवृत्तीवेतन) माहिती दिली. पात्र नागरिकांना अर्ज प्रक्रियेत मदत केली.",
     "Supervised cleanliness drive in market area and residential zones. Ensured proper garbage collection and instructed staff regarding regular maintenance schedules.": "बाजार पेठ आणि निवासी क्षेत्रातील स्वच्छता मोहिमेचे निरीक्षण केले. कचरा वेळेवर उचलला जाईल याची खात्री केली आणि कर्मचाऱ्यांना नियमित स्वच्छतेच्या सूचना दिल्या.",

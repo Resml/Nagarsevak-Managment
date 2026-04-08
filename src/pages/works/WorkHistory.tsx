@@ -10,6 +10,7 @@ import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, Heart
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { AhwalReportGenerator } from './AhwalReportGenerator';
+import { WorkReportGenerator } from './WorkReportGenerator';
 import { useTutorial } from '../../context/TutorialContext';
 import WorkHistoryTutorial from '../../components/tutorial/WorkHistoryTutorial';
 import { HelpCircle } from 'lucide-react';
@@ -51,6 +52,7 @@ const WorkHistory = () => {
     const [selectionMode, setSelectionMode] = useState(false);
     const [selectedWorkIds, setSelectedWorkIds] = useState<Set<string>>(new Set());
     const [showAhwalPreview, setShowAhwalPreview] = useState(false);
+    const [showReport, setShowReport] = useState(false);
 
     // Modal State (Create Only)
     const [showModal, setShowModal] = useState(false);
@@ -309,12 +311,20 @@ const WorkHistory = () => {
                             )}
                         </div>
                         {!selectionMode && (
-                            <button
-                                onClick={toggleSelectionMode}
-                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors tutorial-work-ahwal"
-                            >
-                                <FileText className="w-4 h-4" /> {t('work_history.generate_ahwal') || 'Generate Ahwal'}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowReport(true)}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                                >
+                                    <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download Report'}
+                                </button>
+                                <button
+                                    onClick={toggleSelectionMode}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors tutorial-work-ahwal"
+                                >
+                                    <FileText className="w-4 h-4" /> {t('work_history.generate_ahwal') || 'Generate Ahwal'}
+                                </button>
+                            </div>
                         )}
                         <button
                             onClick={startTutorial}
@@ -461,56 +471,68 @@ const WorkHistory = () => {
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {filteredItems.map((item, index) => (
-                                    <tr key={item.id} className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectionMode && selectedWorkIds.has(item.id) ? 'bg-brand-50/50' : ''}`} onClick={() => handleCardClick(item)}>
+                                    <tr 
+                                        key={item.id} 
+                                        className={`hover:bg-slate-50 transition-colors cursor-pointer ${selectionMode && selectedWorkIds.has(item.id) ? 'bg-brand-50/50' : ''}`} 
+                                        onClick={() => handleCardClick(item)}
+                                    >
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                             {selectionMode ? (
                                                 <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedWorkIds.has(item.id) ? 'bg-brand-600 border-brand-600 text-white' : 'border-slate-300'}`}>
                                                     {selectedWorkIds.has(item.id) && <Check className="w-3 h-3" />}
                                                 </div>
-                                                <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
-                                                    <TranslatedText text={item.description} />
+                                            ) : (
+                                                index + 1
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium text-slate-900 leading-tight">
+                                                <TranslatedText text={item.title} />
+                                            </div>
+                                            <div className="text-xs text-slate-500 line-clamp-1 mt-1 max-w-xs">
+                                                <TranslatedText text={item.description} />
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm text-slate-600">
+                                                <TranslatedText text={item.location} />
+                                                {item.area && <span className="text-slate-400 ml-1">({item.area})</span>}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {getStatusBadge(item.status, item.source)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
+                                                {getSourceIcon(item.source)}
+                                                <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
+                                            </div>
+                                            {item.citizenName && (
+                                                <div className="text-sm text-blue-600 font-medium">
+                                                    {item.citizenName}
                                                 </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm font-medium text-slate-900">
-                                                    <TranslatedText text={item.location} />
-                                                    {item.area && <span className="text-slate-500 ml-1">({item.area})</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {getStatusBadge(item.status, item.source)}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-1 text-xs text-slate-500 mb-1">
-                                                    {getSourceIcon(item.source)}
-                                                    <span>{item.source === 'Manual' ? t('work_history.manual') : (item.source === 'Help' ? t('work_history.help') : t('work_history.complaint'))}</span>
-                                                </div>
-                                                {item.citizenName && (
-                                                    <div className="text-sm text-blue-600 font-medium">
-                                                        {item.citizenName}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="text-sm text-slate-900">{format(new Date(item.date), 'MMM d, yyyy')}</div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {item.amount ? (
-                                                    <div className="text-sm font-medium text-green-600">₹ {item.amount}</div>
-                                                ) : (
-                                                    <span className="text-slate-400">--</span>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {filteredItems.length === 0 && (
-                                        <tr>
-                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                                {t('work_history.no_records')}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900">{format(new Date(item.date), 'MMM d, yyyy')}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {item.amount ? (
+                                                <div className="text-sm font-medium text-green-600">₹ {item.amount}</div>
+                                            ) : (
+                                                <span className="text-slate-400">--</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {filteredItems.length === 0 && (
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                            {t('work_history.no_records')}
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
                             </table>
                         </div>
                     </div>
@@ -696,10 +718,15 @@ const WorkHistory = () => {
                         onClose={() => setShowAhwalPreview(false)}
                     />
                 )}
+                {showReport && (
+                    <WorkReportGenerator
+                        works={filteredItems}
+                        onClose={() => setShowReport(false)}
+                    />
+                )}
+                <WorkHistoryTutorial />
             </div>
-            <WorkHistoryTutorial />
-        </div>
-    );
-};
+        );
+    };
 
 export default WorkHistory;

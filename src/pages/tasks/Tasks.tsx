@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
-import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2, LayoutGrid, FileText, Printer, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Plus, CheckCircle, Clock, AlertCircle, Camera, Sparkles, Calendar, X, Edit2, Trash2, Search, Wand2, MapPin, Building2, LayoutGrid, FileText, Printer, ChevronLeft, ChevronRight, User, HelpCircle, Download } from 'lucide-react';
 import { AIAnalysisService, AIService } from '../../services/aiService';
 import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { useTutorial } from '../../context/TutorialContext';
+import { TaskTutorial } from '../../components/tutorial/TaskTutorial';
+import { TaskReportGenerator } from '../../components/reports/TaskReportGenerator';
 
 const Tasks = () => {
     const { t, language } = useLanguage();
@@ -38,6 +41,8 @@ const Tasks = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'timeline' | 'grid' | 'report'>('timeline');
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+    const [showTaskReport, setShowTaskReport] = useState(false);
+    const [selectedTasksForReport, setSelectedTasksForReport] = useState<any[]>([]);
 
     // Filter State
     const [searchTerm, setSearchTerm] = useState('');
@@ -349,7 +354,7 @@ const Tasks = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <>
             <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="tutorial-task-header">
@@ -663,13 +668,25 @@ const Tasks = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
                         <h3 className="font-semibold text-slate-800">{t('tasks.title') || 'Tasks'} {t('common.report_view')} ({filteredTasks.length})</h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                            title={t('common.print')}
-                        >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedTasksForReport(filteredTasks);
+                                    setShowTaskReport(true);
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-100 shadow-sm transition-colors"
+                                title={t('work_history.download_pdf') || 'Download PDF'}
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                                title={t('common.print')}
+                            >
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
@@ -681,6 +698,7 @@ const Tasks = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.due_date')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.address_office')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.assigned_to')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.actions') || 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -704,10 +722,26 @@ const Tasks = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{task.due_date || '-'}</td>
                                         <td className="px-6 py-4 text-sm text-slate-500"><TranslatedText text={task.address || task.office_name || '-'} /></td>
                                         <td className="px-6 py-4 text-sm text-slate-500"><TranslatedText text={task.assigned_to || task.meet_person_name || '-'} /></td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <button
+                                                onClick={() => {
+                                                    setSelectedTasksForReport([task]);
+                                                    setShowTaskReport(true);
+                                                }}
+                                                className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                title={t('work_history.download_pdf') || 'Download PDF'}
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                                 {filteredTasks.length === 0 && (
-                                    <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No tasks found</td></tr>
+                                    <tr>
+                                        <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                                            {t('work_history.no_records')}
+                                        </td>
+                                    </tr>
                                 )}
                             </tbody>
                         </table>
@@ -786,21 +820,12 @@ const Tasks = () => {
                                                     "px-2.5 py-0.5 rounded-md text-xs font-semibold border",
                                                     task.status === 'Completed' ? "bg-green-50 text-green-700 border-green-200" : "bg-slate-50 text-slate-600 border-slate-200"
                                                 )}>
-                                                    {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                                 </span>
                                             </div>
-                                            <div className="h-6 w-24 bg-slate-200 rounded-full animate-pulse" />
                                         </div>
-                                        <div className="h-4 w-3/4 bg-slate-200 rounded animate-pulse mb-2 mt-4" />
-                                        <div className="h-4 w-1/2 bg-slate-200 rounded animate-pulse mb-4" />
-                                        <div className="pt-4 border-t border-slate-200/70 flex justify-between items-center">
-                                            <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
-                                            <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
-                                        </div>
-
                                         <p className="text-slate-600 text-sm mb-4">
-                                            <TranslatedText text={task.description} />
-                                        </p>
+    <TranslatedText text={task.description} />
+</p>
 
                                         {/* Task Metadata Grid */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 bg-slate-50 rounded-lg p-3 text-sm">
@@ -886,22 +911,6 @@ const Tasks = () => {
                                     )}>
                                         {task.status === 'Completed' ? t('tasks.status_completed') : t('tasks.status_pending')}
                                     </span>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEdit(task)}
-                                            className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
-                                            title={t('common.edit')}
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteClick(task)}
-                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            title={t('common.delete')}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
                                 </div>
                                 
                                 <p className="text-slate-600 text-sm mb-4 line-clamp-3">
@@ -977,7 +986,7 @@ const Tasks = () => {
                         </div>
                         <h3 className="text-lg font-bold text-slate-900 mb-2">{t('common.delete_confirm')}</h3>
                         <p className="text-slate-600 mb-6">
-                            {t('common.delete_warning_item').replace('{item}', '')}
+                            {t('common.delete_warning_item')?.replace('{item}', '')}
                             <span className="font-semibold mx-1">{renderDynamicTitle(deleteTarget.title)}</span>?
                         </p>
                         <div className="flex gap-3 justify-center">
@@ -995,10 +1004,15 @@ const Tasks = () => {
                             </button>
                         </div>
                     </div>
-                )}
-            </div>
-            <TaskTutorial />
-        </div>
+                </div>
+            )}
+            {showTaskReport && (
+                <TaskReportGenerator
+                    tasks={selectedTasksForReport}
+                    onClose={() => setShowTaskReport(false)}
+                />
+            )}
+        </>
     );
 };
 

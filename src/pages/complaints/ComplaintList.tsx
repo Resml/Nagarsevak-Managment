@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer, HelpCircle } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
+import { ComplaintReportGenerator } from '../../components/reports/ComplaintReportGenerator';
 import { format } from 'date-fns';
 import clsx from 'clsx';
 import { supabase } from '../../services/supabaseClient';
@@ -22,6 +23,8 @@ const ComplaintList = () => {
         (location.state as any)?.tab === 'Personal Help' ? 'Personal Help' : 'Complaints'
     );
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showComplaintReport, setShowComplaintReport] = useState(false);
+    const [selectedComplaintsForReport, setSelectedComplaintsForReport] = useState<Complaint[]>([]);
     const { startTutorial } = useTutorial();
 
     // Derived state for translation - simplified and more robust matching AppLayout logic
@@ -647,12 +650,24 @@ const ComplaintList = () => {
                         <h3 className="font-semibold text-gray-800">
                             {t('common.report_view')} ({filteredComplaints.length})
                         </h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                        >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    setSelectedComplaintsForReport(filteredComplaints);
+                                    setShowComplaintReport(true);
+                                }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-lg text-sm font-medium text-brand-700 hover:bg-brand-100 shadow-sm transition-colors"
+                                title={t('work_history.download_pdf') || 'Download PDF'}
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                            >
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -665,6 +680,7 @@ const ComplaintList = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.location_area')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.staff')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.status')}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.actions') || 'Actions'}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -708,6 +724,19 @@ const ComplaintList = () => {
                                                 {complaint.status}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 text-right whitespace-nowrap">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedComplaintsForReport([complaint]);
+                                                    setShowComplaintReport(true);
+                                                }}
+                                                className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                title={t('work_history.download_pdf') || 'Download PDF'}
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                        </td>
                                     </tr>
                                 )) : (
                                     <tr>
@@ -720,6 +749,12 @@ const ComplaintList = () => {
                         </table>
                     </div>
                 </div>
+            )}
+            {showComplaintReport && (
+                <ComplaintReportGenerator
+                    complaints={selectedComplaintsForReport}
+                    onClose={() => setShowComplaintReport(false)}
+                />
             )}
         </div >
     );

@@ -36,20 +36,109 @@ export const AhwalReportGenerator: React.FC<AhwalReportGeneratorProps> = ({ sele
         setIsGenerating(true);
 
         try {
-            const canvas = await html2canvas(reportRef.current, {
-                scale: 2, // Higher resolution
-                useCORS: true, // If we load external images in the future
-                logging: false
-            });
+            // Safe styles to avoid oklch errors in html2canvas
+            const safeStyles = `
+                .text-brand-900 { color: #0c4a6e !important; }
+                .text-brand-800 { color: #075985 !important; }
+                .text-brand-700 { color: #0369a1 !important; }
+                .text-brand-600 { color: #0284c7 !important; }
+                .text-brand-500 { color: #0ea5e9 !important; }
+                .bg-brand-50 { background-color: #f0f9ff !important; }
+                .bg-brand-900 { background-color: #0c4a6e !important; }
+                .text-slate-900 { color: #0f172a !important; }
+                .text-slate-800 { color: #1e293b !important; }
+                .text-slate-700 { color: #334155 !important; }
+                .text-slate-600 { color: #475569 !important; }
+                .text-slate-500 { color: #64748b !important; }
+                .text-slate-400 { color: #94a3b8 !important; }
+                .bg-slate-50 { background-color: #f8fafc !important; }
+                .bg-slate-100 { background-color: #f1f5f9 !important; }
+                .bg-slate-200 { background-color: #e2e8f0 !important; }
+                .text-green-700 { color: #15803d !important; }
+                .border-brand-100 { border-color: #e0f2fe !important; }
+                .border-brand-800 { border-color: #075985 !important; }
+                .border-brand-600 { border-color: #0284c7 !important; }
+                .border-slate-100 { border-color: #f1f5f9 !important; }
+                .border-slate-200 { border-color: #e2e8f0 !important; }
+            `;
 
-            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            const onClone = (clonedDoc: Document) => {
+                const style = clonedDoc.createElement('style');
+                style.innerHTML = safeStyles;
+                clonedDoc.head.appendChild(style);
+            };
 
-            // A4 sizing
+            // Wait for translations to settle
+            await new Promise(resolve => setTimeout(resolve, 800));
+
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const margin = 20; // 20mm margin
+            let currentY = margin;
 
-            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            const captureElement = async (element: HTMLElement) => {
+                const canvas = await html2canvas(element, {
+                    scale: 2, // Slightly lower scale for memory safety
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    onclone: onClone,
+                    logging: false
+                });
+                return {
+                    imgData: canvas.toDataURL('image/png'),
+                    width: pdfWidth - (margin * 2),
+                    height: (canvas.height * (pdfWidth - (margin * 2))) / canvas.width
+                };
+            };
+
+            // 1. Capture Header & Summary
+            const topSection = reportRef.current.querySelector('.report-header')?.parentElement;
+            if (topSection) {
+                // We'll capture everything before the works list first
+                const header = reportRef.current.querySelector('.text-center.border-b-2') as HTMLElement;
+                const summary = reportRef.current.querySelector('.grid-cols-2') as HTMLElement;
+
+                if (header) {
+                    const { imgData, height } = await captureElement(header);
+                    pdf.addImage(imgData, 'PNG', margin, currentY, pdfWidth - (margin * 2), height);
+                    currentY += height + 10;
+                }
+
+                if (summary) {
+                    const { imgData, height } = await captureElement(summary);
+                    pdf.addImage(imgData, 'PNG', margin, currentY, pdfWidth - (margin * 2), height);
+                    currentY += height + 10;
+                }
+            }
+
+            // 2. Capture each Work Block
+            const workBlocks = reportRef.current.querySelectorAll('.break-inside-avoid');
+            for (let i = 0; i < workBlocks.length; i++) {
+                const block = workBlocks[i] as HTMLElement;
+                const { imgData, height } = await captureElement(block);
+
+                // Check if it fits on the current page
+                if (currentY + height > pdfHeight - margin) {
+                    pdf.addPage();
+                    currentY = margin;
+                }
+
+                pdf.addImage(imgData, 'PNG', margin, currentY, pdfWidth - (margin * 2), height);
+                currentY += height + 8;
+            }
+
+            // 3. Capture Signature Area
+            const footer = reportRef.current.querySelector('.mt-20.pt-10') as HTMLElement;
+            if (footer) {
+                const { imgData, height } = await captureElement(footer);
+                if (currentY + height > pdfHeight - margin) {
+                    pdf.addPage();
+                    currentY = margin;
+                }
+                pdf.addImage(imgData, 'PNG', margin, currentY, pdfWidth - (margin * 2), height);
+            }
+
             pdf.save(`Ahwal_Report_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
             onClose();
         } catch (error) {

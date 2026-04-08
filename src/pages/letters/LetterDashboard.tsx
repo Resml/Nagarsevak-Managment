@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid, HelpCircle } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid, HelpCircle, Download } from 'lucide-react';
+import { LetterReportGenerator } from '../../components/reports/LetterReportGenerator';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
@@ -76,6 +77,8 @@ const LetterDashboard = () => {
 
     // View Mode State
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showLetterReport, setShowLetterReport] = useState(false);
+    const [selectedLettersForReport, setSelectedLettersForReport] = useState<any[]>([]);
 
     useEffect(() => {
         fetchRequests();
@@ -651,13 +654,25 @@ const LetterDashboard = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                         {viewMode === 'report' && (
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
-                                title="Print Report"
-                            >
-                                <Printer className="w-4 h-4" /> Print
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-200"
+                                    title="Print Report"
+                                >
+                                    <Printer className="w-4 h-4" /> Print
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setSelectedLettersForReport(filteredRequests);
+                                        setShowLetterReport(true);
+                                    }}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-all bg-brand-600 text-white hover:bg-brand-700 shadow-sm"
+                                    title="Download PDF Report"
+                                >
+                                    <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -755,6 +770,7 @@ const LetterDashboard = () => {
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.area')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.status')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.date')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.actions') || 'Actions'}</th>
                                     </tr>
                                 ) : (
                                     <tr>
@@ -763,6 +779,7 @@ const LetterDashboard = () => {
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.description')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('letters.area')}</th>
                                         <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.date')}</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('common.actions') || 'Actions'}</th>
                                     </tr>
                                 )}
                             </thead>
@@ -787,6 +804,19 @@ const LetterDashboard = () => {
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
                                                 {format(new Date(req.created_at), 'PP p')}
                                             </td>
+                                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedLettersForReport([req]);
+                                                        setShowLetterReport(true);
+                                                    }}
+                                                    className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                    title={t('work_history.download_pdf') || 'Download PDF'}
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
@@ -799,7 +829,20 @@ const LetterDashboard = () => {
                                             <td className="px-4 py-3 text-sm text-slate-600 max-w-md truncate">{letter.description || '-'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600">{letter.area || '-'}</td>
                                             <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-500">
-                                                {format(new Date(letter.received_date), 'PP')}
+                                                {format(new Date(letter.received_date || letter.created_at), 'dd/MM/yyyy')}
+                                            </td>
+                                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedLettersForReport([letter]);
+                                                        setShowLetterReport(true);
+                                                    }}
+                                                    className="p-1.5 text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                    title={t('work_history.download_pdf') || 'Download PDF'}
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
                                             </td>
                                         </tr>
                                     ))
@@ -1145,6 +1188,13 @@ const LetterDashboard = () => {
                 </div>
             )}
 
+            {showLetterReport && (
+                <LetterReportGenerator
+                    type={activeTab}
+                    letters={selectedLettersForReport}
+                    onClose={() => setShowLetterReport(false)}
+                />
+            )}
             {/* Upload Modal */}
             {
                 showUploadModal && (

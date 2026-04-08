@@ -14,7 +14,8 @@ import type { Voter } from '../../types';
 import { VoterService } from '../../services/voterService';
 import { useTutorial } from '../../context/TutorialContext';
 import EventTutorial from '../../components/tutorial/EventTutorial';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
+import { EventReportGenerator } from './EventReportGenerator';
 
 interface Event {
     id: string;
@@ -410,6 +411,7 @@ const EventManagement = () => {
 
     // View Mode
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showReport, setShowReport] = useState(false);
 
     // Modal State
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -608,7 +610,7 @@ const EventManagement = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end mt-2 tutorial-event-view">
+                <div className="flex justify-between items-center mt-2 tutorial-event-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -628,6 +630,14 @@ const EventManagement = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
+                    {viewMode === 'report' && (
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -871,6 +881,12 @@ const EventManagement = () => {
                 </div>
             )}
             <EventTutorial />
+            {showReport && (
+                <EventReportGenerator
+                    events={filteredEvents}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };

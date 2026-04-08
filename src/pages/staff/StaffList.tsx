@@ -8,11 +8,10 @@ import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
 import { useTutorial } from '../../context/TutorialContext';
 import TeamTutorial from '../../components/tutorial/TeamTutorial';
-
-
+import { StaffReportGenerator } from './StaffReportGenerator';
 const StaffList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
@@ -25,6 +24,7 @@ const StaffList = () => {
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showReport, setShowReport] = useState(false);
 
     const AVAILABLE_PERMISSIONS = useMemo(() => [
         // Daily Work
@@ -399,7 +399,7 @@ const StaffList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-end mt-2 tutorial-team-view">
+                <div className="flex justify-between items-center mt-2 tutorial-team-view">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -419,6 +419,14 @@ const StaffList = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
+                    {viewMode === 'report' && (
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
+                    )}
                 </div>
 
                 {loading ? (
@@ -817,6 +825,13 @@ const StaffList = () => {
                 </div>
             )}
             <TeamTutorial />
+            {showReport && (
+                <StaffReportGenerator
+                    staffList={filteredStaff}
+                    activeTab={activeTab}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </>
     );
 };

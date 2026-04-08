@@ -21,6 +21,9 @@ export const translations = {
             all: "All",
             All: "All",
             select: "Select",
+            actions: "Actions",
+            status: "Status",
+            date: "Date",
             male: "Male",
             female: "Female",
             other: "Other",
@@ -40,6 +43,7 @@ export const translations = {
             report: "Report",
             print: "Print",
             report_view: "Report View",
+            directory: "Directory",
             report_columns: {
                 sr_no: "#",
                 date_time: "Date & Time",
@@ -207,7 +211,8 @@ export const translations = {
             tabs: {
                 office: "Office Team",
                 party: "Party Workers",
-                cooperative: "Government Employees"
+                cooperative: "Government Employees",
+                coop: "Government Employees"
             },
             modal: {
                 title: "Add New Team Member",
@@ -1061,6 +1066,7 @@ export const translations = {
             applicant_name: "Applicant Name",
             mobile: "Mobile Number",
             letter_type: "Letter Type",
+            type: "Letter Type",
             select_type: "Select Type",
             subject: "Subject",
             subject_placeholder: "Subject of the letter...",
@@ -1169,8 +1175,11 @@ export const translations = {
             priority_high: "High",
             due_date: "Due date",
             due_time: "Due time",
+            status: "Status",
+            assigned_to: "Assigned To",
             address: "Address / Location",
             address_placeholder: "e.g. Ward Office, Colony Name",
+            assign_info: "Assigned / Contact",
             description: "Description",
             save_task: "Save Task",
             processing: "Processing...",
@@ -1663,6 +1672,9 @@ export const translations = {
             all: "सर्व",
             All: "सर्व",
             select: "निवडा",
+            actions: "कृती",
+            status: "स्थिती",
+            date: "दिनांक",
             male: "पुरुष",
             female: "महिला",
             other: "इतर",
@@ -1682,6 +1694,7 @@ export const translations = {
             report: "रिपोर्ट",
             print: "प्रिंट",
             report_view: "अहवाल दृश्य",
+            directory: "माहिती सूची (Directory)",
             report_columns: {
                 sr_no: "क्र.",
                 date_time: "दिनांक आणि वेळ",
@@ -1849,7 +1862,8 @@ export const translations = {
             tabs: {
                 office: "ऑफिस टीम",
                 party: "पक्ष कार्यकर्ते",
-                cooperative: "शासकीय कर्मचारी"
+                cooperative: "शासकीय कर्मचारी",
+                coop: "शासकीय कर्मचारी"
             },
             modal: {
                 title: "नवीन टीम सदस्य जोडा",
@@ -2692,6 +2706,7 @@ export const translations = {
             new_request: "नवीन विनंती",
             edit_request: "विनंती संपादित करा",
             manage_types: "प्रकार व्यवस्थापित करा",
+            type: "पत्राचा प्रकार",
             search_placeholder: "नाव, प्रकार, क्षेत्राद्वारे शोधा...",
             no_letters: "पत्र विनंतीआढळल्या नाहीत.",
             no_requests: "पत्र विनंती आढळल्या नाहीत.",
@@ -2808,8 +2823,11 @@ export const translations = {
             priority_high: "उच्च",
             due_date: "देय तारीख",
             due_time: "वेळ",
+            status: "स्थिती",
+            assigned_to: "नियुक्त केलेले",
             address: "पत्ता / स्थान",
             address_placeholder: "उदा. प्रभाग कार्यालय, कॉलनी नाव",
+            assign_info: "नियुक्त / संपर्क",
             description: "वर्णन",
             save_task: "कार्य जतन करा",
             processing: "प्रक्रिया सुरू आहे...",
@@ -3281,6 +3299,8 @@ export const translations = {
             Housing: "आवास",
             All: "सभी",
             all: "सभी",
+            status: "स्थिति",
+            date: "तारीख",
             report_columns: {
                 sr_no: "क्र.",
                 date_time: "दिनांक और समय",
@@ -3676,6 +3696,7 @@ export const translations = {
             subtitle: "आधिकारिक पत्र अनुरोधों को ट्रैक और प्रबंधित करें",
             new_request: "नई प्रक्रिया",
             manage_types: "प्रकार प्रबंधित करें",
+            type: "पत्र का प्रकार",
             search_placeholder: "नाम, प्रकार, क्षेत्र द्वारा खोजें...",
             no_letters: "कोई पत्र अनुरोध नहीं मिले।",
             new_request_title: "नया पत्र अनुरोध",

@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { type ElectionResult } from '../types';
+import localElectionData from '../data/election_data.json';
 
 const RESULT_STORAGE_KEY = 'ns_election_results';
 
@@ -47,9 +48,9 @@ export const ResultService = {
                 return filterResults(stored, ward);
             }
 
-            // No data available
-            console.log('[ResultService] No data available anywhere');
-            return [];
+            // Fall back to bundled local JSON
+            console.log('[ResultService] No data anywhere, using bundled election_data.json');
+            return filterResults(localElectionData as unknown as ElectionResult[], ward);
 
         } catch (e) {
             console.error('[ResultService] Exception in getResults:', e);
@@ -61,9 +62,9 @@ export const ResultService = {
                 return filterResults(stored, ward);
             }
 
-            // Return empty array instead of dummy data
-            console.log('[ResultService] Exception - returning empty array');
-            return [];
+            // Fall back to bundled local JSON
+            console.log('[ResultService] Exception - using bundled election_data.json');
+            return filterResults(localElectionData as unknown as ElectionResult[], ward);
         }
     },
 };

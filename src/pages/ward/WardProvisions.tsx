@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle, Trash2, AlertCircle } from 'lucide-react';
+import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle, Trash2, AlertCircle, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -10,6 +10,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import WardProvisionsTutorial from '../../components/tutorial/WardProvisionsTutorial';
 import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { WardProvisionReportGenerator } from './WardProvisionReportGenerator';
 
 const WardProvisions = () => {
     const { t, language } = useLanguage();
@@ -23,6 +24,7 @@ const WardProvisions = () => {
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedProvision, setSelectedProvision] = useState<ProvisionRecord | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<ProvisionRecord | null>(null);
+    const [showReport, setShowReport] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState<Partial<ProvisionRecord>>({
@@ -177,6 +179,12 @@ const WardProvisions = () => {
                                 <option value="2023-2024">FY 2023-2024</option>
                             </select>
                         </div>
+                        <button
+                            onClick={() => setShowReport(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
+                        >
+                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                        </button>
                         <button
                             onClick={startTutorial}
                             className="ns-btn-ghost border border-brand-200 text-brand-700 bg-white hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 tutorial-provision-help shadow-sm"
@@ -565,6 +573,13 @@ const WardProvisions = () => {
                 </div>
             )}
             <WardProvisionsTutorial />
+            {showReport && (
+                <WardProvisionReportGenerator
+                    provisions={provisions}
+                    year={year}
+                    onClose={() => setShowReport(false)}
+                />
+            )}
         </div>
     );
 };
