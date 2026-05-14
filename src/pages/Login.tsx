@@ -6,7 +6,7 @@ import { useTenant } from '../context/TenantContext'; // Added
 import { Shield, User, Lock, ArrowRight, Briefcase, Eye, EyeOff, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
-import loginHero from '../assets/login_hero.jpg';
+import loginHero from '../assets/login_hero.png';
 
 const Login = () => {
     const { login, user, isLoading } = useAuth();
@@ -15,6 +15,7 @@ const Login = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'nagarsevak' | 'amdar' | 'khasdar' | 'minister' | null>(null);
     const [subRole, setSubRole] = useState<'nagarsevak' | 'staff'>('nagarsevak');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +28,7 @@ const Login = () => {
         const searchParams = new URLSearchParams(window.location.search);
         const queryMode = searchParams.get('mode') || searchParams.get('role');
         const roles = ['nagarsevak', 'amdar', 'khasdar', 'minister'];
-        
+
         // 1. Check if query parameter specifies a role (Easiest for testing)
         if (queryMode && roles.includes(queryMode)) {
             return { enforcedRole: queryMode as any, allowedRoles: [queryMode] };
@@ -45,9 +46,9 @@ const Login = () => {
         // 3. Otherwise use tenant config
         const allowed = tenant?.config?.allowed_roles as string[] | undefined;
         if (allowed && allowed.length > 0) {
-            return { 
-                enforcedRole: allowed.length === 1 ? allowed[0] as any : null, 
-                allowedRoles: allowed 
+            return {
+                enforcedRole: allowed.length === 1 ? allowed[0] as any : null,
+                allowedRoles: allowed
             };
         }
 
@@ -69,6 +70,7 @@ const Login = () => {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!email || !password) {
             toast.error('Please enter both email and password.');
             return;
@@ -108,11 +110,11 @@ const Login = () => {
             <div className="w-full max-w-[1000px] h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
 
                 {/* Left Side - Visual / Brand */}
-                <div className="hidden md:flex w-1/2 relative bg-[#1a237e] items-center justify-center overflow-hidden">
+                <div className="hidden md:flex w-1/2 relative bg-white items-center justify-center overflow-hidden border-r border-slate-100">
                     <img
                         src={loginHero}
                         alt="Login Visual"
-                        className="w-full h-full object-contain object-center"
+                        className="w-full h-full object-cover object-left"
                     />
                 </div>
 
@@ -131,9 +133,12 @@ const Login = () => {
                         </button>
                     </div>
 
-                    <div className="max-w-sm mx-auto w-full">
+                    <div className="max-w-sm mx-auto w-full mt-14">
                         <div className="mb-8 text-center">
-                            <h2 className="text-2xl font-bold text-slate-900">{t('login.welcome')}</h2>
+                            <div className="flex justify-center mb-4">
+                                <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-16 w-16 object-contain" />
+                            </div>
+                            <h2 className="text-3xl font-bold text-slate-900">Krishnaniti</h2>
                             <p className="text-slate-500 mt-2">{t('login.subtitle')}</p>
                         </div>
 
@@ -146,7 +151,7 @@ const Login = () => {
                                         onClick={() => setActiveTab('nagarsevak')}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
-                                        <Shield className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <img src="/favicon.svg" alt="Nagarsevak" className="w-8 h-8 object-contain" />
                                         <span className="text-sm font-semibold">Nagarsevak</span>
                                     </button>
                                 )}
@@ -157,7 +162,7 @@ const Login = () => {
                                         onClick={() => setActiveTab('amdar')}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
-                                        <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <img src="/favicon.svg" alt="Amdar" className="w-8 h-8 object-contain" />
                                         <span className="text-sm font-semibold">Amdar</span>
                                     </button>
                                 )}
@@ -168,7 +173,7 @@ const Login = () => {
                                         onClick={() => setActiveTab('khasdar')}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
-                                        <Globe className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <img src="/favicon.svg" alt="Khasdar" className="w-8 h-8 object-contain" />
                                         <span className="text-sm font-semibold">Khasdar</span>
                                     </button>
                                 )}
@@ -179,7 +184,7 @@ const Login = () => {
                                         onClick={() => setActiveTab('minister')}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
-                                        <Briefcase className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
+                                        <img src="/favicon.svg" alt="Amdar" className="w-8 h-8 object-contain" />
                                         <span className="text-sm font-semibold">Minister</span>
                                     </button>
                                 )}
@@ -230,7 +235,7 @@ const Login = () => {
 
                                 <div className="mb-6">
                                     <h3 className="text-lg font-semibold text-slate-800 flex items-center gap-2 capitalize">
-                                        {activeTab} Login
+                                        {`${activeTab} Login`}
                                         {activeTab === 'nagarsevak' && <span className="text-slate-400 text-sm font-normal">({subRole})</span>}
                                     </h3>
                                 </div>

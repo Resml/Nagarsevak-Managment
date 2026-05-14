@@ -280,7 +280,49 @@ export const translations = {
             staff: "Staff Management",
             public_comm: "Public Communication",
             analysis: "Analysis Strategy",
-            profile_settings: "Profile Settings"
+            profile_settings: "Profile Settings",
+            file_tracking: "Work File Tracking"
+        },
+        file_tracking: {
+            title: "Work File Tracker",
+            subtitle: "Track file movement across departments",
+            add_file: "New Tracked File",
+            search_placeholder: "Search by title, inward/outward no...",
+            department: "Department",
+            inward_no: "Inward Number",
+            outward_no: "Outward Number",
+            subject: "Subject",
+            status_label: "Current Status",
+            history: "Movement History",
+            add_stage: "Update Movement",
+            stage_name: "Stage / Table Name",
+            location: "Office / Location",
+            notes: "Notes",
+            no_files: "No files tracked yet.",
+            table_to_table: "Table-to-Table Tracking",
+            movement_date: "Movement Date",
+            form: {
+                title: "File Details",
+                file_name_label: "Title / File Name",
+                file_name_placeholder: "e.g., Road Construction Proposal - Ward 12",
+                subject_placeholder: "e.g., Infrastructure Development",
+                department_placeholder: "e.g., PWD / Municipal Corp",
+                inward_placeholder: "e.g., INW/2024/102",
+                outward_placeholder: "e.g., OUT/2024/55",
+                description: "Description",
+                description_placeholder: "Additional details about the file..."
+            },
+            empty_state_desc: "Start tracking your important documents and government files to monitor their progress across departments.",
+            status: {
+                all: "All",
+                pending: "Pending",
+                assigned: "Assigned",
+                in_progress: "In Progress",
+                approved: "Approved",
+                completed: "Completed",
+                delayed: "Delayed",
+                rejected: "Rejected"
+            }
         },
         nav: {
             voter_search: "Voter Search",
@@ -326,7 +368,8 @@ export const translations = {
             voice_call: "Voice Call",
             ai_voice_call: "AI Voice Call",
             conference_room: "Conference Room",
-            whatsapp_call: "WhatsApp Call"
+            whatsapp_call: "WhatsApp Call",
+            file_tracking: "Work File Tracking"
         },
         voter_forms: {
             title: "Voter Registration Forms",
@@ -1651,6 +1694,20 @@ export const translations = {
             a3: "Our platform is fully responsive and works seamlessly on all mobile devices, tablets, and desktops.",
             q4: "How do I get started?",
             a4: "Simply click 'Get Started' to request a demo. Our team will set up your account within 24 hours."
+        },
+        security: {
+            title: "Security Logs",
+            subtitle: "Monitor recent access to your account and device sessions.",
+            status: "Status",
+            user_email: "User / Email",
+            device_os: "Device & OS",
+            browser: "Browser",
+            date_time: "Date & Time",
+            refresh: "Refresh Logs",
+            search_placeholder: "Search by email, device or browser...",
+            authorized: "Authorized",
+            failed: "Failed",
+            no_logs: "No security logs found."
         }
     },
     mr: {
@@ -1931,7 +1988,49 @@ export const translations = {
             staff: "कर्मचारी व्यवस्थापन",
             public_comm: "जनसंवाद",
             analysis: "विश्लेषण धोरण",
-            profile_settings: "प्रोफाइल सेटिंग्ज"
+            profile_settings: "प्रोफाइल सेटिंग्ज",
+            file_tracking: "कामकाज फाईल ट्रॅकिंग"
+        },
+        file_tracking: {
+            title: "फाईल ट्रॅकिंग (कामकाज)",
+            subtitle: "विभागांमधील फाईलचा प्रवास ट्रॅक करा",
+            add_file: "नवीन फाईल जोडा",
+            search_placeholder: "शीर्षक, आवक/जावक क्रमांकावरून शोधा...",
+            department: "विभाग",
+            inward_no: "आवक क्रमांक",
+            outward_no: "जावक क्रमांक",
+            subject: "विषय",
+            status_label: "सध्याची स्थिती",
+            history: "प्रवास इतिहास (Movement)",
+            add_stage: "हालचाल अद्यतनित करा",
+            stage_name: "स्टेज / टेबलचे नाव",
+            location: "कार्यालय / ठिकाण",
+            notes: "टीप",
+            no_files: "अद्याप कोणतीही फाईल ट्रॅक केलेली नाही.",
+            table_to_table: "टेबल-टू-टेबल ट्रॅकिंग",
+            movement_date: "हालचालीची तारीख",
+            form: {
+                title: "फाईल तपशील",
+                file_name_label: "शीर्षक / फाईलचे नाव",
+                file_name_placeholder: "उदा. रस्ता दुरुस्ती प्रस्ताव - प्रभाग १२",
+                subject_placeholder: "उदा. पायाभूत सुविधा विकास",
+                department_placeholder: "उदा. सार्वजनिक बांधकाम विभाग / महानगरपालिका",
+                inward_placeholder: "उदा. INW/2024/102",
+                outward_placeholder: "उदा. OUT/2024/55",
+                description: "वर्णन",
+                description_placeholder: "फाईल बद्दल अतिरिक्त माहिती..."
+            },
+            empty_state_desc: "तुमचे महत्त्वाचे दस्तऐवज आणि सरकारी फायली ट्रॅक करण्यास सुरुवात करा आणि विविध विभागांमधील त्यांच्या प्रगतीवर लक्ष ठेवा.",
+            status: {
+                all: "सर्व",
+                pending: "प्रलंबित",
+                assigned: "सोपवलेले",
+                in_progress: "काम चालू",
+                approved: "मंजूर",
+                completed: "पूर्ण",
+                delayed: "विलंब",
+                rejected: "नाकारले"
+            }
         },
         nav: {
             voter_search: "मतदार शोध",
@@ -1971,13 +2070,14 @@ export const translations = {
             ward_info_constituency: "प्रभाग माहिती (मतदारसंघ)",
             ward_map: "प्रभाग नकाशा",
             public_communication: "जनसंवाद",
-            voter_forms: "मतडर अर्ज",
+            voter_forms: "मतदार अर्ज",
             send_sms: "SMS पाठवा",
             whatsapp_msg: "व्हॉट्सॲप संदेश",
             voice_call: "व्हॉइस कॉल",
             ai_voice_call: "AI व्हॉइस कॉल",
             conference_room: "कॉन्फरन्स रूम",
-            whatsapp_call: "व्हॉट्सॲप कॉल"
+            whatsapp_call: "व्हॉट्सॲप कॉल",
+            file_tracking: "फाईल ट्रॅकिंग"
         },
         voter_forms: {
             title: "मतदार नोंदणी अर्ज",
@@ -3797,6 +3897,20 @@ export const translations = {
             password_placeholder: "tumचा पासवर्ड प्रविष्ट करा",
             branding_title: "आधुनिक शासनासाठी स्मार्ट व्यवस्थापन.",
             branding_subtitle: "नागरिकांच्या विनंत्या सुलभ करा, कर्मचाऱ्यांचे व्यवस्थापन करा आणि विकासाच्या कामांचा एकाच ठिकाणी मागोवा घ्या.",
+        },
+        security: {
+            title: "सुरक्षा लॉग",
+            subtitle: "तुमच्या खात्याचा वापर आणि डिव्हाइस सत्रांचे निरीक्षण करा.",
+            status: "स्थिती",
+            user_email: "वापरकर्ता / ईमेल",
+            device_os: "डिव्हाइस आणि OS",
+            browser: "ब्राउझर",
+            date_time: "तारीख आणि वेळ",
+            refresh: "लॉग रिफ्रेश करा",
+            search_placeholder: "ईमेल, डिव्हाइस किंवा ब्राउझरद्वारे शोधा...",
+            authorized: "अधिकृत",
+            failed: "अयशस्वी",
+            no_logs: "कोणतेही सुरक्षा लॉग आढळले नाहीत."
         }
     }
 };

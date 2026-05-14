@@ -3,18 +3,20 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle } from 'lucide-react';
+import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import BotDashboard from '../admin/BotDashboard';
+import SecurityLogs from './SecurityLogs';
+import CropModal from '../../components/common/CropModal';
 import clsx from 'clsx';
 
 const ProfileSettings = () => {
-    const { tenant, tenantId } = useTenant();
+    const { tenant, tenantId, refreshTenant } = useTenant();
     const { t, language } = useLanguage();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'bot'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'security'>('profile');
 
     const [formData, setFormData] = useState({
         nagarsevak_name_english: '',
@@ -30,6 +32,12 @@ const ProfileSettings = () => {
         email_address: '',
         social_media_link: ''
     });
+
+    const [cropConfig, setCropConfig] = useState<{
+        image: string;
+        type: 'profile' | 'party';
+        aspect: number;
+    } | null>(null);
 
     // Check permissions
     const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
@@ -84,14 +92,50 @@ const ProfileSettings = () => {
 
         const file = e.target.files[0];
         const fileExt = file.name.split('.').pop();
-        const fileName = `${tenantId}_${type}_${Math.random()}.${fileExt}`;
+        const fileName = `${tenantId}_${type}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        try {
+            const reader = new FileReader();
+            reader.onload = () => {
+                setCropConfig({
+                    image: reader.result as string,
+                    type,
+                    aspect: type === 'profile' ? 1 : 16 / 9 // 1:1 for profile, wider for party logo
+                });
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error reading file:', error);
+            toast.error('Error reading file.');
+        }
+    };
+
+    const handleCropComplete = async (croppedBlob: Blob) => {
+        if (!cropConfig) return;
+        const type = cropConfig.type;
+        const fileName = `${tenantId}_${type}_${Date.now()}.jpg`;
         const filePath = `${fileName}`;
 
         try {
             setSaving(true);
+            setCropConfig(null);
+
+            // If a previous image exists, try to delete it (best effort)
+            const oldUrl = type === 'profile' ? formData.profile_image_url : formData.party_logo_url;
+            if (oldUrl) {
+                const oldPath = oldUrl.split('/app-assets/')[1];
+                if (oldPath) {
+                    await supabase.storage.from('app-assets').remove([oldPath]);
+                }
+            }
+
             const { error: uploadError } = await supabase.storage
                 .from('app-assets')
-                .upload(filePath, file);
+                .upload(filePath, croppedBlob, { 
+                    upsert: true,
+                    contentType: 'image/jpeg'
+                });
 
             if (uploadError) throw uploadError;
 
@@ -99,12 +143,28 @@ const ProfileSettings = () => {
                 .from('app-assets')
                 .getPublicUrl(filePath);
 
-            setFormData(prev => ({
-                ...prev,
-                [type === 'profile' ? 'profile_image_url' : 'party_logo_url']: publicUrl
-            }));
+            // Add cache-busting param so browser shows new image immediately
+            const bustUrl = `${publicUrl}?t=${Date.now()}`;
 
-            toast.success(t('sadasya.upload_success') || 'Upload successful');
+            const updatedFormData = {
+                ...formData,
+                [type === 'profile' ? 'profile_image_url' : 'party_logo_url']: bustUrl
+            };
+
+            setFormData(updatedFormData);
+
+            // Auto-save to DB immediately after upload so AppLayout refreshes
+            const { error: saveError } = await supabase
+                .from('tenants')
+                .update({ config: updatedFormData })
+                .eq('id', tenantId);
+
+            if (saveError) throw saveError;
+
+            // Refresh global TenantContext so logo updates everywhere instantly
+            await refreshTenant();
+
+            toast.success(type === 'profile' ? 'Profile photo updated!' : 'Party logo updated!');
         } catch (error: any) {
             console.error('Error uploading image:', error.message);
             toast.error('Error uploading image.');
@@ -150,7 +210,9 @@ const ProfileSettings = () => {
             }
 
             toast.success(t('sadasya.update_success') || 'Settings updated successfully!');
-            // Reload settings to ensure we have the latest
+            // Refresh global TenantContext so logo/profile updates everywhere
+            await refreshTenant();
+            // Reload local settings
             await fetchSettings();
         } catch (error: any) {
             console.error('Error saving settings:', error);
@@ -210,6 +272,18 @@ const ProfileSettings = () => {
                             {t('whatsapp_bot.title') || 'WhatsApp Bot'}
                         </button>
                     )}
+                    <button
+                        onClick={() => setActiveTab('security')}
+                        className={clsx(
+                            'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                            activeTab === 'security'
+                                ? 'bg-white text-brand-700 shadow'
+                                : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                        )}
+                    >
+                        <Shield className="w-4 h-4" />
+                        {language === 'mr' ? 'सुरक्षा लॉग' : (t('security.title') || 'Security Logs')}
+                    </button>
                 </div>
             </div>
 
@@ -421,6 +495,23 @@ const ProfileSettings = () => {
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                     <BotDashboard />
                 </div>
+            )}
+
+            {/* Security Content */}
+            {activeTab === 'security' && (
+                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                    <SecurityLogs />
+                </div>
+            )}
+
+            {/* Crop Modal */}
+            {cropConfig && (
+                <CropModal
+                    image={cropConfig.image}
+                    aspect={cropConfig.aspect}
+                    onCropComplete={handleCropComplete}
+                    onClose={() => setCropConfig(null)}
+                />
             )}
         </div>
     );

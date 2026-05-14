@@ -14,7 +14,7 @@ const LandingPage = () => {
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900">
             <Helmet>
-                <title>{language === 'mr' ? 'Krishnaniti - नगरसेवक व्यवस्थापन प्रणाली आणि जनसंपर्क' : 'Krishnaniti - Nagarsevak Management & Connect'}</title>
+                <title>{language === 'mr' ? 'कृष्णनीती - नगरसेवक व्यवस्थापन प्रणाली आणि जनसंपर्क' : 'Krishnaniti - Nagarsevak Management & Connect'}</title>
                 <meta name="description" content={language === 'mr' ? 'कृष्णनीती द्वारे नागरिक आणि लोकप्रतिनिधी यांच्यातील दरी कमी करा. वॉर्ड समस्या आणि विकास कार्ये कार्यक्षमतेने व्यवस्थापित करा.' : 'Bridge the gap between citizens and representatives with Krishnaniti. Efficiently manage ward issues and development.'} />
                 <link rel="canonical" href="https://krishnaniti.in/" />
                 {language === 'mr' && <link rel="alternate" hrefLang="mr" href="https://krishnaniti.in/" />}
@@ -23,12 +23,10 @@ const LandingPage = () => {
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
-                                <Shield className="w-5 h-5" />
-                            </div>
-                            <span className="font-display font-bold text-xl tracking-tight text-slate-900">
-                                Nagar Sevak
+                        <div className="flex items-center gap-3">
+                            <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-10 w-10 object-contain" />
+                            <span className="font-display font-bold text-2xl tracking-tight text-slate-900">
+                                Krishnaniti
                             </span>
                         </div>
                         <button
@@ -241,12 +239,10 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-4 gap-8 mb-8">
                         <div className="col-span-1 md:col-span-2">
-                            <div className="flex items-center gap-2 mb-4 text-white">
-                                <div className="h-8 w-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                                    <Shield className="w-5 h-5" />
-                                </div>
-                                <span className="font-display font-bold text-xl tracking-tight">
-                                    Nagar Sevak
+                            <div className="flex items-center gap-3 mb-4 text-white">
+                                <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-10 w-10 object-contain" />
+                                <span className="font-display font-bold text-2xl tracking-tight">
+                                    Krishnaniti
                                 </span>
                             </div>
                             <p className="mb-4 max-w-xs">{t('landing.footer.description')}</p>
@@ -268,7 +264,7 @@ const LandingPage = () => {
                         </div>
                     </div>
                     <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
-                        <p>&copy; {new Date().getFullYear()} Nagar Sevak Managment System. {t('landing.footer.rights')}</p>
+                        <p>&copy; {new Date().getFullYear()} Krishnaniti Managment System. {t('landing.footer.rights')}</p>
                         <p>{t('landing.footer.made_with_love')}</p>
                     </div>
                 </div>

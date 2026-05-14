@@ -31,9 +31,12 @@ import {
   Phone,
   PieChart,
   Search,
+  Settings,
   Smartphone,
   TrendingUp,
   UserPlus,
+  Shield,
+  User,
   Users,
   Wand2,
   X,
@@ -227,6 +230,7 @@ const AppLayout = () => {
           { to: '/dashboard/tasks', icon: CheckSquare, label: t('nav.task_management'), show: isAdminOrStaff, permission: 'tasks' },
           { to: '/dashboard/visitors', icon: Users, label: t('nav.visitor_log'), show: true, permission: 'visitors' },
           { to: '/dashboard/schemes', icon: Newspaper, label: t('nav.govt_schemes'), show: true, permission: 'schemes' },
+          { to: '/dashboard/file-tracking', icon: History, label: t('nav.file_tracking'), show: true, permission: 'file_tracking' },
         ],
       },
       // 2) Ward information
@@ -460,20 +464,20 @@ const AppLayout = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/dashboard')}
-                  className="flex items-center gap-4 text-left overflow-hidden group"
+                  className="flex items-center gap-3 text-left group"
                 >
-                  <div className="h-16 w-16 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-md font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-all duration-300">
+                  <div className="h-14 w-14 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-md font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-all duration-300">
                     {branding?.profile_image ? (
                       <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-2xl">N</span>
+                        <img src="/favicon.svg" alt="Krishnaniti" className="w-10 h-10 object-contain" />
                     )}
                   </div>
-                  <div className="flex flex-col gap-0.5 min-w-0">
-                    <div className="font-display text-xl font-bold leading-tight text-slate-900 truncate group-hover:text-brand-700 transition-colors">
-                      {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="font-display text-base font-bold leading-snug text-slate-900 group-hover:text-brand-700 transition-colors break-words">
+                      {language === 'mr' ? (branding?.name_marathi || 'कृष्णनीती') : (branding?.name_english || 'Krishnaniti')}
                     </div>
-                    <div className="text-sm text-slate-500 leading-tight truncate font-medium">
+                    <div className="text-xs text-slate-500 leading-tight font-medium truncate max-w-[150px]">
                       {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}
                     </div>
                   </div>
@@ -712,12 +716,12 @@ const AppLayout = () => {
                     {branding?.profile_image ? (
                       <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <span className="text-xl font-bold">N</span>
+                      <img src="/favicon.svg" alt="Krishnaniti" className="w-10 h-10 object-contain" />
                     )}
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-bold text-xl leading-tight drop-shadow-sm truncate">
-                      {language === 'mr' ? (branding?.name_marathi || 'Nagar Sevak') : (branding?.name_english || 'Nagar Sevak')}
+                      {language === 'mr' ? (branding?.name_marathi || 'कृष्णनीती') : (branding?.name_english || 'Krishnaniti')}
                     </span>
                     <span className="text-sm text-brand-100 opacity-90 font-medium truncate">
                       {branding?.party_name ? `${branding.party_name} | ` : ''}{branding?.ward_name || 'Operations & Staff'}

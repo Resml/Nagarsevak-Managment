@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { type User } from '../types';
 import { supabase } from '../services/supabaseClient';
+import { getDeviceInfo } from '../utils/deviceInfo';
 
 interface AuthContextType {
     user: User | null;
@@ -135,8 +136,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             if (error) {
-                setIsLoading(false); // Only stop loading on error, otherwise wait for auth state change
+                setIsLoading(false);
                 return { success: false, error: error.message };
+            }
+
+            // Log successful login
+            const { data: { user: sessionUser } } = await supabase.auth.getUser();
+            if (sessionUser) {
+                const device = getDeviceInfo();
+                
+                // Get tenant_id from mapping
+                const { data: mapping } = await supabase
+                    .from('user_tenant_mapping')
+                    .select('tenant_id')
+                    .eq('user_id', sessionUser.id)
+                    .single();
+
+                await supabase.from('login_logs').insert({
+                    user_id: sessionUser.id,
+                    email: sessionUser.email,
+                    device_type: device.deviceType,
+                    browser: device.browser,
+                    os: device.os,
+                    user_agent: device.userAgent,
+                    tenant_id: mapping?.tenant_id,
+                    status: 'success'
+                });
             }
 
             return { success: true };

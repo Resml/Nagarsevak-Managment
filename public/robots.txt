@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://krishnaniti.in/sitemap.xml
+Sitemap: https://nagarsevak.app/sitemap.xml

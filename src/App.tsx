@@ -63,6 +63,10 @@ const ConferenceRoom = lazy(() => import('./pages/communication/ConferenceRoom')
 const WhatsAppCalling = lazy(() => import('./pages/communication/WhatsAppCalling'));
 const VoterForms = lazy(() => import('./pages/political/VoterForms'));
 const ProfileSettings = lazy(() => import('./pages/settings/ProfileSettings'));
+const FileTrackerDashboard = lazy(() => import('./pages/works/FileTrackerDashboard'));
+const FileTrackerForm = lazy(() => import('./pages/works/FileTrackerForm'));
+const FileTrackerDetail = lazy(() => import('./pages/works/FileTrackerDetail'));
+const SecurityLogs = lazy(() => import('./pages/settings/SecurityLogs'));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -143,6 +147,11 @@ function App() {
 
             <Route path="visitors" element={<PermissionGuard permission="visitors"><VisitorLog /></PermissionGuard>} />
 
+            <Route path="file-tracking" element={<PermissionGuard permission="file_tracking"><FileTrackerDashboard /></PermissionGuard>} />
+            <Route path="file-tracking/new" element={<PermissionGuard permission="file_tracking"><FileTrackerForm /></PermissionGuard>} />
+            <Route path="file-tracking/edit/:id" element={<PermissionGuard permission="file_tracking"><FileTrackerForm /></PermissionGuard>} />
+            <Route path="file-tracking/:id" element={<PermissionGuard permission="file_tracking"><FileTrackerDetail /></PermissionGuard>} />
+
             {/* Admin Only / Specific Permissions */}
             <Route path="bot-dashboard" element={<PermissionGuard permission="bot"><BotDashboard /></PermissionGuard>} />
             <Route path="sadasya" element={<PermissionGuard permission="sadasya"><SadasyaList /></PermissionGuard>} />
@@ -192,6 +201,7 @@ function App() {
             <Route path="political/voter-forms" element={<PermissionGuard permission="voters"><VoterForms /></PermissionGuard>} />
 
             <Route path="settings/profile" element={<PermissionGuard permission="profile_settings"><ProfileSettings /></PermissionGuard>} />
+            <Route path="settings/security" element={<PermissionGuard permission="profile_settings"><SecurityLogs /></PermissionGuard>} />
           </Route>
         </Routes>
       </Suspense>
