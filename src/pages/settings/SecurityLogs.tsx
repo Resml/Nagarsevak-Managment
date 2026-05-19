@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Shield, Clock, Monitor, Globe, Search, RefreshCcw, AlertTriangle } from 'lucide-react';
+import { Shield, Clock, Monitor, Globe, Search, RefreshCcw, AlertTriangle, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface LoginLog {
     id: string;
@@ -22,9 +23,18 @@ const SecurityLogs = () => {
     const [logs, setLogs] = useState<LoginLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchLogs();
+        const getSession = async () => {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session) {
+                // Note: We'll compare via metadata since we don't have session_id in DB yet
+                setCurrentSessionId(data.session.user.id); 
+            }
+        };
+        getSession();
     }, []);
 
     const fetchLogs = async () => {
@@ -42,6 +52,37 @@ const SecurityLogs = () => {
             console.error('Error fetching logs:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleGlobalSignOut = async (scope: 'global' | 'others' = 'global') => {
+        const isOthers = scope === 'others';
+        const confirmMsg = language === 'mr' 
+            ? (isOthers 
+                ? 'आपण इतर सर्व उपकरणांमधून बाहेर पडू इच्छिता?' 
+                : 'आपण सर्व उपकरणांमधून बाहेर पडू इच्छिता? हे आपल्याला सध्याच्या उपकरणातूनही बाहेर काढेल.')
+            : (isOthers 
+                ? 'Are you sure you want to sign out from all other devices?' 
+                : 'Are you sure you want to sign out from all devices? This will also sign you out of your current session.');
+        
+        if (!window.confirm(confirmMsg)) return;
+
+        try {
+            const { error } = await supabase.auth.signOut({ scope });
+            if (error) throw error;
+            
+            toast.success(language === 'mr' 
+                ? (isOthers ? 'इतर सर्व उपकरणांमधून लॉग आउट झाले.' : 'यशस्वीरित्या लॉग आउट झाले.')
+                : (isOthers ? 'Logged out from other devices.' : 'Logged out from all devices.')
+            );
+            
+            if (!isOthers) {
+                window.location.href = '/login';
+            } else {
+                fetchLogs(); // Refresh list
+            }
+        } catch (err: any) {
+            toast.error(err.message);
         }
     };
 
@@ -63,13 +104,29 @@ const SecurityLogs = () => {
                         {language === 'mr' ? 'तुमच्या खात्याचा वापर आणि डिव्हाइस सत्रांचे निरीक्षण करा.' : 'Monitor recent access to your account and device sessions.'}
                     </p>
                 </div>
-                <button 
-                    onClick={fetchLogs}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all active:scale-95"
-                >
-                    <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    {language === 'mr' ? 'लॉग रिफ्रेश करा' : 'Refresh Logs'}
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                    <button 
+                        onClick={() => handleGlobalSignOut('others')}
+                        className="flex items-center gap-2 px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-all active:scale-95"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        {language === 'mr' ? 'इतर सर्व डिव्हाइसेस लॉग आउट' : 'Sign out others'}
+                    </button>
+                    <button 
+                        onClick={() => handleGlobalSignOut('global')}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-100 rounded-lg text-sm font-medium text-red-600 hover:bg-red-100 transition-all active:scale-95"
+                    >
+                        <Shield className="w-4 h-4" />
+                        {language === 'mr' ? 'सर्व डिव्हाइसेस लॉग आउट' : 'Sign out all'}
+                    </button>
+                    <button 
+                        onClick={fetchLogs}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all active:scale-95"
+                    >
+                        <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        {language === 'mr' ? 'लॉग रिफ्रेश करा' : 'Refresh'}
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -105,7 +162,7 @@ const SecurityLogs = () => {
                                     </tr>
                                 ))
                             ) : filteredLogs.length > 0 ? (
-                                filteredLogs.map((log) => (
+                                filteredLogs.map((log, idx) => (
                                     <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -117,7 +174,14 @@ const SecurityLogs = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 font-medium text-slate-900">
-                                            {log.email}
+                                            <div className="flex flex-col">
+                                                <span>{log.email}</span>
+                                                {idx === 0 && (
+                                                    <span className="text-[10px] text-brand-600 font-bold uppercase tracking-tight">
+                                                        {language === 'mr' ? 'सध्याचे डिव्हाइस' : 'Current Device'}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">

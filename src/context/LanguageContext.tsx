@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, type Language } from '../utils/translations';
+import { useAuth } from './AuthContext';
+import { useTenant } from './TenantContext';
 
 interface LanguageContextType {
     language: Language;
@@ -11,6 +13,18 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    // We can safely useAuth here because AuthProvider wraps LanguageProvider in main.tsx
+    let user = null;
+    let tenant = null;
+    try {
+        const auth = useAuth();
+        user = auth.user;
+        const tenantContext = useTenant();
+        tenant = tenantContext.tenant;
+    } catch (e) {
+        // Fallback if not wrapped in AuthProvider during tests
+    }
+
     // Get initial language from localStorage or default to 'en'
     const getInitialLanguage = (): Language => {
         const saved = localStorage.getItem('ns_language') as Language;
@@ -76,6 +90,26 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
         } else {
             result = current as string;
+        }
+
+        const isAmdarSection = 
+            user?.role === 'amdar' || 
+            tenant?.subdomain === 'amdar' || 
+            tenant?.subdomain === 'amadar' ||
+            (tenant?.config?.allowed_roles && tenant.config.allowed_roles.includes('amdar'));
+
+        // Apply amdar specific replacements
+        if (isAmdarSection) {
+            if (language === 'mr') {
+                result = result.replace(/मनपा प्रभाग/g, 'विधानसभा').replace(/प्रभाग/g, 'विधानसभा');
+            } else {
+                result = result.replace(/\bWard\b/g, 'Vidhansabha')
+                               .replace(/\bWards\b/g, 'Vidhansabhas')
+                               .replace(/\bward\b/g, 'vidhansabha')
+                               .replace(/\bwards\b/g, 'vidhansabhas')
+                               .replace(/Manpa Prabhag/gi, 'Vidhansabha')
+                               .replace(/Prabhag/gi, 'Vidhansabha');
+            }
         }
 
         // Interpolation

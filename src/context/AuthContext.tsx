@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .select('role')
                 .eq('user_id', sessionUser.id)
                 .single();
-            const userRole = mappingData?.role || 'staff';
+            const userRole = localStorage.getItem('force_amdar') === 'true' ? 'amdar' : (mappingData?.role || 'staff');
 
             // Fetch permissions from staff table
             const { data: staffData } = await supabase

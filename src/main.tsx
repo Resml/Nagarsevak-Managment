@@ -14,15 +14,15 @@ cacheManager.init();
 
 createRoot(document.getElementById('root')!).render(
   <HelmetProvider>
-    <LanguageProvider>
-      <AuthProvider>
-        <TenantProvider>
+    <AuthProvider>
+      <TenantProvider>
+        <LanguageProvider>
           <TutorialProvider>
             <App />
           </TutorialProvider>
-        </TenantProvider>
-      </AuthProvider>
+        </LanguageProvider>
+      </TenantProvider>
       <Toaster position="top-center" richColors closeButton />
-    </LanguageProvider>
+    </AuthProvider>
   </HelmetProvider>,
 )

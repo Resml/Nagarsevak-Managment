@@ -148,7 +148,10 @@ const Login = () => {
                                 {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('nagarsevak')) && (
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('nagarsevak')}
+                                        onClick={() => {
+                                            localStorage.removeItem('force_amdar');
+                                            setActiveTab('nagarsevak');
+                                        }}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
                                         <img src="/favicon.svg" alt="Nagarsevak" className="w-8 h-8 object-contain" />
@@ -159,7 +162,10 @@ const Login = () => {
                                 {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('amdar')) && (
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('amdar')}
+                                        onClick={() => {
+                                            localStorage.setItem('force_amdar', 'true');
+                                            setActiveTab('amdar');
+                                        }}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
                                         <img src="/favicon.svg" alt="Amdar" className="w-8 h-8 object-contain" />
@@ -170,7 +176,10 @@ const Login = () => {
                                 {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('khasdar')) && (
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('khasdar')}
+                                        onClick={() => {
+                                            localStorage.removeItem('force_amdar');
+                                            setActiveTab('khasdar');
+                                        }}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
                                         <img src="/favicon.svg" alt="Khasdar" className="w-8 h-8 object-contain" />
@@ -181,7 +190,10 @@ const Login = () => {
                                 {(!detectedInfo.allowedRoles || detectedInfo.allowedRoles.includes('minister')) && (
                                     <button
                                         type="button"
-                                        onClick={() => setActiveTab('minister')}
+                                        onClick={() => {
+                                            localStorage.removeItem('force_amdar');
+                                            setActiveTab('minister');
+                                        }}
                                         className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-slate-200 text-slate-500 hover:border-brand-300 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hover:-translate-y-1"
                                     >
                                         <img src="/favicon.svg" alt="Amdar" className="w-8 h-8 object-contain" />
