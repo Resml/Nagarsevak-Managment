@@ -29,7 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .select('role')
                 .eq('user_id', sessionUser.id)
                 .single();
-            const userRole = localStorage.getItem('force_amdar') === 'true' ? 'amdar' : (mappingData?.role || 'staff');
+            
+            const currentSubdomain = window.location.hostname.split('.')[0];
+            const isAmdarUrl = currentSubdomain === 'amdar' || currentSubdomain === 'amadar';
+            const userRole = (localStorage.getItem('force_amdar') === 'true' || isAmdarUrl) ? 'amdar' : (mappingData?.role || 'staff');
 
             // Fetch permissions from staff table
             const { data: staffData } = await supabase

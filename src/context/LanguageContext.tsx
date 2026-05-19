@@ -101,14 +101,17 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Apply amdar specific replacements
         if (isAmdarSection) {
             if (language === 'mr') {
-                result = result.replace(/मनपा प्रभाग/g, 'विधानसभा').replace(/प्रभाग/g, 'विधानसभा');
+                result = result.replace(/मनपा प्रभाग/g, 'विधानसभा')
+                               .replace(/प्रभाग/g, 'विधानसभा')
+                               .replace(/मनपा/g, 'विधानसभा');
             } else {
                 result = result.replace(/\bWard\b/g, 'Vidhansabha')
                                .replace(/\bWards\b/g, 'Vidhansabhas')
                                .replace(/\bward\b/g, 'vidhansabha')
                                .replace(/\bwards\b/g, 'vidhansabhas')
                                .replace(/Manpa Prabhag/gi, 'Vidhansabha')
-                               .replace(/Prabhag/gi, 'Vidhansabha');
+                               .replace(/Prabhag/gi, 'Vidhansabha')
+                               .replace(/Manpa/gi, 'Vidhansabha');
             }
         }
 
