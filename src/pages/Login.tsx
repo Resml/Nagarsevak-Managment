@@ -106,8 +106,8 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 font-sans">
-            <div className="w-full max-w-[1000px] h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
+        <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] p-4 font-sans py-8 md:py-4">
+            <div className="w-full max-w-[1000px] min-h-[600px] h-auto md:h-[600px] bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
 
                 {/* Left Side - Visual / Brand */}
                 <div className="hidden md:flex w-1/2 relative bg-white items-center justify-center overflow-hidden border-r border-slate-100">
@@ -121,7 +121,7 @@ const Login = () => {
 
 
                 {/* Right Side - Login Form */}
-                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-gradient-to-br from-white to-brand-50/30 relative">
+                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center bg-gradient-to-br from-white to-brand-50/30 relative overflow-y-auto">
                     <div className="absolute top-6 right-6">
                         <button
                             onClick={() => setLanguage(language === 'en' ? 'mr' : 'en')}
