@@ -103,7 +103,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             if (language === 'mr') {
                 result = result.replace(/मनपा प्रभाग/g, 'विधानसभा')
                                .replace(/प्रभाग/g, 'विधानसभा')
-                               .replace(/मनपा/g, 'विधानसभा');
+                               .replace(/मनपा/g, 'विधानसभा')
+                               .replace(/नगरसेवक/g, 'आमदार');
             } else {
                 result = result.replace(/\bWard\b/g, 'Vidhansabha')
                                .replace(/\bWards\b/g, 'Vidhansabhas')
@@ -111,7 +112,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                                .replace(/\bwards\b/g, 'vidhansabhas')
                                .replace(/Manpa Prabhag/gi, 'Vidhansabha')
                                .replace(/Prabhag/gi, 'Vidhansabha')
-                               .replace(/Manpa/gi, 'Vidhansabha');
+                               .replace(/Manpa/gi, 'Vidhansabha')
+                               .replace(/Nagarsevak/gi, 'Amdar')
+                               .replace(/Nagar Sevak/gi, 'Amdar');
             }
         }
 

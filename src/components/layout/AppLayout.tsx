@@ -660,7 +660,7 @@ const AppLayout = () => {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-slate-900 truncate">{user?.name ?? 'User'}</div>
-                      {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
+                      {(isAdmin || user?.permissions?.includes('profile_settings')) && (
                         <button onClick={() => navigate('/dashboard/settings/profile')} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1">
                           {t('sadasya.profile_settings') || 'Profile Settings'}
                         </button>
@@ -682,7 +682,7 @@ const AppLayout = () => {
                     <Globe className="h-5 w-5" />
                   </button>
 
-                  {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
+                  {(isAdmin || user?.permissions?.includes('profile_settings')) && (
                     <button type="button" onClick={() => navigate('/dashboard/settings/profile')} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
                       <UserPlus className="h-5 w-5" />
                     </button>
