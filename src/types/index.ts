@@ -93,6 +93,7 @@ export interface Voter {
   caste?: string;
   serial_no?: number;
   is_friend_relative?: boolean;
+  favour?: string;
   history: ServiceRecord[];
 }
 

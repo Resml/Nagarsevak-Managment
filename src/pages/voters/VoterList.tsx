@@ -1218,7 +1218,14 @@ const VoterList = () => {
                                     {favourAnalysisTab === 'voters' && (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                             {voters
-                                                .filter(v => getDisplayName(v).toLowerCase().includes(favourAnalysisSearch.toLowerCase()) || (v.epicNo && v.epicNo.toLowerCase().includes(favourAnalysisSearch.toLowerCase())))
+                                                .filter(v => {
+                                                    const displayName = getDisplayName(v);
+                                                    const epicNo = v.epicNo;
+                                                    return (
+                                                        (displayName && displayName.toLowerCase().includes(favourAnalysisSearch.toLowerCase())) ||
+                                                        (epicNo && epicNo.toLowerCase().includes(favourAnalysisSearch.toLowerCase()))
+                                                    );
+                                                })
                                                 .map((voter) => {
                                                     const isSelected = selectedFavourIndividualIds.includes(voter.id);
                                                     return (
