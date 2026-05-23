@@ -2,29 +2,196 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
-import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer, CheckSquare, CheckCircle, Clock, AlertCircle, Calendar, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
 import StaffProfile from './StaffProfile';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
-import { HelpCircle, Download } from 'lucide-react';
-import { useTutorial } from '../../context/TutorialContext';
-import TeamTutorial from '../../components/tutorial/TeamTutorial';
-import { StaffReportGenerator } from './StaffReportGenerator';
+
+
 const StaffList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
-    const { startTutorial } = useTutorial();
+
+    const tr = (en: string, mr: string) => language === 'mr' ? mr : en;
+
+    const translateRole = (role: string) => {
+        if (language !== 'mr') return role;
+        const mapping: Record<string, string> = {
+            'Office Admin': 'कार्यालय प्रशासक',
+            'Sanitation Worker': 'स्वच्छता कर्मचारी',
+            'Staff': 'कर्मचारी',
+            'Driver': 'चालक',
+            'Peon': 'शिपाई',
+            'Helper': 'मदतनीस',
+            'Supervisor': 'पर्यवेक्षक',
+            'Karyakarta': 'कार्यकर्ता'
+        };
+        return mapping[role] || role;
+    };
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [activeTab, setActiveTab] = useState<'Office' | 'Party' | 'Cooperative'>('Office');
+    const [activeTab, setActiveTab] = useState<'Office' | 'Party' | 'Cooperative' | 'WorkManagement'>('Office');
     const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
-    const [showReport, setShowReport] = useState(false);
+
+    // Karyakarta Work Management State
+    const [tasks, setTasks] = useState<any[]>([]);
+    const [complaints, setComplaints] = useState<any[]>([]);
+    const [loadingTasks, setLoadingTasks] = useState(false);
+    const [selectedKaryakartaForTasks, setSelectedKaryakartaForTasks] = useState<Staff | null>(null);
+    const [activeDetailTab, setActiveDetailTab] = useState<'tasks' | 'complaints'>('tasks');
+    const [showWorkloadReport, setShowWorkloadReport] = useState(false);
+    const [showQuickTaskModal, setShowQuickTaskModal] = useState(false);
+    const [quickTaskStaff, setQuickTaskStaff] = useState<Staff | null>(null);
+    const [quickTaskForm, setQuickTaskForm] = useState({
+        title: '',
+        description: '',
+        priority: 'Medium' as 'Low' | 'Medium' | 'High',
+        due_date: '',
+        due_time: '',
+        address: ''
+    });
+    const [savingQuickTask, setSavingQuickTask] = useState(false);
+    const detailsRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (selectedKaryakartaForTasks && detailsRef.current) {
+            detailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, [selectedKaryakartaForTasks]);
+
+    useEffect(() => {
+        if (activeTab === 'WorkManagement') {
+            fetchTasks();
+        }
+    }, [activeTab]);
+
+    const fetchTasks = async () => {
+        setLoadingTasks(true);
+        try {
+            // Fetch Tasks
+            const { data: tasksData, error: tasksError } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('tenant_id', tenantId);
+            if (tasksError) throw tasksError;
+            setTasks(tasksData || []);
+
+            // Fetch Complaints and join voter info
+            const { data: complaintsData, error: complaintsError } = await supabase
+                .from('complaints')
+                .select(`
+                    *,
+                    voter:voters (
+                        name_english,
+                        name_marathi,
+                        mobile
+                    )
+                `)
+                .eq('tenant_id', tenantId);
+            if (complaintsError) throw complaintsError;
+            setComplaints(complaintsData || []);
+        } catch (err) {
+            console.error('Error fetching tasks/complaints:', err);
+        } finally {
+            setLoadingTasks(false);
+        }
+    };
+
+    const handleUpdateComplaintStatus = async (complaintId: string, newStatus: string) => {
+        try {
+            const { error } = await supabase
+                .from('complaints')
+                .update({ status: newStatus })
+                .eq('id', complaintId);
+            if (error) throw error;
+            toast.success("Complaint status updated!");
+            fetchTasks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update complaint status");
+        }
+    };
+
+    const handleAssignTask = async (taskId: string, staffId: string) => {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .update({ assigned_staff_id: staffId || null })
+                .eq('id', taskId);
+            if (error) throw error;
+            toast.success("Task assigned successfully!");
+            fetchTasks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to assign task");
+        }
+    };
+
+    const handleAssignComplaint = async (complaintId: string, staffId: string) => {
+        try {
+            const { error } = await supabase
+                .from('complaints')
+                .update({ assigned_to: staffId || null, status: staffId ? 'Assigned' : 'Pending' })
+                .eq('id', complaintId);
+            if (error) throw error;
+            toast.success("Complaint assigned successfully!");
+            fetchTasks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to assign complaint");
+        }
+    };
+
+    const handleUpdateTaskStatus = async (taskId: string, newStatus: string) => {
+        try {
+            const { error } = await supabase
+                .from('tasks')
+                .update({ status: newStatus })
+                .eq('id', taskId);
+            if (error) throw error;
+            toast.success("Task status updated!");
+            fetchTasks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update status");
+        }
+    };
+
+    const handleCreateQuickTask = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!quickTaskStaff) return;
+        setSavingQuickTask(true);
+        try {
+            const payload = {
+                title: quickTaskForm.title,
+                description: quickTaskForm.description,
+                priority: quickTaskForm.priority,
+                due_date: quickTaskForm.due_date || null,
+                due_time: quickTaskForm.due_time || null,
+                address: quickTaskForm.address,
+                status: 'Pending',
+                assigned_staff_id: quickTaskStaff.id,
+                tenant_id: tenantId
+            };
+            const { error } = await supabase.from('tasks').insert([payload]);
+            if (error) throw error;
+            toast.success("Task assigned successfully!");
+            setShowQuickTaskModal(false);
+            setQuickTaskForm({ title: '', description: '', priority: 'Medium', due_date: '', due_time: '', address: '' });
+            fetchTasks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to assign task");
+        } finally {
+            setSavingQuickTask(false);
+        }
+    };
 
     const AVAILABLE_PERMISSIONS = useMemo(() => [
         // Daily Work
@@ -259,7 +426,9 @@ const StaffList = () => {
     };
 
     // Filter logic:
-    const staffInCurrentTab = staff.filter(s => (s.category || 'Office') === activeTab);
+    const staffInCurrentTab = activeTab === 'WorkManagement'
+        ? staff
+        : staff.filter(s => (s.category || 'Office') === activeTab);
 
     // Area Suggestions Logic
     const getAreaSuggestions = () => {
@@ -288,48 +457,623 @@ const StaffList = () => {
         .sort((a, b) => (a.area || '').localeCompare(b.area || ''));
 
     const renderContent = () => {
+        if (activeTab === 'WorkManagement') {
+            // Task calculations
+            const totalTasks = tasks.length;
+            const completedTasks = tasks.filter(t => t.status === 'Completed').length;
+            const inProgressTasks = tasks.filter(t => t.status === 'In Progress').length;
+            const pendingTasks = tasks.filter(t => t.status === 'Pending').length;
+
+            // Complaint calculations
+            const totalComplaints = complaints.length;
+            const resolvedComplaints = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
+            const inProgressComplaints = complaints.filter(c => c.status === 'InProgress').length;
+            const pendingComplaints = complaints.filter(c => c.status === 'Pending' || c.status === 'Assigned').length;
+
+            // Grand totals
+            const totalLoad = totalTasks + totalComplaints;
+            const pendingLoad = pendingTasks + pendingComplaints;
+            const inProgressLoad = inProgressTasks + inProgressComplaints;
+            const completedLoad = completedTasks + resolvedComplaints;
+
+            // Unassigned pools
+            const unassignedTasks = tasks.filter(t => !t.assigned_staff_id);
+            const unassignedComplaints = complaints.filter(c => !c.assigned_to);
+
+            const sortedStaffByWorkload = [...staff].sort((a, b) => {
+                const aTasks = tasks.filter(t => t.assigned_staff_id === a.id).length;
+                const aComplaints = complaints.filter(c => c.assigned_to === a.id).length;
+                const aTotal = aTasks + aComplaints;
+
+                const bTasks = tasks.filter(t => t.assigned_staff_id === b.id).length;
+                const bComplaints = complaints.filter(c => c.assigned_to === b.id).length;
+                const bTotal = bTasks + bComplaints;
+
+                if (bTotal !== aTotal) {
+                    return bTotal - aTotal;
+                }
+                return (a.name || '').localeCompare(b.name || '');
+            });
+
+            if (showWorkloadReport) {
+                return (
+                    <div className="space-y-6 bg-white p-8 rounded-xl border border-slate-200 shadow-sm print:border-none print:shadow-none print:p-0">
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-4 print:hidden">
+                            <div>
+                                <h1 className="text-xl font-bold text-slate-900">{tr("Karyakarta Workload Report", "कार्यकर्ता कार्यभार अहवाल")}</h1>
+                                <p className="text-xs text-slate-500">{tr("Printable workload status and completion rates", "छापण्यायोग्य कार्यभार स्थिती आणि पूर्णत्वाचा दर")}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => window.print()}
+                                    className="ns-btn-primary bg-brand-600 hover:bg-brand-700 text-white border-none flex items-center gap-2"
+                                >
+                                    <Printer className="w-4 h-4" /> {tr("Print", "प्रिंट करा")}
+                                </button>
+                                <button
+                                    onClick={() => setShowWorkloadReport(false)}
+                                    className="ns-btn-ghost border border-slate-200"
+                                >
+                                    {tr("Close Report", "अहवाल बंद करा")}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="text-center space-y-2 py-4 hidden print:block border-b border-slate-200 mb-6">
+                            <h1 className="text-3xl font-extrabold text-slate-900">{tr("Karyakarta Workload & Performance Report", "कार्यकर्ता कार्यभार आणि कामगिरी अहवाल")}</h1>
+                            <p className="text-sm text-slate-500 font-mono">{tr("Date Generated", "अहवाल तारीख")}: {new Date().toLocaleString(language === 'mr' ? 'mr-IN' : 'en-US')}</p>
+                            <div className="grid grid-cols-4 gap-4 max-w-2xl mx-auto pt-4 text-xs font-semibold">
+                                <div className="border border-slate-100 p-2 rounded">{tr("Total Assigned", "एकूण सोपवलेले")}: {totalLoad}</div>
+                                <div className="border border-slate-100 p-2 rounded">{tr("Pending Work", "प्रलंबित कामे")}: {pendingLoad}</div>
+                                <div className="border border-slate-100 p-2 rounded">{tr("In Progress", "प्रगतीपथावर")}: {inProgressLoad}</div>
+                                <div className="border border-slate-100 p-2 rounded">{tr("Completed Work", "पूर्ण झालेली कामे")}: {completedLoad}</div>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200 border border-slate-200 rounded-lg overflow-hidden">
+                                <thead className="bg-slate-50 print:bg-slate-100">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Karyakarta", "कार्यकर्ता")}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Role", "भूमिका")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Tasks (Pending/Total)", "कामे (प्रलंबित/एकूण)")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Complaints (Pending/Total)", "तक्रारी (प्रलंबित/एकूण)")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Total Pending Load", "एकूण प्रलंबित कार्यभार")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Completed Load", "पूर्ण झालेला कार्यभार")}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">{tr("Progress", "प्रगती")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {sortedStaffByWorkload.map((member) => {
+                                        const memberTasks = tasks.filter(t => t.assigned_staff_id === member.id);
+                                        const mT_pending = memberTasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length;
+                                        const mT_total = memberTasks.length;
+
+                                        const memberComplaints = complaints.filter(c => c.assigned_to === member.id);
+                                        const mC_pending = memberComplaints.filter(c => c.status === 'Pending' || c.status === 'Assigned' || c.status === 'InProgress').length;
+                                        const mC_total = memberComplaints.length;
+
+                                        const totalPending = mT_pending + mC_pending;
+                                        const totalAssigned = mT_total + mC_total;
+                                        const totalCompleted = memberTasks.filter(t => t.status === 'Completed').length + memberComplaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
+                                        const progressPct = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
+
+                                        return (
+                                            <tr key={member.id} className="hover:bg-slate-50/50">
+                                                <td className="px-6 py-4 text-sm font-bold text-slate-900"><TranslatedText text={member.name} isName={true} /></td>
+                                                <td className="px-6 py-4 text-sm text-slate-600">{translateRole(member.role)}</td>
+                                                <td className="px-6 py-4 text-sm text-center font-medium text-slate-800">{mT_pending} / {mT_total}</td>
+                                                <td className="px-6 py-4 text-sm text-center font-medium text-slate-800">{mC_pending} / {mC_total}</td>
+                                                <td className="px-6 py-4 text-sm text-center font-bold text-amber-600">{totalPending}</td>
+                                                <td className="px-6 py-4 text-sm text-center font-bold text-emerald-600">{totalCompleted}</td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-slate-700 text-xs w-8">{progressPct}%</span>
+                                                        <div className="w-20 bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200 print:hidden">
+                                                            <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${progressPct}%` }}></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="space-y-6">
+                    <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900">{tr("Karyakarta Work Management", "कार्यकर्ता काम व्यवस्थापन")}</h1>
+                                <p className="text-sm text-gray-500">{tr("Monitor, track, and assign tasks to your team members", "तुमच्या टीममधील सदस्यांच्या कामांवर लक्ष ठेवा, ट्रॅक करा आणि कामे सोपवा")}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowWorkloadReport(true)}
+                                    className="ns-btn-ghost border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-2 text-xs py-2 shadow-sm font-semibold text-slate-700"
+                                >
+                                    <FileText className="w-4 h-4 text-slate-500" /> {tr("Workload Report", "कार्यभार अहवाल")}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto">
+                            {[
+                                { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
+                                { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
+                                { id: 'WorkManagement', label: tr('Work Management', 'काम व्यवस्थापन'), icon: CheckSquare },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => {
+                                        setActiveTab(tab.id as any);
+                                        setSelectedKaryakartaForTasks(null);
+                                    }}
+                                    className={clsx(
+                                        "flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+                                        activeTab === tab.id
+                                            ? "bg-brand-50 text-brand-700 shadow-sm"
+                                            : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                                    )}
+                                >
+                                    <tab.icon className={clsx("w-4 h-4", activeTab === tab.id ? "text-brand-600" : "text-gray-400")} />
+                                    <span>{tab.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Stats Dashboard */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <p className="text-sm font-semibold text-slate-500">{tr("Total Workload", "एकूण कार्यभार")}</p>
+                            <p className="text-3xl font-black text-slate-900 mt-1">{totalLoad}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{totalTasks} {tr("Tasks", "कामे")} · {totalComplaints} {tr("Complaints", "तक्रारी")}</p>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <p className="text-sm font-semibold text-amber-600">{tr("Pending Load", "प्रलंबित कार्यभार")}</p>
+                            <p className="text-3xl font-black text-amber-600 mt-1">{pendingLoad}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{pendingTasks} {tr("Tasks", "कामे")} · {pendingComplaints} {tr("Complaints", "तक्रारी")}</p>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <p className="text-sm font-semibold text-blue-600">{tr("In Progress", "चालू कामे (प्रगतीपथावर)")}</p>
+                            <p className="text-3xl font-black text-blue-600 mt-1">{inProgressLoad}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{inProgressTasks} {tr("Tasks", "कामे")} · {inProgressComplaints} {tr("Complaints", "तक्रारी")}</p>
+                        </div>
+                        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                            <p className="text-sm font-semibold text-emerald-600">{tr("Completed Work", "पूर्ण झालेली कामे")}</p>
+                            <p className="text-3xl font-black text-emerald-600 mt-1">{completedLoad}</p>
+                            <p className="text-[10px] text-slate-400 mt-1">{completedTasks} {tr("Tasks", "कामे")} · {resolvedComplaints} {tr("Complaints", "तक्रारी")}</p>
+                        </div>
+                    </div>
+
+                    {/* Karyakarta Matrix */}
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                            <h3 className="font-bold text-slate-800">{tr("Team Workload Monitor", "टीम कार्यभार मॉनिटर")}</h3>
+                            <p className="text-xs text-slate-500">{tr("Overview of combined Task and Complaint assignments per Karyakarta", "प्रत्येक कार्यकर्त्याला सोपवलेल्या एकूण कामे आणि तक्रारींचा आढावा")}</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-slate-200">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Karyakarta", "कार्यकर्ता")}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Role", "भूमिका")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Tasks (Pending/Total)", "कामे (प्रलंबित/एकूण)")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Complaints (Pending/Total)", "तक्रारी (प्रलंबित/एकूण)")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Total Pending Load", "एकूण प्रलंबित कार्यभार")}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Overall Progress", "एकूण प्रगती")}</th>
+                                        <th className="px-6 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider">{tr("Actions", "कृती")}</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-slate-200">
+                                    {sortedStaffByWorkload.map((member) => {
+                                        const memberTasks = tasks.filter(t => t.assigned_staff_id === member.id);
+                                        const mT_pending = memberTasks.filter(t => t.status === 'Pending' || t.status === 'In Progress').length;
+                                        const mT_total = memberTasks.length;
+
+                                        const memberComplaints = complaints.filter(c => c.assigned_to === member.id);
+                                        const mC_pending = memberComplaints.filter(c => c.status === 'Pending' || c.status === 'Assigned' || c.status === 'InProgress').length;
+                                        const mC_total = memberComplaints.length;
+
+                                        const totalPending = mT_pending + mC_pending;
+                                        const totalAssigned = mT_total + mC_total;
+                                        const totalCompleted = memberTasks.filter(t => t.status === 'Completed').length + memberComplaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
+                                        const progressPct = totalAssigned > 0 ? Math.round((totalCompleted / totalAssigned) * 100) : 0;
+
+                                        return (
+                                            <tr key={member.id} className="hover:bg-slate-50/50">
+                                                <td className="px-6 py-4 text-sm font-bold text-slate-900"><TranslatedText text={member.name} isName={true} /></td>
+                                                <td className="px-6 py-4 text-sm text-slate-600">{translateRole(member.role)}</td>
+                                                <td className="px-6 py-4 text-sm text-center font-medium text-slate-800">
+                                                    <span className={clsx(mT_pending > 0 ? "text-amber-600 font-bold" : "text-slate-500")}>{mT_pending}</span> / {mT_total}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-center font-medium text-slate-800">
+                                                    <span className={clsx(mC_pending > 0 ? "text-blue-600 font-bold" : "text-slate-500")}>{mC_pending}</span> / {mC_total}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-center font-black text-slate-900">
+                                                    <span className={clsx(totalPending > 0 ? "bg-amber-50 border border-amber-200 text-amber-800 rounded px-2 py-0.5" : "text-slate-400 font-medium")}>
+                                                        {totalPending}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-24 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
+                                                            <div className="bg-emerald-500 h-full rounded-full transition-all duration-300" style={{ width: `${progressPct}%` }}></div>
+                                                        </div>
+                                                        <span className="font-bold text-slate-700 text-xs">{progressPct}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-center flex justify-center gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedKaryakartaForTasks(member);
+                                                            setActiveDetailTab('tasks');
+                                                            setTimeout(() => {
+                                                                if (detailsRef.current) {
+                                                                    detailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                                }
+                                                            }, 100);
+                                                        }}
+                                                        className="ns-btn-ghost py-1 px-3 text-xs bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5"
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5" /> {tr("View Workload", "कार्यभार पहा")}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setQuickTaskStaff(member);
+                                                            setShowQuickTaskModal(true);
+                                                        }}
+                                                        className="ns-btn-primary bg-brand-600 hover:bg-brand-700 text-white border-none py-1 px-3 text-xs"
+                                                    >
+                                                        {tr("Assign Task", "काम सोपवा")}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {sortedStaffByWorkload.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">{tr("No staff members found", "कोणतेही कर्मचारी आढळले नाहीत")}</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {/* Unassigned Work Pool */}
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
+                        <div className="border-b border-slate-100 pb-3 flex justify-between items-center bg-slate-50/50 -m-6 mb-2 p-6">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                    <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse" />
+                                    <span>{tr("Unassigned Work Pool", "असोपवलेल्या कामांचा संच")}</span>
+                                </h3>
+                                <p className="text-xs text-slate-500">{tr("Distribute unassigned tasks and citizen complaints to your team", "तुमच्या टीमला अजून न सोपवलेली कामे आणि नागरिकांच्या तक्रारींचे वाटप करा")}</p>
+                            </div>
+                            <div className="flex gap-2">
+                                <span className="bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold px-2.5 py-1 rounded-full">
+                                    {unassignedTasks.length} {tr("Unassigned Tasks", "असोपवलेली कामे")}
+                                </span>
+                                <span className="bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-full">
+                                    {unassignedComplaints.length} {tr("Unassigned Complaints", "असोपवलेल्या तक्रारी")}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+                            {/* Unassigned Tasks */}
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">{tr("Unassigned Tasks", "असोपवलेली कामे")}</h4>
+                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                    {unassignedTasks.map(task => (
+                                        <div key={task.id} className="border border-slate-200 rounded-lg p-3 bg-slate-50/30 flex justify-between items-center gap-4 hover:bg-slate-50 transition-colors">
+                                            <div className="min-w-0 flex-1">
+                                                <h5 className="font-bold text-slate-800 text-sm truncate"><TranslatedText text={task.title} /></h5>
+                                                <p className="text-xs text-slate-500 truncate"><TranslatedText text={task.description} /></p>
+                                                <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-100">
+                                                    {task.priority === 'High' ? tr("High Priority", "उच्च प्राथमिकता") : task.priority === 'Medium' ? tr("Medium Priority", "मध्यम प्राथमिकता") : tr("Low Priority", "कमी प्राथमिकता")}
+                                                </span>
+                                            </div>
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleAssignTask(task.id, e.target.value)}
+                                                className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
+                                            >
+                                                <option value="">{tr("Assign Karyakarta...", "कार्यकर्ता निवडा...")}</option>
+                                                {staff.map(m => (
+                                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                    {unassignedTasks.length === 0 && (
+                                        <p className="text-xs text-slate-400 italic py-4 text-center">{tr("No unassigned tasks.", "कोणतीही असोपवलेली कामे नाहीत.")}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Unassigned Complaints */}
+                            <div className="space-y-3">
+                                <h4 className="font-bold text-slate-700 text-sm border-b border-slate-100 pb-2">{tr("Unassigned Complaints", "असोपवलेल्या तक्रारी")}</h4>
+                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                    {unassignedComplaints.map(complaint => (
+                                        <div key={complaint.id} className="border border-slate-200 rounded-lg p-3 bg-slate-50/30 flex justify-between items-center gap-4 hover:bg-slate-50 transition-colors">
+                                            <div className="min-w-0 flex-1">
+                                                <h5 className="font-bold text-slate-800 text-sm truncate"><TranslatedText text={complaint.title || complaint.problem} /></h5>
+                                                <p className="text-xs text-slate-500 truncate"><TranslatedText text={complaint.description} /></p>
+                                                <span className="inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                                                    {tr(complaint.category || 'Complaint', complaint.category === 'Water' ? 'पाणी समस्या' : complaint.category === 'Electricity' ? 'वीज समस्या' : complaint.category === 'Roads' ? 'रस्ते समस्या' : complaint.category === 'Garbage' ? 'कचरा समस्या' : complaint.category || 'तक्रार')}
+                                                </span>
+                                            </div>
+                                            <select
+                                                value=""
+                                                onChange={(e) => handleAssignComplaint(complaint.id, e.target.value)}
+                                                className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
+                                            >
+                                                <option value="">{tr("Assign Karyakarta...", "कार्यकर्ता निवडा...")}</option>
+                                                {staff.map(m => (
+                                                    <option key={m.id} value={m.id}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ))}
+                                    {unassignedComplaints.length === 0 && (
+                                        <p className="text-xs text-slate-400 italic py-4 text-center">{tr("No unassigned complaints.", "कोणतीही असोपवलेली तक्रार नाही.")}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Detailed Task & Complaint View */}
+                    {selectedKaryakartaForTasks && (
+                        <div ref={detailsRef} className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4 animate-in fade-in duration-200">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">{tr("Workload Details for", "कार्यभार तपशील:")} <TranslatedText text={selectedKaryakartaForTasks.name} isName={true} /></h3>
+                                    <p className="text-xs text-slate-500">{translateRole(selectedKaryakartaForTasks.role)} · {tr("Assigned Area", "नियुक्त परिसर")}: {tr(selectedKaryakartaForTasks.area || 'All', selectedKaryakartaForTasks.area || 'सर्व')}</p>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedKaryakartaForTasks(null)}
+                                    className="text-sm font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+                                >
+                                    {tr("Close Details", "तपशील बंद करा")}
+                                </button>
+                            </div>
+
+                            {/* Detail Tabs */}
+                            <div className="flex border-b border-slate-200">
+                                <button
+                                    onClick={() => setActiveDetailTab('tasks')}
+                                    className={`py-2 px-4 border-b-2 font-bold text-sm transition-colors ${activeDetailTab === 'tasks' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    {tr("Assigned Tasks", "सोपवलेली कामे")} ({tasks.filter(t => t.assigned_staff_id === selectedKaryakartaForTasks.id).length})
+                                </button>
+                                <button
+                                    onClick={() => setActiveDetailTab('complaints')}
+                                    className={`py-2 px-4 border-b-2 font-bold text-sm transition-colors ${activeDetailTab === 'complaints' ? 'border-brand-500 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    {tr("Assigned Complaints", "सोपवलेल्या तक्रारी")} ({complaints.filter(c => c.assigned_to === selectedKaryakartaForTasks.id).length})
+                                </button>
+                            </div>
+
+                            {activeDetailTab === 'tasks' ? (
+                                <div className="grid gap-3">
+                                    {tasks.filter(t => t.assigned_staff_id === selectedKaryakartaForTasks.id).map(task => (
+                                        <div key={task.id} className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-slate-800 text-base"><TranslatedText text={task.title} /></h4>
+                                                <p className="text-sm text-slate-650"><TranslatedText text={task.description} /></p>
+                                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-2">
+                                                    <span className={`px-2 py-0.5 rounded-full font-medium ${task.priority === 'High' ? 'bg-red-50 text-red-700 border border-red-100' :
+                                                            task.priority === 'Medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-100' :
+                                                                'bg-slate-50 text-slate-650 border border-slate-200'
+                                                        }`}>
+                                                        {task.priority === 'High' ? tr("High Priority", "उच्च प्राथमिकता") : task.priority === 'Medium' ? tr("Medium Priority", "मध्यम प्राथमिकता") : tr("Low Priority", "कमी प्राथमिकता")}
+                                                    </span>
+                                                    {task.due_date && <span>{tr("Due", "मुदत")}: {task.due_date} {task.due_time}</span>}
+                                                    {task.address && <span>{tr("Address", "पत्ता")}: {task.address}</span>}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 self-start md:self-center">
+                                                <label className="text-xs font-bold text-slate-600">{tr("Status:", "स्थिती:")}</label>
+                                                <select
+                                                    value={task.status}
+                                                    onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
+                                                    className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
+                                                >
+                                                    <option value="Pending">{tr("Pending", "प्रलंबित")}</option>
+                                                    <option value="In Progress">{tr("In Progress", "चालू")}</option>
+                                                    <option value="Completed">{tr("Completed", "पूर्ण")}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {tasks.filter(t => t.assigned_staff_id === selectedKaryakartaForTasks.id).length === 0 && (
+                                        <div className="py-6 text-center text-slate-500 italic text-sm">
+                                            {tr("No tasks currently assigned to this member.", "या सदस्याला सध्या कोणतेही काम सोपवले नाही.")}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {complaints.filter(c => c.assigned_to === selectedKaryakartaForTasks.id).map(complaint => (
+                                        <div key={complaint.id} className="border border-slate-150 rounded-xl p-4 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-slate-800 text-base"><TranslatedText text={complaint.title || complaint.problem} /></h4>
+                                                    <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-100 px-2 py-0.5 rounded font-medium">
+                                                        {tr(complaint.category || 'Complaint', complaint.category === 'Water' ? 'पाणी समस्या' : complaint.category === 'Electricity' ? 'वीज समस्या' : complaint.category === 'Roads' ? 'रस्ते समस्या' : complaint.category === 'Garbage' ? 'कचरा समस्या' : complaint.category || 'तक्रार')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-650"><TranslatedText text={complaint.description} /></p>
+                                                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-2">
+                                                    {complaint.voter && (
+                                                        <span>{tr("Reporter", "तक्रारदार")}: {complaint.voter.name_marathi || complaint.voter.name_english} ({complaint.voter.mobile || 'N/A'})</span>
+                                                    )}
+                                                    {complaint.location && <span>{tr("Location", "ठिकाण")}: {complaint.location}</span>}
+                                                    <span>{tr("Created", "दिनांक")}: {new Date(complaint.created_at).toLocaleDateString(language === 'mr' ? 'mr-IN' : 'en-US')}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 self-start md:self-center">
+                                                <label className="text-xs font-bold text-slate-600">{tr("Status:", "स्थिती:")}</label>
+                                                <select
+                                                    value={complaint.status}
+                                                    onChange={(e) => handleUpdateComplaintStatus(complaint.id, e.target.value)}
+                                                    className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
+                                                >
+                                                    <option value="Pending">{tr("Pending", "प्रलंबित")}</option>
+                                                    <option value="Assigned">{tr("Assigned", "सोपवले")}</option>
+                                                    <option value="InProgress">{tr("In Progress", "काम सुरू")}</option>
+                                                    <option value="Resolved">{tr("Resolved", "निवारण झाले")}</option>
+                                                    <option value="Closed">{tr("Closed", "बंद केले")}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {complaints.filter(c => c.assigned_to === selectedKaryakartaForTasks.id).length === 0 && (
+                                        <div className="py-6 text-center text-slate-500 italic text-sm">
+                                            {tr("No complaints currently assigned to this member.", "या सदस्याला सध्या कोणत्याही तक्रारी सोपवल्या नाहीत.")}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Quick Task Modal */}
+                    {showQuickTaskModal && quickTaskStaff && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
+                                <h3 className="text-lg font-bold text-slate-900">{tr("Assign New Task to", "नवीन काम सोपवा:")} <TranslatedText text={quickTaskStaff.name} isName={true} /></h3>
+                                <form onSubmit={handleCreateQuickTask} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Task Title", "कामाचे शीर्षक")}</label>
+                                        <input
+                                            type="text" required
+                                            className="ns-input"
+                                            value={quickTaskForm.title}
+                                            onChange={e => setQuickTaskForm({ ...quickTaskForm, title: e.target.value })}
+                                            placeholder={tr("e.g. Inspect water pipeline leakage", "उदा. पाणी पुरवठा पाईपलाईन गळती पाहणे")}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Description", "कामाचा तपशील")}</label>
+                                        <textarea
+                                            rows={3} required
+                                            className="ns-input"
+                                            value={quickTaskForm.description}
+                                            onChange={e => setQuickTaskForm({ ...quickTaskForm, description: e.target.value })}
+                                            placeholder={tr("Details of the work to be done...", "करायच्या कामाची माहिती...")}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Priority", "प्राथमिकता")}</label>
+                                            <select
+                                                className="ns-input"
+                                                value={quickTaskForm.priority}
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, priority: e.target.value as any })}
+                                            >
+                                                <option value="Low">{tr("Low", "कमी")}</option>
+                                                <option value="Medium">{tr("Medium", "मध्यम")}</option>
+                                                <option value="High">{tr("High", "उच्च")}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Due Date", "मुदत तारीख")}</label>
+                                            <input
+                                                type="date"
+                                                className="ns-input"
+                                                value={quickTaskForm.due_date}
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_date: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Due Time", "मुदत वेळ")}</label>
+                                            <input
+                                                type="time"
+                                                className="ns-input"
+                                                value={quickTaskForm.due_time}
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_time: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Address / Office", "पत्ता / ठिकाण")}</label>
+                                            <input
+                                                type="text"
+                                                className="ns-input"
+                                                value={quickTaskForm.address}
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, address: e.target.value })}
+                                                placeholder={tr("e.g. Ward 12 Main Road", "उदा. प्रभाग १२ मुख्य रस्ता")}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowQuickTaskModal(false)}
+                                            className="ns-btn-ghost text-xs"
+                                        >
+                                            {tr("Cancel", "रद्द करा")}
+                                        </button>
+                                        <button
+                                            type="submit" disabled={savingQuickTask}
+                                            className="ns-btn-primary bg-brand-600 hover:bg-brand-700 text-white border-none py-2 px-6 text-xs font-bold"
+                                        >
+                                            {savingQuickTask ? tr("Saving...", "जतन करत आहे...") : tr("Assign Task", "काम सोपवा")}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <div className="space-y-6">
                 <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-4 space-y-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <div className="tutorial-team-header">
-                                <h1 className="text-2xl font-bold text-gray-900">{t('staff.title')}</h1>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <p className="text-sm text-gray-500">{t('staff.subtitle')}</p>
-                                    <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
-                                        {t('staff.list.found')}: {filteredStaff.length}
+                            <h1 className="text-2xl font-bold text-gray-900">{t('staff.title')}</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <p className="text-sm text-gray-500">{t('staff.subtitle')}</p>
+                                <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                                    {t('staff.list.found')}: {filteredStaff.length}
+                                </span>
+                                {filteredStaff.length !== staffInCurrentTab.length && (
+                                    <span className="text-xs text-slate-400">
+                                        of {staffInCurrentTab.length}
                                     </span>
-                                    {filteredStaff.length !== staffInCurrentTab.length && (
-                                        <span className="text-xs text-slate-400">
-                                            of {staffInCurrentTab.length}
-                                        </span>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            <button
-                                onClick={startTutorial}
-                                className="ns-btn ns-btn-secondary tutorial-team-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
-                            >
-                                <HelpCircle className="w-4 h-4 mr-2" />
-                                {language === 'mr' ? 'मदत' : 'Help'}
-                            </button>
-                            <button
-                                onClick={() => setShowModal(true)}
-                                className="ns-btn-primary tutorial-team-add"
-                            >
-                                <Plus className="w-4 h-4 mr-2" /> {t('staff.add_staff')}
-                            </button>
-                        </div>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="ns-btn-primary"
+                        >
+                            <Plus className="w-4 h-4" /> {t('staff.add_staff')}
+                        </button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto tutorial-team-tabs">
+                    <div className="flex space-x-1 bg-white p-1 rounded-xl border border-gray-200 overflow-x-auto">
                         {[
                             { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
                             { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
+                            { id: 'WorkManagement', label: tr('Work Management', 'काम व्यवस्थापन'), icon: CheckSquare },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -349,7 +1093,7 @@ const StaffList = () => {
                 </div>
 
                 {/* Search Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 tutorial-team-filters">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -399,7 +1143,7 @@ const StaffList = () => {
                 </div>
 
                 {/* View Mode Toggle */}
-                <div className="flex justify-between items-center mt-2 tutorial-team-view">
+                <div className="flex justify-end mt-2">
                     <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                         <button
                             onClick={() => setViewMode('grid')}
@@ -419,14 +1163,6 @@ const StaffList = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
-                    {viewMode === 'report' && (
-                        <button
-                            onClick={() => setShowReport(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
-                        >
-                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
-                        </button>
-                    )}
                 </div>
 
                 {loading ? (
@@ -434,7 +1170,7 @@ const StaffList = () => {
                         {[1, 2, 3].map(i => <div key={i} className="h-32 bg-gray-100 animate-pulse rounded-xl"></div>)}
                     </div>
                 ) : viewMode === 'grid' ? (
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 tutorial-team-list">
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredStaff.length > 0 ? (
                             filteredStaff.map((member) => (
                                 <div
@@ -500,24 +1236,23 @@ const StaffList = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50">
                             <h3 className="font-semibold text-gray-800">
-                                {t('staff.tabs.office')} - {t('common.report_view')} ({filteredStaff.length})
+                                {t('staff.tabs.office')} - {t('common.report')} ({filteredStaff.length})
                             </h3>
                             <button
                                 onClick={() => window.print()}
                                 className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                                title={t('common.print')}
                             >
-                                <Printer className="w-4 h-4" /> {t('common.print')}
+                                <Printer className="w-4 h-4" /> Print
                             </button>
                         </div>
                         <div className="overflow-x-auto print:overflow-visible">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50 print:bg-gray-100">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.name_role')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.contact')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.keywords_categories')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Role</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keywords/Categories</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -823,14 +1558,6 @@ const StaffList = () => {
                         </div>
                     </div>
                 </div>
-            )}
-            <TeamTutorial />
-            {showReport && (
-                <StaffReportGenerator
-                    staffList={filteredStaff}
-                    activeTab={activeTab}
-                    onClose={() => setShowReport(false)}
-                />
             )}
         </>
     );

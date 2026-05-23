@@ -2,10 +2,23 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
 import { supabase } from '../../services/supabaseClient';
-import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save, Users } from 'lucide-react';
+import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save, Users, Heart, Baby, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
+
+interface FamilyMember {
+    id: string;
+    name: string;
+    name_marathi?: string;
+    age?: number;
+    gender?: string;
+    relation_type?: string;
+    relation_name?: string;
+    serial_no?: number;
+    epic_no?: string;
+    inferredRelation: string;
+}
 
 const VoterProfile = () => {
     const { id } = useParams<{ id: string }>();
@@ -13,6 +26,8 @@ const VoterProfile = () => {
     const { t, language } = useLanguage();
     const [voter, setVoter] = useState<Voter | undefined>(undefined);
     const [complaintHistory, setComplaintHistory] = useState<Complaint[]>([]);
+    const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+    const [loadingFamily, setLoadingFamily] = useState(false);
 
     // Edit State
     const [isEditing, setIsEditing] = useState(false);
@@ -71,6 +86,7 @@ const VoterProfile = () => {
                         epicNo: voterData.epic_no,
                         mobile: voterData.mobile,
                         is_friend_relative: voterData.is_friend_relative,
+                        house_no: voterData.house_no,
                         history: []
                     };
                     setVoter(mappedVoter);
@@ -125,6 +141,108 @@ const VoterProfile = () => {
 
         fetchVoterDetails();
     }, [id]);
+
+    // Fetch family members whenever voter data is available
+    useEffect(() => {
+        if (!voter || !voter.booth || !voter.id) return;
+
+        const fetchFamilyMembers = async () => {
+            setLoadingFamily(true);
+            try {
+                // Fetch voters in the same booth (part_no) and house_no
+                // We use the raw voter data stored in the voter state
+                const baseQuery = supabase
+                    .from('voters')
+                    .select('id, name_english, name_marathi, age, gender, relation_type, relation_name, serial_no, epic_no, house_no')
+                    .neq('id', voter.id);
+
+                // Try to match by house_no + part_no if available
+                const boothVal = voter.booth ? parseInt(voter.booth, 10) : null;
+                const { data: houseData } = voter.house_no
+                    ? await baseQuery
+                        .eq('part_no', boothVal !== null && !isNaN(boothVal) ? boothVal : voter.booth)
+                        .eq('house_no', voter.house_no)
+                        .limit(20)
+                    : { data: [] };
+
+                if (!houseData || houseData.length === 0) {
+                    setFamilyMembers([]);
+                    return;
+                }
+
+                // Infer relationships
+                const currentName = (voter.name_english || voter.name || '').trim().toLowerCase();
+
+                const mappedMembers: FamilyMember[] = houseData.map((fm: any) => {
+                    let inferredRelation = 'Relative';
+                    const fmRelType = (fm.relation_type || '').toUpperCase();
+                    const fmRelName = (fm.relation_name || '').trim().toLowerCase();
+                    const fmName = (fm.name_english || '').trim().toLowerCase();
+
+                    // Try to infer based on relation type codes
+                    if (fmRelType === 'H') {
+                        // This member's relation is 'Husband' (their husband's name = fmRelName)
+                        if (fmRelName === currentName) {
+                            // Current voter is the husband of this member → this member is Wife
+                            inferredRelation = voter.gender === 'M' ? 'Wife' : 'Husband';
+                        } else {
+                            inferredRelation = fm.gender === 'F' ? 'Wife' : 'Husband';
+                        }
+                    } else if (fmRelType === 'F') {
+                        // This member's relation is 'Father' (their father's name = fmRelName)
+                        if (fmRelName === currentName) {
+                            // Current voter is the father of this family member → they are Son/Daughter
+                            inferredRelation = fm.gender === 'F' ? 'Daughter' : 'Son';
+                        } else {
+                            // They share the same father name as current voter → Sibling
+                            inferredRelation = fm.gender === 'F' ? 'Sister' : 'Brother';
+                        }
+                    } else if (fmRelType === 'M') {
+                        if (fmRelName === currentName) {
+                            inferredRelation = fm.gender === 'F' ? 'Daughter' : 'Son';
+                        } else {
+                            inferredRelation = fm.gender === 'F' ? 'Sister' : 'Brother';
+                        }
+                    } else if (fmRelType === 'W') {
+                        inferredRelation = 'Wife';
+                    } else {
+                        // Fallback: guess from age difference
+                        const ageDiff = (voter.age || 0) - (fm.age || 0);
+                        if (Math.abs(ageDiff) <= 5) {
+                            inferredRelation = fm.gender === 'F' ? 'Sister' : 'Brother';
+                        } else if (ageDiff > 15) {
+                            inferredRelation = fm.gender === 'F' ? 'Daughter' : 'Son';
+                        } else if (ageDiff < -15) {
+                            inferredRelation = fm.gender === 'F' ? 'Mother' : 'Father';
+                        } else {
+                            inferredRelation = 'Relative';
+                        }
+                    }
+
+                    return {
+                        id: fm.id,
+                        name: fm.name_english || '',
+                        name_marathi: fm.name_marathi,
+                        age: fm.age,
+                        gender: fm.gender,
+                        relation_type: fm.relation_type,
+                        relation_name: fm.relation_name,
+                        serial_no: fm.serial_no,
+                        epic_no: fm.epic_no,
+                        inferredRelation,
+                    };
+                });
+
+                setFamilyMembers(mappedMembers);
+            } catch (err) {
+                console.error('Error fetching family members:', err);
+            } finally {
+                setLoadingFamily(false);
+            }
+        };
+
+        fetchFamilyMembers();
+    }, [voter?.id, voter?.booth, voter?.house_no]);
 
     if (!voter) {
         return <div className="p-8 text-center">Loading voter details...</div>;
@@ -188,7 +306,26 @@ const VoterProfile = () => {
             if (error) throw error;
 
             toast.success('Voter details updated successfully');
-            setVoter({ ...voter, ...updates } as Voter);
+            const updatedVoter: Voter = {
+                ...voter,
+                name_english: editForm.name,
+                name_marathi: editForm.name_marathi,
+                name: editForm.name,
+                mobile: editForm.mobile ? editForm.mobile : undefined,
+                age: editForm.age,
+                dob: editForm.dob ? editForm.dob : undefined,
+                profession: editForm.profession,
+                gender: editForm.gender as 'M' | 'F' | 'O',
+                address_english: editForm.address,
+                address_marathi: editForm.address_marathi,
+                address: editForm.address,
+                current_address_english: editForm.current_address_english,
+                current_address_marathi: editForm.current_address_marathi,
+                ward: editForm.ward_no,
+                booth: editForm.part_no,
+                epicNo: editForm.epic_no
+            };
+            setVoter(updatedVoter);
             setIsEditing(false);
         } catch (err) {
             console.error(err);
@@ -312,6 +449,119 @@ const VoterProfile = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Family Member Mapping Card */}
+            {(loadingFamily || familyMembers.length > 0) && (
+                <div className="ns-card overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-white flex items-center gap-3">
+                        <div className="w-9 h-9 bg-violet-100 rounded-xl flex items-center justify-center">
+                            <Users className="w-4 h-4 text-violet-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-base font-bold text-slate-900">Family Members</h2>
+                            <p className="text-xs text-slate-500">Other voters registered at the same address</p>
+                        </div>
+                        <span className="ml-auto text-xs font-bold bg-violet-100 text-violet-700 px-2.5 py-1 rounded-full border border-violet-200">
+                            {familyMembers.length} found
+                        </span>
+                    </div>
+
+                    {loadingFamily ? (
+                        <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-20 bg-slate-100 animate-pulse rounded-xl" />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="p-6">
+                            {/* Self Card */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {/* Self */}
+                                <div className="relative bg-brand-50 border border-brand-200 rounded-xl p-4 ring-1 ring-brand-100 shadow-sm">
+                                    <div className="absolute -top-2 left-3">
+                                        <span className="text-[10px] font-bold bg-brand-600 text-white px-2 py-0.5 rounded-full">Self</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center">
+                                            <User className="w-4 h-4 text-brand-600" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-900 truncate">{voter.name_english || voter.name}</p>
+                                            <p className="text-xs text-slate-500">
+                                                Age {voter.age} · {voter.gender === 'M' ? 'Male' : voter.gender === 'F' ? 'Female' : 'Other'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Family Members */}
+                                {familyMembers.map(member => {
+                                    const relationColors: Record<string, string> = {
+                                        'Wife': 'bg-pink-50 border-pink-200 ring-pink-100',
+                                        'Husband': 'bg-blue-50 border-blue-200 ring-blue-100',
+                                        'Father': 'bg-amber-50 border-amber-200 ring-amber-100',
+                                        'Mother': 'bg-orange-50 border-orange-200 ring-orange-100',
+                                        'Son': 'bg-emerald-50 border-emerald-200 ring-emerald-100',
+                                        'Daughter': 'bg-teal-50 border-teal-200 ring-teal-100',
+                                        'Brother': 'bg-cyan-50 border-cyan-200 ring-cyan-100',
+                                        'Sister': 'bg-purple-50 border-purple-200 ring-purple-100',
+                                        'Relative': 'bg-slate-50 border-slate-200 ring-slate-100',
+                                    };
+                                    const badgeColors: Record<string, string> = {
+                                        'Wife': 'bg-pink-600',
+                                        'Husband': 'bg-blue-600',
+                                        'Father': 'bg-amber-600',
+                                        'Mother': 'bg-orange-600',
+                                        'Son': 'bg-emerald-600',
+                                        'Daughter': 'bg-teal-600',
+                                        'Brother': 'bg-cyan-600',
+                                        'Sister': 'bg-purple-600',
+                                        'Relative': 'bg-slate-500',
+                                    };
+                                    const colorClass = relationColors[member.inferredRelation] || relationColors['Relative'];
+                                    const badgeColor = badgeColors[member.inferredRelation] || badgeColors['Relative'];
+
+                                    return (
+                                        <button
+                                            key={member.id}
+                                            onClick={() => navigate(`/dashboard/voters/${member.id}`)}
+                                            className={`relative border rounded-xl p-4 ring-1 shadow-sm text-left hover:shadow-md transition-all group ${colorClass}`}
+                                        >
+                                            <div className="absolute -top-2 left-3">
+                                                <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded-full ${badgeColor}`}>
+                                                    {member.inferredRelation}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    {member.gender === 'F'
+                                                        ? <UserCheck className="w-4 h-4 text-slate-500" />
+                                                        : <User className="w-4 h-4 text-slate-500" />
+                                                    }
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm font-bold text-slate-900 truncate group-hover:text-brand-700 transition-colors">
+                                                        {member.name || member.name_marathi}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {member.age ? `Age ${member.age} · ` : ''}
+                                                        {member.gender === 'M' ? 'Male' : member.gender === 'F' ? 'Female' : ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {member.epic_no && (
+                                                <p className="mt-2 text-[10px] font-mono text-slate-400 truncate border-t border-white/50 pt-1.5">
+                                                    {member.epic_no}
+                                                </p>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Recent History */}
             <h2 className="text-xl font-bold text-slate-900 pt-4">{t('voter_profile.service_history')}</h2>

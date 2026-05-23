@@ -1,20 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer } from 'lucide-react';
+import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer, BarChart2 } from 'lucide-react';
 import { type Voter } from '../../types';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
-import { useTutorial } from '../../context/TutorialContext';
-import { HelpCircle } from 'lucide-react';
-import VoterTutorial from '../../components/tutorial/VoterTutorial';
 
 const PAGE_SIZE = 50;
 
 const VoterList = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
-    const { startTutorial } = useTutorial();
     const { tenantId } = useTenant();
     const [voters, setVoters] = useState<Voter[]>([]);
     const [totalCount, setTotalCount] = useState<number | null>(null);
@@ -40,6 +36,16 @@ const VoterList = () => {
     const [selectedCasteForBulk, setSelectedCasteForBulk] = useState('');
     const [isAllocating, setIsAllocating] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+
+    // Favour-wise Allocation State
+    const [favourFilter, setFavourFilter] = useState('');
+    const [showFavourModal, setShowFavourModal] = useState(false);
+    const [selectedFavourForBulk, setSelectedFavourForBulk] = useState('');
+    const [selectedFavourAnalysisNames, setSelectedFavourAnalysisNames] = useState<string[]>([]);
+    const [favourAnalysisTab, setFavourAnalysisTab] = useState<'surnames' | 'firstnames' | 'castes' | 'voters'>('surnames');
+    const [favourAnalysisSearch, setFavourAnalysisSearch] = useState('');
+    const [selectedFavourIndividualIds, setSelectedFavourIndividualIds] = useState<string[]>([]);
+    const [selectedFavourCastes, setSelectedFavourCastes] = useState<string[]>([]);
 
     // Suggestions State
     const [addressSuggestions, setAddressSuggestions] = useState<{ address: string; count: number }[]>([]);
@@ -216,6 +222,52 @@ const VoterList = () => {
         }
     };
 
+    const handleBulkFavourAllocate = async () => {
+        if (!selectedFavourForBulk) return;
+        setIsAllocating(true);
+        try {
+            if (favourAnalysisTab === 'surnames' || favourAnalysisTab === 'firstnames') {
+                if (selectedFavourAnalysisNames.length === 0) return;
+                for (const name of selectedFavourAnalysisNames) {
+                    await supabase
+                        .from('voters')
+                        .update({ favour: selectedFavourForBulk })
+                        .ilike('name_english', `%${name}%`)
+                        .eq('tenant_id', tenantId);
+                }
+            } else if (favourAnalysisTab === 'castes') {
+                if (selectedFavourCastes.length === 0) return;
+                for (const caste of selectedFavourCastes) {
+                    await supabase
+                        .from('voters')
+                        .update({ favour: selectedFavourForBulk })
+                        .eq('caste', caste)
+                        .eq('tenant_id', tenantId);
+                }
+            } else if (favourAnalysisTab === 'voters') {
+                if (selectedFavourIndividualIds.length === 0) return;
+                const { error } = await supabase
+                    .from('voters')
+                    .update({ favour: selectedFavourForBulk })
+                    .in('id', selectedFavourIndividualIds)
+                    .eq('tenant_id', tenantId);
+                if (error) throw error;
+            }
+
+            alert(t('voters.favour_allocation_success') || 'Favour allocated successfully!');
+            setSelectedFavourAnalysisNames([]);
+            setSelectedFavourCastes([]);
+            setSelectedFavourIndividualIds([]);
+            setShowFavourModal(false);
+            fetchVoters(0, true);
+        } catch (error) {
+            console.error('Error allocating favour:', error);
+            alert('Failed to allocate favour');
+        } finally {
+            setIsAllocating(false);
+        }
+    };
+
     const toggleAnalysisName = (name: string) => {
         setSelectedAnalysisNames(prev =>
             prev.includes(name)
@@ -286,6 +338,10 @@ const VoterList = () => {
                 query = query.ilike('caste', `%${casteFilter}%`);
             }
 
+            if (favourFilter) {
+                query = query.eq('favour', favourFilter);
+            }
+
             if (showFriendsOnly) {
                 query = query.eq('is_friend_relative', true);
             }
@@ -316,6 +372,7 @@ const VoterList = () => {
                 mobile: row.mobile,
                 houseNo: row.house_no,
                 caste: row.caste,
+                favour: row.favour,
                 serial_no: row.serial_no || row.new_serial_no,
                 is_friend_relative: row.is_friend_relative,
                 history: []
@@ -332,7 +389,7 @@ const VoterList = () => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [nameFilter, addressFilter, houseNoFilter, ageFilter, genderFilter, casteFilter, showFriendsOnly]);
+    }, [nameFilter, addressFilter, houseNoFilter, ageFilter, genderFilter, casteFilter, favourFilter, showFriendsOnly]);
 
     // Initial load and filter change
     useEffect(() => {
@@ -379,15 +436,13 @@ const VoterList = () => {
             <div className="flex flex-col gap-4 md:sticky md:top-0 z-30 bg-slate-50 pt-1 pb-4">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <div className="tutorial-voter-header">
-                            <h1 className="text-2xl font-bold text-gray-900">
-                                {isTagMode
-                                    ? t('voters.tagging_mode_title')
-                                    : showFriendsOnly
-                                        ? t('voters.friends_relatives_title')
-                                        : t('voters.title')}
-                            </h1>
-                        </div>
+                        <h1 className="text-2xl font-bold text-gray-900">
+                            {isTagMode
+                                ? t('voters.tagging_mode_title')
+                                : showFriendsOnly
+                                    ? t('voters.friends_relatives_title')
+                                    : t('voters.title')}
+                        </h1>
                         <div className="flex items-center gap-2">
                             <p className="text-sm text-slate-500">
                                 {isTagMode
@@ -431,7 +486,7 @@ const VoterList = () => {
                                         setShowFriendsOnly(next);
                                         if (next) setIsTagMode(false);
                                     }}
-                                    className="ns-btn-secondary tutorial-voter-friends"
+                                    className={`ns-btn ${showFriendsOnly ? 'bg-brand-600 text-white border-brand-600' : 'ns-btn-secondary'}`}
                                 >
                                     <Users className={`w-4 h-4 mr-2 ${showFriendsOnly ? 'text-white' : ''}`} />
                                     {t('voters.friends_relatives')}
@@ -442,23 +497,26 @@ const VoterList = () => {
                                         setShowAnalysisModal(true);
                                         fetchAnalysisData();
                                     }}
-                                    className="ns-btn ns-btn-secondary tutorial-voter-caste-btn"
+                                    className="ns-btn ns-btn-secondary"
                                 >
                                     <Filter className="w-4 h-4 mr-2" />
                                     {t('voters.caste_allocation')}
                                 </button>
 
                                 <button
-                                    onClick={startTutorial}
-                                    className="ns-btn ns-btn-secondary tutorial-voter-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
+                                    onClick={() => {
+                                        setShowFavourModal(true);
+                                        fetchAnalysisData();
+                                    }}
+                                    className="ns-btn ns-btn-secondary bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300"
                                 >
-                                    <HelpCircle className="w-4 h-4 mr-2" />
-                                    {language === 'mr' ? 'मदत' : 'Help'}
+                                    <BarChart2 className="w-4 h-4 mr-2 text-brand-600" />
+                                    {t('voters.favour_allocation') || 'Favour Allocation'}
                                 </button>
 
                                 <button
                                     onClick={() => navigate('/dashboard/political/add-voter')}
-                                    className="ns-btn-primary tutorial-voter-add"
+                                    className="ns-btn-primary"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     {t('voters.add_new')}
@@ -512,7 +570,7 @@ const VoterList = () => {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 tutorial-voter-filters">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                     {/* Name Filter */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -623,6 +681,23 @@ const VoterList = () => {
                         </select>
                     </div>
 
+                    {/* Favour Filter */}
+                    <div className="relative">
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <select
+                            value={favourFilter}
+                            onChange={(e) => setFavourFilter(e.target.value)}
+                            className="ns-input pl-9 w-full appearance-none bg-white font-semibold"
+                        >
+                            <option value="">{t('voters.favour_label') || "Favour Status"}</option>
+                            <option value="Favourable">Favourable (अनुकूल)</option>
+                            <option value="Against">Against (प्रतिकूल)</option>
+                            <option value="Neutral">Neutral (तटस्थ)</option>
+                            <option value="Doubtful">Doubtful (संशयास्पद)</option>
+                        </select>
+                    </div>
+
                     {/* Caste Filter with Suggestions */}
                     <div className="relative" ref={casteWrapperRef}>
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -661,7 +736,7 @@ const VoterList = () => {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex justify-end tutorial-voter-view">
+            <div className="flex justify-end">
                 <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
                     <button
                         onClick={() => setViewMode('grid')}
@@ -700,27 +775,27 @@ const VoterList = () => {
             ) : viewMode === 'report' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
-                        <h3 className="font-semibold text-slate-800">{t('voters.title') || 'Voters'} {t('common.report_view')} ({totalCount !== null ? totalCount : voters.length})</h3>
+                        <h3 className="font-semibold text-slate-800">Voters {t('common.report')} ({totalCount !== null ? totalCount : voters.length})</h3>
                         <button
                             onClick={() => window.print()}
                             className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                            title={t('common.print')}
                         >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
+                            <Printer className="w-4 h-4" /> Print
                         </button>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.sr_no')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.name')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.epic_no')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.age')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.gender')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.address')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.ward_booth')}</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.report_columns.caste')}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">EPIC No</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Age</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Gender</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ward / Booth</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Caste</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Favour</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
@@ -733,6 +808,18 @@ const VoterList = () => {
                                         <td className="px-4 py-3 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getDisplayAddress(voter)}</div></td>
                                         <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
                                         <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
+                                        <td className="px-4 py-3 text-sm text-slate-500">
+                                            {voter.favour ? (
+                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                                    voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                    voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                                    voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                    'bg-amber-50 text-amber-700 border-amber-100'
+                                                }`}>
+                                                    {voter.favour}
+                                                </span>
+                                            ) : '-'}
+                                        </td>
                                     </tr>
                                 ))}
                                 {voters.length === 0 && (
@@ -790,6 +877,16 @@ const VoterList = () => {
                                         <span className="ns-badge border-slate-200 bg-slate-50 text-slate-600 whitespace-nowrap">
                                             {t('voters.ward')} {voter.ward}
                                         </span>
+                                        {voter.favour && (
+                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                                voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-150 shadow-sm' :
+                                                voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-150 shadow-sm' :
+                                                voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-150 shadow-sm' :
+                                                'bg-amber-50 text-amber-700 border-amber-150 shadow-sm'
+                                            }`}>
+                                                {voter.favour}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
 
@@ -989,7 +1086,228 @@ const VoterList = () => {
                     </div>
                 </div>
             )}
-            <VoterTutorial />
+
+            {/* Favour Allocation Modal */}
+            {showFavourModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                        {/* Modal Header */}
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900">{t('voters.favour_allocation') || 'Favour-wise Allocation'}</h3>
+                                <p className="text-sm text-slate-500">Allocate support categories based on surnames, castes, or individual voters</p>
+                            </div>
+                            <button
+                                onClick={() => setShowFavourModal(false)}
+                                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                            >
+                                <Plus className="w-6 h-6 rotate-45 text-slate-500" />
+                            </button>
+                        </div>
+
+                        {/* Search and Tabs */}
+                        <div className="p-6 border-b border-slate-100 bg-white">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                                <div className="flex p-1 bg-slate-100 rounded-xl w-full sm:w-auto overflow-x-auto">
+                                    {[
+                                        { id: 'surnames', label: t('voters.surnames') || 'Surnames' },
+                                        { id: 'firstnames', label: t('voters.first_names') || 'First Names' },
+                                        { id: 'castes', label: 'By Caste' },
+                                        { id: 'voters', label: 'Individual Voters' }
+                                    ].map((tab) => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setFavourAnalysisTab(tab.id as any)}
+                                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${favourAnalysisTab === tab.id ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="relative w-full sm:max-w-xs">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        value={favourAnalysisSearch}
+                                        onChange={(e) => setFavourAnalysisSearch(e.target.value)}
+                                        className="ns-input pl-9 w-full bg-slate-50 border-slate-200 focus:bg-white"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Data Content */}
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+                            {loadingAnalysis ? (
+                                <div className="flex flex-col items-center justify-center py-12">
+                                    <RefreshCw className="w-8 h-8 animate-spin text-brand-600 mb-4" />
+                                    <p className="text-slate-500 font-medium">Analyzing data...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Surnames / First Names */}
+                                    {(favourAnalysisTab === 'surnames' || favourAnalysisTab === 'firstnames') && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {(favourAnalysisTab === 'surnames' ? surnameStats : firstnameStats)
+                                                .filter(item => item.name.toLowerCase().includes(favourAnalysisSearch.toLowerCase()))
+                                                .map((item, idx) => {
+                                                    const isSelected = selectedFavourAnalysisNames.includes(item.name);
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`group bg-white border rounded-xl p-4 transition-all flex items-center justify-between cursor-pointer ${isSelected ? 'border-brand-500 ring-1 ring-brand-500 bg-brand-50/30' : 'border-slate-200 hover:border-brand-300 hover:shadow-md'}`}
+                                                            onClick={() => {
+                                                                setSelectedFavourAnalysisNames(prev =>
+                                                                    prev.includes(item.name) ? prev.filter(n => n !== item.name) : [...prev, item.name]
+                                                                );
+                                                            }}
+                                                        >
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-300'}`}>
+                                                                    {isSelected && <Plus className="w-3.5 h-3.5 text-white" />}
+                                                                </div>
+                                                                <span className={`font-semibold truncate mr-2 ${isSelected ? 'text-brand-700' : 'text-slate-700 group-hover:text-brand-700'}`}>
+                                                                    {item.name}
+                                                                </span>
+                                                            </div>
+                                                            <span className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isSelected ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600 group-hover:bg-brand-50 group-hover:text-brand-700'}`}>
+                                                                {item.count}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
+
+                                    {/* Castes */}
+                                    {favourAnalysisTab === 'castes' && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                            {casteSuggestions
+                                                .filter(item => item.caste.toLowerCase().includes(favourAnalysisSearch.toLowerCase()))
+                                                .map((item, idx) => {
+                                                    const isSelected = selectedFavourCastes.includes(item.caste);
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`group bg-white border rounded-xl p-4 transition-all flex items-center justify-between cursor-pointer ${isSelected ? 'border-brand-500 ring-1 ring-brand-500 bg-brand-50/30' : 'border-slate-200 hover:border-brand-300 hover:shadow-md'}`}
+                                                            onClick={() => {
+                                                                setSelectedFavourCastes(prev =>
+                                                                    prev.includes(item.caste) ? prev.filter(c => c !== item.caste) : [...prev, item.caste]
+                                                                );
+                                                            }}
+                                                        >
+                                                            <div className="flex items-center gap-3 overflow-hidden">
+                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-brand-650 border-brand-650 text-white' : 'bg-white border-slate-300'}`}>
+                                                                    {isSelected && <Plus className="w-3.5 h-3.5 text-white" />}
+                                                                </div>
+                                                                <span className={`font-semibold truncate mr-2 ${isSelected ? 'text-brand-700' : 'text-slate-700 group-hover:text-brand-700'}`}>
+                                                                    {item.caste}
+                                                                </span>
+                                                            </div>
+                                                            <span className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isSelected ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-600 group-hover:bg-brand-50 group-hover:text-brand-700'}`}>
+                                                                {item.count}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
+
+                                    {/* Individual Voters */}
+                                    {favourAnalysisTab === 'voters' && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {voters
+                                                .filter(v => getDisplayName(v).toLowerCase().includes(favourAnalysisSearch.toLowerCase()) || (v.epicNo && v.epicNo.toLowerCase().includes(favourAnalysisSearch.toLowerCase())))
+                                                .map((voter) => {
+                                                    const isSelected = selectedFavourIndividualIds.includes(voter.id);
+                                                    return (
+                                                        <div
+                                                            key={voter.id}
+                                                            className={`group bg-white border rounded-xl p-4 transition-all flex items-start gap-3 cursor-pointer ${isSelected ? 'border-brand-500 ring-1 ring-brand-500 bg-brand-50/30' : 'border-slate-200 hover:border-brand-300 hover:shadow-md'}`}
+                                                            onClick={() => {
+                                                                setSelectedFavourIndividualIds(prev =>
+                                                                    prev.includes(voter.id) ? prev.filter(id => id !== voter.id) : [...prev, voter.id]
+                                                                );
+                                                            }}
+                                                        >
+                                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors mt-0.5 ${isSelected ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-300'}`}>
+                                                                {isSelected && <Plus className="w-3.5 h-3.5 text-white" />}
+                                                            </div>
+                                                            <div className="flex-1 overflow-hidden">
+                                                                <span className="font-bold text-slate-900 truncate block">{getDisplayName(voter)}</span>
+                                                                <span className="text-xs text-slate-500 block">EPIC: {voter.epicNo || '-'} | Caste: {voter.caste || '-'}</span>
+                                                                <span className="text-xs text-slate-400 block truncate">{getDisplayAddress(voter)}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Modal Footer with Allocation */}
+                        <div className="p-6 border-t border-slate-100 bg-white shadow-lg">
+                            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    {(selectedFavourAnalysisNames.length > 0 || selectedFavourCastes.length > 0 || selectedFavourIndividualIds.length > 0) && (
+                                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+                                            <span className="px-3 py-1.5 text-sm font-bold text-slate-700 whitespace-nowrap">
+                                                {favourAnalysisTab === 'surnames' || favourAnalysisTab === 'firstnames' ? `${selectedFavourAnalysisNames.length} Names` :
+                                                 favourAnalysisTab === 'castes' ? `${selectedFavourCastes.length} Castes` :
+                                                 `${selectedFavourIndividualIds.length} Voters`} to:
+                                            </span>
+                                            <div className="relative">
+                                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                                <select
+                                                    value={selectedFavourForBulk}
+                                                    onChange={(e) => setSelectedFavourForBulk(e.target.value)}
+                                                    className="ns-input pl-9 py-1.5 pr-8 text-sm focus:ring-brand-500 bg-white font-semibold"
+                                                >
+                                                    <option value="">{t('voters.select_favour') || 'Select Favour'}</option>
+                                                    <option value="Favourable">Favourable (अनुकूल)</option>
+                                                    <option value="Against">Against (प्रतिकूल)</option>
+                                                    <option value="Neutral">Neutral (तटस्थ)</option>
+                                                    <option value="Doubtful">Doubtful (संशयास्पद)</option>
+                                                </select>
+                                            </div>
+                                            <button
+                                                disabled={!selectedFavourForBulk || isAllocating}
+                                                onClick={handleBulkFavourAllocate}
+                                                className={`ns-btn-primary py-1.5 px-6 text-sm flex items-center gap-2 border-none bg-brand-600 hover:bg-brand-700 ${(!selectedFavourForBulk || isAllocating) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            >
+                                                {isAllocating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <BarChart2 className="w-4 h-4" />}
+                                                Save
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedFavourAnalysisNames([]);
+                                            setSelectedFavourCastes([]);
+                                            setSelectedFavourIndividualIds([]);
+                                        }}
+                                        className="ns-btn-secondary py-2"
+                                        disabled={selectedFavourAnalysisNames.length === 0 && selectedFavourCastes.length === 0 && selectedFavourIndividualIds.length === 0}
+                                    >
+                                        {t('common.cancel')}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowFavourModal(false)}
+                                        className="ns-btn-primary bg-slate-800 hover:bg-slate-900 border-none px-10"
+                                    >
+                                        Exit Modal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
