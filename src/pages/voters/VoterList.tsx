@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer, BarChart2 } from 'lucide-react';
 import { type Voter } from '../../types';
@@ -36,6 +36,7 @@ const VoterList = () => {
     const [selectedCasteForBulk, setSelectedCasteForBulk] = useState('');
     const [isAllocating, setIsAllocating] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showFamilyGrouping, setShowFamilyGrouping] = useState(false);
 
     // Favour-wise Allocation State
     const [favourFilter, setFavourFilter] = useState('');
@@ -431,6 +432,43 @@ const VoterList = () => {
         }
     };
 
+    const getGroupedFamilies = () => {
+        const familiesMap: Record<string, { booth: string; houseNo: string; address: string; members: Voter[] }> = {};
+        const individualVoters: Voter[] = [];
+
+        voters.forEach(voter => {
+            const house = voter.houseNo ? voter.houseNo.toString().trim() : '';
+            const booth = voter.booth ? voter.booth.toString().trim() : '';
+            
+            if (house && booth && house !== '-' && booth !== '-') {
+                const key = `${booth}_${house}`;
+                if (!familiesMap[key]) {
+                    familiesMap[key] = {
+                        booth,
+                        houseNo: house,
+                        address: getDisplayAddress(voter) || '',
+                        members: []
+                    };
+                }
+                familiesMap[key].members.push(voter);
+            } else {
+                individualVoters.push(voter);
+            }
+        });
+
+        // Convert grouped object to array and sort families by the lowest serial number of their members
+        const familyList = Object.values(familiesMap).sort((a, b) => {
+            const aMin = a.members.length > 0 ? (a.members[0].serial_no || 0) : 999999;
+            const bMin = b.members.length > 0 ? (b.members[0].serial_no || 0) : 999999;
+            return aMin - bMin;
+        });
+
+        return {
+            families: familyList,
+            individuals: individualVoters
+        };
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 md:sticky md:top-0 z-30 bg-slate-50 pt-1 pb-4">
@@ -735,17 +773,40 @@ const VoterList = () => {
                 </div>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex justify-end">
-                <div className="bg-white border border-slate-200 rounded-lg p-1 flex shadow-sm">
+            {/* View Mode & Grouping Toggles */}
+            <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3">
+                {/* Family Grouping Toggle Button */}
+                <button
+                    onClick={() => setShowFamilyGrouping(!showFamilyGrouping)}
+                    className={`px-4 py-2 rounded-xl flex items-center justify-center gap-2.5 text-sm font-bold shadow-sm transition-all duration-200 border ${
+                        showFamilyGrouping 
+                            ? 'bg-violet-600 hover:bg-violet-700 text-white border-violet-600 scale-[1.02] shadow-violet-100/50' 
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
+                    }`}
+                >
+                    <Users className={`w-4 h-4 transition-transform duration-300 ${showFamilyGrouping ? 'rotate-12 scale-110' : ''}`} />
+                    <span>{t('voters.family_grouping_toggle')}</span>
+                </button>
+
+                {/* View Mode Toggle */}
+                <div className="bg-white border border-slate-200 rounded-xl p-1 flex shadow-sm">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
+                            viewMode === 'grid' 
+                                ? "bg-brand-50 text-brand-700 shadow-sm" 
+                                : "text-slate-500 hover:text-slate-700"
+                        }`}
                     >
-                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                        <LayoutGrid className="w-4 h-4" /> {t('common.grid')}
+                    </button>
                     <button
                         onClick={() => setViewMode('report')}
-                        className={`px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors ${viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-slate-700"}`}
+                        className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
+                            viewMode === 'report' 
+                                ? "bg-brand-50 text-brand-700 shadow-sm" 
+                                : "text-slate-500 hover:text-slate-700"
+                        }`}
                     >
                         <FileText className="w-4 h-4" /> {t('common.report')}
                     </button>
@@ -798,32 +859,145 @@ const VoterList = () => {
                                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Favour</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-slate-200">
-                                {voters.map((voter, idx) => (
-                                    <tr key={voter.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/dashboard/voters/${voter.id}`)}>                                        <td className="px-4 py-3 text-sm text-slate-400">{voter.serial_no || idx + 1}</td>
-                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800">{getDisplayName(voter)}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.epicNo || '-'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.age || '-'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.gender || '-'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getDisplayAddress(voter)}</div></td>
-                                        <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
-                                        <td className="px-4 py-3 text-sm text-slate-500">
-                                            {voter.favour ? (
-                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
-                                                    voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                    voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
-                                                    voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    'bg-amber-50 text-amber-700 border-amber-100'
-                                                }`}>
-                                                    {voter.favour}
-                                                </span>
-                                            ) : '-'}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {voters.length === 0 && (
-                                    <tr><td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">No voters found</td></tr>
+                             <tbody className="bg-white divide-y divide-slate-200">
+                                {showFamilyGrouping ? (
+                                    <>
+                                        {getGroupedFamilies().families.map((family, fIdx) => (
+                                            <Fragment key={`fam-${fIdx}`}>
+                                                <tr className="bg-violet-50/40 border-y border-violet-100/80">
+                                                    <td colSpan={9} className="px-4 py-2.5 text-xs font-bold text-violet-800">
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center gap-2">
+                                                                <Home className="w-3.5 h-3.5 text-violet-650" />
+                                                                <span>
+                                                                    {t('voters.family_card_title', { houseNo: family.houseNo, booth: family.booth })}
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-semibold truncate max-w-md hidden sm:inline">
+                                                                    • {family.address}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200">
+                                                                {t('voters.family_members_count', { count: family.members.length })}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {family.members.map((voter, mIdx) => (
+                                                    <tr
+                                                        key={voter.id}
+                                                        className="hover:bg-slate-50 cursor-pointer border-l-4 border-l-violet-400/40 transition-colors"
+                                                        onClick={() => navigate(`/dashboard/voters/${voter.id}`)}
+                                                    >
+                                                        <td className="px-4 py-3 text-sm text-slate-400 pl-5">{voter.serial_no || `${fIdx + 1}-${mIdx + 1}`}</td>
+                                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800 pl-5">{getDisplayName(voter)}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.epicNo || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.age || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.gender || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500 max-w-xs">
+                                                            <div className="line-clamp-2">{getDisplayAddress(voter)}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">
+                                                            {voter.favour ? (
+                                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                                                    voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                                    voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                                                    voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                    'bg-amber-50 text-amber-700 border-amber-100'
+                                                                }`}>
+                                                                    {voter.favour}
+                                                                </span>
+                                                            ) : '-'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </Fragment>
+                                        ))}
+
+                                        {getGroupedFamilies().individuals.length > 0 && (
+                                            <>
+                                                <tr className="bg-slate-50 border-y border-slate-200">
+                                                    <td colSpan={9} className="px-4 py-2.5 text-xs font-bold text-slate-605">
+                                                        <div className="flex items-center gap-2">
+                                                            <User className="w-3.5 h-3.5 text-slate-500" />
+                                                            <span>
+                                                                {t('voters.individual_voters_title')}
+                                                            </span>
+                                                            <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full text-[10px] ml-auto">
+                                                                {getGroupedFamilies().individuals.length} {t('voters.voters_count') || 'voters'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {getGroupedFamilies().individuals.map((voter, idx) => (
+                                                    <tr
+                                                        key={voter.id}
+                                                        className="hover:bg-slate-50 cursor-pointer border-l-4 border-l-slate-300 transition-colors"
+                                                        onClick={() => navigate(`/dashboard/voters/${voter.id}`)}
+                                                    >
+                                                        <td className="px-4 py-3 text-sm text-slate-400 pl-5">{voter.serial_no || idx + 1}</td>
+                                                        <td className="px-4 py-3 text-sm font-semibold text-slate-800 pl-5">{getDisplayName(voter)}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.epicNo || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.age || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.gender || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500 max-w-xs">
+                                                            <div className="line-clamp-2">{getDisplayAddress(voter)}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
+                                                        <td className="px-4 py-3 text-sm text-slate-500">
+                                                            {voter.favour ? (
+                                                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                                                    voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                                    voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                                                    voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                    'bg-amber-50 text-amber-700 border-amber-100'
+                                                                }`}>
+                                                                    {voter.favour}
+                                                                </span>
+                                                            ) : '-'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </>
+                                        )}
+
+                                        {voters.length === 0 && (
+                                            <tr>
+                                                <td colSpan={9} className="px-6 py-12 text-center text-slate-500 italic">No voters found</td>
+                                            </tr>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {voters.map((voter, idx) => (
+                                            <tr key={voter.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => navigate(`/dashboard/voters/${voter.id}`)}>                                                <td className="px-4 py-3 text-sm text-slate-400">{voter.serial_no || idx + 1}</td>
+                                                <td className="px-4 py-3 text-sm font-semibold text-slate-800">{getDisplayName(voter)}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500">{voter.epicNo || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500">{voter.age || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500">{voter.gender || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500 max-w-xs"><div className="line-clamp-2">{getDisplayAddress(voter)}</div></td>
+                                                <td className="px-4 py-3 text-sm text-slate-500 whitespace-nowrap">{voter.ward} / {voter.booth}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500">{voter.caste || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-slate-500">
+                                                    {voter.favour ? (
+                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                                            voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                            voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                                            voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                            'bg-amber-50 text-amber-700 border-amber-100'
+                                                        }`}>
+                                                            {voter.favour}
+                                                        </span>
+                                                    ) : '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {voters.length === 0 && (
+                                            <tr><td colSpan={9} className="px-6 py-12 text-center text-slate-500 italic">No voters found</td></tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>
@@ -836,6 +1010,214 @@ const VoterList = () => {
                         </div>
                     )}
                 </div>
+            ) : showFamilyGrouping ? (
+                <>
+                    {/* Family-wise Grouped View */}
+                    <div className="space-y-8 animate-in fade-in duration-200">
+                        {/* Grouped Families Section */}
+                        {getGroupedFamilies().families.length > 0 && (
+                            <div className="space-y-4">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                                    {language === 'mr' ? 'कुटुंबवार यादी (Grouped Families)' : 'Grouped Families'}
+                                </h3>
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                                    {getGroupedFamilies().families.map((family, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+                                        >
+                                            {/* Family Card Header */}
+                                            <div className="p-4 bg-gradient-to-r from-violet-50 to-white border-b border-slate-150 flex items-center justify-between gap-2">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="w-8 h-8 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                                        <Users className="w-4.5 h-4.5 text-violet-600" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-bold text-sm text-slate-805 truncate">
+                                                            {t('voters.family_card_title', { houseNo: family.houseNo, booth: family.booth }) || `House #${family.houseNo} · Booth ${family.booth}`}
+                                                        </h4>
+                                                        <p className="text-[10px] text-slate-400 font-semibold truncate max-w-xs">{family.address}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] font-bold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full border border-violet-200 whitespace-nowrap">
+                                                    {t('voters.family_members_count', { count: family.members.length }) || `${family.members.length} members`}
+                                                </span>
+                                            </div>
+
+                                            {/* Family Card Body - Members Stack */}
+                                            <div className="p-4 divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[300px] bg-slate-50/[0.02]">
+                                                {family.members.map((member) => {
+                                                    const isSelected = isTagMode && member.is_friend_relative;
+                                                    return (
+                                                        <div
+                                                            key={member.id}
+                                                            onClick={(e) => isTagMode ? handleTagVoter(member, e) : navigate(`/dashboard/voters/${member.id}`)}
+                                                            className={`py-3 flex items-center justify-between gap-3 cursor-pointer group hover:bg-slate-50/50 px-2 -mx-2 rounded-xl transition-all ${isSelected ? 'bg-brand-50/40 ring-1 ring-brand-400/50' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 font-semibold text-xs group-hover:bg-brand-50 group-hover:text-brand-700 transition-colors flex-shrink-0">
+                                                                    <User className="w-3.5 h-3.5" />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <span className="font-bold text-xs text-slate-800 group-hover:text-brand-600 transition-colors block truncate">
+                                                                        {getDisplayName(member)}
+                                                                    </span>
+                                                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold mt-0.5">
+                                                                        <span>{member.gender} · Age {member.age}</span>
+                                                                        {member.serial_no && (
+                                                                            <>
+                                                                                <span>•</span>
+                                                                                <span className="font-mono bg-slate-100 px-1.5 py-0.2 rounded text-slate-500 font-bold">#{member.serial_no}</span>
+                                                                            </>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                                {(isTagMode || member.is_friend_relative) && (
+                                                                    <button
+                                                                        onClick={(e) => handleTagVoter(member, e)}
+                                                                        className={`p-1 rounded transition-colors ${member.is_friend_relative ? 'text-brand-750 hover:text-brand-850' : 'text-slate-300 hover:text-brand-600 hover:bg-brand-50'}`}
+                                                                        title={member.is_friend_relative ? "Remove from Friends List" : "Add to Friends List"}
+                                                                    >
+                                                                        <Users className={`w-3.5 h-3.5 ${member.is_friend_relative ? 'fill-brand-700' : ''}`} />
+                                                                    </button>
+                                                                )}
+                                                                {member.favour && (
+                                                                    <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold border whitespace-nowrap ${
+                                                                        member.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                                                        member.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                                                                        member.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                                                                        'bg-amber-50 text-amber-700 border-amber-100'
+                                                                    }`}>
+                                                                        {member.favour}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Individual Voters Section */}
+                        {getGroupedFamilies().individuals.length > 0 && (
+                            <div className="space-y-4 border-t border-slate-200 pt-6">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider pl-1">
+                                    {t('voters.individual_voters_title') || 'Individual Voters (No House No.)'}
+                                </h3>
+                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    {getGroupedFamilies().individuals.map((voter) => (
+                                        <div
+                                            key={voter.id}
+                                            onClick={(e) => isTagMode ? handleTagVoter(voter, e) : navigate(`/dashboard/voters/${voter.id}`)}
+                                            className={`ns-card p-5 hover:shadow-md transition-shadow cursor-pointer group relative ${isTagMode && voter.is_friend_relative ? 'ring-2 ring-brand-500 ring-inset bg-brand-50/30' : ''}`}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="w-10 h-10 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-600 font-bold group-hover:bg-brand-50 group-hover:text-brand-700 transition-colors">
+                                                        <User className="w-5 h-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-slate-900">{getDisplayName(voter)}</h3>
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                                            <span>EPIC: {voter.epicNo}</span>
+                                                            {voter.serial_no && (
+                                                                <>
+                                                                    <span>•</span>
+                                                                    <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 font-medium">#{voter.serial_no}</span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-2">
+                                                    {(isTagMode || voter.is_friend_relative) && (
+                                                        <button
+                                                            onClick={(e) => handleTagVoter(voter, e)}
+                                                            className={`p-1.5 rounded-lg transition-colors ${voter.is_friend_relative ? 'bg-brand-100 text-brand-700 border border-brand-200 shadow-sm' : 'text-slate-300 hover:text-brand-600 hover:bg-brand-50 border border-transparent'}`}
+                                                            title={voter.is_friend_relative ? "Remove from Friends List" : "Add to Friends List"}
+                                                        >
+                                                            <Users className={`w-4 h-4 ${voter.is_friend_relative ? 'fill-brand-700' : ''}`} />
+                                                        </button>
+                                                    )}
+                                                    <span className="ns-badge border-slate-200 bg-slate-50 text-slate-600 whitespace-nowrap">
+                                                        {t('voters.ward')} {voter.ward}
+                                                    </span>
+                                                    {voter.favour && (
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                                            voter.favour === 'Favourable' ? 'bg-emerald-50 text-emerald-700 border-emerald-150 shadow-sm' :
+                                                            voter.favour === 'Against' ? 'bg-rose-50 text-rose-700 border-rose-150 shadow-sm' :
+                                                            voter.favour === 'Neutral' ? 'bg-blue-50 text-blue-700 border-blue-150 shadow-sm' :
+                                                            'bg-amber-50 text-amber-700 border-amber-150 shadow-sm'
+                                                        }`}>
+                                                            {voter.favour}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                                <div className="flex items-start space-x-2">
+                                                    <MapPin className="w-4 h-4 mt-0.5 text-slate-400" />
+                                                    <div className="line-clamp-2">
+                                                        {voter.houseNo ? <span className="font-medium mr-1">#{voter.houseNo},</span> : null}
+                                                        {getDisplayAddress(voter)}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center space-x-2 pl-6 text-xs text-slate-500">
+                                                    <span>{t('voters.booth')}: {voter.booth}</span>
+                                                    <span>•</span>
+                                                    <span>{t('voters.age')}: {voter.age}</span>
+                                                    {voter.gender && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span>{voter.gender}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {!loading && voters.length === 0 && (
+                        <div className="py-12 text-center text-slate-500 ns-card border-dashed p-10">
+                            {t('voters.no_results')}
+                        </div>
+                    )}
+
+                    {/* Load More Button */}
+                    {totalCount !== null && voters.length < totalCount && (
+                        <div className="mt-8 flex justify-center pb-8">
+                            <button
+                                onClick={handleLoadMore}
+                                disabled={loadingMore}
+                                className="ns-btn-primary w-full md:w-auto min-w-[200px] justify-center py-2.5 px-6 shadow-sm hover:shadow-md transition-all active:scale-95 animate-in slide-in-from-bottom-2 duration-200"
+                            >
+                                {loadingMore ? (
+                                    <>
+                                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                                        Loading...
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="w-4 h-4 mr-2" />
+                                        Load More Results ({voters.length} of {totalCount})
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    )}
+                </>
             ) : (
                 <>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

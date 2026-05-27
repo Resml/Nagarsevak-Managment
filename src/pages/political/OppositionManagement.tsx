@@ -67,6 +67,20 @@ const OppositionManagement = () => {
     const [savingActivity, setSavingActivity] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
 
+    // Negative Stories State
+    const [showNegativeStoryModal, setShowNegativeStoryModal] = useState(false);
+    const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+    const [storyDeleteTarget, setStoryDeleteTarget] = useState<any | null>(null);
+    const [savingNegativeStory, setSavingNegativeStory] = useState(false);
+
+    const [negativeStoryForm, setNegativeStoryForm] = useState({
+        date: format(new Date(), 'yyyy-MM-dd'),
+        title: '',
+        severity: 'Medium', // High | Medium | Low
+        source: '',
+        description: ''
+    });
+
     useEffect(() => {
         fetchOppositionKaryakartas();
     }, []);
@@ -250,6 +264,110 @@ const OppositionManagement = () => {
             console.error(err);
             toast.error('Failed to remove activity');
         }
+    };
+
+    const handleSaveNegativeStory = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedMember) return;
+        setSavingNegativeStory(true);
+        try {
+            const currentStories = selectedMember.negative_stories || [];
+            let updatedStories = [];
+
+            if (editingStoryId) {
+                // Edit existing story
+                updatedStories = currentStories.map((s: any) => 
+                    s.id === editingStoryId 
+                        ? { 
+                            ...s, 
+                            date: negativeStoryForm.date,
+                            title: negativeStoryForm.title,
+                            severity: negativeStoryForm.severity,
+                            source: negativeStoryForm.source,
+                            description: negativeStoryForm.description
+                          } 
+                        : s
+                );
+                toast.success(isMr ? 'नकारात्मक किस्सा यशस्वीरित्या अद्ययावत केला!' : 'Controversy record updated successfully!');
+            } else {
+                // Create new story
+                const newStory = {
+                    id: crypto.randomUUID(),
+                    date: negativeStoryForm.date,
+                    title: negativeStoryForm.title,
+                    severity: negativeStoryForm.severity,
+                    source: negativeStoryForm.source,
+                    description: negativeStoryForm.description
+                };
+                updatedStories = [newStory, ...currentStories];
+                toast.success(isMr ? 'नकारात्मक किस्सा यशस्वीरित्या नोंदवला गेला!' : 'Controversy logged successfully!');
+            }
+
+            const { error } = await supabase
+                .from('opposition_karyakartas')
+                .update({ negative_stories: updatedStories })
+                .eq('id', selectedMember.id);
+
+            if (error) throw error;
+
+            setShowNegativeStoryModal(false);
+            setNegativeStoryForm({
+                date: format(new Date(), 'yyyy-MM-dd'),
+                title: '',
+                severity: 'Medium',
+                source: '',
+                description: ''
+            });
+            setEditingStoryId(null);
+
+            // Update local state
+            const updatedMember = { ...selectedMember, negative_stories: updatedStories };
+            setSelectedMember(updatedMember);
+            setMembers(prev => prev.map(m => m.id === selectedMember.id ? updatedMember : m));
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.message || 'Failed to save controversy.');
+        } finally {
+            setSavingNegativeStory(false);
+        }
+    };
+
+    const handleDeleteNegativeStory = async (storyId: string) => {
+        if (!selectedMember) return;
+        try {
+            const currentStories = selectedMember.negative_stories || [];
+            const updatedStories = currentStories.filter((s: any) => s.id !== storyId);
+
+            const { error } = await supabase
+                .from('opposition_karyakartas')
+                .update({ negative_stories: updatedStories })
+                .eq('id', selectedMember.id);
+
+            if (error) throw error;
+
+            toast.success(isMr ? 'नकारात्मक किस्सा यशस्वीरित्या काढला गेला!' : 'Controversy removed successfully!');
+            setStoryDeleteTarget(null);
+
+            // Update local state
+            const updatedMember = { ...selectedMember, negative_stories: updatedStories };
+            setSelectedMember(updatedMember);
+            setMembers(prev => prev.map(m => m.id === selectedMember.id ? updatedMember : m));
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to remove controversy');
+        }
+    };
+
+    const handleEditStoryClick = (story: any) => {
+        setNegativeStoryForm({
+            date: story.date,
+            title: story.title,
+            severity: story.severity || 'Medium',
+            source: story.source || '',
+            description: story.description
+        });
+        setEditingStoryId(story.id);
+        setShowNegativeStoryModal(true);
     };
 
     const getCandidateName = (candId: string) => {
@@ -828,8 +946,117 @@ const OppositionManagement = () => {
                             </div>
                         )}
 
+                        {/* Negative Stories & Controversies Section */}
+                        <div className="space-y-4 border-t border-slate-100 pt-4">
+                            <div className="flex justify-between items-center">
+                                <h4 className="font-bold text-slate-800 text-base flex items-center gap-1.5 text-rose-750">
+                                    <AlertCircle className="w-5 h-5 text-rose-500" />
+                                    {t('opposition.negative_stories_title') || 'Negative Stories & Controversies'}
+                                </h4>
+                                <button
+                                    onClick={() => {
+                                        setNegativeStoryForm({
+                                            date: format(new Date(), 'yyyy-MM-dd'),
+                                            title: '',
+                                            severity: 'Medium',
+                                            source: '',
+                                            description: ''
+                                        });
+                                        setEditingStoryId(null);
+                                        setShowNegativeStoryModal(true);
+                                    }}
+                                    className="ns-btn-soft text-xs py-1 px-3 flex items-center gap-1 border-rose-200 hover:border-rose-300 hover:bg-rose-50/50 text-rose-700 font-bold"
+                                >
+                                    <Plus className="w-3.5 h-3.5 text-rose-500" />
+                                    {t('opposition.log_negative_story') || 'Log Negative Story'}
+                                </button>
+                            </div>
+
+                            {/* Negative Stories List / Cards */}
+                            <div className="space-y-4 pl-3 relative border-l border-slate-200 ml-3 pt-2 pb-2">
+                                {selectedMember.negative_stories && selectedMember.negative_stories.length > 0 ? (
+                                    selectedMember.negative_stories.map((story: any) => {
+                                        let badgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+                                        let cardBorder = "border-slate-150 bg-slate-50/30";
+                                        let bulletColor = "bg-slate-400";
+                                        
+                                        if (story.severity === 'High') {
+                                            badgeColor = "bg-rose-50 text-rose-700 border-rose-200";
+                                            cardBorder = "border-rose-100 bg-rose-50/10";
+                                            bulletColor = "bg-rose-500";
+                                        } else if (story.severity === 'Medium') {
+                                            badgeColor = "bg-amber-50 text-amber-700 border-amber-200";
+                                            cardBorder = "border-amber-100 bg-amber-50/10";
+                                            bulletColor = "bg-amber-500";
+                                        } else if (story.severity === 'Low') {
+                                            badgeColor = "bg-blue-50 text-blue-700 border-blue-200";
+                                            cardBorder = "border-blue-50/50 bg-blue-50/5";
+                                            bulletColor = "bg-blue-400";
+                                        }
+
+                                        return (
+                                            <div key={story.id} className={`relative p-4 rounded-xl border transition-all hover:shadow-sm ${cardBorder}`}>
+                                                {/* Timeline connector dot */}
+                                                <div className={`absolute -left-[24px] top-5 w-4.5 h-4.5 border-4 border-white rounded-full ${bulletColor} shadow-sm`}></div>
+                                                
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="space-y-1">
+                                                        <div className="flex flex-wrap items-center gap-1.5">
+                                                            <span className="text-[10px] text-slate-400 font-bold font-mono bg-white px-2 py-0.5 rounded border border-slate-100">{story.date}</span>
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${badgeColor}`}>
+                                                                {story.severity === 'High' ? (t('opposition.severity_high') || 'High Impact') :
+                                                                 story.severity === 'Medium' ? (t('opposition.severity_medium') || 'Medium Impact') :
+                                                                 (t('opposition.severity_low') || 'Low Impact')}
+                                                            </span>
+                                                        </div>
+                                                        <h5 className="font-bold text-sm text-slate-900 pt-0.5">{story.title}</h5>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            onClick={() => handleEditStoryClick(story)}
+                                                            className="p-1 text-slate-400 hover:text-brand-600 hover:bg-white rounded transition-colors"
+                                                            title={isMr ? "संपादित करा" : "Edit controversy"}
+                                                        >
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setStoryDeleteTarget(story)}
+                                                            className="p-1 text-slate-400 hover:text-rose-600 hover:bg-white rounded transition-colors"
+                                                            title={isMr ? "हटवा" : "Delete controversy"}
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <p className="text-xs text-slate-600 mt-2 leading-relaxed bg-white/50 p-2 rounded-lg border border-slate-100/50">{story.description}</p>
+                                                
+                                                {story.source && (
+                                                    <div className="mt-2 text-[10px] flex items-center gap-1 text-brand-600 hover:text-brand-700 bg-white/70 px-2.5 py-1 rounded border border-slate-100 w-fit">
+                                                        <BookOpen className="w-3.5 h-3.5 text-brand-500" />
+                                                        <span className="font-semibold">{isMr ? 'संदर्भ/पुरावा:' : 'Source:'}</span>
+                                                        {story.source.startsWith('http') ? (
+                                                            <a href={story.source} target="_blank" rel="noopener noreferrer" className="underline font-bold truncate max-w-[200px]">
+                                                                {story.source}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="font-bold truncate max-w-[200px]">{story.source}</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="text-center py-6 text-slate-400 italic text-xs -ml-3 bg-slate-50/30 rounded-xl border border-dashed border-slate-200">
+                                        {t('opposition.no_negative_stories') || 'No negative incidents or controversies logged for this member.'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Activity Timeline */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 border-t border-slate-100 pt-4">
                             <div className="flex justify-between items-center">
                                 <h4 className="font-bold text-slate-800 text-base">{t('opposition.timeline_title') || 'Campaign Activity Log'}</h4>
                                 <button
@@ -1384,6 +1611,145 @@ const OppositionManagement = () => {
                                 </div>
                             </form>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Negative Story Form Modal */}
+            {showNegativeStoryModal && selectedMember && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center border-b border-slate-150 pb-3">
+                            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-1.5 text-rose-750">
+                                <AlertCircle className="w-5 h-5 text-rose-500" />
+                                {editingStoryId 
+                                    ? (t('opposition.edit_negative_story') || 'Edit Negative Story') 
+                                    : (t('opposition.log_negative_story') || 'Log Negative Story')}
+                            </h3>
+                            <button 
+                                onClick={() => {
+                                    setShowNegativeStoryModal(false);
+                                    setEditingStoryId(null);
+                                }} 
+                                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSaveNegativeStory} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    {t('opposition.negative_story_date') || 'Incident Date'}
+                                </label>
+                                <input
+                                    type="date" required
+                                    className="ns-input"
+                                    value={negativeStoryForm.date}
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, date: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    {t('opposition.negative_story_title_label') || 'Story / Controversy Title'}
+                                </label>
+                                <input
+                                    type="text" required
+                                    className="ns-input"
+                                    value={negativeStoryForm.title}
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, title: e.target.value })}
+                                    placeholder={t('opposition.negative_story_title_placeholder') || 'e.g. Financial irregularities accusation'}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    {t('opposition.negative_story_severity') || 'Severity / Political Impact'}
+                                </label>
+                                <select
+                                    className="ns-input bg-white w-full"
+                                    value={negativeStoryForm.severity}
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, severity: e.target.value })}
+                                >
+                                    <option value="High">{t('opposition.severity_high') || 'High Impact (तीव्र)'}</option>
+                                    <option value="Medium">{t('opposition.severity_medium') || 'Medium Impact (मध्यम)'}</option>
+                                    <option value="Low">{t('opposition.severity_low') || 'Low Impact (सौम्य)'}</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    {t('opposition.negative_story_source') || 'Source / Reference Link'}
+                                </label>
+                                <input
+                                    type="text"
+                                    className="ns-input"
+                                    value={negativeStoryForm.source}
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, source: e.target.value })}
+                                    placeholder={t('opposition.negative_story_source_placeholder') || 'e.g. news link, video proof, WhatsApp reference'}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    {t('opposition.negative_story_desc') || 'Controversy Description'}
+                                </label>
+                                <textarea
+                                    rows={3} required
+                                    className="ns-input"
+                                    value={negativeStoryForm.description}
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, description: e.target.value })}
+                                    placeholder={t('opposition.negative_story_desc_placeholder') || 'Describe the incident, voter reactions, and political impact...'}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowNegativeStoryModal(false);
+                                        setEditingStoryId(null);
+                                    }}
+                                    className="ns-btn-ghost text-xs"
+                                >
+                                    {t('common.cancel') || 'Cancel'}
+                                </button>
+                                <button
+                                    type="submit" disabled={savingNegativeStory}
+                                    className="ns-btn-primary bg-rose-600 hover:bg-rose-700 text-white font-bold border-none py-2 px-6 text-xs shadow-sm rounded-lg"
+                                >
+                                    {savingNegativeStory ? (isMr ? 'नोंदवत आहे...' : 'Logging...') : (editingStoryId ? (t('common.save') || 'Save') : (t('opposition.add_negative_story_btn') || 'Log Controversy'))}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Controversy Confirmation Modal */}
+            {storyDeleteTarget && (
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4 bg-white">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <AlertCircle className="w-6 h-6 text-rose-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">
+                                {t('opposition.delete_story_title') || 'Remove Controversy?'}
+                            </h3>
+                            <p className="text-slate-500 mt-2 text-sm">
+                                {t('opposition.delete_story_confirm') || 'Are you sure you want to remove this controversy record? This action cannot be undone.'}
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setStoryDeleteTarget(null)}
+                                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium text-sm"
+                            >
+                                {t('common.cancel') || 'Cancel'}
+                            </button>
+                            <button
+                                onClick={() => handleDeleteNegativeStory(storyDeleteTarget.id)}
+                                className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 font-medium text-sm"
+                            >
+                                {isMr ? 'हटवा' : 'Delete'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

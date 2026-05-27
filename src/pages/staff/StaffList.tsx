@@ -33,7 +33,7 @@ const StaffList = () => {
     const [staff, setStaff] = useState<Staff[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
-    const [activeTab, setActiveTab] = useState<'Office' | 'Party' | 'Cooperative' | 'WorkManagement'>('Office');
+    const [activeTab, setActiveTab] = useState<'Office' | 'Party' | 'Cooperative'>('Office');
     const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
@@ -607,7 +607,6 @@ const StaffList = () => {
                             {[
                                 { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
                                 { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
-                                { id: 'WorkManagement', label: tr('Work Management', 'काम व्यवस्थापन'), icon: CheckSquare },
                             ].map((tab) => (
                                 <button
                                     key={tab.id}
@@ -1073,7 +1072,6 @@ const StaffList = () => {
                         {[
                             { id: 'Office', label: t('staff.tabs.office'), icon: Building2 },
                             { id: 'Party', label: t('staff.tabs.party'), icon: Flag },
-                            { id: 'WorkManagement', label: tr('Work Management', 'काम व्यवस्थापन'), icon: CheckSquare },
                         ].map((tab) => (
                             <button
                                 key={tab.id}

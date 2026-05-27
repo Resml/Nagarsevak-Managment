@@ -15,6 +15,7 @@ import {
   Flag,
   Globe,
   History,
+  Home,
   Image,
   IndianRupee,
   Info,
@@ -37,6 +38,7 @@ import {
   Users,
   Wand2,
   X,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -278,6 +280,7 @@ const AppLayout = () => {
         items: [
           { to: '/dashboard/social', icon: TrendingUp, label: t('nav.social_analytics'), show: true, permission: 'social' },
           { to: '/dashboard/media/newspaper', icon: Newspaper, label: t('nav.newspaper_clipping'), show: true, permission: 'newspaper' },
+          { to: '/dashboard/media/tracking', icon: Globe, label: t('nav.media_tracking') || 'Media Tracking', show: true, permission: 'newspaper' },
           { to: '/dashboard/content', icon: Wand2, label: t('nav.ai_content'), show: true, permission: 'ai_content' },
         ],
       },
@@ -309,8 +312,11 @@ const AppLayout = () => {
           { to: '/dashboard/voters', icon: Search, label: t('nav.voter_search'), show: isAdminOrStaff, permission: 'voters' },
           { to: '/dashboard/staff', icon: Users, label: t('nav.my_team'), show: true, permission: 'staff' },
           { to: '/dashboard/political/opposition', icon: Users, label: t('nav.opposition_info') || 'Opposition Info', show: true, permission: 'voters' },
+          { to: '/dashboard/political/social-organizations', icon: Building2, label: t('nav.social_organizations') || 'NGO & Mandals Info', show: true, permission: 'voters' },
+          { to: '/dashboard/political/housing-societies', icon: Home, label: t('nav.housing_societies') || 'Society Chairmans & Voters', show: true, permission: 'voters' },
           { to: '/dashboard/political/duplicates', icon: AlertTriangle, label: t('nav.duplicate_voters') || 'Duplicate Voters', show: true, permission: 'voters' },
           { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
+          { to: '/dashboard/political/work-management', icon: ClipboardList, label: t('nav.karyakarta_work') || 'Karyakarta Work Management', show: true, permission: 'staff' },
         ],
       },
 

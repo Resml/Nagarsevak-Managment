@@ -49,6 +49,7 @@ const ImprovementDetail = lazy(() => import('./pages/ward/ImprovementDetail'));
 const WardWiseProvision = lazy(() => import('./pages/ward/WardProvisions'));
 const GovernmentOffice = lazy(() => import('./pages/office/GovernmentOffice'));
 const NewspaperClipping = lazy(() => import('./pages/media/NewspaperClipping'));
+const MediaTracking = lazy(() => import('./pages/media/MediaTracking'));
 const AnalysisStrategy = lazy(() => import('./pages/political/AnalysisStrategy'));
 const CastWiseVoters = lazy(() => import('./pages/political/CastWiseVoters'));
 const AddVoter = lazy(() => import('./pages/political/AddVoter'));
@@ -64,7 +65,10 @@ const WhatsAppCalling = lazy(() => import('./pages/communication/WhatsAppCalling
 const VoterForms = lazy(() => import('./pages/political/VoterForms'));
 const ProfileSettings = lazy(() => import('./pages/settings/ProfileSettings'));
 const OppositionManagement = lazy(() => import('./pages/political/OppositionManagement'));
+const SocialOrganizations = lazy(() => import('./pages/political/SocialOrganizations'));
+const HousingSocieties = lazy(() => import('./pages/political/HousingSocieties'));
 const DuplicateVoters = lazy(() => import('./pages/political/DuplicateVoters'));
+const KaryakartaWorkManagement = lazy(() => import('./pages/political/KaryakartaWorkManagement'));
 
 
 // Protected Route Wrapper
@@ -175,6 +179,7 @@ function App() {
 
             <Route path="government-office" element={<PermissionGuard permission="gov_office"><GovernmentOffice /></PermissionGuard>} />
             <Route path="media/newspaper" element={<PermissionGuard permission="newspaper"><NewspaperClipping /></PermissionGuard>} />
+            <Route path="media/tracking" element={<PermissionGuard permission="newspaper"><MediaTracking /></PermissionGuard>} />
 
             <Route path="analysis-strategy" element={<PermissionGuard permission="analysis"><AnalysisStrategy /></PermissionGuard>} />
 
@@ -183,7 +188,10 @@ function App() {
             <Route path="political/friends-relatives" element={<PermissionGuard permission="voters"><FriendsRelatives /></PermissionGuard>} />
             <Route path="political/ward-info" element={<PermissionGuard permission="voters"><WardInfoConstituency /></PermissionGuard>} />
             <Route path="political/opposition" element={<PermissionGuard permission="voters"><OppositionManagement /></PermissionGuard>} />
+            <Route path="political/social-organizations" element={<PermissionGuard permission="voters"><SocialOrganizations /></PermissionGuard>} />
+            <Route path="political/housing-societies" element={<PermissionGuard permission="voters"><HousingSocieties /></PermissionGuard>} />
             <Route path="political/duplicates" element={<PermissionGuard permission="voters"><DuplicateVoters /></PermissionGuard>} />
+            <Route path="political/work-management" element={<PermissionGuard permission="staff"><KaryakartaWorkManagement /></PermissionGuard>} />
 
 
             <Route path="political/public-communication" element={<PermissionGuard permission="public_comm"><PublicCommunication /></PermissionGuard>} />

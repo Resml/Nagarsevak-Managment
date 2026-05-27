@@ -271,7 +271,11 @@ export const translations = {
             conference_room: "Conference Room",
             whatsapp_call: "WhatsApp Call",
             opposition_info: "Opposition Information",
-            duplicate_voters: "Duplicate Voters"
+            duplicate_voters: "Duplicate Voters",
+            social_organizations: "NGO & Mandals Info",
+            housing_societies: "Society Chairmans & Voters",
+            media_tracking: "Media Tracking",
+            karyakarta_work: "Karyakarta Work Management"
         },
         voter_forms: {
             title: "Voter Registration Forms",
@@ -487,7 +491,11 @@ export const translations = {
             favour_allocation_success: "Favour allocated successfully!",
             favour_label: "Favour Status",
             duplicate_voters_detected: "Duplicate Voters Detected",
-            verify_duplicates: "Verify & Clean Duplicates"
+            verify_duplicates: "Verify & Clean Duplicates",
+            family_grouping_toggle: "Family-wise Grouping",
+            family_card_title: "House #{{houseNo}} · Booth {{booth}}",
+            family_members_count: "{{count}} members",
+            individual_voters_title: "Individual Voters (No House No.)"
         },
         add_voter: {
             title: "Add New Voter",
@@ -1649,6 +1657,24 @@ export const translations = {
             link_worker_btn: "Link Worker to Team",
             belongs_to_candidate: "Belongs to Candidate",
             unassigned: "Unassigned",
+            negative_stories_title: "Negative Stories & Controversies",
+            log_negative_story: "Log Negative Story",
+            no_negative_stories: "No negative incidents or controversies logged for this member.",
+            negative_story_date: "Incident Date",
+            negative_story_title_label: "Story / Controversy Title",
+            negative_story_title_placeholder: "e.g. Financial irregularities accusation",
+            negative_story_severity: "Severity / Political Impact",
+            negative_story_source: "Source / Reference Link",
+            negative_story_source_placeholder: "e.g. news link, video proof, WhatsApp reference",
+            negative_story_desc: "Controversy Description",
+            negative_story_desc_placeholder: "Describe the incident, voter reactions, and political impact...",
+            severity_high: "High Impact (तीव्र)",
+            severity_medium: "Medium Impact (मध्यम)",
+            severity_low: "Low Impact (सौम्य)",
+            add_negative_story_btn: "Log Controversy",
+            edit_negative_story: "Edit Negative Story",
+            delete_story_title: "Remove Controversy?",
+            delete_story_confirm: "Are you sure you want to remove this controversy record? This action cannot be undone.",
         },
         duplicate_voters: {
             title: "Duplicate Voter Detection",
@@ -1743,6 +1769,25 @@ export const translations = {
             tone_campaign: "Enthusiastic Campaign",
             generating_ai: "Consulting Gemini AI...",
             ai_placeholder: "AI Strategic Briefing will appear here after generation."
+        },
+        media_tracking: {
+            title: "Media Tracking",
+            subtitle: "Track online news, internet portals, press coverage, and social media mentions",
+            search_placeholder: "Enter name of a person (e.g. Mamit Chougale)...",
+            start_tracking: "Start News Tracking",
+            tracking_in_progress: "Tracking Portals...",
+            quick_profiles: "Quick Tracking Profiles",
+            telemetry_terminal: "Scanner Telemetry Logs",
+            total_mentions: "Total News Mentions",
+            sentiment_ratio: "Sentiment Ratio",
+            positive_mentions: "Positive Coverage",
+            negative_mentions: "Negative Coverage",
+            saved_to_clipping: "Saved to Newspaper Clippings",
+            save_to_clipping: "Save to Newspaper Clippings",
+            news_source: "News Source",
+            view_coverage: "View Full Coverage",
+            news_not_found: "No news mentions found. Enter another name or check spelling.",
+            no_active_search: "Enter a name above and click search to scan the media databases."
         }
     },
     mr: {
@@ -2014,7 +2059,11 @@ export const translations = {
             conference_room: "कॉन्फरन्स रूम",
             whatsapp_call: "व्हॉट्सॲप कॉल",
             opposition_info: "विरोधी पक्षाची माहिती",
-            duplicate_voters: "दुसरे मतदार (ड्युप्लिकेट)"
+            duplicate_voters: "दुसरे मतदार (ड्युप्लिकेट)",
+            social_organizations: "NGO, क्रीडा व गणेश मंडळ",
+            housing_societies: "सोसायटी चेअरमन व मतदार",
+            media_tracking: "माध्यम मागोवा (Media Tracking)",
+            karyakarta_work: "कार्यकर्ता काम व्यवस्थापन"
         },
         voter_forms: {
             title: "मतदार नोंदणी अर्ज",
@@ -2230,7 +2279,11 @@ export const translations = {
             favour_allocation_success: "फेवर वाटप यशस्वी झाले!",
             favour_label: "फेवर स्थिती",
             duplicate_voters_detected: "ड्युप्लिकेट मतदार आढळले",
-            verify_duplicates: "ड्युप्लिकेट मतदार पडताळणी"
+            verify_duplicates: "ड्युप्लिकेट मतदार पडताळणी",
+            family_grouping_toggle: "कुटुंबवार वर्गीकरण",
+            family_card_title: "घर क्र. #{{houseNo}} · बुथ {{booth}}",
+            family_members_count: "{{count}} सदस्य",
+            individual_voters_title: "इतर वैयक्तिक मतदार (घर क्र. उपलब्ध नाही)"
         },
         add_voter: {
             title: "नवीन मतदार जोडा",
@@ -3352,6 +3405,24 @@ export const translations = {
             link_worker_btn: "कार्यकर्ता टीमशी जोडा",
             belongs_to_candidate: "उमेदवाराचे सदस्य",
             unassigned: "कोणत्याही उमेदवाराशी जोडलेले नाही",
+            negative_stories_title: "विरोधकांचे नकारात्मक किस्से व वाद",
+            log_negative_story: "नकारात्मक किस्सा नोंदवा",
+            no_negative_stories: "या सदस्यासाठी अद्याप कोणतेही नकारात्मक किस्से किंवा वाद नोंदवलेले नाहीत.",
+            negative_story_date: "घटनेची तारीख",
+            negative_story_title_label: "किस्सा / वादाचे शीर्षक",
+            negative_story_title_placeholder: "उदा. भ्रष्टाचाराचा आरोप, चुकीचे वक्तव्य",
+            negative_story_severity: "तीव्रता / राजकीय प्रभाव",
+            negative_story_source: "स्रोत / पुरावा लिंक",
+            negative_story_source_placeholder: "उदा. बातमी लिंक, व्हिडिओ संदर्भ, व्हॉट्सॲप मेसेज",
+            negative_story_desc: "वादाचा / घटनेचा तपशील",
+            negative_story_desc_placeholder: "घटनेचे वर्णन, मतदारांची प्रतिक्रिया आणि राजकीय प्रभावाची माहिती लिहा...",
+            severity_high: "तीव्र प्रभाव (High)",
+            severity_medium: "मध्यम प्रभाव (Medium)",
+            severity_low: "सौम्य प्रभाव (Low)",
+            add_negative_story_btn: "किस्सा नोंदवा",
+            edit_negative_story: "नकारात्मक किस्सा संपादित करा",
+            delete_story_title: "किस्सा हटवायचा?",
+            delete_story_confirm: "आपण नक्की हा नकारात्मक किस्सा हटवू इच्छिता? ही कृती पूर्ववत केली जाऊ शकत नाही.",
         },
         duplicate_voters: {
             title: "ड्युप्लिकेट मतदार शोध",
@@ -3914,6 +3985,25 @@ export const translations = {
             authorized: "अधिकृत",
             failed: "अयशस्वी",
             no_logs: "कोणतेही सुरक्षा लॉग आढळले नाहीत."
+        },
+        media_tracking: {
+            title: "माध्यम मागोवा (Media Tracking)",
+            subtitle: "ऑनलाइन बातम्या, इंटरनेट पोर्टल्स, प्रसिद्धी आणि सोशल मीडियावरील उल्लेखांचा मागोवा घ्या",
+            search_placeholder: "व्यक्तीचे नाव प्रविष्ट करा (उदा. अमित चौगुले)...",
+            start_tracking: "बातम्यांचा शोध सुरू करा",
+            tracking_in_progress: "पोर्टल्स शोधत आहे...",
+            quick_profiles: "द्रुत मागोवा प्रोफाइल",
+            telemetry_terminal: "स्कॅनर टेलिमेट्री लॉग्स",
+            total_mentions: "एकूण बातम्यांचे उल्लेख",
+            sentiment_ratio: "भावना गुणोत्तर",
+            positive_mentions: "सकारात्मक प्रसिद्धी",
+            negative_mentions: "नकारात्मक प्रसिद्धी",
+            saved_to_clipping: "वृत्तपत्र कात्रणात जतन केले",
+            save_to_clipping: "वृत्तपत्र कात्रणात जतन करा",
+            news_source: "बातम्यांचे माध्यम",
+            view_coverage: "पूर्ण बातमी पहा",
+            news_not_found: "बातम्यांचे कोणतेही उल्लेख आढळले नाहीत. दुसरे नाव प्रविष्ट करा किंवा स्पेलिंग तपासा.",
+            no_active_search: "मीडिया डेटाबेस स्कॅन करण्यासाठी वर नाव प्रविष्ट करा आणि शोध वर क्लिक करा."
         }
     }
 };
