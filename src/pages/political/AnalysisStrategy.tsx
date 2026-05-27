@@ -79,6 +79,9 @@ const AnalysisStrategy = () => {
     const isMr = language === 'mr';
     const navigate = useNavigate();
 
+    // Tab State
+    const [activeTab, setActiveTab] = useState<'strategy' | 'analytical'>('strategy');
+
     // AI Briefing States
     const [selectedTone, setSelectedTone] = useState<'Development' | 'Grievance' | 'Campaign'>('Development');
     const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
@@ -490,10 +493,35 @@ const AnalysisStrategy = () => {
                 </div>
             </div>
 
-            {/* Premium Saffron/Golden Tab bar REMOVED — Consultant section is shown directly */}
+            {/* Premium Saffron/Golden Dual Tabs */}
+            <div className="flex space-x-1 bg-white p-1.5 rounded-xl border border-slate-200 overflow-x-auto print:hidden shadow-sm max-w-md">
+                <button
+                    onClick={() => setActiveTab('strategy')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-extrabold transition-all whitespace-nowrap ${
+                        activeTab === 'strategy'
+                            ? "bg-brand-50 text-brand-700 shadow-sm border border-brand-100"
+                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                >
+                    <LineChart className="w-4 h-4" />
+                    <span>{isMr ? 'विश्लेषण धोरण' : 'Analysis Strategy'}</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('analytical')}
+                    className={`flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 rounded-lg text-sm font-extrabold transition-all whitespace-nowrap ${
+                        activeTab === 'analytical'
+                            ? "bg-brand-50 text-brand-700 shadow-sm border border-brand-100"
+                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                    }`}
+                >
+                    <Sparkles className="w-4 h-4 text-indigo-500" />
+                    <span>{isMr ? 'विश्लेषणात्मक माहिती' : 'Analytical Info'}</span>
+                </button>
+            </div>
 
             {/* CONSULTANT SECTION */}
-            <div className="space-y-6">
+            {activeTab === 'strategy' && (
+                <div className="space-y-6">
                     {/* Welcome Selector Container */}
                     {!isGenerating && !reportGenerated && (
                         <div className="ns-card p-8 max-w-3xl mx-auto space-y-6 animate-fade-in print:hidden">
@@ -1050,7 +1078,30 @@ const AnalysisStrategy = () => {
                             </div>
                         </div>
                     )}
-            </div>
+                </div>
+            )}
+
+            {/* ANALYTICAL TAB (COMING SOON) */}
+            {activeTab === 'analytical' && (
+                <div className="ns-card p-16 max-w-xl mx-auto flex flex-col items-center justify-center space-y-6 text-center animate-fade-in print:hidden">
+                    <div className="p-4 bg-brand-50 border border-brand-100 rounded-2xl text-brand-600 animate-bounce">
+                        <Sparkles className="w-12 h-12" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-black text-slate-800">
+                            {isMr ? 'विश्लेषणात्मक माहिती' : 'Analytical Information'}
+                        </h2>
+                        <span className="inline-block px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-black uppercase tracking-wider">
+                            🚀 {isMr ? 'लवकरच येत आहे' : 'Coming Soon'}
+                        </span>
+                        <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed pt-2">
+                            {isMr 
+                                ? 'या विभागात लवकरच प्रगत विश्लेषण, आलेख आणि प्रभागाची सांख्यिकीय माहिती उपलब्ध करून दिली जाईल.'
+                                : 'Advanced visual analytics, ward demographic trends, and predictive political forecasting charts will be available in this section very soon.'}
+                        </p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
