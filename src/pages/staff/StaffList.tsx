@@ -65,12 +65,6 @@ const StaffList = () => {
         }
     }, [selectedKaryakartaForTasks]);
 
-    useEffect(() => {
-        if (activeTab === 'WorkManagement') {
-            fetchTasks();
-        }
-    }, [activeTab]);
-
     const fetchTasks = async () => {
         setLoadingTasks(true);
         try {
@@ -426,7 +420,7 @@ const StaffList = () => {
     };
 
     // Filter logic:
-    const staffInCurrentTab = activeTab === 'WorkManagement'
+    const staffInCurrentTab = (activeTab as any) === 'WorkManagement'
         ? staff
         : staff.filter(s => (s.category || 'Office') === activeTab);
 
@@ -457,7 +451,7 @@ const StaffList = () => {
         .sort((a, b) => (a.area || '').localeCompare(b.area || ''));
 
     const renderContent = () => {
-        if (activeTab === 'WorkManagement') {
+        if ((activeTab as any) === 'WorkManagement') {
             // Task calculations
             const totalTasks = tasks.length;
             const completedTasks = tasks.filter(t => t.status === 'Completed').length;
