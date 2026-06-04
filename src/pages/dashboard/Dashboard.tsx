@@ -17,6 +17,8 @@ import {
     Search,
     UserPlus,
     HelpCircle,
+    FileText,
+    CheckSquare,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
@@ -26,14 +28,19 @@ import { DashboardTutorial } from '../../components/tutorial/DashboardTutorial';
 const Dashboard = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant(); // Added tenantId
+    const { tenantId, hasFeature } = useTenant(); // Added tenantId and hasFeature
+    const hasComplaints = hasFeature('complaints');
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         total: 0,
         pending: 0,
         inProgress: 0,
         resolved: 0,
-        voters: 0
+        voters: 0,
+        pendingTasks: 0,
+        completedTasks: 0,
+        totalLetters: 0,
+        totalVisitors: 0
     });
     const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null }>>([]);
     const [dailyBriefing, setDailyBriefing] = useState<string>('');
@@ -48,50 +55,106 @@ const Dashboard = () => {
     useEffect(() => {
         fetchDashboardData();
 
-        // Realtime Subscription for Complaints
-        const subscription = supabase
-            .channel('dashboard-realtime')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
-                fetchDashboardData();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
-                fetchDashboardData();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
-                fetchDashboardData();
-            })
-            .subscribe();
+        // Realtime Subscription
+        const channel = supabase.channel('dashboard-realtime');
+        
+        if (hasComplaints) {
+            channel
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                });
+        } else {
+            channel
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'letter_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                })
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors', filter: `tenant_id=eq.${tenantId}` }, () => {
+                    fetchDashboardData();
+                });
+        }
+
+        channel.subscribe();
 
         return () => {
-            subscription.unsubscribe();
+            channel.unsubscribe();
         };
-    }, [tenantId]);
+    }, [tenantId, hasComplaints]);
 
     const fetchDashboardData = async () => {
         try {
-            // Parallel Fetch
-            const [complaintsRes, votersRes] = await Promise.all([
-                supabase.from('complaints').select('*').eq('tenant_id', tenantId), // Secured
-                supabase.from('voters').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId) // Secured
-            ]);
+            let allComplaints: any[] = [];
+            let allTasks: any[] = [];
+            let totalLettersCount = 0;
+            let totalVisitorsCount = 0;
+            let voterCount = 0;
 
-            const allComplaints = complaintsRes.data || [];
-            const voterCount = votersRes.count || 0;
+            if (hasComplaints) {
+                const [complaintsRes, votersRes] = await Promise.all([
+                    supabase.from('complaints').select('*').eq('tenant_id', tenantId), // Secured
+                    supabase.from('voters').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId) // Secured
+                ]);
+                allComplaints = complaintsRes.data || [];
+                voterCount = votersRes.count || 0;
+            } else {
+                const [tasksRes, lettersRes, visitorsRes, votersRes] = await Promise.all([
+                    supabase.from('tasks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
+                    supabase.from('letter_requests').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                    supabase.from('visitors').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+                    supabase.from('voters').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId)
+                ]);
+                allTasks = tasksRes.data || [];
+                totalLettersCount = lettersRes.count || 0;
+                totalVisitorsCount = visitorsRes.count || 0;
+                voterCount = votersRes.count || 0;
+            }
 
-            const newStats = {
+            const newStats = hasComplaints ? {
                 total: allComplaints.length,
                 pending: allComplaints.filter(c => c.status === 'Pending').length,
                 inProgress: allComplaints.filter(c => ['Assigned', 'InProgress'].includes(c.status)).length,
                 resolved: allComplaints.filter(c => ['Resolved', 'Closed'].includes(c.status)).length,
-                voters: voterCount
+                voters: voterCount,
+                pendingTasks: 0,
+                completedTasks: 0,
+                totalLetters: 0,
+                totalVisitors: 0
+            } : {
+                total: allTasks.length,
+                pending: allTasks.filter(t => t.status !== 'Completed').length,
+                inProgress: 0,
+                resolved: allTasks.filter(t => t.status === 'Completed').length,
+                voters: voterCount,
+                pendingTasks: allTasks.filter(t => t.status !== 'Completed').length,
+                completedTasks: allTasks.filter(t => t.status === 'Completed').length,
+                totalLetters: totalLettersCount,
+                totalVisitors: totalVisitorsCount
             };
 
             setStats(newStats);
-            setRecentActivity(allComplaints.slice(0, 5)); // Just take top 5 for now (assuming sort order)
+
+            const activityList = hasComplaints
+                ? allComplaints.slice(0, 5)
+                : allTasks.slice(0, 5).map(t => ({
+                    id: t.id,
+                    status: t.status === 'Completed' ? 'Resolved' : 'Pending',
+                    problem: t.title,
+                    title: t.title,
+                    created_at: t.created_at
+                }));
+            setRecentActivity(activityList);
 
             // AI Briefing (Regenerate if empty or language changed)
             if (!dailyBriefing) {
-                const briefing = await AIAnalysisService.generateDailyBriefing(newStats, allComplaints.slice(0, 3), language as 'en' | 'mr');
+                const briefing = await AIAnalysisService.generateDailyBriefing(newStats, hasComplaints ? allComplaints.slice(0, 3) : allTasks.slice(0, 3), language as 'en' | 'mr');
                 setDailyBriefing(briefing);
             }
 
@@ -138,8 +201,8 @@ const Dashboard = () => {
                             <HelpCircle className="w-5 h-5 text-brand-600" />
                             <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
                         </button>
-                        <button className="ns-btn-primary tutorial-new-request" onClick={() => navigate('/dashboard/complaints/new')}>
-                            <Plus className="w-4 h-4" /> {t('complaints.new_request') || 'New Request'}
+                        <button className="ns-btn-primary tutorial-new-request" onClick={() => navigate(hasComplaints ? '/dashboard/complaints/new' : '/dashboard/tasks')}>
+                            <Plus className="w-4 h-4" /> {hasComplaints ? (t('complaints.new_request') || 'New Request') : (language === 'mr' ? 'नवीन काम' : 'New Task')}
                         </button>
                     </div>
                 </div>
@@ -159,10 +222,17 @@ const Dashboard = () => {
                         <UserPlus className="w-4 h-4" />
                         {t('dashboard.action_staff')}
                     </button>
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/complaints')}>
-                        <Megaphone className="w-4 h-4" />
-                        {t('dashboard.action_complaints')}
-                    </button>
+                    {hasComplaints ? (
+                        <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/complaints')}>
+                            <Megaphone className="w-4 h-4" />
+                            {t('dashboard.action_complaints')}
+                        </button>
+                    ) : (
+                        <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/tasks')}>
+                            <CheckSquare className="w-4 h-4" />
+                            {language === 'mr' ? 'माझी कामे' : 'My Tasks'}
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -186,9 +256,9 @@ const Dashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 tutorial-stats">
                 <StatCard title={t('dashboard.total_citizens')} value={stats.voters} icon={Users} accent="border-sky-100 bg-sky-50 text-sky-700" />
-                <StatCard title={t('dashboard.pending_issues')} value={stats.pending} icon={AlertCircle} accent="border-red-100 bg-red-50 text-red-700" />
-                <StatCard title={t('dashboard.in_progress')} value={stats.inProgress} icon={Activity} accent="border-amber-100 bg-amber-50 text-amber-700" />
-                <StatCard title={t('dashboard.resolved')} value={stats.resolved} icon={CheckCircle} accent="border-green-100 bg-green-50 text-green-700" />
+                <StatCard title={hasComplaints ? t('dashboard.pending_issues') : (language === 'mr' ? 'प्रलंबित कामे' : 'Pending Tasks')} value={hasComplaints ? stats.pending : stats.pendingTasks} icon={AlertCircle} accent="border-red-100 bg-red-50 text-red-700" />
+                <StatCard title={hasComplaints ? t('dashboard.in_progress') : (language === 'mr' ? 'पत्र व्यवहार' : 'Total Letters')} value={hasComplaints ? stats.inProgress : stats.totalLetters} icon={hasComplaints ? Activity : FileText} accent="border-amber-100 bg-amber-50 text-amber-700" />
+                <StatCard title={hasComplaints ? t('dashboard.resolved') : (language === 'mr' ? 'भेट देणारे' : 'Total Visitors')} value={hasComplaints ? stats.resolved : stats.totalVisitors} icon={hasComplaints ? CheckCircle : Users} accent="border-green-100 bg-green-50 text-green-700" />
             </div>
 
             {/* Main Content Grid */}
@@ -198,18 +268,21 @@ const Dashboard = () => {
                 <div className="lg:col-span-2 ns-card p-6 tutorial-status-chart">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-lg font-bold text-slate-900">{t('dashboard.status_overview')}</h2>
-                        <button onClick={() => navigate('/dashboard/complaints')} className="text-sm text-brand-700 font-semibold hover:underline">
+                        <button onClick={() => navigate(hasComplaints ? '/dashboard/complaints' : '/dashboard/tasks')} className="text-sm text-brand-700 font-semibold hover:underline">
                             {t('dashboard.view_all')}
                         </button>
                     </div>
 
                     {/* Custom CSS Bar Chart */}
                     <div className="space-y-6">
-                        {[
+                        {(hasComplaints ? [
                             { label: t('dashboard.pending'), count: stats.pending, color: 'bg-red-500' },
                             { label: t('dashboard.in_progress'), count: stats.inProgress, color: 'bg-amber-500' },
                             { label: t('dashboard.resolved'), count: stats.resolved, color: 'bg-green-600' },
-                        ].map((item) => (
+                        ] : [
+                            { label: language === 'mr' ? 'प्रलंबित कामे' : 'Pending Tasks', count: stats.pendingTasks, color: 'bg-amber-500' },
+                            { label: language === 'mr' ? 'पूर्ण झालेली कामे' : 'Completed Tasks', count: stats.completedTasks, color: 'bg-green-600' },
+                        ]).map((item) => (
                             <div key={item.label}>
                                 <div className="flex justify-between text-sm mb-1.5">
                                     <span className="font-medium text-slate-700">{item.label}</span>
@@ -268,8 +341,8 @@ const Dashboard = () => {
                             <p className="text-sm text-slate-500 text-center py-8">{t('dashboard.no_activity')}</p>
                         )}
                     </div>
-                    <button className="w-full mt-4 ns-btn-ghost border border-slate-200 justify-center" onClick={() => navigate('/dashboard/complaints')}>
-                        {t('dashboard.view_full_log')}
+                    <button className="w-full mt-4 ns-btn-ghost border border-slate-200 justify-center" onClick={() => navigate(hasComplaints ? '/dashboard/complaints' : '/dashboard/tasks')}>
+                        {hasComplaints ? t('dashboard.view_full_log') : (language === 'mr' ? 'सर्व कामे पहा' : 'View All Tasks')}
                     </button>
                 </div>
 

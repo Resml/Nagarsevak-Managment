@@ -270,7 +270,8 @@ const ComplaintForm = () => {
             if (files.length > 0) {
                 const file = files[0];
                 const fileExt = file.name.split('.').pop();
-                const fileName = `complaints/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const activeTenantId = tenantId || 'default-tenant';
+                const fileName = `${activeTenantId}/files/complaints/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('documents') // Using documents bucket as confirmed working

@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, type ReactNode } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity,
@@ -185,9 +185,29 @@ function SidebarNavGroup({
 const AppLayout = () => {
   const { user, logout } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { tenant } = useTenant();
+  const { tenant, tier, plan, isNagarsevak, isAmdar, isKhasdar, isMinister, hasFeature } = useTenant();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const getDynamicPath = useCallback((path: string) => {
+    if (path.startsWith('/dashboard')) {
+      const categoryPath = tier.toLowerCase();
+      const planPath = plan.toLowerCase();
+      return `/${categoryPath}/${planPath}${path}`;
+    }
+    return path;
+  }, [tier, plan]);
+
+  const checkPermission = useCallback((perm?: string) => {
+    if (!perm) return true;
+    if (!hasFeature(perm)) return false;
+    if (user?.isStaff) {
+      const perms = user.permissions;
+      if (!Array.isArray(perms) || perms.length === 0) return false;
+      return perms.includes(perm);
+    }
+    return true;
+  }, [user, hasFeature]);
   const [isSidebarOpen, setSidebarOpen] = useState(false); // Mobile toggle
   const [isCollapsed, setIsCollapsed] = useState(false); // Desktop toggle
   const [branding, setBranding] = useState<{
@@ -254,9 +274,8 @@ const AppLayout = () => {
         icon: Building2,
         label: t('nav.municipal_work'),
         show: true,
-        // permission: 'municipal',
         items: [
-          { to: '/dashboard/diary', icon: BookOpen, label: t('nav.gb_register'), show: isAdminOrStaff, permission: 'gb_register' },
+          { to: '/dashboard/diary', icon: BookOpen, label: t('nav.gb_register'), show: isAdminOrStaff && (isNagarsevak || plan === 'advance'), permission: 'gb_register' },
           { to: '/dashboard/budget', icon: IndianRupee, label: t('nav.ward_budget'), show: true, permission: 'budget' },
         ],
       },
@@ -276,7 +295,6 @@ const AppLayout = () => {
         icon: Megaphone,
         label: t('nav.media_promotion'),
         show: true,
-        // permission: 'media',
         items: [
           { to: '/dashboard/social', icon: TrendingUp, label: t('nav.social_analytics'), show: true, permission: 'social' },
           { to: '/dashboard/media/newspaper', icon: Newspaper, label: t('nav.newspaper_clipping'), show: true, permission: 'newspaper' },
@@ -291,7 +309,6 @@ const AppLayout = () => {
         icon: Activity,
         label: t('nav.programs_activities'),
         show: true,
-        // permission: 'programs',
         items: [
           { to: '/dashboard/events', icon: Calendar, label: t('nav.events_invites'), show: true, permission: 'events' },
           { to: '/dashboard/gallery', icon: Image, label: t('nav.gallery_media'), show: true, permission: 'gallery' },
@@ -304,19 +321,18 @@ const AppLayout = () => {
         icon: Flag,
         label: t('nav.political'),
         show: true,
-        // permission: 'political',
         items: [
           { to: '/dashboard/results', icon: BarChart2, label: t('nav.result_analysis'), show: true, permission: 'results' },
           { to: '/dashboard/sadasya', icon: Users, label: t('nav.sadasya'), show: isAdminOrStaff, permission: 'sadasya' },
           { to: '/dashboard/surveys', icon: CheckSquare, label: t('nav.sample_surveys'), show: true, permission: 'surveys' },
           { to: '/dashboard/voters', icon: Search, label: t('nav.voter_search'), show: isAdminOrStaff, permission: 'voters' },
           { to: '/dashboard/staff', icon: Users, label: t('nav.my_team'), show: true, permission: 'staff' },
-          { to: '/dashboard/political/opposition', icon: Users, label: t('nav.opposition_info') || 'Opposition Info', show: true, permission: 'voters' },
-          { to: '/dashboard/political/social-organizations', icon: Building2, label: t('nav.social_organizations') || 'NGO & Mandals Info', show: true, permission: 'voters' },
-          { to: '/dashboard/political/housing-societies', icon: Home, label: t('nav.housing_societies') || 'Society Chairmans & Voters', show: true, permission: 'voters' },
+          { to: '/dashboard/political/opposition', icon: Users, label: t('nav.opposition_info') || 'Opposition Info', show: true, permission: 'opposition' },
+          { to: '/dashboard/political/social-organizations', icon: Building2, label: t('nav.social_organizations') || 'NGO & Mandals Info', show: true, permission: 'social_organizations' },
+          { to: '/dashboard/political/housing-societies', icon: Home, label: t('nav.housing_societies') || 'Society Chairmans & Voters', show: true, permission: 'housing_societies' },
           { to: '/dashboard/political/duplicates', icon: AlertTriangle, label: t('nav.duplicate_voters') || 'Duplicate Voters', show: true, permission: 'voters' },
-          { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voters' },
-          { to: '/dashboard/political/work-management', icon: ClipboardList, label: t('nav.karyakarta_work') || 'Karyakarta Work Management', show: true, permission: 'staff' },
+          { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voter_forms' },
+          { to: '/dashboard/political/work-management', icon: ClipboardList, label: t('nav.karyakarta_work') || 'Karyakarta Work Management', show: true, permission: 'karyakarta_work' },
         ],
       },
 
@@ -328,12 +344,12 @@ const AppLayout = () => {
         label: t('nav.public_communication'),
         show: true,
         items: [
-          { to: '/dashboard/communication/sms', icon: MessageSquare, label: t('nav.send_sms'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/whatsapp', icon: Smartphone, label: t('nav.whatsapp_msg'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/voice', icon: Phone, label: t('nav.voice_call'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/ai-voice', icon: Wand2, label: t('nav.ai_voice_call'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/conference', icon: Users, label: t('nav.conference_room'), show: true, permission: 'public_comm' },
-          { to: '/dashboard/communication/whatsapp-call', icon: Phone, label: t('nav.whatsapp_call'), show: true, permission: 'public_comm' },
+          { to: '/dashboard/communication/sms', icon: MessageSquare, label: t('nav.send_sms'), show: true, permission: 'sms' },
+          { to: '/dashboard/communication/whatsapp', icon: Smartphone, label: t('nav.whatsapp_msg'), show: true, permission: 'whatsapp' },
+          { to: '/dashboard/communication/voice', icon: Phone, label: t('nav.voice_call'), show: true, permission: 'voice_call' },
+          { to: '/dashboard/communication/ai-voice', icon: Wand2, label: t('nav.ai_voice_call'), show: true, permission: 'ai_voice_call' },
+          { to: '/dashboard/communication/conference', icon: Users, label: t('nav.conference_room'), show: true, permission: 'conference_room' },
+          { to: '/dashboard/communication/whatsapp-call', icon: Phone, label: t('nav.whatsapp_call'), show: true, permission: 'whatsapp_call' },
         ],
       },
       // 9) Analysis Strategy
@@ -346,7 +362,7 @@ const AppLayout = () => {
         permission: 'analysis',
       },
     ],
-    [isAdmin, isAdminOrStaff, t],
+    [isAdminOrStaff, t, isNagarsevak, plan],
   );
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -361,8 +377,9 @@ const AppLayout = () => {
     navItems.forEach((entry) => {
       if (entry.kind === 'group') {
         const hasActiveItem = entry.items.some((item) => {
-          if (item.to === currentPath) return true;
-          if (!item.end && currentPath.startsWith(item.to)) return true;
+          const activeTo = getDynamicPath(item.to);
+          if (activeTo === currentPath) return true;
+          if (!item.end && currentPath.startsWith(activeTo)) return true;
           return false;
         });
         if (hasActiveItem && !openGroups[entry.id]) {
@@ -370,7 +387,7 @@ const AppLayout = () => {
         }
       }
     });
-  }, [location.pathname, navItems]);
+  }, [location.pathname, navItems, getDynamicPath]);
 
   // Scroll to active item on path change
   useEffect(() => {
@@ -394,41 +411,27 @@ const AppLayout = () => {
 
   // Automated Translation Logic
   useEffect(() => {
-    // Logic:
-    // 1. If we are in /complaints (List or Detail) OR /letters (Dashboard) AND Language is Marathi -> FORCE Google Translate ON
-    // 2. If we are in /complaints/new (Form) OR /letters/new (Form) -> FORCE Google Translate OFF
-    // 3. If we are anywhere else -> FORCE Google Translate OFF
-
     const isComplaintSection = location.pathname.startsWith('/complaints');
     const isComplaintForm = location.pathname === '/complaints/new';
 
     const isLettersSection = location.pathname.startsWith('/letters');
     const isLetterForm = location.pathname === '/letters/new';
 
-    // We want translation active ONLY if:
-    // - We are in the complaints OR letters section
-    // - We are NOT on a form page (new complaint / new letter)
-    // - The App Language is Marathi
     const shouldTranslate = ((isComplaintSection && !isComplaintForm) || (isLettersSection && !isLetterForm)) && language === 'mr';
 
     const cookies = document.cookie.split(';');
     const transCookie = cookies.find(c => c.trim().startsWith('googtrans='));
-    // Check for either /en/mr or /auto/mr or just /mr
     const hasCookie = transCookie && (transCookie.includes('/en/mr') || transCookie.includes('/auto/mr'));
 
     if (shouldTranslate && !hasCookie) {
-      // Turn ON - Robust Cookie Setting
-      // Use /auto/mr to be safer with language detection
       document.cookie = "googtrans=/auto/mr; path=/";
       document.cookie = "googtrans=/auto/mr; path=/; domain=" + window.location.hostname;
 
-      // Small delay to ensure cookie is written before reload
       setTimeout(() => {
         window.location.reload();
       }, 50);
 
     } else if (!shouldTranslate && hasCookie) {
-      // Turn OFF - Robust Cookie Clearing
       document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
 
@@ -468,7 +471,7 @@ const AppLayout = () => {
               {!isCollapsed && (
                 <button
                   type="button"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(getDynamicPath('/dashboard'))}
                   className="flex items-center gap-3 text-left overflow-hidden group"
                 >
                   <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black overflow-hidden relative border border-brand-100 group-hover:border-brand-300 transition-colors">
@@ -489,7 +492,7 @@ const AppLayout = () => {
                 </button>
               )}
               {isCollapsed && (
-                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate('/dashboard')}>
+                <div className="h-10 w-10 shrink-0 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center shadow-sm font-black cursor-pointer overflow-hidden relative border border-brand-100 hover:border-brand-300 transition-colors" onClick={() => navigate(getDynamicPath('/dashboard'))}>
                   {branding?.profile_image ? (
                     <img src={branding.profile_image} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
@@ -518,14 +521,14 @@ const AppLayout = () => {
             <nav ref={navContainerRef} className={cn("flex-1 overflow-y-auto space-y-3", isCollapsed ? "px-2 py-4" : "px-3 py-4")}>
               {isAdminOrStaff ? (
                 <SidebarNavItem
-                  to="/dashboard"
+                  to={getDynamicPath('/dashboard')}
                   end
                   icon={LayoutDashboard}
                   label={t('common.dashboard')}
                   onNavigate={onNavigate}
                   isCollapsed={isCollapsed}
                   itemRef={(el) => {
-                    if (location.pathname === '/dashboard') activeItemRef.current = el;
+                    if (location.pathname === getDynamicPath('/dashboard')) activeItemRef.current = el;
                   }}
                 />
               ) : null}
@@ -533,17 +536,6 @@ const AppLayout = () => {
               {navItems.map((entry) => {
                 // If it's a group
                 if (entry.kind === 'group') {
-                  const checkPermission = (perm?: string) => {
-                    if (!perm) return true;
-                    // If this user is in the staff table, enforce their specific permissions
-                    if (user?.isStaff) {
-                      const perms = user.permissions;
-                      if (!Array.isArray(perms) || perms.length === 0) return false;
-                      return perms.includes(perm);
-                    }
-                    return true; // Non-staff (admins, nagarsevak, etc.) always have full access
-                  };
-
                   if (entry.permission && !checkPermission(entry.permission)) return null;
 
                   const visibleItems = entry.items.filter((i) => {
@@ -552,10 +544,6 @@ const AppLayout = () => {
                   });
 
                   if (visibleItems.length === 0) return null;
-
-                  // Groups that should have the highlighted background
-                  const highlightedGroups = ['daily_work', 'ward_info', 'municipal', 'media', 'programs', 'political'];
-                  const isHighlighted = highlightedGroups.includes(entry.id);
 
                   return (
                     <SidebarNavGroup
@@ -570,15 +558,16 @@ const AppLayout = () => {
                       {visibleItems.map((item) => (
                         <SidebarNavItem
                           key={item.to}
-                          to={item.to}
+                          to={getDynamicPath(item.to)}
                           icon={item.icon}
                           label={item.label}
                           onNavigate={onNavigate}
                           isCollapsed={isCollapsed}
                           itemRef={(el) => {
+                            const activeTo = getDynamicPath(item.to);
                             const isActive = item.end
-                              ? location.pathname === item.to
-                              : location.pathname.startsWith(item.to);
+                              ? location.pathname === activeTo
+                              : location.pathname.startsWith(activeTo);
                             if (isActive) activeItemRef.current = el;
                           }}
                         />
@@ -590,25 +579,12 @@ const AppLayout = () => {
                 else {
                   if (entry.show === false) return null;
 
-                  const checkPermission = (perm?: string) => {
-                    if (!perm) return true;
-                    if (user?.isStaff) {
-                      const perms = user.permissions;
-                      if (!Array.isArray(perms) || perms.length === 0) return false;
-                      return perms.includes(perm);
-                    }
-                    return true;
-                  };
-
                   if (entry.permission && !checkPermission(entry.permission)) return null;
-
-                  // Items that should have the highlighted background
-                  const isHighlighted = entry.to === '/dashboard/analysis-strategy';
 
                   return (
                     <SidebarNavItem
                       key={entry.to}
-                      to={entry.to}
+                      to={getDynamicPath(entry.to)}
                       icon={entry.icon}
                       label={entry.label}
                       onNavigate={onNavigate}
@@ -616,9 +592,10 @@ const AppLayout = () => {
                       isCollapsed={isCollapsed}
                       className={''}
                       itemRef={(el) => {
+                        const activeTo = getDynamicPath(entry.to);
                         const isActive = entry.end
-                          ? location.pathname === entry.to
-                          : location.pathname.startsWith(entry.to);
+                          ? location.pathname === activeTo
+                          : location.pathname.startsWith(activeTo);
                         if (isActive) activeItemRef.current = el;
                       }}
                     />
@@ -666,7 +643,7 @@ const AppLayout = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-semibold text-slate-900 truncate">{user?.name ?? 'User'}</div>
                       {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
-                        <button onClick={() => navigate('/dashboard/settings/profile')} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1">
+                        <button onClick={() => navigate(getDynamicPath('/dashboard/settings/profile'))} className="text-xs text-brand-600 hover:text-brand-700 font-medium truncate flex items-center gap-1 mt-0.5">
                           {t('sadasya.profile_settings') || 'Profile Settings'}
                         </button>
                       )}
@@ -688,7 +665,7 @@ const AppLayout = () => {
                   </button>
 
                   {(user?.role === 'admin' || user?.permissions?.includes('profile_settings')) && (
-                    <button type="button" onClick={() => navigate('/dashboard/settings/profile')} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
+                    <button type="button" onClick={() => navigate(getDynamicPath('/dashboard/settings/profile'))} className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg" title={t('sadasya.profile_settings') || 'Settings'}>
                       <UserPlus className="h-5 w-5" />
                     </button>
                   )}

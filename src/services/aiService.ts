@@ -1,4 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getGlobalTenantId } from "./supabaseClient";
+import { logSecurityEvent } from "../utils/securityLogs";
+
+function validateAISession(operationName: string) {
+    const tenantId = getGlobalTenantId();
+    if (!tenantId) {
+        logSecurityEvent('unauthorized_ai_request', {
+            operation: operationName,
+            reason: 'AI generation requested without an active tenant session'
+        }, null);
+        throw new Error("Security Violation: No active tenant session detected for AI request.");
+    }
+}
 
 // Access your API key as an environment variable (see "Set up your API key" above)
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
@@ -16,6 +29,7 @@ export const AIService = {
         tone: ToneType,
         language: LanguageType
     ): Promise<string> => {
+        validateAISession('generateContent');
         if (!API_KEY) {
             throw new Error("Gemini API Key is missing. Please set VITE_GEMINI_API_KEY in .env");
         }
@@ -114,6 +128,7 @@ export const AIAnalysisService = {
         translated_description_mr: string;
         original_language: string;
     }> => {
+        validateAISession('analyzeComplaint');
         try {
             const model = genAI.getGenerativeModel({
                 model: "gemini-2.5-flash",
@@ -185,6 +200,7 @@ export const AIAnalysisService = {
         userProfile: string,
         schemesList: any[]
     ): Promise<number[]> => {
+        validateAISession('matchSchemes');
         try {
             const model = genAI.getGenerativeModel({
                 model: "gemini-2.5-flash",
@@ -214,6 +230,7 @@ export const AIAnalysisService = {
 
     // 3. Document Scanner (OCR -> Task)
     parseDocument: async (imageBase64: string): Promise<{ title: string; description: string; deadline: string; priority: string }> => {
+        validateAISession('parseDocument');
         try {
             const model = genAI.getGenerativeModel({
                 model: "gemini-2.5-flash",
@@ -254,6 +271,7 @@ export const AIAnalysisService = {
 
     // 4. Dashboard Daily Briefing
     generateDailyBriefing: async (stats: any, recentComplaints: any[], language: 'en' | 'mr' = 'en'): Promise<string> => {
+        validateAISession('generateDailyBriefing');
         try {
             const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const prompt = `

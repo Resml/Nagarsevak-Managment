@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, getGlobalTenantId } from './supabaseClient';
 import { type GalleryItem, type GalleryCategory } from '../types';
 
 const GALLERY_STORAGE_KEY = 'ns_gallery';
@@ -240,7 +240,8 @@ export const GalleryService = {
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const tenantId = getGlobalTenantId() || 'default-tenant';
+            const filePath = `${tenantId}/files/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('gallery-uploads')

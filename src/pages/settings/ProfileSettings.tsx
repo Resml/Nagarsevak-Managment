@@ -115,7 +115,8 @@ const ProfileSettings = () => {
         if (!cropConfig) return;
         const type = cropConfig.type;
         const fileName = `${tenantId}_${type}_${Date.now()}.jpg`;
-        const filePath = `${fileName}`;
+        const activeTenantId = tenantId || 'default-tenant';
+        const filePath = `${activeTenantId}/files/${fileName}`;
 
         try {
             setSaving(true);

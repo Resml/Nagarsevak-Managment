@@ -519,7 +519,8 @@ const LetterDashboard = () => {
                     throw new Error('PDF generation failed to return a valid blob');
                 }
 
-                const fileName = `letters/${id}_${Date.now()}.pdf`;
+                const activeTenantId = tenantId || 'default-tenant';
+                const fileName = `${activeTenantId}/files/letters/${id}_${Date.now()}.pdf`;
 
                 const { data, error: uploadError } = await supabase.storage
                     .from('documents')

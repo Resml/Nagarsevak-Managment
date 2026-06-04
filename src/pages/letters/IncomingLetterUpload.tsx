@@ -261,7 +261,8 @@ const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLette
             // 1. Upload file to Supabase Storage if new file selected
             if (file) {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `incoming_letters/${Date.now()}_${title.replace(/\s+/g, '_').toLowerCase()}.${fileExt}`;
+                const activeTenantId = tenantId || 'default-tenant';
+                const fileName = `${activeTenantId}/files/incoming_letters/${Date.now()}_${title.replace(/\s+/g, '_').toLowerCase()}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('documents')

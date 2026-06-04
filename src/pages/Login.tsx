@@ -11,8 +11,9 @@ import loginHero from '../assets/login_hero.png';
 const Login = () => {
     const { login, user, isLoading } = useAuth();
     const { t, language, setLanguage } = useLanguage();
-    const { tenant } = useTenant(); // Added
+    const { tenant, plan, setTestPlan } = useTenant(); // Added
     const navigate = useNavigate();
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default';
     const [activeTab, setActiveTab] = useState<'nagarsevak' | 'amdar' | 'khasdar' | 'minister' | null>(null);
     const [subRole, setSubRole] = useState<'nagarsevak' | 'staff'>('nagarsevak');
 
@@ -141,6 +142,32 @@ const Login = () => {
                             <h2 className="text-3xl font-bold text-slate-900">Krishnaniti</h2>
                             <p className="text-slate-500 mt-2">{t('login.subtitle')}</p>
                         </div>
+
+                        {/* Developer Testing: Plan Selector */}
+                        {isLocalDev && (
+                            <div className="mb-8 p-3.5 bg-brand-50/50 rounded-2xl border border-brand-100/60 text-center shadow-sm">
+                                <label className="block text-[10px] font-black text-brand-600 uppercase tracking-widest mb-2.5">
+                                    🛠️ Test Plan Version
+                                </label>
+                                <div className="bg-slate-100/80 p-1 rounded-xl flex gap-1.5">
+                                    {(['basic', 'pro', 'advance'] as const).map((p) => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setTestPlan(p)}
+                                            className={clsx(
+                                                "flex-1 py-2 text-xs font-bold rounded-lg capitalize transition-all duration-200",
+                                                plan === p
+                                                    ? "bg-white text-brand-700 shadow-sm border border-slate-200/40"
+                                                    : "text-slate-500 hover:text-slate-700 hover:bg-white/40"
+                                            )}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {!activeTab ? (
                             /* Step 1: Role Selection */
