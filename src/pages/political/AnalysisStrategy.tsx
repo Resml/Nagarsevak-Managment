@@ -113,7 +113,7 @@ const AnalysisStrategy = () => {
 
                 const extraAreas = new Set<string>();
                 if (complaintsData) {
-                    complaintsData.forEach(c => {
+                    complaintsData.forEach((c: any) => {
                         if (c.area && c.area.trim()) {
                             extraAreas.add(c.area.trim());
                         }
@@ -152,7 +152,7 @@ const AnalysisStrategy = () => {
 
                     if (error || !data || data.length === 0) { keepGoing = false; break; }
 
-                    data.forEach(v => {
+                    data.forEach((v: any) => {
                         if (isMr) {
                             if (v.address_marathi?.trim()) addrSet.add(v.address_marathi.trim());
                         } else {
@@ -250,7 +250,7 @@ const AnalysisStrategy = () => {
                 .eq('tenant_id', tenantId);
             const allRequests = requestsData ?? [];
             const matchedVoterIds = new Set(matchedVoters.map(v => v.id));
-            const matchedRequests = allRequests.filter(r => r.voter_id && matchedVoterIds.has(r.voter_id));
+            const matchedRequests = allRequests.filter((r: any) => r.voter_id && matchedVoterIds.has(r.voter_id));
 
             // 5. Fetch Events — server-side ilike on area OR location
             const { data: eventsAreaData } = await supabase
@@ -279,7 +279,7 @@ const AnalysisStrategy = () => {
                 .select('*')
                 .eq('category', 'Newspaper');
             const gallery = galleryData ?? [];
-            const matchedArticles = gallery.filter(item =>
+            const matchedArticles = gallery.filter((item: any) =>
                 (item.title || '').toLowerCase().includes(normArea.toLowerCase()) ||
                 (item.description || '').toLowerCase().includes(normArea.toLowerCase())
             );
@@ -297,7 +297,7 @@ const AnalysisStrategy = () => {
                 .from('election_results')
                 .select('*');
             const electionResults = electionResultsData ?? [];
-            const matchedResults = electionResults.filter(r =>
+            const matchedResults = electionResults.filter((r: any) =>
                 (r.booth_name || '').toLowerCase().includes(normArea.toLowerCase()) ||
                 (r.ward_name || '').toLowerCase().includes(normArea.toLowerCase())
             );
@@ -331,13 +331,13 @@ const AnalysisStrategy = () => {
 
             // Complaints Aggregates
             const totalComplaints = matchedComplaints.length;
-            const solvedComplaints = matchedComplaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
-            const ongoingComplaints = matchedComplaints.filter(c => c.status === 'Pending' || c.status === 'InProgress').length;
-            const assignedComplaints = matchedComplaints.filter(c => c.status === 'Assigned').length;
+            const solvedComplaints = matchedComplaints.filter((c: any) => c.status === 'Resolved' || c.status === 'Closed').length;
+            const ongoingComplaints = matchedComplaints.filter((c: any) => c.status === 'Pending' || c.status === 'InProgress').length;
+            const assignedComplaints = matchedComplaints.filter((c: any) => c.status === 'Assigned').length;
 
             // Requests Aggregates
             const totalRequests = matchedRequests.length;
-            const solvedRequests = matchedRequests.filter(r => r.status === 'Resolved' || r.status === 'Closed').length;
+            const solvedRequests = matchedRequests.filter((r: any) => r.status === 'Resolved' || r.status === 'Closed').length;
             const pendingRequests = totalRequests - solvedRequests;
 
             // Events
@@ -345,22 +345,22 @@ const AnalysisStrategy = () => {
             const avgRsvpAttendance = conductedEventsCount > 0 ? Math.round(75 + Math.random() * 80) : 0; // Mocked attendance engagement
 
             // Articles Sentiment
-            const positiveArticlesCount = matchedArticles.filter(a => a.sentiment === 'positive').length;
+            const positiveArticlesCount = matchedArticles.filter((a: any) => a.sentiment === 'positive').length;
             const negativeArticlesCount = matchedArticles.length - positiveArticlesCount;
 
             // Budget
             const allocatedBudget = 0;
             const utilizedBudget = 0;
             const requestedProvisionsCount = matchedProvisions.length;
-            const provisionsAmount = matchedProvisions.reduce((sum, p) => sum + (p.requested_amount || 0), 0);
+            const provisionsAmount = matchedProvisions.reduce((sum: number, p: any) => sum + (p.requested_amount || 0), 0);
 
             // Elections Results
-            const totalElectionVotes = matchedResults.reduce((sum, r) => sum + (r.total_votes_casted || 0), 0);
+            const totalElectionVotes = matchedResults.reduce((sum: number, r: any) => sum + (r.total_votes_casted || 0), 0);
             const winnerName = matchedResults.length > 0 ? matchedResults[0].winner : 'N/A';
-            const winningMargin = matchedResults.reduce((sum, r) => sum + (r.margin || 0), 0);
+            const winningMargin = matchedResults.reduce((sum: number, r: any) => sum + (r.margin || 0), 0);
 
             const partyPerformance: Record<string, number> = {};
-            matchedResults.forEach(r => {
+            matchedResults.forEach((r: any) => {
                 if (r.candidate_votes && typeof r.candidate_votes === 'object') {
                     Object.entries(r.candidate_votes).forEach(([party, votes]) => {
                         partyPerformance[party] = (partyPerformance[party] || 0) + Number(votes);

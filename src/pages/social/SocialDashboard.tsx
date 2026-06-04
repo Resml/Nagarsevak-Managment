@@ -99,7 +99,7 @@ const SocialDashboard = () => {
         if (data && data.length > 0) {
             // Shuffle and pick 2-3
             const shuffled = data.sort(() => 0.5 - Math.random());
-            setBirthdays(shuffled.slice(0, 3).map(v => ({ id: v.id, name: v.name_english, mobile: v.mobile })));
+            setBirthdays(shuffled.slice(0, 3).map((v: any) => ({ id: v.id, name: v.name_english, mobile: v.mobile })));
         }
     };
 

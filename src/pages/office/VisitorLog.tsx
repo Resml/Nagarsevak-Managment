@@ -121,7 +121,7 @@ const VisitorLog = () => {
                     const addrs = new Map<string, number>();
                     const houses = new Map<string, number>();
 
-                    votersData.forEach(v => {
+                    votersData.forEach((v: any) => {
                         // Localized Address Grouping
                         const addr = language === 'mr'
                             ? (v.address_marathi || v.address_english)

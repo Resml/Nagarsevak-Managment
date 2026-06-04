@@ -66,7 +66,7 @@ const SurveyDashboard = () => {
 
             if (error) throw error;
 
-            const mappedSurveys: Survey[] = (data || []).map(s => ({
+            const mappedSurveys: Survey[] = (data || []).map((s: any) => ({
                 id: s.id,
                 title: s.title,
                 description: s.description,

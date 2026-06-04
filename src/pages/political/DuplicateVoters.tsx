@@ -48,7 +48,7 @@ const DuplicateVoters = () => {
             }
 
             const groups = new Map<string, any[]>();
-            data.forEach(voter => {
+            data.forEach((voter: any) => {
                 const raw = (voter.name_english || '').trim();
                 const normalized = raw.toLowerCase().replace(/\s+/g, ' ');
                 if (!normalized) return;

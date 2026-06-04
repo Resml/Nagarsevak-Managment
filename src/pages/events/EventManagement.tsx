@@ -193,7 +193,7 @@ const InviteModal = ({ event, tenantId, onClose }: InviteModalProps) => {
             .not('mobile', 'is', null)
             .neq('mobile', '')
             .limit(500)
-            .then(({ data }) => {
+            .then(({ data }: any) => {
                 setAllVotersForSuggestions((data || []).map((r: any) => ({
                     id: '', name: r.name_english || '', age: 0, gender: 'O', address: r.address_english || r.address_marathi || '',
                     address_marathi: r.address_marathi, address_english: r.address_english,

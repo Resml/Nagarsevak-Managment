@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                             table: 'staff',
                             filter: `id=eq.${sessionUser.id}`,
                         },
-                        (payload) => {
+                        (payload: any) => {
                             console.log('[AuthContext] Staff permissions updated in real-time:', payload.new);
                             const updatedPermissions: string[] = Array.isArray(payload.new.permissions)
                                 ? payload.new.permissions
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Check active session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({ data: { session } }: any) => {
             if (session?.user) {
                 loadUser(session.user);
             } else {
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Listen for auth state changes (login/logout)
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             if (session?.user) {
                 loadUser(session.user);
             } else {

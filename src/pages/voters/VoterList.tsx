@@ -108,7 +108,7 @@ const VoterList = () => {
                     const houses = new Map<string, number>();
                     const castes = new Map<string, number>();
 
-                    votersData.forEach(v => {
+                    votersData.forEach((v: any) => {
                         // Address
                         const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
                         if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
@@ -146,7 +146,7 @@ const VoterList = () => {
                 const surnames = new Map<string, number>();
                 const firstnames = new Map<string, number>();
 
-                data.forEach(row => {
+                data.forEach((row: any) => {
                     const name = row.name_english || '';
                     const parts = name.trim().split(/\s+/);
                     if (parts.length > 0) {
@@ -208,7 +208,7 @@ const VoterList = () => {
             const { data: votersData } = await supabase.from('voters').select('caste').eq('tenant_id', tenantId).limit(1000);
             if (votersData) {
                 const castes = new Map<string, number>();
-                votersData.forEach(v => { if (v.caste) castes.set(v.caste, (castes.get(v.caste) || 0) + 1); });
+                votersData.forEach((v: any) => { if (v.caste) castes.set(v.caste, (castes.get(v.caste) || 0) + 1); });
                 setCasteSuggestions(Array.from(castes).map(([caste, count]) => ({ caste, count })).sort((a, b) => b.count - a.count).slice(0, 50));
             }
 

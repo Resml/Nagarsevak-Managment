@@ -64,7 +64,7 @@ const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLette
                     const addrs = new Map<string, number>();
                     const houses = new Map<string, number>();
 
-                    votersData.forEach(v => {
+                    votersData.forEach((v: any) => {
                         const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
                         if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
 

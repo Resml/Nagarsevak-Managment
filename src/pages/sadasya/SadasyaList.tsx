@@ -126,7 +126,7 @@ const SadasyaList = () => {
                     const addrs = new Map<string, number>();
                     const houses = new Map<string, number>();
 
-                    votersData.forEach(v => {
+                    votersData.forEach((v: any) => {
                         const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
                         if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
 
@@ -292,7 +292,7 @@ const SadasyaList = () => {
 
                 // Map DB fields to Sadasya interface if needed, or rely on matching names
                 // The DB columns match the interface mostly, but checks are good
-                const mappedData: Sadasya[] = (data || []).map(item => ({
+                const mappedData: Sadasya[] = (data || []).map((item: any) => ({
                     id: item.id,
                     name: item.name,
                     name_marathi: item.name_marathi,

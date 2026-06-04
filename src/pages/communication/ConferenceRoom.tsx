@@ -94,8 +94,8 @@ const InviteVoterModal = ({ meeting, tenantId, onClose, onSent }: InviteVoterMod
     useEffect(() => {
         supabase.from('voters').select('address_marathi,address_english').eq('tenant_id', tenantId)
             .not('mobile', 'is', null).neq('mobile', '').limit(500)
-            .then(({ data }) => {
-                const addrs = [...new Set((data || []).map((r: any) => r.address_marathi || r.address_english || '').filter(Boolean))];
+            .then(({ data }: any) => {
+                const addrs = [...new Set((data || []).map((r: any) => r.address_marathi || r.address_english || '').filter(Boolean))] as string[];
                 setAllAddrs(addrs);
             });
     }, [tenantId]);

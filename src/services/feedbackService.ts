@@ -45,7 +45,7 @@ export const FeedbackService = {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'work_feedback' },
-                (payload) => {
+                (payload: any) => {
                     callback(payload);
                 }
             )

@@ -411,7 +411,7 @@ const OppositionManagement = () => {
                 .order('created_at', { ascending: false });
             if (!updatedMembers.error) {
                 setMembers(updatedMembers.data || []);
-                const self = updatedMembers.data?.find(m => m.id === selectedMember.id);
+                const self = updatedMembers.data?.find((m: any) => m.id === selectedMember.id);
                 if (self) setSelectedMember(self);
             }
         } catch (err: any) {
@@ -464,7 +464,7 @@ const OppositionManagement = () => {
                 .order('created_at', { ascending: false });
             if (!updatedMembers.error) {
                 setMembers(updatedMembers.data || []);
-                const self = updatedMembers.data?.find(m => m.id === selectedMember.id);
+                const self = updatedMembers.data?.find((m: any) => m.id === selectedMember.id);
                 if (self) setSelectedMember(self);
             }
         } catch (err: any) {
@@ -494,7 +494,7 @@ const OppositionManagement = () => {
                 .order('created_at', { ascending: false });
             if (!updatedMembers.error) {
                 setMembers(updatedMembers.data || []);
-                const self = updatedMembers.data?.find(m => m.id === selectedMember.id);
+                const self = updatedMembers.data?.find((m: any) => m.id === selectedMember.id);
                 if (self) setSelectedMember(self);
             }
         } catch (err) {

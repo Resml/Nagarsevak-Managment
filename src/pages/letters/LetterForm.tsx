@@ -120,7 +120,7 @@ const LetterForm = () => {
             if (data && data.length > 0) {
                 // Filter types based on role: amdar specific templates should only be visible to amdar users
                 const isAmdar = user?.role === 'amdar';
-                const filteredData = data.filter(type => {
+                const filteredData = data.filter((type: any) => {
                     const name = (type.name || '').toLowerCase();
                     const nameMarathi = (type.name_marathi || '').toLowerCase();
                     const isAmdarTemplate = name.includes('amdar') || nameMarathi.includes('amdar') || nameMarathi.includes('आमदार');
@@ -195,7 +195,7 @@ const LetterForm = () => {
                     const addrs = new Map<string, number>();
                     const houses = new Map<string, number>();
 
-                    votersData.forEach(v => {
+                    votersData.forEach((v: any) => {
                         const addr = language === 'mr' ? (v.address_marathi || v.address_english) : v.address_english;
                         if (addr) addrs.set(addr, (addrs.get(addr) || 0) + 1);
 
