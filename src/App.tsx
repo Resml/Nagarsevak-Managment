@@ -94,7 +94,7 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
   const { tenant, tier, plan, loading: tenantLoading } = useTenant();
   const location = useLocation();
 
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default';
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default' || window.location.hostname.includes('vercel.app');
 
   const isChecking = authLoading || tenantLoading;
 

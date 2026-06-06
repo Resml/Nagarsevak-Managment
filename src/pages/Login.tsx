@@ -13,7 +13,7 @@ const Login = () => {
     const { t, language, setLanguage } = useLanguage();
     const { tenant, plan, setTestPlan } = useTenant(); // Added
     const navigate = useNavigate();
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default';
+    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default' || window.location.hostname.includes('vercel.app');
     const [activeTab, setActiveTab] = useState<'nagarsevak' | 'amdar' | 'khasdar' | 'minister' | null>(null);
     const [subRole, setSubRole] = useState<'nagarsevak' | 'staff'>('nagarsevak');
 
