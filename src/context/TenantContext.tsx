@@ -165,7 +165,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Determine plan, default to 'advance' on local development to allow testing all features
     const hostname = window.location.hostname;
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || tenant?.subdomain === 'default' || hostname.includes('vercel.app');
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || tenant?.subdomain === 'default' || hostname.includes('vercel.app') || hostname === 'krishnaniti.in' || hostname === 'www.krishnaniti.in';
     
     const [testPlan, setTestPlanState] = useState<TenantPlan>(() => {
         return (localStorage.getItem('test_plan') as TenantPlan) || 'advance';
