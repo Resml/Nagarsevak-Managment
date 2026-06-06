@@ -9,6 +9,7 @@ export const checkFeatureAccess = (featureKey: string, plan: string): boolean =>
     'tasks',             // Daily Work Management (रोजचे कामकाज)
     'letters',           // Letter Management (पत्र व्यवहार)
     'visitors',          // Visitor Management (भेट देणारे)
+    'complaints',        // Complaint Tracking (तक्रार निवारण)
     'ward_problems',     // Ward Issues Management (प्रभाग समस्या) - Problems
     'ward_info',         // Ward Issues Management (प्रभाग समस्या) - Map
     'work_history',      // Completed Works Tracking (केलेली कामे) - History
@@ -49,7 +50,6 @@ export const checkFeatureAccess = (featureKey: string, plan: string): boolean =>
     'voice_call',           // Voice Call (व्हॉइस कॉल)
     'analysis',             // Advanced Analytics & Reports
     'surveys',              // Survey & Feedback System
-    'complaints',           // Complaint Tracking
     'events',               // Event Management
     'gov_office',           // Government Office / Document Repository
   ];

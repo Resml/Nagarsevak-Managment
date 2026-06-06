@@ -94,6 +94,8 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
   const { tenant, tier, plan, loading: tenantLoading } = useTenant();
   const location = useLocation();
 
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default';
+
   const isChecking = authLoading || tenantLoading;
 
   // Perform checks and log security mismatch if detected
@@ -115,7 +117,7 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
     const isCategoryMatch = expectedCategory === actualCategory;
     const isPlanMatch = expectedPlan === actualPlan;
 
-    if (user?.email === 'krishnaniti@gmail.com') return;
+    if (user?.email === 'krishnaniti@gmail.com' && !isLocal) return;
 
     if (!isCategoryMatch || !isPlanMatch) {
       logSecurityEvent(
@@ -171,8 +173,8 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
   const expectedPlan = normalizePlan(routePlan);
   const actualPlan = normalizePlan(plan);
 
-  const isCategoryMatch = expectedCategory === actualCategory || user?.email === 'krishnaniti@gmail.com';
-  const isPlanMatch = expectedPlan === actualPlan || user?.email === 'krishnaniti@gmail.com';
+  const isCategoryMatch = expectedCategory === actualCategory || (user?.email === 'krishnaniti@gmail.com' && !isLocal);
+  const isPlanMatch = expectedPlan === actualPlan || (user?.email === 'krishnaniti@gmail.com' && !isLocal);
 
   if (!isCategoryMatch || !isPlanMatch) {
     return (

@@ -181,12 +181,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const queryPlan = searchParams.get('plan');
     
     let plan = tenant?.plan || 'basic';
-    if (user?.email === 'krishnaniti@gmail.com') {
-        plan = 'advance';
-    } else if (validPlans.includes(pathPlan)) {
+    if (validPlans.includes(pathPlan)) {
         plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
     } else if (isLocal) {
         plan = (queryPlan as TenantPlan) || testPlan;
+    } else if (user?.email === 'krishnaniti@gmail.com') {
+        plan = 'advance';
     }
 
     useEffect(() => {
@@ -199,11 +199,11 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const isMinister = tier === 'minister';
 
     const hasFeature = useCallback((featureKey: string) => {
-        if (user?.email === 'krishnaniti@gmail.com') {
+        if (user?.email === 'krishnaniti@gmail.com' && !isLocal) {
             return true;
         }
         return checkFeatureAccess(featureKey, plan);
-    }, [plan, user]);
+    }, [plan, user, isLocal]);
 
     return (
         <TenantContext.Provider value={{

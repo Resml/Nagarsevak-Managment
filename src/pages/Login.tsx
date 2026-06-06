@@ -147,7 +147,7 @@ const Login = () => {
                         {isLocalDev && (
                             <div className="mb-8 p-3.5 bg-brand-50/50 rounded-2xl border border-brand-100/60 text-center shadow-sm">
                                 <label className="block text-[10px] font-black text-brand-600 uppercase tracking-widest mb-2.5">
-                                    🛠️ Test Plan Version
+                                    🛠️ Demo Plan Version
                                 </label>
                                 <div className="bg-slate-100/80 p-1 rounded-xl flex gap-1.5">
                                     {(['basic', 'pro', 'advance'] as const).map((p) => (
