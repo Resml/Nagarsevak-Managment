@@ -110,6 +110,7 @@ export interface Staff {
   mobile: string;
   role: string;
   keywords: string[];
+  party_wing?: string;
 }
 
 export interface Sadasya {

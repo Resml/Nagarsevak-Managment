@@ -9,6 +9,22 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 
+const PARTY_WINGS = [
+    'युवक आघाडी',
+    'महिला आघाडी',
+    'विद्यार्थी आघाडी',
+    'शेतकरी आघाडी',
+    'कामगार आघाडी',
+    'व्यापारी आघाडी',
+    'अल्पसंख्याक आघाडी',
+    'ओबीसी आघाडी',
+    'ज्येष्ठ नागरिक आघाडी',
+    'क्रीडा आघाडी',
+    'आयटी सेल',
+    'सोशल मीडिया सेल',
+    'जनसंपर्क विभाग',
+    'स्वयंसेवक संघटना'
+];
 
 const StaffList = () => {
     const { t, language } = useLanguage();
@@ -249,7 +265,8 @@ const StaffList = () => {
         category: 'Office' as 'Office' | 'Party' | 'Cooperative',
         keywords: '',
         categories: [] as string[],
-        permissions: [] as string[]
+        permissions: [] as string[],
+        party_wing: ''
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -258,6 +275,20 @@ const StaffList = () => {
     const [areaSearch, setAreaSearch] = useState('');
     const [showAreaSuggestions, setShowAreaSuggestions] = useState(false);
     const areaWrapperRef = useRef<HTMLDivElement>(null);
+    const [wingFilter, setWingFilter] = useState('');
+
+    const uniqueWings = useMemo(() => {
+        const set = new Set<string>();
+        // Add predefined Marathi wings
+        PARTY_WINGS.forEach(w => set.add(w));
+        // Add any existing wings from staff data (whether Marathi or English or custom)
+        staff.forEach(s => {
+            if (s.party_wing) {
+                set.add(s.party_wing);
+            }
+        });
+        return Array.from(set).sort((a, b) => a.localeCompare(b));
+    }, [staff]);
 
     // Close suggestions on click outside
     useEffect(() => {
@@ -316,7 +347,8 @@ const StaffList = () => {
                         category: formData.category,
                         area: formData.area,
                         keywords: finalKeywords,
-                        permissions: formData.permissions
+                        permissions: formData.permissions,
+                        party_wing: formData.party_wing
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
@@ -356,11 +388,26 @@ const StaffList = () => {
                     throw new Error(data.error);
                 }
 
+                // Update the newly created user's party wing field since edge function does not support it
+                if (data && data.user && data.user.id) {
+                    const newUserId = data.user.id;
+                    if (formData.party_wing) {
+                        const { error: updateError } = await supabase
+                            .from('staff')
+                            .update({ party_wing: formData.party_wing })
+                            .eq('id', newUserId)
+                            .eq('tenant_id', tenantId);
+                        if (updateError) {
+                            console.error('Failed to update party wing for new staff:', updateError);
+                        }
+                    }
+                }
+
                 toast.success(t('staff.list.success_add'));
             }
 
             setShowModal(false);
-            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [] });
+            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [], party_wing: '' });
             setEditingStaffId(null);
             fetchStaff();
         } catch (err: any) {
@@ -388,7 +435,8 @@ const StaffList = () => {
             category: (staffMember.category as any) || 'Office',
             keywords: manualKeywords.join(', '),
             categories: foundCategories,
-            permissions: staffMember.permissions || []
+            permissions: staffMember.permissions || [],
+            party_wing: staffMember.party_wing || ''
         });
         setShowModal(true);
         // We might want to keep the profile open or close it?
@@ -446,7 +494,8 @@ const StaffList = () => {
             const matchesName = s.name.toLowerCase().includes(nameSearch.toLowerCase()) ||
                 s.mobile.includes(nameSearch);
             const matchesArea = !areaSearch || (s.area || '').toLowerCase().includes(areaSearch.toLowerCase());
-            return matchesName && matchesArea;
+            const matchesWing = !wingFilter || (s.party_wing || '').toLowerCase() === wingFilter.toLowerCase();
+            return matchesName && matchesArea && matchesWing;
         })
         .sort((a, b) => (a.area || '').localeCompare(b.area || ''));
 
@@ -1085,7 +1134,7 @@ const StaffList = () => {
                 </div>
 
                 {/* Search Filters */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
@@ -1132,6 +1181,22 @@ const StaffList = () => {
                             </div>
                         )}
                     </div>
+                    <div className="relative">
+                        <Flag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                        <select
+                            value={wingFilter}
+                            onChange={(e) => setWingFilter(e.target.value)}
+                            className="ns-input pl-9 pr-10 w-full appearance-none bg-white text-slate-700"
+                        >
+                            <option value="">{tr('All Wings', 'सर्व आघाड्या / सेल')}</option>
+                            {uniqueWings.map((wing, index) => (
+                                <option key={index} value={wing}>
+                                    {wing}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
+                    </div>
                 </div>
 
                 {/* View Mode Toggle */}
@@ -1176,13 +1241,19 @@ const StaffList = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-gray-900 leading-tight"><TranslatedText text={member.name} /></h3>
-                                            <div className="flex items-center gap-2 mt-0.5">
+                                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
                                                 <span className="inline-flex items-center text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                                                     <TranslatedText text={member.role} />
                                                 </span>
                                                 {member.area && (
                                                     <span className="inline-flex items-center text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded">
                                                         <TranslatedText text={member.area} />
+                                                    </span>
+                                                )}
+                                                {member.party_wing && (
+                                                    <span className="inline-flex items-center text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full shadow-sm">
+                                                        <Flag className="w-3.5 h-3.5 mr-1 text-orange-500" />
+                                                        <TranslatedText text={member.party_wing} />
                                                     </span>
                                                 )}
                                             </div>
@@ -1252,7 +1323,14 @@ const StaffList = () => {
                                         <tr key={member.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedStaff(member)}>
                                             <td className="px-6 py-4 text-sm text-gray-800">
                                                 <div className="font-semibold"><TranslatedText text={member.name} /></div>
-                                                <div className="text-xs text-gray-500"><TranslatedText text={member.role} /></div>
+                                                <div className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+                                                    <TranslatedText text={member.role} />
+                                                    {member.party_wing && (
+                                                        <span className="inline-flex items-center text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200">
+                                                            {member.party_wing}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-mono">
                                                 {member.mobile}
@@ -1430,6 +1508,26 @@ const StaffList = () => {
                                         placeholder={t('staff.modal.area_placeholder')}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
+                                    {tr('Party Wing (Paksh Wing)', 'पक्ष आघाडी / सेल')}
+                                    <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    list="party-wings"
+                                    className="ns-input mt-1"
+                                    value={formData.party_wing || ''}
+                                    onChange={e => setFormData({ ...formData, party_wing: e.target.value })}
+                                    placeholder={tr('Select or type party wing', 'पक्ष आघाडी निवडा किंवा टाईप करा')}
+                                />
+                                <datalist id="party-wings">
+                                    {PARTY_WINGS.map((wing, index) => (
+                                        <option key={index} value={wing} />
+                                    ))}
+                                </datalist>
                             </div>
 
                             <div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Phone, Calendar, Trash2, Edit2, User, Tag, Briefcase } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Calendar, Trash2, Edit2, User, Tag, Briefcase, Flag } from 'lucide-react';
 import { format } from 'date-fns';
 import { type Staff } from '../../types/staff';
 import { type Complaint } from '../../types';
@@ -61,6 +61,12 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                                 <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200">
                                     {member.category}
                                 </span>
+                                {member.party_wing && (
+                                    <span className="text-xs bg-orange-50 px-2 py-0.5 rounded text-orange-800 border border-orange-200 font-semibold flex items-center gap-1 shadow-sm">
+                                        <Flag className="w-3.5 h-3.5 text-orange-500" />
+                                        {member.party_wing}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield } from 'lucide-react';
+import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield, Clock, Loader2, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import BotDashboard from '../admin/BotDashboard';
 import SecurityLogs from './SecurityLogs';
@@ -16,7 +16,7 @@ const ProfileSettings = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'security'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'security' | 'support'>('profile');
 
     const [formData, setFormData] = useState({
         nagarsevak_name_english: '',
@@ -38,6 +38,89 @@ const ProfileSettings = () => {
         type: 'profile' | 'party';
         aspect: number;
     } | null>(null);
+
+    // Support states
+    const [supportTitle, setSupportTitle] = useState('');
+    const [supportDescription, setSupportDescription] = useState('');
+    const [supportPriority, setSupportPriority] = useState<'Low' | 'Medium' | 'High'>('Medium');
+    const [submittingSupport, setSubmittingSupport] = useState(false);
+    const [supportTickets, setSupportTickets] = useState<any[]>([]);
+    const [loadingTickets, setLoadingTickets] = useState(false);
+
+    const fetchSupportTickets = async () => {
+        if (!tenantId) return;
+        setLoadingTickets(true);
+        try {
+            const { data, error } = await supabase
+                .from('support_tickets')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setSupportTickets(data || []);
+        } catch (error) {
+            console.error('Error fetching support tickets:', error);
+        } finally {
+            setLoadingTickets(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'support' && tenantId) {
+            fetchSupportTickets();
+        }
+    }, [activeTab, tenantId]);
+
+    const handleSubmitSupport = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!supportTitle.trim() || !supportDescription.trim()) {
+            toast.error(language === 'mr' ? 'कृपया सर्व आवश्यक फील्ड भरा.' : 'Please fill in all required fields.');
+            return;
+        }
+
+        setSubmittingSupport(true);
+        try {
+            const userEmail = user?.email || 'unknown';
+            const userName = user?.name || 'unknown';
+            const userRole = user?.role || 'unknown';
+            
+            const meta = {
+                submitter_name: userName,
+                submitter_email: userEmail,
+                user_role: userRole,
+                user_agent: navigator.userAgent,
+                timestamp: new Date().toISOString()
+            };
+
+            const { error } = await supabase.from('support_tickets').insert([{
+                title: supportTitle,
+                description: supportDescription,
+                status: 'Pending',
+                priority: supportPriority,
+                user_id: userEmail,
+                user_name: userName,
+                description_meta: JSON.stringify(meta)
+            }]);
+
+            if (error) throw error;
+
+            toast.success(
+                language === 'mr' 
+                    ? 'तुमची अडचण यशस्वीरित्या नोंदवली गेली आहे.' 
+                    : 'Your support ticket has been submitted successfully.'
+            );
+            
+            setSupportTitle('');
+            setSupportDescription('');
+            setSupportPriority('Medium');
+            fetchSupportTickets();
+        } catch (error: any) {
+            console.error('Error submitting support ticket:', error);
+            toast.error(error.message || 'Error submitting ticket');
+        } finally {
+            setSubmittingSupport(false);
+        }
+    };
 
     // Check permissions
     const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
@@ -285,6 +368,18 @@ const ProfileSettings = () => {
                         <Shield className="w-4 h-4" />
                         {language === 'mr' ? 'सुरक्षा लॉग' : (t('security.title') || 'Security Logs')}
                     </button>
+                    <button
+                        onClick={() => setActiveTab('support')}
+                        className={clsx(
+                            'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                            activeTab === 'support'
+                                ? 'bg-white text-brand-700 shadow'
+                                : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                        )}
+                    >
+                        <AlertTriangle className="w-4 h-4" />
+                        {language === 'mr' ? 'अडचण नोंदवा' : 'Report Issue'}
+                    </button>
                 </div>
             </div>
 
@@ -502,6 +597,159 @@ const ProfileSettings = () => {
             {activeTab === 'security' && (
                 <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                     <SecurityLogs />
+                </div>
+            )}
+
+            {/* Support Content */}
+            {activeTab === 'support' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                    {/* Left Column: Form */}
+                    <div className="ns-card p-6 space-y-4 bg-white shadow-sm border border-slate-100 rounded-xl">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                            <AlertTriangle className="w-5 h-5 text-amber-500 animate-pulse" />
+                            {language === 'mr' ? 'नवीन अडचण नोंदवा' : 'Report New Issue'}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                            {language === 'mr' 
+                                ? 'अप्लिकेशन वापरताना काही अडचण किंवा बग आल्यास, आपण येथे तिकीट नोंदवू शकता.' 
+                                : 'If you face any issue or bug while using the application, you can raise a support ticket here.'}
+                        </p>
+
+                        <form onSubmit={handleSubmitSupport} className="space-y-4 pt-2">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {language === 'mr' ? 'अडचणीचा विषय / शीर्षक' : 'Issue Summary / Title'} <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    value={supportTitle}
+                                    onChange={(e) => setSupportTitle(e.target.value)}
+                                    className="ns-input w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                                    placeholder={language === 'mr' ? 'उदा. प्रोफाईल फोटो सेव्ह होत नाही' : 'e.g. Profile photo not saving'}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {language === 'mr' ? 'सविस्तर माहिती' : 'Detailed Description'} <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    required
+                                    rows={5}
+                                    value={supportDescription}
+                                    onChange={(e) => setSupportDescription(e.target.value)}
+                                    className="ns-input w-full min-h-[120px] border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+                                    placeholder={language === 'mr' 
+                                        ? 'अडचणीबद्दल सविस्तर माहिती लिहा (उदा. आपण काय करत होतात, काय एरर आली)' 
+                                        : 'Describe the issue in detail (e.g. what action you were performing, what error appeared)'}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {language === 'mr' ? 'प्राधान्य / तीव्रता' : 'Priority / Severity'}
+                                </label>
+                                <select
+                                    value={supportPriority}
+                                    onChange={(e) => setSupportPriority(e.target.value as any)}
+                                    className="ns-input w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white"
+                                >
+                                    <option value="Low">{language === 'mr' ? 'कमी (Low)' : 'Low'}</option>
+                                    <option value="Medium">{language === 'mr' ? 'मध्यम (Medium)' : 'Medium'}</option>
+                                    <option value="High">{language === 'mr' ? 'जास्त (High)' : 'High'}</option>
+                                </select>
+                            </div>
+
+                            <div className="pt-2 flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={submittingSupport}
+                                    className="ns-btn-primary flex items-center gap-2 animate-all duration-200"
+                                >
+                                    {submittingSupport ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            {language === 'mr' ? 'नोंदवत आहे...' : 'Submitting...'}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            {language === 'mr' ? 'तिकीट दाखल करा' : 'Submit Ticket'}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* Right Column: Submitted Tickets */}
+                    <div className="ns-card p-6 space-y-4 flex flex-col max-h-[600px] bg-white shadow-sm border border-slate-100 rounded-xl">
+                        <h3 className="flex items-center gap-2 text-lg font-bold text-slate-800 border-b pb-2">
+                            <Clock className="w-5 h-5 text-brand-600" />
+                            {language === 'mr' ? 'माझी तिकीटे' : 'My Support Tickets'}
+                        </h3>
+
+                        <div className="flex-1 overflow-y-auto pr-1">
+                            {loadingTickets ? (
+                                <div className="h-40 flex items-center justify-center">
+                                    <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+                                </div>
+                            ) : supportTickets.length > 0 ? (
+                                <div className="space-y-3 animate-in fade-in duration-300">
+                                    {supportTickets.map((ticket) => {
+                                        const cleanTitle = ticket.title;
+                                        const dateStr = ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : 'N/A';
+                                        
+                                        // Colors
+                                        let statusBg = 'bg-slate-100 text-slate-700';
+                                        if (ticket.status === 'Resolved') statusBg = 'bg-green-100 text-green-700';
+                                        else if (ticket.status === 'InProgress') statusBg = 'bg-yellow-100 text-yellow-700';
+                                        else if (ticket.status === 'Pending') statusBg = 'bg-red-50 text-red-700 border border-red-100';
+
+                                        let priorityBg = 'bg-slate-50 text-slate-600';
+                                        if (ticket.priority === 'High') priorityBg = 'bg-rose-50 text-rose-600 border border-rose-100';
+                                        else if (ticket.priority === 'Medium') priorityBg = 'bg-amber-50 text-amber-600 border border-amber-100';
+
+                                        return (
+                                            <div key={ticket.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors space-y-2">
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <h4 className="font-semibold text-slate-800 text-sm line-clamp-1">{cleanTitle}</h4>
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${statusBg}`}>
+                                                        {ticket.status === 'InProgress' ? (language === 'mr' ? 'काम चालू' : 'In Progress') : 
+                                                         ticket.status === 'Resolved' ? (language === 'mr' ? 'सोडवलेले' : 'Resolved') : 
+                                                         (language === 'mr' ? 'प्रलंबित' : 'Pending')}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-500 line-clamp-2">
+                                                    {ticket.description}
+                                                </p>
+                                                <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-100/50 mt-1">
+                                                    <span className="flex items-center gap-1">
+                                                        <Clock className="w-3 h-3 text-slate-400" />
+                                                        {dateStr}
+                                                    </span>
+                                                    <div className="flex gap-2 items-center">
+                                                        {ticket.priority && (
+                                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${priorityBg}`}>
+                                                                {ticket.priority}
+                                                            </span>
+                                                        )}
+                                                        <span className="font-mono text-slate-400">#{ticket.id}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="h-40 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-xl">
+                                    <HelpCircle className="w-8 h-8 text-slate-300 mb-2" />
+                                    <p className="text-sm font-medium">{language === 'mr' ? 'कोणतीही तिकीटे आढळली नाहीत.' : 'No support tickets found.'}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 

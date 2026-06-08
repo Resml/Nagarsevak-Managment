@@ -8,4 +8,5 @@ export interface Staff {
     keywords: string[];
     permissions?: string[];
     tenant_id?: string;
+    party_wing?: string;
 }
