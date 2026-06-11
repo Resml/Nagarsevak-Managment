@@ -9,4 +9,7 @@ export interface Staff {
     permissions?: string[];
     tenant_id?: string;
     party_wing?: string;
+    paksh?: string;
+    pad?: string;
+    society_name?: string;
 }

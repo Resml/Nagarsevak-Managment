@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { UserPlus, ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase } from '../../services/supabaseClient';
 import { useTenant } from '../../context/TenantContext';
+import { SEO } from '../../components/SEO';
 
 const JoinParty = () => {
     const navigate = useNavigate();
@@ -17,6 +18,22 @@ const JoinParty = () => {
         voterId: ''
     });
     const [isSubmitted, setIsSubmitted] = useState(false);
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [{
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://krishnaniti.in/"
+        },{
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Join Party",
+            "item": "https://krishnaniti.in/join-party"
+        }]
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value, type } = e.target;
@@ -117,6 +134,12 @@ const JoinParty = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+            <SEO 
+                title="Join Party - Krishnaniti"
+                description="Register to join the party and stay updated with the latest activities and development works in your ward."
+                url="https://krishnaniti.in/join-party"
+                structuredData={breadcrumbSchema}
+            />
             <div className="w-full max-w-md">
                 <div className="ns-card p-6 md:p-8 relative">
                     <button

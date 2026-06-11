@@ -5,26 +5,100 @@ import { useLanguage } from '../context/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Shield, ArrowRight, CheckCircle, Users, BarChart2, MessageSquare, Building2, Eye, LayoutDashboard, Globe, Star, ChevronDown, ChevronUp, Quote } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const { user, isLoading } = useAuth();
     const { t, language, setLanguage } = useLanguage();
 
+    const title = language === 'mr' ? 'कृष्णनीती - नगरसेवक व्यवस्थापन प्रणाली आणि जनसंपर्क' : 'Krishnaniti - Nagarsevak Management & Connect';
+    const description = language === 'mr' ? 'कृष्णनीती द्वारे नागरिक आणि लोकप्रतिनिधी यांच्यातील दरी कमी करा. वॉर्ड समस्या आणि विकास कार्ये कार्यक्षमतेने व्यवस्थापित करा.' : 'Bridge the gap between citizens and representatives with Krishnaniti. Efficiently manage ward issues and development.';
+
+    const organizationSchema = {
+        "@context": "https://schema.org",
+        "@type": "GovernmentOrganization",
+        "name": "Krishnaniti",
+        "alternateName": "Nagarsevak Management System",
+        "url": "https://krishnaniti.in",
+        "logo": "https://krishnaniti.in/favicon.svg",
+        "description": description,
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer support",
+            "email": "krishnaniti@gmail.com"
+        }
+    };
+
+    const navigationSchema = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "itemListElement": [
+            {
+                "@type": "SiteNavigationElement",
+                "position": 1,
+                "name": language === 'mr' ? "वैशिष्ट्ये" : "Features",
+                "url": "https://krishnaniti.in/#features"
+            },
+            {
+                "@type": "SiteNavigationElement",
+                "position": 2,
+                "name": language === 'mr' ? "नेहमी विचारले जाणारे प्रश्न" : "FAQ",
+                "url": "https://krishnaniti.in/#faq"
+            },
+            {
+                "@type": "SiteNavigationElement",
+                "position": 3,
+                "name": language === 'mr' ? "लॉगिन" : "Login",
+                "url": "https://krishnaniti.in/login"
+            },
+            {
+                "@type": "SiteNavigationElement",
+                "position": 4,
+                "name": language === 'mr' ? "नोंदणी" : "Register",
+                "url": "https://krishnaniti.in/join-party"
+            }
+        ]
+    };
+
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [1, 2, 3, 4].map((i) => ({
+            "@type": "Question",
+            "name": t(`faq.q${i}`),
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": t(`faq.a${i}`)
+            }
+        }))
+    };
+
+    const structuredDataList = [organizationSchema, navigationSchema, faqSchema];
+
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900">
-            <Helmet>
-                <title>{language === 'mr' ? 'कृष्णनीती - नगरसेवक व्यवस्थापन प्रणाली आणि जनसंपर्क' : 'Krishnaniti - Nagarsevak Management & Connect'}</title>
-                <meta name="description" content={language === 'mr' ? 'कृष्णनीती द्वारे नागरिक आणि लोकप्रतिनिधी यांच्यातील दरी कमी करा. वॉर्ड समस्या आणि विकास कार्ये कार्यक्षमतेने व्यवस्थापित करा.' : 'Bridge the gap between citizens and representatives with Krishnaniti. Efficiently manage ward issues and development.'} />
-                <link rel="canonical" href="https://krishnaniti.in/" />
-                {language === 'mr' && <link rel="alternate" hrefLang="mr" href="https://krishnaniti.in/" />}
-            </Helmet>
+        <main className="min-h-screen bg-white font-sans text-slate-900">
+            <SEO 
+                title={title}
+                description={description}
+                url={language === 'mr' ? 'https://krishnaniti.in/?lang=mr' : 'https://krishnaniti.in/'}
+                structuredData={structuredDataList}
+            />
+            {language === 'mr' ? (
+                <Helmet>
+                    <link rel="alternate" hrefLang="en" href="https://krishnaniti.in/" />
+                </Helmet>
+            ) : (
+                <Helmet>
+                    <link rel="alternate" hrefLang="mr" href="https://krishnaniti.in/?lang=mr" />
+                </Helmet>
+            )}
             {/* Navigation */}
             <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-3">
-                            <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-10 w-10 object-contain" />
+                            <img src="/favicon.svg" alt="Krishnaniti Logo" loading="lazy" width="40" height="40" className="h-10 w-10 object-contain" />
                             <span className="font-display font-bold text-2xl tracking-tight text-slate-900">
                                 Krishnaniti
                             </span>
@@ -33,6 +107,7 @@ const LandingPage = () => {
                             onClick={() => setLanguage(language === 'en' ? 'mr' : 'en')}
                             className="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-full transition-all mr-2"
                             title={language === 'en' ? 'Switch to Marathi' : 'Switch to English'}
+                            aria-label={language === 'en' ? 'Switch to Marathi language' : 'Switch to English language'}
                         >
                             <Globe className="w-5 h-5" />
                             <span className="sr-only">Switch Language</span>
@@ -40,6 +115,7 @@ const LandingPage = () => {
                         <button
                             onClick={() => navigate(user ? '/dashboard' : '/login')}
                             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-full font-medium text-sm transition-all shadow-lg shadow-slate-900/20 active:scale-95 flex items-center gap-2"
+                            aria-label={user ? t('landing.hero.dashboard') : t('landing.hero.login')}
                         >
                             <span>{user ? t('landing.hero.dashboard') : t('landing.hero.login')}</span>
                             <ArrowRight className="w-4 h-4" />
@@ -103,10 +179,14 @@ const LandingPage = () => {
                         <button
                             onClick={() => navigate(user ? '/dashboard' : '/login')}
                             className="w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-lg shadow-xl shadow-brand-600/30 transition-all hover:-translate-y-1"
+                            aria-label={user ? t('landing.hero.dashboard') : t('landing.hero.get_started')}
                         >
                             {user ? t('landing.hero.dashboard') : t('landing.hero.get_started')}
                         </button>
-                        <button className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 hover:border-brand-200 hover:text-brand-700">
+                        <button 
+                            className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 hover:border-brand-200 hover:text-brand-700"
+                            aria-label={t('landing.hero.view_demo')}
+                        >
                             <Eye className="w-5 h-5" />
                             {t('landing.hero.view_demo')}
                         </button>
@@ -125,7 +205,7 @@ const LandingPage = () => {
             </section>
 
             {/* Features Grid */}
-            <section className="py-24 bg-slate-50">
+            <section id="features" className="py-24 bg-slate-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center max-w-3xl mx-auto mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{t('landing.features.title')}</h2>
@@ -174,7 +254,7 @@ const LandingPage = () => {
             </section>
 
             {/* Testimonials */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section id="testimonials" className="py-24 bg-white relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-64 h-64 bg-brand-50/50 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-16">
@@ -215,7 +295,7 @@ const LandingPage = () => {
             </section>
 
             {/* FAQ */}
-            <section className="py-24 bg-slate-50">
+            <section id="faq" className="py-24 bg-slate-50">
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">{t('faq.title')}</h2>
@@ -240,7 +320,7 @@ const LandingPage = () => {
                     <div className="grid md:grid-cols-4 gap-8 mb-8">
                         <div className="col-span-1 md:col-span-2">
                             <div className="flex items-center gap-3 mb-4 text-white">
-                                <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-10 w-10 object-contain" />
+                                <img src="/favicon.svg" alt="Krishnaniti Logo" loading="lazy" width="40" height="40" className="h-10 w-10 object-contain" />
                                 <span className="font-display font-bold text-2xl tracking-tight">
                                     Krishnaniti
                                 </span>
@@ -250,9 +330,9 @@ const LandingPage = () => {
                         <div>
                             <h4 className="text-white font-semibold mb-4">{t('landing.footer.platform')}</h4>
                             <ul className="space-y-2 text-sm">
-                                <li><a href="#features" className="hover:text-brand-400 transition">{t('landing.footer.features')}</a></li>
-                                <li><a href="#testimonials" className="hover:text-brand-400 transition">{t('landing.footer.testimonials')}</a></li>
-                                <li><a href="/pricing" className="hover:text-brand-400 transition">{t('landing.footer.pricing')}</a></li>
+                                <li><a href={language === 'mr' ? '/features?lang=mr' : '/features'} className="hover:text-brand-400 transition">{t('landing.footer.features')}</a></li>
+                                <li><a href={language === 'mr' ? '/faq?lang=mr' : '/faq'} className="hover:text-brand-400 transition">{t('faq.title')}</a></li>
+                                <li><a href={language === 'mr' ? '/?lang=mr#testimonials' : '/#testimonials'} className="hover:text-brand-400 transition">{t('landing.footer.testimonials')}</a></li>
                             </ul>
                         </div>
                         <div>
@@ -269,7 +349,7 @@ const LandingPage = () => {
                     </div>
                 </div>
             </footer>
-        </div>
+        </main>
     );
 };
 

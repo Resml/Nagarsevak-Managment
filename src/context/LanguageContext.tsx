@@ -25,11 +25,25 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Fallback if not wrapped in AuthProvider during tests
     }
 
-    // Get initial language from localStorage or default to 'en'
+    // Get initial language from URL, localStorage or default to 'en'
     const getInitialLanguage = (): Language => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const langParam = params.get('lang');
+            if (langParam === 'en' || langParam === 'mr') return langParam as Language;
+        }
         const saved = localStorage.getItem('ns_language') as Language;
         // Only support 'en' and 'mr' now
         if (saved && (saved === 'en' || saved === 'mr')) return saved;
+        
+        // Auto-detect browser language preference
+        if (typeof navigator !== 'undefined') {
+            const browserLang = navigator.language || (navigator as any).userLanguage;
+            if (browserLang) {
+                const mainLang = browserLang.split('-')[0];
+                if (mainLang === 'mr') return 'mr';
+            }
+        }
         return 'en';
     };
 
@@ -51,6 +65,12 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         setLanguageState(lang);
         localStorage.setItem('ns_language', lang);
+
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', lang);
+            window.history.replaceState({}, '', url.toString());
+        }
     };
 
     // Translation function: supports nested keys like 'common.welcome' and interpolation {{key}}

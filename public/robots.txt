@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /join-party
+Allow: /login
+Disallow: /*/dashboard/
+Disallow: /dashboard/
 
-Sitemap: https://nagarsevak.app/sitemap.xml
+Sitemap: https://krishnaniti.in/sitemap.xml

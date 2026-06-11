@@ -111,6 +111,9 @@ export interface Staff {
   role: string;
   keywords: string[];
   party_wing?: string;
+  paksh?: string;
+  pad?: string;
+  society_name?: string;
 }
 
 export interface Sadasya {

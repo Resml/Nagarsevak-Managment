@@ -8,6 +8,9 @@ import AppLayout from './components/layout/AppLayout';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 
+const FeaturesPage = lazy(() => import('./pages/FeaturesPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+
 // Lazy-loaded routes for performance optimization
 const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'));
 const VoterList = lazy(() => import('./pages/voters/VoterList'));
@@ -285,6 +288,8 @@ function App() {
       <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/faq" element={<FAQPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/join-party" element={<JoinParty />} />
           <Route path="/s/:id" element={<PublicSurveyForm />} />

@@ -266,7 +266,10 @@ const StaffList = () => {
         keywords: '',
         categories: [] as string[],
         permissions: [] as string[],
-        party_wing: ''
+        party_wing: '',
+        paksh: '',
+        pad: '',
+        society_name: ''
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -348,7 +351,10 @@ const StaffList = () => {
                         area: formData.area,
                         keywords: finalKeywords,
                         permissions: formData.permissions,
-                        party_wing: formData.party_wing
+                        party_wing: formData.party_wing,
+                        paksh: formData.paksh,
+                        pad: formData.pad,
+                        society_name: formData.society_name
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
@@ -388,17 +394,23 @@ const StaffList = () => {
                     throw new Error(data.error);
                 }
 
-                // Update the newly created user's party wing field since edge function does not support it
+                // Update the newly created user's custom fields since edge function does not support them
                 if (data && data.user && data.user.id) {
                     const newUserId = data.user.id;
-                    if (formData.party_wing) {
+                    const updatePayload: any = {};
+                    if (formData.party_wing) updatePayload.party_wing = formData.party_wing;
+                    if (formData.paksh) updatePayload.paksh = formData.paksh;
+                    if (formData.pad) updatePayload.pad = formData.pad;
+                    if (formData.society_name) updatePayload.society_name = formData.society_name;
+
+                    if (Object.keys(updatePayload).length > 0) {
                         const { error: updateError } = await supabase
                             .from('staff')
-                            .update({ party_wing: formData.party_wing })
+                            .update(updatePayload)
                             .eq('id', newUserId)
                             .eq('tenant_id', tenantId);
                         if (updateError) {
-                            console.error('Failed to update party wing for new staff:', updateError);
+                            console.error('Failed to update custom fields for new staff:', updateError);
                         }
                     }
                 }
@@ -407,7 +419,7 @@ const StaffList = () => {
             }
 
             setShowModal(false);
-            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [], party_wing: '' });
+            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [], party_wing: '', paksh: '', pad: '', society_name: '' });
             setEditingStaffId(null);
             fetchStaff();
         } catch (err: any) {
@@ -436,7 +448,10 @@ const StaffList = () => {
             keywords: manualKeywords.join(', '),
             categories: foundCategories,
             permissions: staffMember.permissions || [],
-            party_wing: staffMember.party_wing || ''
+            party_wing: staffMember.party_wing || '',
+            paksh: staffMember.paksh || '',
+            pad: staffMember.pad || '',
+            society_name: staffMember.society_name || ''
         });
         setShowModal(true);
         // We might want to keep the profile open or close it?
@@ -1245,15 +1260,34 @@ const StaffList = () => {
                                                 <span className="inline-flex items-center text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                                                     <TranslatedText text={member.role} />
                                                 </span>
+                                                {member.paksh && (
+                                                    <span className="inline-flex items-center text-xs font-bold text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-full shadow-sm">
+                                                        <Briefcase className="w-3.5 h-3.5 mr-1 text-sky-500" />
+                                                        {member.paksh}
+                                                    </span>
+                                                )}
                                                 {member.area && (
                                                     <span className="inline-flex items-center text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded">
                                                         <TranslatedText text={member.area} />
+                                                        {member.society_name && ` (${member.society_name})`}
+                                                    </span>
+                                                )}
+                                                {!member.area && member.society_name && (
+                                                    <span className="inline-flex items-center text-xs text-gray-500 border border-gray-200 px-1.5 py-0.5 rounded">
+                                                        <TranslatedText text={member.society_name} />
                                                     </span>
                                                 )}
                                                 {member.party_wing && (
                                                     <span className="inline-flex items-center text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full shadow-sm">
                                                         <Flag className="w-3.5 h-3.5 mr-1 text-orange-500" />
                                                         <TranslatedText text={member.party_wing} />
+                                                        {member.pad && ` - ${member.pad}`}
+                                                    </span>
+                                                )}
+                                                {!member.party_wing && member.pad && (
+                                                    <span className="inline-flex items-center text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full shadow-sm">
+                                                        <Flag className="w-3.5 h-3.5 mr-1 text-orange-500" />
+                                                        <TranslatedText text={member.pad} />
                                                     </span>
                                                 )}
                                             </div>
@@ -1323,11 +1357,22 @@ const StaffList = () => {
                                         <tr key={member.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedStaff(member)}>
                                             <td className="px-6 py-4 text-sm text-gray-800">
                                                 <div className="font-semibold"><TranslatedText text={member.name} /></div>
-                                                <div className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+                                                <div className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap mt-0.5">
                                                     <TranslatedText text={member.role} />
+                                                    {member.paksh && (
+                                                        <span className="inline-flex items-center text-[10px] font-bold text-sky-700 bg-sky-50 px-1.5 py-0.2 rounded border border-sky-200">
+                                                            {member.paksh}
+                                                        </span>
+                                                    )}
                                                     {member.party_wing && (
                                                         <span className="inline-flex items-center text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200">
                                                             {member.party_wing}
+                                                            {member.pad && ` - ${member.pad}`}
+                                                        </span>
+                                                    )}
+                                                    {!member.party_wing && member.pad && (
+                                                        <span className="inline-flex items-center text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200">
+                                                            {member.pad}
                                                         </span>
                                                     )}
                                                 </div>
@@ -1336,7 +1381,16 @@ const StaffList = () => {
                                                 {member.mobile}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
-                                                {member.area || <span className="text-gray-400 italic">N/A</span>}
+                                                {member.area ? (
+                                                    <span>
+                                                        {member.area}
+                                                        {member.society_name && <span className="text-xs text-gray-400 block mt-0.5">{member.society_name}</span>}
+                                                    </span>
+                                                ) : member.society_name ? (
+                                                    <span>{member.society_name}</span>
+                                                ) : (
+                                                    <span className="text-gray-400 italic">N/A</span>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-sm text-gray-600">
                                                 <div className="flex flex-wrap gap-1">
@@ -1394,17 +1448,41 @@ const StaffList = () => {
                     <div className="bg-white rounded-xl max-w-lg w-full p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4 text-gray-900">{editingStaffId ? 'Edit Staff Member' : t('staff.modal.title')}</h2>
                         <form onSubmit={handleSave} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">{t('staff.modal.category')}</label>
-                                <select
-                                    className="ns-input mt-1"
-                                    value={formData.category}
-                                    onChange={e => setFormData({ ...formData, category: e.target.value as any })}
-                                >
-                                    <option value="Office">{t('staff.modal.office_desc')}</option>
-                                    <option value="Party">{t('staff.modal.party_desc')}</option>
-                                    <option value="Cooperative">{t('staff.modal.coop_desc')}</option>
-                                </select>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">{t('staff.modal.category')}</label>
+                                    <select
+                                        className="ns-input mt-1"
+                                        value={formData.category}
+                                        onChange={e => setFormData({ ...formData, category: e.target.value as any })}
+                                    >
+                                        <option value="Office">{t('staff.modal.office_desc')}</option>
+                                        <option value="Party">{t('staff.modal.party_desc')}</option>
+                                        <option value="Cooperative">{t('staff.modal.coop_desc')}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
+                                        {tr('Political Party (Paksh)', 'राजकीय पक्ष (पक्ष)')}
+                                        <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
+                                    </label>
+                                    <select
+                                        className="ns-input mt-1"
+                                        value={formData.paksh || ''}
+                                        onChange={e => setFormData({ ...formData, paksh: e.target.value })}
+                                    >
+                                        <option value="">{tr('Select Party', 'पक्ष निवडा')}</option>
+                                        <option value="BJP">{tr('BJP (Bharatiya Janata Party)', 'भाजप (भारतीय जनता पक्ष)')}</option>
+                                        <option value="INC">{tr('INC (Congress)', 'काँग्रेस (आय)')}</option>
+                                        <option value="NCP">{tr('NCP (Nationalist Congress Party)', 'राष्ट्रवादी काँग्रेस')}</option>
+                                        <option value="SHS">{tr('Shiv Sena', 'शिवसेना')}</option>
+                                        <option value="UBT">{tr('Shivsena (UBT)', 'शिवसेना (उद्धव बाळासाहेब ठाकरे)')}</option>
+                                        <option value="MNS">{tr('MNS (Maharashtra Navnirman Sena)', 'मनсе (महाराष्ट्र नवनिर्माण सेना)')}</option>
+                                        <option value="AAP">{tr('AAP (Aam Aadmi Party)', 'आप (आम आदमी पक्ष)')}</option>
+                                        <option value="Independent">{tr('Independent', 'अपक्ष')}</option>
+                                        <option value="Other">{tr('Other / None', 'इतर / कोणताही नाही')}</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -1476,30 +1554,31 @@ const StaffList = () => {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">{t('staff.modal.role')}</label>
+                                <input
+                                    type="text"
+                                    list="roles"
+                                    required
+                                    className="ns-input mt-1"
+                                    value={formData.role}
+                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
+                                    placeholder={t('staff.modal.role_placeholder')}
+                                />
+                                <datalist id="roles">
+                                    <option value="Office Admin" />
+                                    <option value="Personal Assistant" />
+                                    <option value="Ward President" />
+                                    <option value="Booth Pramukh" />
+                                    <option value="Electrician" />
+                                    <option value="Plumber" />
+                                    <option value="Sanitation Worker" />
+                                </datalist>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">{t('staff.modal.role')}</label>
-                                    <input
-                                        type="text"
-                                        list="roles"
-                                        required
-                                        className="ns-input mt-1"
-                                        value={formData.role}
-                                        onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                        placeholder={t('staff.modal.role_placeholder')}
-                                    />
-                                    <datalist id="roles">
-                                        <option value="Office Admin" />
-                                        <option value="Personal Assistant" />
-                                        <option value="Ward President" />
-                                        <option value="Booth Pramukh" />
-                                        <option value="Electrician" />
-                                        <option value="Plumber" />
-                                        <option value="Sanitation Worker" />
-                                    </datalist>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">{t('staff.modal.area')}</label>
+                                    <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">{t('staff.modal.area')}</label>
                                     <input
                                         type="text"
                                         className="ns-input mt-1"
@@ -1508,26 +1587,64 @@ const StaffList = () => {
                                         placeholder={t('staff.modal.area_placeholder')}
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
+                                        {tr('Society Name', 'सोसायटीचे नाव')}
+                                        <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="ns-input mt-1"
+                                        value={formData.society_name || ''}
+                                        onChange={e => setFormData({ ...formData, society_name: e.target.value })}
+                                        placeholder={tr('e.g. Royal Heights', 'उदा. रॉयल हाईट्स')}
+                                    />
+                                </div>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
-                                    {tr('Party Wing (Paksh Wing)', 'पक्ष आघाडी / सेल')}
-                                    <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    list="party-wings"
-                                    className="ns-input mt-1"
-                                    value={formData.party_wing || ''}
-                                    onChange={e => setFormData({ ...formData, party_wing: e.target.value })}
-                                    placeholder={tr('Select or type party wing', 'पक्ष आघाडी निवडा किंवा टाईप करा')}
-                                />
-                                <datalist id="party-wings">
-                                    {PARTY_WINGS.map((wing, index) => (
-                                        <option key={index} value={wing} />
-                                    ))}
-                                </datalist>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
+                                        {tr('Party Wing (Paksh Wing)', 'पक्ष आघाडी / सेल')}
+                                        <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        list="party-wings"
+                                        className="ns-input mt-1"
+                                        value={formData.party_wing || ''}
+                                        onChange={e => setFormData({ ...formData, party_wing: e.target.value })}
+                                        placeholder={tr('Select or type party wing', 'पक्ष आघाडी निवडा किंवा टाईप करा')}
+                                    />
+                                    <datalist id="party-wings">
+                                        {PARTY_WINGS.map((wing, index) => (
+                                            <option key={index} value={wing} />
+                                        ))}
+                                    </datalist>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
+                                        {tr('Designation/Post (Pad)', 'पद (पक्ष आघाडीतील पद)')}
+                                        <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        list="party-posts"
+                                        className="ns-input mt-1"
+                                        value={formData.pad || ''}
+                                        onChange={e => setFormData({ ...formData, pad: e.target.value })}
+                                        placeholder={tr('e.g. President, Secretary', 'उदा. अध्यक्ष, सचिव')}
+                                    />
+                                    <datalist id="party-posts">
+                                        <option value={tr('President', 'अध्यक्ष')} />
+                                        <option value={tr('Vice President', 'उपाध्यक्ष')} />
+                                        <option value={tr('Secretary', 'सचिव')} />
+                                        <option value={tr('Joint Secretary', 'सहसचिव')} />
+                                        <option value={tr('Treasurer', 'कोषाध्यक्ष')} />
+                                        <option value={tr('Organizer', 'संघटक')} />
+                                        <option value={tr('Member', 'सदस्य')} />
+                                    </datalist>
+                                </div>
                             </div>
 
                             <div>

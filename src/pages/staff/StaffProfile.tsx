@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Phone, Calendar, Trash2, Edit2, User, Tag, Briefcase, Flag } from 'lucide-react';
+import { ArrowLeft, MapPin, Phone, Calendar, Trash2, Edit2, User, Tag, Briefcase, Flag, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { type Staff } from '../../types/staff';
 import { type Complaint } from '../../types';
@@ -61,10 +61,22 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                                 <span className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600 border border-slate-200">
                                     {member.category}
                                 </span>
+                                {member.paksh && (
+                                    <span className="text-xs bg-sky-50 px-2 py-0.5 rounded text-sky-850 border border-sky-200 font-bold flex items-center gap-1 shadow-sm">
+                                        <Briefcase className="w-3.5 h-3.5 text-sky-500" />
+                                        {member.paksh}
+                                    </span>
+                                )}
                                 {member.party_wing && (
                                     <span className="text-xs bg-orange-50 px-2 py-0.5 rounded text-orange-800 border border-orange-200 font-semibold flex items-center gap-1 shadow-sm">
                                         <Flag className="w-3.5 h-3.5 text-orange-500" />
                                         {member.party_wing}
+                                    </span>
+                                )}
+                                {member.pad && (
+                                    <span className="text-xs bg-emerald-50 px-2 py-0.5 rounded text-emerald-800 border border-emerald-200 font-semibold flex items-center gap-1 shadow-sm animate-in fade-in">
+                                        <User className="w-3.5 h-3.5 text-emerald-500" />
+                                        {member.pad}
                                     </span>
                                 )}
                             </div>
@@ -101,6 +113,15 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                                 <div>
                                     <p className="text-slate-900"><TranslatedText text={member.area} /></p>
                                     <p className="text-xs text-slate-500 mt-0.5">Assigned Area</p>
+                                </div>
+                            </div>
+                        )}
+                        {member.society_name && (
+                            <div className="flex items-start space-x-3">
+                                <Building2 className="w-5 h-5 text-slate-400 mt-0.5" />
+                                <div>
+                                    <p className="text-slate-900"><TranslatedText text={member.society_name} /></p>
+                                    <p className="text-xs text-slate-500 mt-0.5">Society Name / building</p>
                                 </div>
                             </div>
                         )}
