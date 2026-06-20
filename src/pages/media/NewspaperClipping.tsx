@@ -7,7 +7,8 @@ import { type GalleryItem, type GalleryCategory } from '../../types';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import NewspaperTutorial from '../../components/tutorial/NewspaperTutorial';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Download } from 'lucide-react';
+import { NewspaperReportGenerator } from '../../components/reports/NewspaperReportGenerator';
 
 const NewspaperClipping = () => {
     const { t, language } = useLanguage();
@@ -22,6 +23,7 @@ const NewspaperClipping = () => {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+    const [showPdfGenerator, setShowPdfGenerator] = useState(false);
 
     const [formData, setFormData] = useState<{
         title: string;
@@ -342,13 +344,21 @@ const NewspaperClipping = () => {
                         <h3 className="font-semibold text-slate-800">
                             {t('newspaper.title')} - {t('common.report')} ({getFilteredItems().length})
                         </h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                            title={t('common.print')}
-                        >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowPdfGenerator(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 shadow-sm"
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                                title={t('common.print')}
+                            >
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-slate-200">
@@ -518,6 +528,13 @@ const NewspaperClipping = () => {
                     </div>
                 )
             }
+
+            {showPdfGenerator && (
+                <NewspaperReportGenerator
+                    items={getFilteredItems()}
+                    onClose={() => setShowPdfGenerator(false)}
+                />
+            )}
 
             {/* Delete Confirmation Modal */}
             {

@@ -2,8 +2,9 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
-import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer, CheckSquare, CheckCircle, Clock, AlertCircle, Calendar, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer, CheckSquare, CheckCircle, Clock, AlertCircle, Calendar, ChevronDown, ChevronUp, BarChart2, Download } from 'lucide-react';
 import StaffProfile from './StaffProfile';
+import { StaffReportGenerator } from './StaffReportGenerator';
 import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -54,6 +55,7 @@ const StaffList = () => {
     const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [showPdfGenerator, setShowPdfGenerator] = useState(false);
 
     // Karyakarta Work Management State
     const [tasks, setTasks] = useState<any[]>([]);
@@ -1335,21 +1337,29 @@ const StaffList = () => {
                             <h3 className="font-semibold text-gray-800">
                                 {t('staff.tabs.office')} - {t('common.report')} ({filteredStaff.length})
                             </h3>
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
-                            >
-                                <Printer className="w-4 h-4" /> Print
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowPdfGenerator(true)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 shadow-sm"
+                                >
+                                    <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                                </button>
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm"
+                                >
+                                    <Printer className="w-4 h-4" /> Print
+                                </button>
+                            </div>
                         </div>
                         <div className="overflow-x-auto print:overflow-visible">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50 print:bg-gray-100">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name & Role</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Area</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Keywords/Categories</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.name_role')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.contact')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.area')}</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.keywords_categories')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -1765,6 +1775,15 @@ const StaffList = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* PDF Generator */}
+            {showPdfGenerator && (
+                <StaffReportGenerator
+                    staffList={filteredStaff}
+                    activeTab={activeTab}
+                    onClose={() => setShowPdfGenerator(false)}
+                />
             )}
         </>
     );

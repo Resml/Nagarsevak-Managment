@@ -238,7 +238,7 @@ export const LetterReportGenerator: React.FC<LetterReportGeneratorProps> = ({ le
                                     <div className="grid grid-cols-2 gap-4 pl-7 pt-4 border-t border-slate-100">
                                         <div>
                                             <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">
-                                                {type === 'outgoing' ? 'प्राप्तकर्ता' : 'प्रेषक'}
+                                                {type === 'outgoing' ? (t('letters.recipient') || 'Recipient') : (t('letters.sender') || 'Sender')}
                                             </p>
                                             <p className="text-sm font-medium text-slate-900">
                                                 <TranslatedText text={type === 'outgoing' ? letter.recipient_name : letter.sender_name} />
@@ -246,7 +246,7 @@ export const LetterReportGenerator: React.FC<LetterReportGeneratorProps> = ({ le
                                         </div>
                                         <div>
                                              <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">
-                                                 मोबाईल नंबर
+                                                 {t('common.report_columns.mobile') || 'Mobile Number'}
                                              </p>
                                              <p className="text-sm font-mono text-slate-900">
                                                  {letter.details?.mobile || letter.mobile || letter.voter?.mobile || '-'}
@@ -257,7 +257,7 @@ export const LetterReportGenerator: React.FC<LetterReportGeneratorProps> = ({ le
                                     {/* Area row - always shown for outgoing letters */}
                                     {(letter.area || letter.details?.area) && (
                                         <div className="pl-7 pt-3">
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">क्षेत्र / पत्ता</p>
+                                            <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">{t('common.report_columns.area') || 'Area / Address'}</p>
                                             <p className="text-sm text-slate-700">{letter.area || letter.details?.area}</p>
                                         </div>
                                     )}

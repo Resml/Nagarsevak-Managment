@@ -630,14 +630,6 @@ const EventManagement = () => {
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
-                    {viewMode === 'report' && (
-                        <button
-                            onClick={() => setShowReport(true)}
-                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 border border-brand-200 rounded-lg hover:bg-brand-100 transition-colors shadow-sm"
-                        >
-                            <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
-                        </button>
-                    )}
                 </div>
             </div>
 
@@ -733,12 +725,20 @@ const EventManagement = () => {
                         <h3 className="font-semibold text-slate-800">
                             {t('events.title')} - {t('common.report_view')} ({filteredEvents.length})
                         </h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                        >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowReport(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 shadow-sm"
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            >
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full divide-y divide-slate-200">

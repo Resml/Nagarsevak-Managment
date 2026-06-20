@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer, BarChart2 } from 'lucide-react';
+import { MapPin, Search, User, Home, Filter, RefreshCw, ChevronDown, Plus, Users, ArrowLeft, LayoutGrid, FileText, Printer, BarChart2, Download } from 'lucide-react';
 import { type Voter } from '../../types';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { VoterReportGenerator } from '../../components/reports/VoterReportGenerator';
 
 const PAGE_SIZE = 50;
 
@@ -37,6 +38,7 @@ const VoterList = () => {
     const [isAllocating, setIsAllocating] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [showFamilyGrouping, setShowFamilyGrouping] = useState(false);
+    const [showPdfGenerator, setShowPdfGenerator] = useState(false);
 
     // Favour-wise Allocation State
     const [favourFilter, setFavourFilter] = useState('');
@@ -837,26 +839,34 @@ const VoterList = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
                         <h3 className="font-semibold text-slate-800">Voters {t('common.report')} ({totalCount !== null ? totalCount : voters.length})</h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                        >
-                            <Printer className="w-4 h-4" /> Print
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowPdfGenerator(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 shadow-sm"
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                            >
+                                <Printer className="w-4 h-4" /> Print
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">#</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">EPIC No</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Age</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Gender</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Ward / Booth</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Caste</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Favour</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.name') || 'Name'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('common.epic_no') || 'EPIC No'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('voters.age') || 'Age'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('add_voter.form.gender') || 'Gender'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('voters.address') || 'Address'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('voters.ward') || 'Ward'} / {t('voters.booth') || 'Booth'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('add_voter.form.caste') || 'Caste'}</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{t('voters.favour_label') || 'Favour'}</th>
                                 </tr>
                             </thead>
                              <tbody className="bg-white divide-y divide-slate-200">
@@ -1696,6 +1706,12 @@ const VoterList = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {showPdfGenerator && (
+                <VoterReportGenerator
+                    voters={voters}
+                    onClose={() => setShowPdfGenerator(false)}
+                />
             )}
         </div>
     );

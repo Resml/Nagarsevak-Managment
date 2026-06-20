@@ -110,8 +110,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
             pdf.save(`Scheme_Applications_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
             onClose();
         } catch (err) {
-            console.error('PDF error:', err);
-            alert('PDF तयार करण्यात अयशस्वी. पुन्हा प्रयत्न करा.');
+            alert(t('schemes.pdf_error') || 'Failed to generate PDF. Please try again.');
         } finally {
             setGenerating(false);
             setProgress(0);
@@ -126,7 +125,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <FileText style={{ width: 20, height: 20, color: '#0284c7' }} />
-                        <span style={{ fontWeight: 700, fontSize: '16px', color: '#1e293b' }}>सरकारी योजना — अर्ज अहवाल</span>
+                        <span style={{ fontWeight: 700, fontSize: '16px', color: '#1e293b' }}>{t('schemes.title') || 'Government Schemes'} — {t('schemes.application_report') || 'Application Report'}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {generating && (
@@ -145,7 +144,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                             {generating
                                 ? <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                                 : <Download style={{ width: 16, height: 16 }} />}
-                            {generating ? 'तयार होत आहे...' : 'PDF डाउनलोड करा'}
+                            {generating ? (t('work_history.generating') || 'Generating...') : (t('work_history.download_pdf') || 'Download PDF')}
                         </button>
                         <button onClick={onClose} style={{ padding: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', borderRadius: '50%' }}>
                             <X style={{ width: 20, height: 20 }} />
@@ -162,12 +161,12 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                         {/* Report Header */}
                         <div style={{ borderBottom: '2px solid #0284c7', paddingBottom: '24px', marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                             <div>
-                                <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0369a1', margin: 0, marginBottom: '4px' }}>सरकारी योजना</h1>
-                                <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>अर्ज नोंदणी अहवाल</p>
+                                <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#0369a1', margin: 0, marginBottom: '4px' }}>{t('schemes.title') || 'Government Schemes'}</h1>
+                                <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>{t('schemes.application_report') || 'Application Report'}</p>
                             </div>
                             <div style={{ textAlign: 'right', fontSize: '12px', color: '#94a3b8' }}>
-                                <p style={{ margin: 0 }}>दिनांक: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
-                                <p style={{ margin: 0 }}>एकूण अर्ज: {applications.length}</p>
+                                <p style={{ margin: 0 }}>{t('common.date')}: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+                                <p style={{ margin: 0 }}>{t('schemes.total_applications') || 'Total Applications'}: {applications.length}</p>
                             </div>
                         </div>
 
@@ -175,7 +174,15 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                             <thead>
                                 <tr style={{ background: '#f8fafc' }}>
-                                    {['अ.क्र.', 'अर्जदाराचे नाव', 'मोबाईल / पत्ता', 'योजनेचे नाव', 'दिनांक', 'स्थिती', 'लाभ / नकाराचे कारण'].map((h, i) => (
+                                    {[
+                                        t('common.report_columns.sr_no'),
+                                        t('schemes.applicant_name') || 'Applicant Name',
+                                        t('schemes.mobile_address') || 'Mobile / Address',
+                                        t('schemes.scheme_name') || 'Scheme Name',
+                                        t('common.report_columns.date'),
+                                        t('common.status'),
+                                        t('schemes.benefit_reason') || 'Benefit / Reason'
+                                    ].map((h, i) => (
                                         <th key={i} style={{ border: '1px solid #e2e8f0', padding: '8px 6px', textAlign: 'left', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>
                                             {h}
                                         </th>
@@ -212,7 +219,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                         </table>
 
                         <div style={{ marginTop: '60px', paddingTop: '24px', borderTop: '1px solid #f1f5f9', textAlign: 'center', color: '#94a3b8', fontSize: '10px', fontStyle: 'italic' }}>
-                            Generated by Nagarsevak Management System
+                            {t('common.generated_by') || 'Generated by Nagarsevak Management System'}
                         </div>
                     </div>
                 </div>

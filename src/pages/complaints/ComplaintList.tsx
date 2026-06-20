@@ -674,7 +674,6 @@ const ComplaintList = () => {
                             <thead className="bg-gray-50 print:bg-gray-100">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.date_time')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.ticket_id')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.citizen_info')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.title_type')}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('common.report_columns.location_area')}</th>
@@ -689,9 +688,6 @@ const ComplaintList = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {format(new Date(complaint.createdAt), 'MMM d, yyyy')}<br />
                                             <span className="text-xs text-gray-400">{format(new Date(complaint.createdAt), 'h:mm a')}</span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand-600">
-                                            #{complaint.id}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-800">
                                             <div className="font-medium">

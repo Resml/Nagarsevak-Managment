@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper, LayoutGrid, Printer, HelpCircle } from 'lucide-react';
+import { Search, FileText, ChevronRight, Info, Sparkles, RefreshCw, Plus, Filter, Trash2, Edit, Newspaper, LayoutGrid, Printer, HelpCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -12,6 +12,8 @@ import SchemeApplicationModal from './SchemeApplicationModal';
 import SchemeBeneficiaryList from './SchemeBeneficiaryList';
 import clsx from 'clsx';
 import { TranslatedText } from '../../components/TranslatedText';
+import { SingleSchemePdfGenerator } from '../../components/reports/SingleSchemePdfGenerator';
+import { SchemeListReportGenerator } from '../../components/reports/SchemeListReportGenerator';
 
 interface Scheme {
     id: number;
@@ -39,6 +41,8 @@ const SchemeList = () => {
     const [applyingScheme, setApplyingScheme] = useState<Scheme | null>(null);
     const [showApplications, setShowApplications] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
+    const [downloadingScheme, setDownloadingScheme] = useState<Scheme | null>(null);
+    const [showListPdfGenerator, setShowListPdfGenerator] = useState(false);
 
     // Helper to split "English / Marathi" text based on current language
     const getLocalizedData = (text: string) => {
@@ -315,13 +319,21 @@ const SchemeList = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
                         <h3 className="font-semibold text-slate-800">{t('schemes.select_scheme')} {t('common.report_view')} ({schemesToDisplay.length})</h3>
-                        <button
-                            onClick={() => window.print()}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
-                            title={t('common.print')}
-                        >
-                            <Printer className="w-4 h-4" /> {t('common.print')}
-                        </button>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowListPdfGenerator(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 shadow-sm"
+                            >
+                                <Download className="w-4 h-4" /> {t('work_history.download_pdf') || 'Download PDF'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+                                title={t('common.print')}
+                            >
+                                <Printer className="w-4 h-4" /> {t('common.print')}
+                            </button>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
@@ -412,6 +424,16 @@ const SchemeList = () => {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
+                                                setDownloadingScheme(scheme);
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            {t('schemes.download_pdf') || 'Download PDF'}
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
                                                 navigate(`/dashboard/schemes/edit/${scheme.id}`);
                                             }}
                                             className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-brand-50 rounded-md transition-colors"
@@ -465,6 +487,20 @@ const SchemeList = () => {
                     onSuccess={() => {
                         // Optional: Refresh some stats or show success confetti
                     }}
+                />
+            )}
+
+            {downloadingScheme && (
+                <SingleSchemePdfGenerator
+                    scheme={downloadingScheme}
+                    onClose={() => setDownloadingScheme(null)}
+                />
+            )}
+
+            {showListPdfGenerator && (
+                <SchemeListReportGenerator
+                    schemes={schemesToDisplay}
+                    onClose={() => setShowListPdfGenerator(false)}
                 />
             )}
 

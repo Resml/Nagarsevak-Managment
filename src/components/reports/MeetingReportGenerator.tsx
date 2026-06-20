@@ -216,7 +216,7 @@ export const MeetingReportGenerator: React.FC<MeetingReportGeneratorProps> = ({ 
                                         </div>
                                         <div>
                                             <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-1">
-                                                Meeting Link
+                                                {t('communication_page.conf_meet_link') || 'Meeting Link'}
                                             </p>
                                             <p className="text-xs font-mono text-brand-600 truncate max-w-[200px]">
                                                 {meeting.meet_link}
@@ -230,7 +230,7 @@ export const MeetingReportGenerator: React.FC<MeetingReportGeneratorProps> = ({ 
                         <div className="mt-20 pt-10 border-t border-slate-200 flex justify-end break-before-avoid">
                             <div className="text-center w-64">
                                 <div className="h-16 border-b border-dashed border-slate-400 mb-2"></div>
-                                <p className="font-bold text-slate-900">Signature / स्वाक्षरी</p>
+                                <p className="font-bold text-slate-900">{t('communication_page.conf_signature') || 'Signature / स्वाक्षरी'}</p>
                             </div>
                         </div>
                     </div>

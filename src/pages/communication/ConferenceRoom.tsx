@@ -554,11 +554,11 @@ const ConferenceRoom = () => {
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_schedule_date')} & {t('communication_page.conf_schedule_time')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_meeting_title')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_invited')}</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Link</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_schedule_date') || 'Date'} & {t('communication_page.conf_schedule_time') || 'Time'}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_meeting_title') || 'Meeting Title'}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('common.report_columns.status') || 'Status'}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_invited') || 'Invited'}</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_meet_link') || 'Link'}</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">{t('common.actions') || 'Actions'}</th>
                                 </tr>
                             </thead>
