@@ -29,8 +29,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { AIService } from '../../services/aiService';
 import AddressSelector from '../../components/common/AddressSelector';
+import { AnalysisStrategyPdfGenerator } from '../../components/reports/AnalysisStrategyPdfGenerator';
 
-interface AreaMetrics {
+export interface AreaMetrics {
     areaName: string;
     totalVoters: number;
     staffCount: number;
@@ -94,6 +95,7 @@ const AnalysisStrategy = () => {
     const [reportData, setReportData] = useState<AreaMetrics | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [loadingStep, setLoadingStep] = useState(0);
+    const [showPdf, setShowPdf] = useState(false);
 
     const printableRef = useRef<HTMLDivElement>(null);
 
@@ -634,7 +636,7 @@ const AnalysisStrategy = () => {
                                 </div>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={handlePrint}
+                                        onClick={() => setShowPdf(true)}
                                         className="ns-btn-ghost flex items-center gap-2 text-xs py-2 border border-slate-200 font-bold hover:bg-slate-50"
                                     >
                                         <Printer className="w-4 h-4 text-slate-500" />
@@ -818,42 +820,42 @@ const AnalysisStrategy = () => {
                                     <div className="ns-card p-6 space-y-4">
                                         <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                                             <AlertTriangle className="w-5 h-5 text-brand-500" />
-                                            {t('consultant.civic_problems')}
+                                            {isMr ? 'नागरी समस्या व तक्रारी' : 'Civic Problems & Complaints'}
                                         </h3>
                                         <div className="grid grid-cols-3 gap-3 text-center">
                                             <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-                                                <span className="text-[10px] font-bold text-emerald-600 block uppercase">{t('consultant.solved_complaints')}</span>
+                                                <span className="text-[10px] font-bold text-emerald-600 block uppercase">{isMr ? 'सोडवलेल्या तक्रारी' : 'Solved Complaints'}</span>
                                                 <span className="text-2xl font-black text-emerald-600">{reportData.solvedComplaints}</span>
                                             </div>
                                             <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
-                                                <span className="text-[10px] font-bold text-amber-600 block uppercase">{t('consultant.ongoing_complaints')}</span>
+                                                <span className="text-[10px] font-bold text-amber-600 block uppercase">{isMr ? 'प्रलंबित कामे / तक्रारी' : 'Ongoing/Pending Complaints'}</span>
                                                 <span className="text-2xl font-black text-amber-600">{reportData.ongoingComplaints}</span>
                                             </div>
                                             <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
-                                                <span className="text-[10px] font-bold text-purple-600 block uppercase">{t('consultant.assigned_complaints')}</span>
+                                                <span className="text-[10px] font-bold text-purple-600 block uppercase">{isMr ? 'नियुक्त केलेल्या तक्रारी' : 'Assigned Complaints'}</span>
                                                 <span className="text-2xl font-black text-purple-600">{reportData.assignedComplaints}</span>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-slate-400 font-semibold uppercase">{t('consultant.total_complaints')}: {reportData.totalComplaints}</p>
+                                        <p className="text-xs text-slate-400 font-semibold uppercase">{isMr ? 'एकूण प्राप्त तक्रारी' : 'Total Complaints Received'}: {reportData.totalComplaints}</p>
                                     </div>
 
                                     {/* Personal Requests */}
                                     <div className="ns-card p-6 space-y-4">
                                         <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                                             <FileText className="w-5 h-5 text-brand-600" />
-                                            {t('consultant.personal_requests')}
+                                            {isMr ? 'वैयक्तिक स्वरूपाची कामे' : 'Personal Requests'}
                                         </h3>
                                         <div className="grid grid-cols-2 gap-4 text-center">
                                             <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                                                <span className="text-[10px] font-bold text-emerald-600 block uppercase">{t('consultant.solved_requests')}</span>
+                                                <span className="text-[10px] font-bold text-emerald-600 block uppercase">{isMr ? 'पूर्ण केलेली कामे' : 'Completed Requests'}</span>
                                                 <span className="text-2xl font-black text-emerald-600">{reportData.solvedRequests}</span>
                                             </div>
                                             <div className="bg-rose-50 border border-rose-100 rounded-xl p-3">
-                                                <span className="text-[10px] font-bold text-rose-600 block uppercase">{t('consultant.pending_requests')}</span>
+                                                <span className="text-[10px] font-bold text-rose-600 block uppercase">{isMr ? 'प्रलंबित विनंत्या' : 'Pending Requests'}</span>
                                                 <span className="text-2xl font-black text-rose-600">{reportData.pendingRequests}</span>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-slate-400 font-semibold uppercase">{t('consultant.total_requests')}: {reportData.totalRequests}</p>
+                                        <p className="text-xs text-slate-400 font-semibold uppercase">{isMr ? 'एकूण विनंत्या' : 'Total Requests'}: {reportData.totalRequests}</p>
                                     </div>
                                 </div>
 
@@ -861,28 +863,28 @@ const AnalysisStrategy = () => {
                                 <div className="ns-card p-6 space-y-4">
                                     <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                                         <TrendingUp className="w-5 h-5 text-brand-500" />
-                                        {t('consultant.election_results')}
+                                        {isMr ? 'मागील निवडणूक निकाल' : 'Past Election Results'}
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {/* Primary stats */}
                                         <div className="space-y-3">
                                             <div>
-                                                <span className="text-xs font-semibold text-slate-400 uppercase">{t('consultant.booth_votes')}</span>
+                                                <span className="text-xs font-semibold text-slate-400 uppercase">{isMr ? 'एकूण मतदान' : 'Total Votes'}</span>
                                                 <p className="text-2xl font-black text-slate-800">{reportData.totalElectionVotes}</p>
                                             </div>
                                             <div>
-                                                <span className="text-xs font-semibold text-slate-400 uppercase">{t('consultant.winner')}</span>
+                                                <span className="text-xs font-semibold text-slate-400 uppercase">{isMr ? 'विजेता उमेदवार / पक्ष' : 'Winner'}</span>
                                                 <p className="text-lg font-black text-emerald-600">{reportData.winnerName}</p>
                                             </div>
                                             <div>
-                                                <span className="text-xs font-semibold text-slate-400 uppercase">{t('consultant.margin')}</span>
+                                                <span className="text-xs font-semibold text-slate-400 uppercase">{isMr ? 'मताधिक्य' : 'Winning Margin'}</span>
                                                 <p className="text-lg font-black text-slate-800">+ {reportData.winningMargin} {isMr ? 'मते' : 'votes'}</p>
                                             </div>
                                         </div>
 
                                         {/* Party breakdown table */}
                                         <div className="md:col-span-2 space-y-2">
-                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('consultant.comparative_performance')}</h4>
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{isMr ? 'तुलनात्मक कामगिरी' : 'Comparative Performance'}</h4>
                                             <div className="space-y-2 border border-slate-100 rounded-xl overflow-hidden shadow-sm bg-slate-50/50">
                                                 {Object.entries(reportData.partyPerformance).map(([party, votes]) => (
                                                     <div key={party} className="flex justify-between items-center p-2.5 border-b border-slate-100 last:border-0 text-xs font-bold text-slate-700">
@@ -899,12 +901,12 @@ const AnalysisStrategy = () => {
                                 <div className="ns-card p-6 space-y-4">
                                     <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                                         <IndianRupee className="w-5 h-5 text-brand-600" />
-                                        {t('consultant.municipal_works')}
+                                        {isMr ? 'महानगरपालिका विकासकामे' : 'Municipal Development Works'}
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         {/* Budgets Progress */}
                                         <div className="space-y-4">
-                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('consultant.allocated_budget')}</h4>
+                                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{isMr ? 'मंजूर बजेट / निधी' : 'Allocated Budget'}</h4>
                                             <div className="space-y-2">
                                                 <div className="flex justify-between text-sm font-black text-slate-800">
                                                     <span>₹{reportData.allocatedBudget.toLocaleString()}</span>
@@ -926,7 +928,7 @@ const AnalysisStrategy = () => {
                                         {/* Provisions */}
                                         <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between">
                                             <div>
-                                                <span className="text-xs font-bold text-slate-400 uppercase block mb-1">{t('consultant.requested_provisions')}</span>
+                                                <span className="text-xs font-bold text-slate-400 uppercase block mb-1">{isMr ? 'सुचवलेली विकासकामे' : 'Proposed Provisions'}</span>
                                                 <p className="text-2xl font-black text-slate-800">{reportData.requestedProvisionsCount}</p>
                                             </div>
                                             <div className="mt-2">
@@ -943,7 +945,7 @@ const AnalysisStrategy = () => {
                                     <div className="ns-card p-6 space-y-4">
                                         <h3 className="text-base font-black text-slate-800 flex items-center gap-2 border-b border-slate-100 pb-3">
                                             <Calendar className="w-5 h-5 text-purple-600" />
-                                            {t('consultant.media_events')}
+                                            {isMr ? 'आयोजित कार्यक्रम आणि उपक्रम' : 'Media & Events Hosted'}
                                         </h3>
                                         <div className="flex justify-between items-center bg-purple-50 border border-purple-100 p-3 rounded-xl">
                                             <div>
@@ -1101,6 +1103,15 @@ const AnalysisStrategy = () => {
                         </p>
                     </div>
                 </div>
+            )}
+
+            {/* PDF Report Generator */}
+            {showPdf && reportData && (
+                <AnalysisStrategyPdfGenerator
+                    reportData={reportData}
+                    generatedBrief={generatedBrief}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

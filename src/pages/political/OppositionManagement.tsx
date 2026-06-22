@@ -6,14 +6,15 @@ import { toast } from 'sonner';
 import { 
     Users, Plus, Search, MapPin, Phone, Tag, 
     Calendar, Trash2, Edit2, AlertCircle, X, 
-    BookOpen, Briefcase, FileText, ChevronRight, Play
+    BookOpen, Briefcase, FileText, ChevronRight, Play, Download
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { OppositionReportPdfGenerator } from '../../components/reports/OppositionReportPdfGenerator';
 
 const OppositionManagement = () => {
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const { tenantId } = useTenant();
-    const isMr = t('common.welcome') !== 'Welcome';
+    const isMr = language === 'mr' || t('common.welcome') !== 'Welcome';
     const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -22,6 +23,7 @@ const OppositionManagement = () => {
     const [partyFilter, setPartyFilter] = useState('');
     const [areaFilter, setAreaFilter] = useState('');
     const [typeFilter, setTypeFilter] = useState('');
+    const [showPdf, setShowPdf] = useState(false);
 
     // Modal & Form State
     const [showFormModal, setShowFormModal] = useState(false);
@@ -569,15 +571,24 @@ const OppositionManagement = () => {
                         </h1>
                         <p className="text-sm text-slate-500">{t('opposition.subtitle') || 'Track and monitor opposition workers, strongholds, and key public campaigns'}</p>
                     </div>
-                    <button
-                        onClick={() => {
-                            resetForm();
-                            setShowFormModal(true);
-                        }}
-                        className="ns-btn-primary bg-brand-600 hover:bg-brand-700 text-white border-none font-bold shadow-sm rounded-lg"
-                    >
-                        <Plus className="w-4 h-4 mr-1" /> {t('opposition.add_member') || 'Add Opposition Member'}
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <button
+                            onClick={() => setShowPdf(true)}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-sm transition-colors"
+                        >
+                            <FileText className="w-4 h-4" />
+                            <span>{language === 'mr' ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}</span>
+                        </button>
+                        <button
+                            onClick={() => {
+                                resetForm();
+                                setShowFormModal(true);
+                            }}
+                            className="ns-btn-primary bg-brand-600 hover:bg-brand-700 text-white border-none font-bold shadow-sm rounded-xl px-4 py-2"
+                        >
+                            <Plus className="w-4 h-4 mr-1" /> {t('opposition.add_member') || 'Add Opposition Member'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Filters Grid */}
@@ -1787,6 +1798,13 @@ const OppositionManagement = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <OppositionReportPdfGenerator
+                    members={filteredMembers}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

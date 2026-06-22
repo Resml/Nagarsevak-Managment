@@ -26,9 +26,11 @@ import {
 } from 'lucide-react';
 import { useTutorial } from '../../context/TutorialContext';
 import VoterFormTutorial from '../../components/tutorial/VoterFormTutorial';
+import { VoterFormsPdfGenerator } from '../../components/reports/VoterFormsPdfGenerator';
 
 const VoterForms: React.FC = () => {
     const { t, language } = useLanguage();
+    const isMr = language === 'mr';
     const { tenantId } = useTenant();
     const { user } = useAuth();
     const { startTutorial } = useTutorial();
@@ -46,7 +48,8 @@ const VoterForms: React.FC = () => {
     const [deleteTarget, setDeleteTarget] = useState<VoterApplication | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
-
+    const [showPdf, setShowPdf] = useState(false);
+    
     // Modal Specific Search State
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
@@ -374,6 +377,15 @@ const VoterForms: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                        {activeTab === 'applications' && (
+                            <button
+                                onClick={() => setShowPdf(true)}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                {isMr ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}
+                            </button>
+                        )}
                         <button
                             onClick={startTutorial}
                             className="ns-btn ns-btn-secondary tutorial-voterforms-help border border-brand-200 text-brand-700 bg-white hover:bg-brand-50"
@@ -843,6 +855,22 @@ const VoterForms: React.FC = () => {
                     </div>
                 </div>
             )}
+            
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <VoterFormsPdfGenerator
+                    activeTab={activeTab}
+                    formsData={forms}
+                    applications={applications.filter(app => {
+                        const matchesSearch = (app.applicant_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+                            (app.applicant_mobile || '').includes(searchQuery);
+                        const matchesStatus = statusFilter === 'All' || app.status === statusFilter;
+                        return matchesSearch && matchesStatus;
+                    })}
+                    onClose={() => setShowPdf(false)}
+                />
+            )}
+
             <VoterFormTutorial />
         </div>
     );

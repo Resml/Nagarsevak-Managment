@@ -7,8 +7,9 @@ import {
     Home, Users, Search, Plus, Phone, MapPin, 
     Trash2, Edit2, X, Copy, Check, Info, Award, 
     ChevronDown, ChevronUp, FileText, CheckCircle2,
-    Activity, Building2, TrendingUp, UsersRound
+    Activity, Building2, TrendingUp, UsersRound, Download
 } from 'lucide-react';
+import { HousingSocietiesPdfGenerator } from '../../components/reports/HousingSocietiesPdfGenerator';
 
 interface HousingSociety {
     id: string;
@@ -148,6 +149,7 @@ const HousingSocieties = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [areaFilter, setAreaFilter] = useState('all');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [showPdf, setShowPdf] = useState(false);
 
     // Modals & Form State
     const [showModal, setShowModal] = useState(false);
@@ -425,13 +427,22 @@ const HousingSocieties = () => {
                     </p>
                 </div>
 
-                <button
-                    onClick={handleOpenAdd}
-                    className="ns-btn-primary flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl shadow-md shadow-brand-100 hover:shadow-brand-200 transition-all font-bold self-start md:self-auto"
-                >
-                    <Plus className="w-4 h-4" />
-                    {isMr ? 'नवीन सोसायटी नोंदवा' : 'Register New Society'}
-                </button>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <button
+                        onClick={() => setShowPdf(true)}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50 px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold shadow-sm transition-colors"
+                    >
+                        <FileText className="w-4 h-4" />
+                        <span>{isMr ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}</span>
+                    </button>
+                    <button
+                        onClick={handleOpenAdd}
+                        className="ns-btn-primary flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl shadow-md shadow-brand-100 hover:shadow-brand-200 transition-all font-bold self-start md:self-auto"
+                    >
+                        <Plus className="w-4 h-4" />
+                        {isMr ? 'नवीन सोसायटी नोंदवा' : 'Register New Society'}
+                    </button>
+                </div>
             </div>
 
             {/* Stats widgets */}
@@ -938,6 +949,13 @@ const HousingSocieties = () => {
                         </form>
                     </div>
                 </div>
+            )}
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <HousingSocietiesPdfGenerator
+                    societies={filteredSocieties}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
+import { KaryakartaWorkloadPdfGenerator } from '../../components/reports/KaryakartaWorkloadPdfGenerator';
 
 type TeamTab = 'Office' | 'Cooperative' | 'Party';
 
@@ -94,6 +95,7 @@ const KaryakartaWorkManagement = () => {
 
     // Workload report modal
     const [showReport, setShowReport] = useState(false);
+    const [showPdf, setShowPdf] = useState(false);
 
     useEffect(() => {
         fetchAll();
@@ -484,6 +486,13 @@ const KaryakartaWorkManagement = () => {
                                     )}
                                 </p>
                             </div>
+                            <button
+                                onClick={() => setShowPdf(true)}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                {language === 'mr' ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}
+                            </button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-100">
@@ -1168,6 +1177,17 @@ const KaryakartaWorkManagement = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <KaryakartaWorkloadPdfGenerator
+                    staffData={sortedStaff}
+                    tasksData={tasks}
+                    complaintsData={complaints}
+                    activeTabLabel={language === 'mr' ? currentTab.labelMr : currentTab.labelEn}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

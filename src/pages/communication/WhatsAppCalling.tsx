@@ -13,6 +13,18 @@ import WhatsAppCallingTutorial from '../../components/tutorial/WhatsAppCallingTu
 const PAGE_SIZE = 50;
 const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
 
+import { CommunicationHistoryPdfGenerator } from '../../components/reports/CommunicationHistoryPdfGenerator';
+
+interface MessageLog {
+    id: string;
+    sent_at: string;
+    channel: string;
+    message: string;
+    recipients: number;
+    sent_count: number;
+    failed_count: number;
+}
+
 const WhatsAppCalling = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
@@ -22,6 +34,23 @@ const WhatsAppCalling = () => {
     const [loading, setLoading] = useState(false);
     const [botStatus, setBotStatus] = useState('disconnected');
     const [socket, setSocket] = useState<any>(null);
+
+    const [logs, setLogs] = useState<MessageLog[]>([]);
+    const [logsLoading, setLogsLoading] = useState(false);
+    const [showPdf, setShowPdf] = useState(false);
+
+    const fetchLogs = useCallback(async () => {
+        setLogsLoading(true);
+        try {
+            const { data, error } = await supabase.from('message_logs').select('*').eq('tenant_id', tenantId).eq('channel', 'wa_call').order('sent_at', { ascending: false }).limit(100);
+            if (error) throw error;
+            setLogs(data || []);
+        } catch (err) {
+            console.error(err);
+        } finally { setLogsLoading(false); }
+    }, [tenantId]);
+
+    useEffect(() => { if (activeTab === 'history') fetchLogs(); }, [activeTab, fetchLogs]);
 
     useEffect(() => {
         const newSocket = io(SOCKET_URL, { query: { tenantIds: tenantId } });
@@ -123,10 +152,55 @@ const WhatsAppCalling = () => {
                     )}
                 </div>
             ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                    <History className="w-12 h-12 mb-3 opacity-30" />
-                    <p>{t('communication_page.wa_call_history_hint')}</p>
+                <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-800">{t('communication_page.tabs_history')}</h2>
+                            <p className="text-sm text-slate-500">{logs.length} WhatsApp Calls</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowPdf(true)}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                {language === 'mr' ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}
+                            </button>
+                            <button onClick={fetchLogs} disabled={logsLoading} className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">
+                                {logsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                {t('common.refresh') || 'Refresh'}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-3">
+                    {logsLoading ? (
+                        <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
+                    ) : logs.length === 0 ? (
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-10">
+                            <History className="w-12 h-12 mb-3 opacity-30" />
+                            <p>{t('communication_page.wa_call_history_hint')}</p>
+                        </div>
+                    ) : (
+                        logs.map(log => (
+                            <div key={log.id} className="ns-card p-4 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm font-semibold">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
+                                    <p className="text-xs text-slate-500">{log.message}</p>
+                                </div>
+                                <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('nav.whatsapp_call')}</span>
+                            </div>
+                        ))
+                    )}
+                    </div>
                 </div>
+            )}
+            
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <CommunicationHistoryPdfGenerator
+                    logs={logs}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
             <WhatsAppCallingTutorial />
         </div>

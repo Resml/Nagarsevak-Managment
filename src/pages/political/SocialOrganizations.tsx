@@ -7,8 +7,9 @@ import {
     Building2, Users, Activity, Sparkles, Plus, Search, 
     Phone, MapPin, Calendar, Trash2, Edit2, X, ChevronDown, 
     ChevronUp, Heart, Award, Info, Copy, Check, CheckCircle2,
-    Flag, Shield, Layers, HelpCircle
+    Flag, Shield, Layers, HelpCircle, FileText, Download
 } from 'lucide-react';
+import { MandalNgoReportPdfGenerator } from '../../components/reports/MandalNgoReportPdfGenerator';
 
 interface EventConducted {
     id: string;
@@ -171,6 +172,7 @@ const SocialOrganizations = () => {
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
+    const [showPdf, setShowPdf] = useState(false);
 
     // Modal & Form states
     const [showModal, setShowModal] = useState(false);
@@ -555,13 +557,22 @@ const SocialOrganizations = () => {
                     </p>
                 </div>
 
-                <button
-                    onClick={handleOpenAdd}
-                    className="ns-btn-primary flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl shadow-md shadow-brand-100 hover:shadow-brand-200 transition-all font-bold self-start md:self-auto"
-                >
-                    <Plus className="w-4 h-4" />
-                    {isMr ? 'नवीन मंडळ जोडा' : 'Add New Mandal/Club'}
-                </button>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <button
+                        onClick={() => setShowPdf(true)}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50 px-4 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold shadow-sm transition-colors"
+                    >
+                        <FileText className="w-4 h-4" />
+                        <span>{isMr ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}</span>
+                    </button>
+                    <button
+                        onClick={handleOpenAdd}
+                        className="ns-btn-primary flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl shadow-md shadow-brand-100 hover:shadow-brand-200 transition-all font-bold self-start md:self-auto"
+                    >
+                        <Plus className="w-4 h-4" />
+                        {isMr ? 'नवीन मंडळ जोडा' : 'Add New Mandal/Club'}
+                    </button>
+                </div>
             </div>
 
             {/* Stats Section */}
@@ -1149,6 +1160,13 @@ const SocialOrganizations = () => {
                         </form>
                     </div>
                 </div>
+            )}
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <MandalNgoReportPdfGenerator
+                    organizations={filteredOrgs}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

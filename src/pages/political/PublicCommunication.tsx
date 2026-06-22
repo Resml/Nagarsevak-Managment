@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 const PAGE_SIZE = 50;
 const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
 
+import { CommunicationHistoryPdfGenerator } from '../../components/reports/CommunicationHistoryPdfGenerator';
+
 // ---- Types ----
 interface MessageLog {
     id: string;
@@ -65,6 +67,7 @@ const PublicCommunication = () => {
     const [logs, setLogs] = useState<MessageLog[]>([]);
     const [logsLoading, setLogsLoading] = useState(false);
     const [expandedLog, setExpandedLog] = useState<string | null>(null);
+    const [showPdf, setShowPdf] = useState(false);
 
     // ------------------------------------------------------------------
     // 1. Socket Connection for Bot
@@ -651,10 +654,19 @@ const PublicCommunication = () => {
                             <h2 className="text-lg font-bold text-slate-800">Message History</h2>
                             <p className="text-sm text-slate-500">{logs.length} broadcasts recorded</p>
                         </div>
-                        <button onClick={fetchLogs} disabled={logsLoading} className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">
-                            {logsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                            Refresh
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowPdf(true)}
+                                className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mr-2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                {language === 'mr' ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}
+                            </button>
+                            <button onClick={fetchLogs} disabled={logsLoading} className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 font-medium">
+                                {logsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                Refresh
+                            </button>
+                        </div>
                     </div>
 
                     {logsLoading ? (
@@ -742,6 +754,14 @@ const PublicCommunication = () => {
                         </div>
                     )}
                 </div>
+            )}
+
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <CommunicationHistoryPdfGenerator
+                    logs={logs}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );

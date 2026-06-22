@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Users, CheckCircle, XCircle } from 'lucide-react';
+import { PieChart, Users, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { ResultService } from '../../services/resultService';
 import { type ElectionResult } from '../../types';
 
@@ -7,6 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTutorial } from '../../context/TutorialContext';
 import ResultTutorial from '../../components/tutorial/ResultTutorial';
 import { HelpCircle } from 'lucide-react';
+import { ResultAnalysisPdfGenerator } from '../../components/reports/ResultAnalysisPdfGenerator';
 
 const ResultAnalysis = () => {
     const { t, language } = useLanguage();
@@ -17,6 +18,7 @@ const ResultAnalysis = () => {
     const [loading, setLoading] = useState(true);
     const [selectedCandidate, setSelectedCandidate] = useState('');
     const [availableCandidates, setAvailableCandidates] = useState<string[]>([]);
+    const [showPdf, setShowPdf] = useState(false);
 
     // Fetch all wards on mount
     useEffect(() => {
@@ -176,8 +178,15 @@ const ResultAnalysis = () => {
 
             {/* Detailed Table */}
             <div className="ns-card overflow-hidden tutorial-result-detailed">
-                <div className="p-6 border-b border-slate-200/70">
+                <div className="p-4 sm:p-6 border-b border-slate-200/70 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h2 className="text-lg font-semibold text-slate-900">{t('election.booth_performance')}</h2>
+                    <button
+                        onClick={() => setShowPdf(true)}
+                        className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-sm transition-colors"
+                    >
+                        <FileText className="w-4 h-4" />
+                        <span>{language === 'mr' ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}</span>
+                    </button>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200/70">
@@ -230,6 +239,15 @@ const ResultAnalysis = () => {
                 </div>
             </div>
             <ResultTutorial />
+
+            {showPdf && (
+                <ResultAnalysisPdfGenerator
+                    ward={ward}
+                    selectedCandidate={selectedCandidate}
+                    results={results}
+                    onClose={() => setShowPdf(false)}
+                />
+            )}
         </div>
     );
 };

@@ -3,8 +3,9 @@ import { supabase } from '../../services/supabaseClient';
 import { useTenant } from '../../context/TenantContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ChevronDown, ChevronUp, Search, Users, RefreshCw, ExternalLink, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, Search, Users, RefreshCw, ExternalLink, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { DuplicateVotersPdfGenerator } from '../../components/reports/DuplicateVotersPdfGenerator';
 
 interface DuplicateGroup {
     normalizedName: string;
@@ -24,6 +25,7 @@ const DuplicateVoters = () => {
     const [totalDuplicates, setTotalDuplicates] = useState(0);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [showPdf, setShowPdf] = useState(false);
 
     useEffect(() => {
         fetchDuplicates();
@@ -124,12 +126,21 @@ const DuplicateVoters = () => {
                         </h1>
                         <p className="text-sm text-slate-500">{t('duplicate_voters.subtitle') || 'Identify and clean up duplicate voter records with matching full names'}</p>
                     </div>
-                    <button
-                        onClick={fetchDuplicates}
-                        className="ns-btn-soft flex items-center gap-2 text-sm"
-                    >
-                        <RefreshCw className="w-4 h-4" /> {t('duplicate_voters.refresh') || 'Refresh'}
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <button
+                            onClick={() => setShowPdf(true)}
+                            className="ns-btn-ghost border border-brand-200 text-brand-700 bg-brand-50/50 hover:bg-brand-50 px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold shadow-sm transition-colors"
+                        >
+                            <FileText className="w-4 h-4" />
+                            <span>{isMr ? 'पीडीएफ डाउनलोड करा' : 'Download PDF'}</span>
+                        </button>
+                        <button
+                            onClick={fetchDuplicates}
+                            className="ns-btn-soft flex items-center gap-2 text-sm px-4 py-2"
+                        >
+                            <RefreshCw className="w-4 h-4" /> {t('duplicate_voters.refresh') || 'Refresh'}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Row */}
@@ -377,6 +388,14 @@ const DuplicateVoters = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {/* PDF Report Generator */}
+            {showPdf && (
+                <DuplicateVotersPdfGenerator
+                    duplicateGroups={filteredGroups}
+                    totalDuplicates={totalDuplicates}
+                    onClose={() => setShowPdf(false)}
+                />
             )}
         </div>
     );
