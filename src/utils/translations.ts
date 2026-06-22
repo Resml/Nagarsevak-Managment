@@ -1176,6 +1176,8 @@ export const translations = {
         tasks: {
             title: "Dairy",
             subtitle: "Assign and track team tasks",
+            today: "Today",
+            timeline_view: "Timeline",
             assign_info: "Assigned / Contact",
             new_task: "New Task",
             scan_doc: "Scan Doc",
@@ -1283,6 +1285,7 @@ export const translations = {
         work_history: {
             title: "Work History & Achievements",
             subtitle: "Unified view of development works, resolved issues, and help provided.",
+            no_timeline_tasks: "No tasks scheduled for today.",
             people_benefited: "Number of People Benefited",
             people_benefited_placeholder: "e.g. 1000",
             total_amount_spent: "Total Amount Spent",
@@ -3028,6 +3031,8 @@ export const translations = {
         tasks: {
             title: "दैनंदिनी",
             subtitle: "टीम कार्य नियुक्त करा आणि ट्रॅक करा",
+            today: "आज",
+            timeline_view: "टाइमलाइन",
             assign_info: "नियुक्त केलेले / संपर्क",
             new_task: "नवीन कार्य",
             scan_doc: "दस्तऐवज स्कॅन करा",
@@ -3134,6 +3139,7 @@ export const translations = {
         work_history: {
             title: "विकासाची कामे आणि साध्य केलेली उपलब्धी",
             subtitle: "विकास कामे, सोडवलेले मुद्दे आणि प्रदान केलेली मदत यांचे एकत्रित दृश्य.",
+            no_timeline_tasks: "आजसाठी कोणतेही कार्य नियोजित नाही.",
             people_benefited: "लोकांना झालेला फायदा संख्या",
             people_benefited_placeholder: "उदा. १०००",
             total_amount_spent: "एकूण झालेला खर्च",
