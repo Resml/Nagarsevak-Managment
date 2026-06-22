@@ -172,7 +172,7 @@ export const VisitorReportGenerator: React.FC<VisitorReportGeneratorProps> = ({ 
                         <div className="report-header border-b-2 border-brand-600 pb-6 mb-8 flex justify-between items-end">
                             <div>
                                 <h1 className="text-3xl font-bold text-brand-700 mb-1">{t('office.visitor_log')}</h1>
-                                <p className="text-slate-500">Visitor Records Report</p>
+                                <p className="text-slate-500">{t('office.report_subtitle') || 'Visitor Records Report'}</p>
                             </div>
                             <div className="text-right text-sm text-slate-400">
                                 <p>{t('common.report_columns.date_time')}: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>

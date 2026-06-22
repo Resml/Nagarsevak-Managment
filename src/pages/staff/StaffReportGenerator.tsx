@@ -152,7 +152,7 @@ export const StaffReportGenerator: React.FC<StaffReportGeneratorProps> = ({ staf
                 <div className="flex justify-between items-center p-4 border-b bg-slate-50">
                     <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-brand-600" />
-                        <h2 className="text-lg font-bold text-slate-800">{activeTab === 'Office' ? t('staff.tabs.office') : activeTab === 'Party' ? t('staff.tabs.party') : t('staff.tabs.coop')} - {t('common.report_view')}</h2>
+                        <h2 className="text-lg font-bold text-slate-800">{activeTab === 'Office' ? t('staff.tabs.office') : activeTab === 'Party' ? t('staff.tabs.party') : t('staff.tabs.cooperative')} - {t('common.report_view')}</h2>
                     </div>
                     <div className="flex items-center gap-3">
                         {generating && (
@@ -185,7 +185,7 @@ export const StaffReportGenerator: React.FC<StaffReportGeneratorProps> = ({ staf
                         <div className="report-header border-b-2 border-brand-600 pb-6 mb-8 flex justify-between items-end">
                             <div>
                                 <h1 className="text-3xl font-bold text-brand-700 mb-1">{t('staff.title')}</h1>
-                                <p className="text-slate-500">{activeTab === 'Office' ? t('staff.tabs.office') : activeTab === 'Party' ? t('staff.tabs.party') : t('staff.tabs.coop')} {t('common.directory')}</p>
+                                <p className="text-slate-500">{activeTab === 'Office' ? t('staff.tabs.office') : activeTab === 'Party' ? t('staff.tabs.party') : t('staff.tabs.cooperative')} {t('common.directory')}</p>
                             </div>
                             <div className="text-right text-sm text-slate-400">
                                 <p>{t('common.date')}: {format(new Date(), 'dd/MM/yyyy')}</p>

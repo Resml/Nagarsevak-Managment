@@ -213,7 +213,8 @@ export const LetterReportGenerator: React.FC<LetterReportGeneratorProps> = ({ le
                         <div className="space-y-6">
                             {normalizedLetters.map((letter, index) => {
                                 // Translate English letter type to Marathi using known map
-                                const marathiTypeName = CUSTOM_TRANSLATIONS[letter.letter_type] || letter.letter_type || 'General';
+                                let marathiTypeName = CUSTOM_TRANSLATIONS[letter.letter_type] || letter.letter_type || 'General';
+                                if (marathiTypeName === 'Incoming') marathiTypeName = 'आवक';
                                 // Use Marathi name as subject title if it's the same as the type
                                 const subjectDisplay = (letter.subject === letter.letter_type)
                                     ? marathiTypeName

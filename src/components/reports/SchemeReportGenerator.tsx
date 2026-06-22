@@ -165,7 +165,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                                 <p style={{ color: '#64748b', margin: 0, fontSize: '14px' }}>{t('schemes.application_report') || 'Application Report'}</p>
                             </div>
                             <div style={{ textAlign: 'right', fontSize: '12px', color: '#94a3b8' }}>
-                                <p style={{ margin: 0 }}>{t('common.date')}: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
+                                <p style={{ margin: 0 }}>{t('common.report_columns.date')}: {format(new Date(), 'dd/MM/yyyy HH:mm')}</p>
                                 <p style={{ margin: 0 }}>{t('schemes.total_applications') || 'Total Applications'}: {applications.length}</p>
                             </div>
                         </div>
@@ -180,7 +180,7 @@ export const SchemeReportGenerator: React.FC<SchemeReportGeneratorProps> = ({ ap
                                         t('schemes.mobile_address') || 'Mobile / Address',
                                         t('schemes.scheme_name') || 'Scheme Name',
                                         t('common.report_columns.date'),
-                                        t('common.status'),
+                                        t('common.report_columns.status'),
                                         t('schemes.benefit_reason') || 'Benefit / Reason'
                                     ].map((h, i) => (
                                         <th key={i} style={{ border: '1px solid #e2e8f0', padding: '8px 6px', textAlign: 'left', fontWeight: 700, color: '#334155', whiteSpace: 'nowrap' }}>
