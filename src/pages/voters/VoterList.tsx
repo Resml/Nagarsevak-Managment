@@ -838,7 +838,7 @@ const VoterList = () => {
             ) : viewMode === 'report' ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50">
-                        <h3 className="font-semibold text-slate-800">Voters {t('common.report')} ({totalCount !== null ? totalCount : voters.length})</h3>
+                        <h3 className="font-semibold text-slate-800">{t('voters.title')} - {t('common.report_view')} ({totalCount !== null ? totalCount : voters.length})</h3>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setShowPdfGenerator(true)}

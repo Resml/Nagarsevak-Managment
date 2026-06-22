@@ -559,7 +559,7 @@ const ConferenceRoom = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('common.report_columns.status') || 'Status'}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_invited') || 'Invited'}</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">{t('communication_page.conf_meet_link') || 'Link'}</th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">{t('common.actions') || 'Actions'}</th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">{t('common.options') || 'Options'}</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
