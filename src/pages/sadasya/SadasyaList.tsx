@@ -337,11 +337,73 @@ const SadasyaList = () => {
         return member.address_english || member.address;
     };
 
-    const getDisplayArea = (area: string | undefined) => {
+    // English to Marathi area translation map for common areas
+    const areaTranslations: Record<string, string> = {
+        "shastri roads": "शास्त्री रोड",
+        "shastri road": "शास्त्री रोड",
+        "prabhat road": "प्रभात रोड",
+        "erandwane": "एरंडवणे",
+        "rajaram bridge": "राजाराम पूल",
+        "alka talkies chauk": "अलका टॉकीज चौक",
+        "alka talkies chowk": "अलका टॉकीज चौक",
+        "navi peth": "नवी पेठ",
+        "sadashiv peth": "सदाशिव पेठ",
+        "narayan peth": "नारायण पेठ",
+        "swargate": "स्वारगेट",
+        "kothrud": "कोथरूड",
+        "shivajinagar": "शिवाजीनगर",
+        "deccan gymkhana": "डेक्कन जिमखाना",
+        "pune": "पुणे",
+        "katraj": "कात्रज",
+        "dhankawadi": "धनकवडी",
+        "sahakar nagar": "सहकार नगर",
+        "bibwewadi": "बिबवेवाडी",
+        "padmavati": "पद्मावती",
+        "parvati": "पर्वती",
+        "dattawadi": "दत्तवाडी",
+        "sinhagad road": "सिंहगड रोड",
+        "vadgaon": "वडगाव",
+        "dhayari": "धायरी",
+        "warje": "वारजे",
+        "karve nagar": "कर्वे नगर",
+        "bhusari colony": "भुसारी कॉलनी",
+        "kothrud stand": "कोथरूड स्टँड",
+        "paud road": "पौड रोड",
+        "bavdhan": "बावधान",
+        "pashan": "पाषाण",
+        "baner": "बाणेर",
+        "aundh": "औंध",
+        "bopodi": "बोपोडी",
+        "khadki": "खडकी",
+        "yerawada": "येरवडा",
+        "viman nagar": "विमान नगर",
+        "kalyani nagar": "कल्याणी नगर",
+        "koregaon park": "कोरेगाव पार्क",
+        "camp": "कॅम्प",
+        "hadapsar": "हडपसर",
+        "wanowrie": "वानवडी",
+        "kondhwa": "कोंढवा",
+        "nibm": "एनआयबीएम",
+        "wakad": "वाकड",
+        "hinjewadi": "हिंजवडी",
+        "pimpri": "पिंपरी",
+        "chinchwad": "चिंचवड",
+        "nigdi": "निगडी",
+        "bhosari": "भोसरी",
+        "lokmanya nagar": "लोकमान्य नगर"
+    };
+
+    const getDisplayArea = (area: string | undefined | null) => {
         if (!area) return '';
+        
+        // Return Marathi translation if language is set to Marathi
         if (language === 'mr') {
-            return CUSTOM_TRANSLATIONS[area] || area;
+            const lowerArea = area.toLowerCase().trim();
+            if (areaTranslations[lowerArea]) {
+                return areaTranslations[lowerArea];
+            }
         }
+        
         return area;
     };
 
