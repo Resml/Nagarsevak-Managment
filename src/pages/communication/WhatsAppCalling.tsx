@@ -9,6 +9,7 @@ import { io } from 'socket.io-client';
 import { HelpCircle } from 'lucide-react';
 import { useTutorial } from '../../context/TutorialContext';
 import WhatsAppCallingTutorial from '../../components/tutorial/WhatsAppCallingTutorial';
+import { format } from 'date-fns';
 
 const PAGE_SIZE = 50;
 const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
@@ -198,7 +199,7 @@ const WhatsAppCalling = () => {
             {/* PDF Report Generator */}
             {showPdf && (
                 <CommunicationHistoryPdfGenerator
-                    logs={logs}
+                    logs={logs as any}
                     onClose={() => setShowPdf(false)}
                 />
             )}

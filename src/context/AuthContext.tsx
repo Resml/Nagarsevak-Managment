@@ -156,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 permissions: [],
                 isStaff: false,
             };
-            setUser(mockUser);
+            setUser(mockUser as any);
             localStorage.setItem('mock_session', JSON.stringify(mockUser));
             setIsLoading(false);
             return { success: true };
