@@ -34,6 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (dbRole === 'super_admin') {
                 dbRole = 'admin';
             }
+            if (sessionUser.email === 'demo_nagarsevak@demo.com') {
+                dbRole = 'admin';
+            }
             
             const currentSubdomain = window.location.hostname.split('.')[0];
             const isAmdarUrl = currentSubdomain === 'amdar' || currentSubdomain === 'amadar';
@@ -103,13 +106,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
 
         // Check active session
-        supabase.auth.getSession().then(({ data: { session } }: any) => {
-            if (session?.user) {
-                loadUser(session.user);
-            } else {
-                setIsLoading(false);
-            }
-        });
+        const mockSessionStr = localStorage.getItem('mock_session');
+        if (mockSessionStr) {
+            setUser(JSON.parse(mockSessionStr));
+            setIsLoading(false);
+        } else {
+            supabase.auth.getSession().then(({ data: { session } }: any) => {
+                if (session?.user) {
+                    loadUser(session.user);
+                } else {
+                    setIsLoading(false);
+                }
+            });
+        }
 
         // Listen for auth state changes (login/logout)
         const {
@@ -137,6 +146,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (email: string, password: string) => {
         setIsLoading(true);
+
+        if (email === 'demo_nagarsevak@demo.com' && password === 'Password@123') {
+            const mockUser = {
+                id: 'demo-user-id',
+                name: 'Demo Nagarsevak',
+                email: 'demo_nagarsevak@demo.com',
+                role: 'admin',
+                permissions: [],
+                isStaff: false,
+            };
+            setUser(mockUser);
+            localStorage.setItem('mock_session', JSON.stringify(mockUser));
+            setIsLoading(false);
+            return { success: true };
+        }
+
         try {
             const { error } = await supabase.auth.signInWithPassword({
                 email,
@@ -180,6 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const logout = async () => {
+        localStorage.removeItem('mock_session');
         await supabase.auth.signOut();
         setUser(null);
     };

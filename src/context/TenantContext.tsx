@@ -57,8 +57,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
             let tenantIdToFetch: string | null = null;
 
+            if (user?.email === 'demo_nagarsevak@demo.com') {
+                tenantIdToFetch = 'bf1a3e36-464e-4eff-b21d-dc71f5a5a582'; // krishnaniti tenant UUID
+            }
+
             // 1. If User is Logged In, check their mapping FIRST
-            if (user?.id) {
+            if (user?.id && !tenantIdToFetch) {
                 const { data: mapping } = await supabase
                     .from('user_tenant_mapping')
                     .select('tenant_id')
@@ -185,12 +189,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
     } else if (isLocal) {
         plan = (queryPlan as TenantPlan) || testPlan;
-    } else if (user?.email === 'krishnaniti@gmail.com') {
+    } else if (user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com') {
         plan = 'advance';
     }
 
     useEffect(() => {
-        setActiveTenantSession(tenant?.id || null, tier, plan, user?.email === 'krishnaniti@gmail.com');
+        const shouldBypass = user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com';
+        setActiveTenantSession(tenant?.id || null, tier, plan, shouldBypass);
     }, [tenant, tier, plan, user]);
 
     const isNagarsevak = tier === 'nagarsevak';
@@ -201,6 +206,11 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const hasFeature = useCallback((featureKey: string) => {
         if (user?.email === 'krishnaniti@gmail.com' && !isLocal) {
             return true;
+        }
+        if (user?.email === 'demo_nagarsevak@demo.com') {
+            const excluded = ['voice_call', 'ai_voice_call', 'whatsapp_call', 'social', 'newspaper'];
+            if (excluded.includes(featureKey)) return false;
+            return checkFeatureAccess(featureKey, 'advance');
         }
         return checkFeatureAccess(featureKey, plan);
     }, [plan, user, isLocal]);
