@@ -333,6 +333,7 @@ const AppLayout = () => {
           { to: '/dashboard/political/duplicates', icon: AlertTriangle, label: t('nav.duplicate_voters') || 'Duplicate Voters', show: true, permission: 'voters' },
           { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voter_forms' },
           { to: '/dashboard/political/work-management', icon: ClipboardList, label: t('nav.karyakarta_work') || 'Karyakarta Work Management', show: true, permission: 'karyakarta_work' },
+          { to: '/dashboard/political/sales-proposal', icon: FileText, label: language === 'mr' ? 'प्रस्ताव लेटरहेड' : 'Sales Proposal', show: isAdminOrStaff, permission: 'analysis' },
         ],
       },
 

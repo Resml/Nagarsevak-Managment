@@ -222,6 +222,10 @@ const Dashboard = () => {
                         <UserPlus className="w-4 h-4" />
                         {t('dashboard.action_staff')}
                     </button>
+                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/political/sales-proposal')}>
+                        <FileText className="w-4 h-4 text-brand-600" />
+                        {language === 'mr' ? 'प्रस्ताव लेटरहेड' : 'Sales Proposal'}
+                    </button>
                     {hasComplaints ? (
                         <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/complaints')}>
                             <Megaphone className="w-4 h-4" />
