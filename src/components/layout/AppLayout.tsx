@@ -201,7 +201,7 @@ const AppLayout = () => {
   const checkPermission = useCallback((perm?: string) => {
     if (!perm) return true;
     if (!hasFeature(perm)) return false;
-    if (user?.isStaff) {
+    if (user?.isStaff || user?.role === 'staff') {
       const perms = user.permissions;
       if (!Array.isArray(perms) || perms.length === 0) return false;
       return perms.includes(perm);

@@ -189,12 +189,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
     } else if (isLocal) {
         plan = (queryPlan as TenantPlan) || testPlan;
-    } else if (user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com') {
-        plan = 'advance';
     }
 
     useEffect(() => {
-        const shouldBypass = user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com';
+        const shouldBypass = user?.role === 'admin';
         setActiveTenantSession(tenant?.id || null, tier, plan, shouldBypass);
     }, [tenant, tier, plan, user]);
 
@@ -204,23 +202,14 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const isMinister = tier === 'minister';
 
     const hasFeature = useCallback((featureKey: string) => {
-        if (user?.email === 'krishnaniti@gmail.com' && !isLocal) {
-            return true;
-        }
-
         // DYNAMIC DATABASE CHECK: Read disabled_features array directly from tenant.config
         const disabledFeatures: string[] = tenant?.config?.disabled_features || [];
         if (disabledFeatures.includes(featureKey)) {
             return false;
         }
 
-        if (user?.email === 'demo_nagarsevak@demo.com') {
-            const excluded = ['voice_call', 'ai_voice_call', 'whatsapp_call', 'social', 'newspaper'];
-            if (excluded.includes(featureKey)) return false;
-            return checkFeatureAccess(featureKey, 'advance');
-        }
         return checkFeatureAccess(featureKey, plan);
-    }, [plan, user, isLocal, tenant]);
+    }, [plan, tenant]);
 
     return (
         <TenantContext.Provider value={{

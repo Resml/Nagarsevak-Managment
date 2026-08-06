@@ -23,50 +23,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const loadUser = async (sessionUser: { id: string; email?: string; user_metadata?: any }) => {
             currentUserId = sessionUser.id;
 
+            // Fetch permissions from staff table by staff ID
+            const { data: staffData } = await supabase
+                .from('staff')
+                .select('permissions, id, role')
+                .eq('id', sessionUser.id)
+                .maybeSingle();
+
             // Fetch role from user_tenant_mapping
             const { data: mappingData } = await supabase
                 .from('user_tenant_mapping')
                 .select('role')
                 .eq('user_id', sessionUser.id)
-                .single();
+                .maybeSingle();
             
-            let dbRole = mappingData?.role || 'staff';
+            let dbRole = mappingData?.role || (staffData ? 'staff' : 'admin');
             if (dbRole === 'super_admin') {
                 dbRole = 'admin';
             }
-            if (sessionUser.email === 'demo_nagarsevak@demo.com') {
-                dbRole = 'admin';
-            }
-            
+
+            // A user is a staff member if they exist in staff table OR mapping explicitly says staff/karyakarta
+            const isStaffUser = !!staffData || dbRole === 'staff' || dbRole === 'karyakarta';
+
             const currentSubdomain = window.location.hostname.split('.')[0];
             const isAmdarUrl = currentSubdomain === 'amdar' || currentSubdomain === 'amadar';
-            const userRole = (localStorage.getItem('force_amdar') === 'true' || isAmdarUrl) ? 'amdar' : dbRole;
-
-            // Fetch permissions from staff table
-            let staffData = null;
-
-            const { data: staffById } = await supabase
-                .from('staff')
-                .select('permissions, id')
-                .eq('id', sessionUser.id)
-                .maybeSingle();
-
-            staffData = staffById;
-
-            if (!staffData && sessionUser.email) {
-                const { data: staffByEmail } = await supabase
-                    .from('staff')
-                    .select('permissions, id')
-                    .eq('user_email', sessionUser.email)
-                    .maybeSingle();
-                staffData = staffByEmail;
-            }
+            const userRole = isStaffUser ? 'staff' : ((localStorage.getItem('force_amdar') === 'true' || isAmdarUrl) ? 'amdar' : dbRole);
 
             const permissions: string[] = (staffData?.permissions && Array.isArray(staffData.permissions))
                 ? staffData.permissions
                 : [];
-
-            const isStaffUser = !!staffData || dbRole === 'staff';
 
             console.log('[AuthContext] Resolved user:', {
                 id: sessionUser.id,

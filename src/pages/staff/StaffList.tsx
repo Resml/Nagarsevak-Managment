@@ -308,19 +308,19 @@ const StaffList = () => {
     }, []);
 
     useEffect(() => {
-        if (tenantId) {
-            fetchStaff();
-        }
+        fetchStaff();
     }, [tenantId]);
 
     const fetchStaff = async () => {
         try {
-            const { data, error } = await supabase
-                .from('staff')
-                .select('*')
-                .eq('tenant_id', tenantId) // Secured
-                .order('created_at', { ascending: false });
+            console.log('[fetchStaff] tenantId =', tenantId);
+            let query = supabase.from('staff').select('*').order('created_at', { ascending: false });
+            if (tenantId) {
+                query = query.eq('tenant_id', tenantId);
+            }
+            const { data, error } = await query;
 
+            console.log('[fetchStaff] raw data =', data, '| error =', error);
             if (error) throw error;
             setStaff(data || []);
         } catch (err) {
@@ -352,15 +352,11 @@ const StaffList = () => {
                     .update({
                         name: formData.name,
                         mobile: fullMobile,
-                        role: formData.role,
-                        category: formData.category,
-                        area: formData.area,
+                        role: formData.role || 'staff',
+                        category: formData.category || 'Office',
+                        area: formData.area || '',
                         keywords: finalKeywords,
-                        permissions: formData.permissions,
-                        party_wing: formData.party_wing,
-                        paksh: formData.paksh,
-                        pad: formData.pad,
-                        society_name: formData.society_name
+                        permissions: formData.permissions || []
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
@@ -411,26 +407,29 @@ const StaffList = () => {
                     throw new Error(data.error);
                 }
 
-                // Update the newly created user's custom fields and ensure category, tenant_id & role are synced
+                // Ensure staff record exists in staff table with tenant_id, category, and permissions
                 const cleanEmail = formData.user_email.trim();
-                const updatePayload: any = {
-                    category: formData.category || 'Office',
+                const staffId = data?.user?.id || data?.staff?.id || data?.id || crypto.randomUUID();
+
+                const staffPayload: any = {
+                    id: staffId,
+                    name: formData.name,
+                    mobile: fullMobile,
+                    role: formData.role || 'staff',
                     tenant_id: tenantId,
-                    role: formData.role || 'staff'
+                    area: formData.area || '',
+                    category: formData.category || 'Office',
+                    keywords: finalKeywords,
+                    permissions: formData.permissions || []
                 };
-                if (formData.party_wing) updatePayload.party_wing = formData.party_wing;
-                if (formData.paksh) updatePayload.paksh = formData.paksh;
-                if (formData.pad) updatePayload.pad = formData.pad;
-                if (formData.society_name) updatePayload.society_name = formData.society_name;
 
-                // Sync update in staff table by user_email or ID
-                const { error: updateError } = await supabase
+                // Upsert directly into staff table
+                const { error: upsertError } = await supabase
                     .from('staff')
-                    .update(updatePayload)
-                    .or(`user_email.eq.${cleanEmail},id.eq.${data?.user?.id || data?.id || '00000000-0000-0000-0000-000000000000'}`);
+                    .upsert([staffPayload]);
 
-                if (updateError) {
-                    console.error('Failed to sync fields for new staff:', updateError);
+                if (upsertError) {
+                    console.error('Failed to upsert staff record:', upsertError);
                 }
 
                 toast.success(t('staff.list.success_add'));
@@ -515,7 +514,7 @@ const StaffList = () => {
             const sCat = (s.category || 'Office').toString().trim().toLowerCase();
             const tabCat = activeTab.toString().trim().toLowerCase();
             if (tabCat === 'office') {
-                return sCat === 'office' || !s.category;
+                return sCat === 'office' || sCat === 'nagarsevak' || !s.category;
             }
             return sCat === tabCat;
         });

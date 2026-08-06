@@ -120,7 +120,7 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
     const isCategoryMatch = expectedCategory === actualCategory;
     const isPlanMatch = expectedPlan === actualPlan;
 
-    if ((user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com') && !isLocal) return;
+
 
     if (!isCategoryMatch || !isPlanMatch) {
       logSecurityEvent(
@@ -176,8 +176,8 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
   const expectedPlan = normalizePlan(routePlan);
   const actualPlan = normalizePlan(plan);
 
-  const isCategoryMatch = expectedCategory === actualCategory || ((user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com') && !isLocal);
-  const isPlanMatch = expectedPlan === actualPlan || ((user?.email === 'krishnaniti@gmail.com' || user?.email === 'demo_nagarsevak@demo.com') && !isLocal);
+    const isCategoryMatch = expectedCategory === actualCategory;
+    const isPlanMatch = expectedPlan === actualPlan;
 
   if (!isCategoryMatch || !isPlanMatch) {
     return (
