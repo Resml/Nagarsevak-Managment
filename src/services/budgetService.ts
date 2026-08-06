@@ -73,13 +73,6 @@ export const BudgetService = {
 
             if (error) throw error;
 
-            // Fallback if empty to show dummy data first time
-            if (!data || data.length === 0) {
-                const stored = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY) || '[]');
-                if (stored.length > 0) return filterByYear(stored, year);
-                return filterByYear(DUMMY_BUDGET, year);
-            }
-
             return (data || []).map((row: any) => ({
                 id: row.id,
                 financialYear: row.financial_year,
@@ -93,9 +86,8 @@ export const BudgetService = {
             }));
 
         } catch (e) {
-            const stored = JSON.parse(localStorage.getItem(BUDGET_STORAGE_KEY) || '[]');
-            if (stored.length > 0) return filterByYear(stored, year);
-            return filterByYear(DUMMY_BUDGET, year);
+            console.error('Error fetching budget data:', e);
+            return [];
         }
     },
 

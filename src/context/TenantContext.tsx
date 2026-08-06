@@ -207,13 +207,20 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (user?.email === 'krishnaniti@gmail.com' && !isLocal) {
             return true;
         }
+
+        // DYNAMIC DATABASE CHECK: Read disabled_features array directly from tenant.config
+        const disabledFeatures: string[] = tenant?.config?.disabled_features || [];
+        if (disabledFeatures.includes(featureKey)) {
+            return false;
+        }
+
         if (user?.email === 'demo_nagarsevak@demo.com') {
             const excluded = ['voice_call', 'ai_voice_call', 'whatsapp_call', 'social', 'newspaper'];
             if (excluded.includes(featureKey)) return false;
             return checkFeatureAccess(featureKey, 'advance');
         }
         return checkFeatureAccess(featureKey, plan);
-    }, [plan, user, isLocal]);
+    }, [plan, user, isLocal, tenant]);
 
     return (
         <TenantContext.Provider value={{

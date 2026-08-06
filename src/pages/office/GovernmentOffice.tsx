@@ -54,14 +54,16 @@ const GovernmentOfficePage = () => {
     const [showReport, setShowReport] = useState(false);
 
     useEffect(() => {
-        loadOffices();
-        fetchStaff();
-    }, []);
+        if (tenantId) {
+            loadOffices();
+            fetchStaff();
+        }
+    }, [tenantId]);
 
     const loadOffices = async () => {
         setOfficesLoading(true);
         try {
-            const data = await GovernmentService.getOffices();
+            const data = await GovernmentService.getOffices(tenantId);
             setOffices(data);
         } catch (error) {
             console.error('Failed to load offices:', error);
@@ -72,6 +74,7 @@ const GovernmentOfficePage = () => {
     };
 
     const fetchStaff = async () => {
+        if (!tenantId) return;
         setStaffLoading(true);
         try {
             const { data, error } = await supabase
@@ -97,7 +100,7 @@ const GovernmentOfficePage = () => {
                 toast.error('Please fill required fields');
                 return;
             }
-            await GovernmentService.addOffice(officeFormData as any);
+            await GovernmentService.addOffice(officeFormData as any, tenantId);
             setIsOfficeModalOpen(false);
             setOfficeFormData({
                 name: '',

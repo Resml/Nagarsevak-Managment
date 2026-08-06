@@ -298,7 +298,7 @@ const AppLayout = () => {
         items: [
           { to: '/dashboard/social', icon: TrendingUp, label: t('nav.social_analytics'), show: true, permission: 'social' },
           { to: '/dashboard/media/newspaper', icon: Newspaper, label: t('nav.newspaper_clipping'), show: true, permission: 'newspaper' },
-          { to: '/dashboard/media/tracking', icon: Globe, label: t('nav.media_tracking') || 'Media Tracking', show: true, permission: 'newspaper' },
+          { to: '/dashboard/media/tracking', icon: Globe, label: t('nav.media_tracking') || 'Media Tracking', show: true, permission: 'media_tracking' },
           { to: '/dashboard/content', icon: Wand2, label: t('nav.ai_content'), show: true, permission: 'ai_content' },
         ],
       },
@@ -333,7 +333,6 @@ const AppLayout = () => {
           { to: '/dashboard/political/duplicates', icon: AlertTriangle, label: t('nav.duplicate_voters') || 'Duplicate Voters', show: true, permission: 'voters' },
           { to: '/dashboard/political/voter-forms', icon: FileText, label: t('nav.voter_forms'), show: true, permission: 'voter_forms' },
           { to: '/dashboard/political/work-management', icon: ClipboardList, label: t('nav.karyakarta_work') || 'Karyakarta Work Management', show: true, permission: 'karyakarta_work' },
-          { to: '/dashboard/political/sales-proposal', icon: FileText, label: language === 'mr' ? 'प्रस्ताव लेटरहेड' : 'Sales Proposal', show: isAdminOrStaff, permission: 'analysis' },
         ],
       },
 

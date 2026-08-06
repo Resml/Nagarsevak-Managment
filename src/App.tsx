@@ -78,7 +78,6 @@ const KaryakartaWorkManagement = lazy(() => import('./pages/political/Karyakarta
 const FileTrackerDashboard = lazy(() => import('./pages/works/FileTrackerDashboard'));
 const FileTrackerForm = lazy(() => import('./pages/works/FileTrackerForm'));
 const FileTrackerDetail = lazy(() => import('./pages/works/FileTrackerDetail'));
-const SalesProposalGenerator = lazy(() => import('./pages/political/SalesProposalGenerator'));
 
 
 // Protected Route Wrapper
@@ -294,7 +293,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/join-party" element={<JoinParty />} />
           <Route path="/s/:id" element={<PublicSurveyForm />} />
-          <Route path="/sales-proposal" element={<SalesProposalGenerator />} />
 
           <Route path="/:routeCategory/:routePlan/dashboard" element={
             <ProtectedRoute>
@@ -364,7 +362,7 @@ function App() {
             <Route path="files/edit/:id" element={<PermissionGuard permission="gov_office"><FileTrackerForm /></PermissionGuard>} />
             <Route path="files/:id" element={<PermissionGuard permission="gov_office"><FileTrackerDetail /></PermissionGuard>} />
             <Route path="media/newspaper" element={<PermissionGuard permission="newspaper"><NewspaperClipping /></PermissionGuard>} />
-            <Route path="media/tracking" element={<PermissionGuard permission="newspaper"><MediaTracking /></PermissionGuard>} />
+            <Route path="media/tracking" element={<PermissionGuard permission="media_tracking"><MediaTracking /></PermissionGuard>} />
 
             <Route path="analysis-strategy" element={<PermissionGuard permission="analysis"><AnalysisStrategy /></PermissionGuard>} />
 
@@ -377,7 +375,6 @@ function App() {
             <Route path="political/housing-societies" element={<PermissionGuard permission="housing_societies"><HousingSocieties /></PermissionGuard>} />
             <Route path="political/duplicates" element={<PermissionGuard permission="voters"><DuplicateVoters /></PermissionGuard>} />
             <Route path="political/work-management" element={<PermissionGuard permission="karyakarta_work"><KaryakartaWorkManagement /></PermissionGuard>} />
-            <Route path="political/sales-proposal" element={<PermissionGuard permission="analysis"><SalesProposalGenerator /></PermissionGuard>} />
 
 
             <Route path="political/public-communication" element={<PermissionGuard permission="public_comm"><PublicCommunication /></PermissionGuard>} />

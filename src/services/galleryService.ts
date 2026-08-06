@@ -108,21 +108,6 @@ export const GalleryService = {
 
             if (error) throw error;
 
-            // If DB empty, fallback to dummy
-            if (!data || data.length === 0) {
-                const stored = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
-                
-                // Clear cache if it contains broken dummy data from previous attempts
-                const hasBrokenNewspaper = stored.some((s: any) => s.category === 'Newspaper' && s.imageUrl.includes('blob:'));
-                if (hasBrokenNewspaper) {
-                    localStorage.removeItem(GALLERY_STORAGE_KEY);
-                    return filteredDummy(category);
-                }
-
-                if (stored.length > 0) return stored;
-                return filteredDummy(category);
-            }
-
             return (data || []).map((row: any) => ({
                 id: row.id,
                 title: row.title,
@@ -137,10 +122,8 @@ export const GalleryService = {
             }));
 
         } catch (e) {
-            // Fallback
-            const stored = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
-            if (stored.length > 0) return filterItems(stored, category);
-            return filteredDummy(category);
+            console.error('Error fetching gallery data:', e);
+            return [];
         }
     },
 
