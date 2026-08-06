@@ -369,10 +369,21 @@ const StaffList = () => {
                     return;
                 }
 
+                if (formData.password.length < 6) {
+                    toast.error('Password must be at least 6 characters long');
+                    return;
+                }
+
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.user_email.trim())) {
+                    toast.error('Please enter a valid Email address');
+                    return;
+                }
+
                 // Call Edge Function to create Auth User + Staff Record
                 const { data, error } = await supabase.functions.invoke('create-staff-user', {
                     body: {
-                        email: formData.user_email,
+                        email: formData.user_email.trim(),
                         password: formData.password,
                         name: formData.name,
                         mobile: fullMobile,
@@ -426,7 +437,13 @@ const StaffList = () => {
             fetchStaff();
         } catch (err: any) {
             console.error(err);
-            toast.error(err.message || (editingStaffId ? 'Failed to update staff' : t('staff.list.error_add')));
+            let errMsg = err.message || (editingStaffId ? 'Failed to update staff' : t('staff.list.error_add'));
+            if (errMsg.includes('already been registered') || errMsg.includes('already registered')) {
+                errMsg = 'A user with this email address is already registered. Please use a different email address.';
+            } else if (errMsg.includes('Database error creating new user')) {
+                errMsg = 'Failed to create user. Make sure the password is at least 6 characters and the email is unique.';
+            }
+            toast.error(errMsg);
         }
     };
 
