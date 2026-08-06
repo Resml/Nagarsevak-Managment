@@ -43,22 +43,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const userRole = (localStorage.getItem('force_amdar') === 'true' || isAmdarUrl) ? 'amdar' : dbRole;
 
             // Fetch permissions from staff table
-            const { data: staffData } = await supabase
+            let staffData = null;
+
+            const { data: staffById } = await supabase
                 .from('staff')
-                .select('permissions')
+                .select('permissions, id')
                 .eq('id', sessionUser.id)
                 .maybeSingle();
+
+            staffData = staffById;
+
+            if (!staffData && sessionUser.email) {
+                const { data: staffByEmail } = await supabase
+                    .from('staff')
+                    .select('permissions, id')
+                    .eq('user_email', sessionUser.email)
+                    .maybeSingle();
+                staffData = staffByEmail;
+            }
 
             const permissions: string[] = (staffData?.permissions && Array.isArray(staffData.permissions))
                 ? staffData.permissions
                 : [];
+
+            const isStaffUser = !!staffData || dbRole === 'staff';
 
             console.log('[AuthContext] Resolved user:', {
                 id: sessionUser.id,
                 email: sessionUser.email,
                 role: userRole,
                 permissions,
-                isStaff: !!staffData,
+                isStaff: isStaffUser,
             });
 
             setUser({
@@ -67,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: sessionUser.email || '',
                 role: userRole,
                 permissions,
-                isStaff: !!staffData,
+                isStaff: isStaffUser,
             });
             setIsLoading(false);
 

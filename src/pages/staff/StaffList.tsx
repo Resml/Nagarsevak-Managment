@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { type Staff } from '../../types/staff';
-import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer, CheckSquare, CheckCircle, Clock, AlertCircle, Calendar, ChevronDown, ChevronUp, BarChart2, Download } from 'lucide-react';
+import { Plus, Trash2, Edit2, User, Phone, Briefcase, Tag, Building2, Flag, Wrench, Search, MapPin, Eye, EyeOff, LayoutGrid, FileText, Printer, CheckSquare, CheckCircle, Clock, AlertCircle, Calendar, ChevronDown, ChevronUp, BarChart2, Download, Loader2 } from 'lucide-react';
 import StaffProfile from './StaffProfile';
 import { StaffReportGenerator } from './StaffReportGenerator';
 import clsx from 'clsx';
@@ -75,6 +75,7 @@ const StaffList = () => {
         address: ''
     });
     const [savingQuickTask, setSavingQuickTask] = useState(false);
+    const [savingStaff, setSavingStaff] = useState(false);
     const detailsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -307,8 +308,10 @@ const StaffList = () => {
     }, []);
 
     useEffect(() => {
-        fetchStaff();
-    }, []);
+        if (tenantId) {
+            fetchStaff();
+        }
+    }, [tenantId]);
 
     const fetchStaff = async () => {
         try {
@@ -329,6 +332,7 @@ const StaffList = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSavingStaff(true);
         try {
             // Merge manual input keywords with selected categories
             const manualKeywords = formData.keywords.split(',').map(k => k.trim()).filter(k => k);
@@ -444,6 +448,8 @@ const StaffList = () => {
                 errMsg = 'Failed to create user. Make sure the password is at least 6 characters and the email is unique.';
             }
             toast.error(errMsg);
+        } finally {
+            setSavingStaff(false);
         }
     };
 
@@ -1753,9 +1759,14 @@ const StaffList = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="ns-btn-primary"
+                                    disabled={savingStaff}
+                                    className="ns-btn-primary flex items-center justify-center gap-2 min-w-[100px]"
                                 >
-                                    {editingStaffId ? 'Update' : t('staff.modal.save')}
+                                    {savingStaff && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {savingStaff 
+                                        ? tr('Saving...', 'जतन करत आहे...') 
+                                        : (editingStaffId ? 'Update' : t('staff.modal.save'))
+                                    }
                                 </button>
                             </div>
                         </form>
