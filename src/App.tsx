@@ -282,12 +282,25 @@ const PermissionGuard = ({ children, permission }: { children: React.ReactNode; 
   return <Navigate to="/dashboard" replace />;
 };
 
+// Root Route Component: Redirects tenant subdomains directly to Login page, main site to LandingPage
+const RootRedirect = () => {
+  const hostname = window.location.hostname;
+  const subdomain = hostname.split('.')[0];
+  const isMainSite = hostname === 'localhost' || hostname === '127.0.0.1' || subdomain === 'www' || subdomain === 'krishnaniti' || subdomain === 'default';
+
+  if (!isMainSite) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <LandingPage />;
+};
+
 function App() {
   return (
     <BrowserRouter>
       <Suspense fallback={<div className="flex h-screen items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div></div>}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<RootRedirect />} />
           <Route path="/features" element={<FeaturesPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/login" element={<Login />} />
