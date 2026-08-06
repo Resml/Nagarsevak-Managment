@@ -44,7 +44,12 @@ const Login = () => {
             return { enforcedRole: mappedSubdomain as any, allowedRoles: [mappedSubdomain] };
         }
 
-        // 3. Otherwise use tenant config
+        // 3. Check if tenant has a specific tier (e.g. mamit.krishnaniti.in -> nagarsevak)
+        if (tenant?.tier && roles.includes(tenant.tier.toLowerCase())) {
+            return { enforcedRole: tenant.tier.toLowerCase() as any, allowedRoles: [tenant.tier.toLowerCase()] };
+        }
+
+        // 4. Otherwise use tenant config
         const allowed = tenant?.config?.allowed_roles as string[] | undefined;
         if (allowed && allowed.length > 0) {
             return {
@@ -54,6 +59,16 @@ const Login = () => {
         }
 
         return { enforcedRole: null, allowedRoles: null };
+    }, [tenant]);
+
+    const politicianTitle = useMemo(() => {
+        if (tenant?.config?.nagarsevak_name_english) {
+            return tenant.config.nagarsevak_name_english;
+        }
+        if (tenant?.name && tenant.name !== 'Default Nagarsevak') {
+            return tenant.name;
+        }
+        return 'Krishnaniti';
     }, [tenant]);
 
     useEffect(() => {
@@ -139,8 +154,8 @@ const Login = () => {
                             <div className="flex justify-center mb-4">
                                 <img src="/favicon.svg" alt="Krishnaniti Logo" className="h-16 w-16 object-contain" />
                             </div>
-                            <h2 className="text-3xl font-bold text-slate-900">Krishnaniti</h2>
-                            <p className="text-slate-500 mt-2">{t('login.subtitle')}</p>
+                            <h2 className="text-3xl font-bold text-slate-900">{politicianTitle}</h2>
+                            <p className="text-slate-500 mt-2">{tenant?.name && tenant.name !== 'Default Nagarsevak' ? `Sign in to access your portal` : t('login.subtitle')}</p>
                         </div>
 
                         {/* Developer Testing: Plan Selector */}
