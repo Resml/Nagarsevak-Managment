@@ -411,25 +411,26 @@ const StaffList = () => {
                     throw new Error(data.error);
                 }
 
-                // Update the newly created user's custom fields since edge function does not support them
-                if (data && data.user && data.user.id) {
-                    const newUserId = data.user.id;
-                    const updatePayload: any = {};
-                    if (formData.party_wing) updatePayload.party_wing = formData.party_wing;
-                    if (formData.paksh) updatePayload.paksh = formData.paksh;
-                    if (formData.pad) updatePayload.pad = formData.pad;
-                    if (formData.society_name) updatePayload.society_name = formData.society_name;
+                // Update the newly created user's custom fields and ensure category, tenant_id & role are synced
+                const cleanEmail = formData.user_email.trim();
+                const updatePayload: any = {
+                    category: formData.category || 'Office',
+                    tenant_id: tenantId,
+                    role: formData.role || 'staff'
+                };
+                if (formData.party_wing) updatePayload.party_wing = formData.party_wing;
+                if (formData.paksh) updatePayload.paksh = formData.paksh;
+                if (formData.pad) updatePayload.pad = formData.pad;
+                if (formData.society_name) updatePayload.society_name = formData.society_name;
 
-                    if (Object.keys(updatePayload).length > 0) {
-                        const { error: updateError } = await supabase
-                            .from('staff')
-                            .update(updatePayload)
-                            .eq('id', newUserId)
-                            .eq('tenant_id', tenantId);
-                        if (updateError) {
-                            console.error('Failed to update custom fields for new staff:', updateError);
-                        }
-                    }
+                // Sync update in staff table by user_email or ID
+                const { error: updateError } = await supabase
+                    .from('staff')
+                    .update(updatePayload)
+                    .or(`user_email.eq.${cleanEmail},id.eq.${data?.user?.id || data?.id || '00000000-0000-0000-0000-000000000000'}`);
+
+                if (updateError) {
+                    console.error('Failed to sync fields for new staff:', updateError);
                 }
 
                 toast.success(t('staff.list.success_add'));
@@ -510,7 +511,14 @@ const StaffList = () => {
     // Filter logic:
     const staffInCurrentTab = (activeTab as any) === 'WorkManagement'
         ? staff
-        : staff.filter(s => (s.category || 'Office') === activeTab);
+        : staff.filter(s => {
+            const sCat = (s.category || 'Office').toString().trim().toLowerCase();
+            const tabCat = activeTab.toString().trim().toLowerCase();
+            if (tabCat === 'office') {
+                return sCat === 'office' || !s.category;
+            }
+            return sCat === tabCat;
+        });
 
     // Area Suggestions Logic
     const getAreaSuggestions = () => {
@@ -1760,13 +1768,16 @@ const StaffList = () => {
                                 <button
                                     type="submit"
                                     disabled={savingStaff}
-                                    className="ns-btn-primary flex items-center justify-center gap-2 min-w-[100px]"
+                                    className="ns-btn-primary flex items-center justify-center gap-2 min-w-[120px] font-medium"
                                 >
-                                    {savingStaff && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {savingStaff 
-                                        ? tr('Saving...', 'जतन करत आहे...') 
-                                        : (editingStaffId ? 'Update' : t('staff.modal.save'))
-                                    }
+                                    {savingStaff ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                                            <span>{tr('Saving...', 'जतन करत आहे...')}</span>
+                                        </>
+                                    ) : (
+                                        <span>{editingStaffId ? 'Update' : t('staff.modal.save')}</span>
+                                    )}
                                 </button>
                             </div>
                         </form>
