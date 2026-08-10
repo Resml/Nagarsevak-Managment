@@ -167,29 +167,33 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         tier = pathCategory as TenantTier;
     }
     
-    // Determine plan, default to 'advance' on local development to allow testing all features
-    const hostname = window.location.hostname;
-    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || tenant?.subdomain === 'default' || hostname.includes('vercel.app') || hostname === 'krishnaniti.in' || hostname === 'www.krishnaniti.in';
+    // Explicit plan override via URL query parameter for manual testing (?plan=pro)
+    const searchParams = new URLSearchParams(window.location.search);
+    const queryPlan = searchParams.get('plan');
     
+    // Determine plan:
+    // 1. Path-based plan (e.g. /nagarsevak/basic/dashboard)
+    // 2. Query param (?plan=basic)
+    // 3. Database tenant plan (normalized: 'advanced' -> 'advance')
+    // 4. Fallback to 'basic'
+    const rawTenantPlan = String(tenant?.plan || 'basic');
+    const normalizedTenantPlan = (rawTenantPlan === 'advanced' ? 'advance' : rawTenantPlan) as TenantPlan;
+
+    let plan: TenantPlan = normalizedTenantPlan;
+    if (validPlans.includes(pathPlan)) {
+        plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
+    } else if (queryPlan && validPlans.includes(queryPlan.toLowerCase())) {
+        plan = (queryPlan.toLowerCase() === 'advanced' ? 'advance' : queryPlan.toLowerCase()) as TenantPlan;
+    }
+
     const [testPlan, setTestPlanState] = useState<TenantPlan>(() => {
-        return (localStorage.getItem('test_plan') as TenantPlan) || 'advance';
+        return (localStorage.getItem('test_plan') as TenantPlan) || normalizedTenantPlan;
     });
 
     const setTestPlan = useCallback((newPlan: TenantPlan) => {
         localStorage.setItem('test_plan', newPlan);
         setTestPlanState(newPlan);
     }, []);
-
-    // Allow overriding plan via query parameter on local dev
-    const searchParams = new URLSearchParams(window.location.search);
-    const queryPlan = searchParams.get('plan');
-    
-    let plan = tenant?.plan || 'basic';
-    if (validPlans.includes(pathPlan)) {
-        plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
-    } else if (isLocal) {
-        plan = (queryPlan as TenantPlan) || testPlan;
-    }
 
     useEffect(() => {
         const shouldBypass = user?.role === 'admin';
@@ -202,12 +206,19 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const isMinister = tier === 'minister';
 
     const hasFeature = useCallback((featureKey: string) => {
-        // DYNAMIC DATABASE CHECK: Read disabled_features array directly from tenant.config
+        // 1. DYNAMIC DATABASE CHECK: If explicitly disabled for this tenant in config, ALWAYS block it
         const disabledFeatures: string[] = tenant?.config?.disabled_features || [];
         if (disabledFeatures.includes(featureKey)) {
             return false;
         }
 
+        // 2. DYNAMIC DATABASE CHECK: If explicitly enabled for this tenant in config, ALWAYS allow it
+        const enabledFeatures: string[] = tenant?.config?.enabled_features || [];
+        if (enabledFeatures.includes(featureKey)) {
+            return true;
+        }
+
+        // 3. Subscription Plan-based matrix access
         return checkFeatureAccess(featureKey, plan);
     }, [plan, tenant]);
 

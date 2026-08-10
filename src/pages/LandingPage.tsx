@@ -78,7 +78,7 @@ const LandingPage = () => {
 
     return (
         <main className="min-h-screen bg-white font-sans text-slate-900">
-            <SEO 
+            <SEO
                 title={title}
                 description={description}
                 url={language === 'mr' ? 'https://krishnaniti.in/?lang=mr' : 'https://krishnaniti.in/'}
@@ -183,7 +183,7 @@ const LandingPage = () => {
                         >
                             {user ? t('landing.hero.dashboard') : t('landing.hero.get_started')}
                         </button>
-                        <button 
+                        <button
                             className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl font-bold text-lg transition-all flex items-center justify-center gap-2 hover:border-brand-200 hover:text-brand-700"
                             aria-label={t('landing.hero.view_demo')}
                         >

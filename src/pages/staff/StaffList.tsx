@@ -208,43 +208,60 @@ const StaffList = () => {
 
     const AVAILABLE_PERMISSIONS = useMemo(() => [
         // Daily Work
-        { id: 'complaints', label: t('permissions.complaints') },
-        { id: 'letters', label: t('permissions.letters') },
-        { id: 'tasks', label: t('permissions.tasks') },
-        { id: 'visitors', label: t('permissions.visitors') },
-        { id: 'schemes', label: t('permissions.schemes') },
+        { id: 'complaints', label: t('permissions.complaints') || 'Complaints & Requests' },
+        { id: 'letters', label: t('permissions.letters') || 'Letters & Applications' },
+        { id: 'tasks', label: t('permissions.tasks') || 'Task Management' },
+        { id: 'visitors', label: t('permissions.visitors') || 'Visitor Log' },
+        { id: 'schemes', label: t('permissions.schemes') || 'Government Schemes' },
 
         // Ward Info
-        { id: 'ward_problems', label: t('permissions.ward_problems') },
-        { id: 'work_history', label: t('permissions.work_history') },
-        { id: 'improvements', label: t('permissions.improvements') },
-        { id: 'provision', label: t('permissions.provision') },
+        { id: 'ward_problems', label: t('permissions.ward_problems') || 'Ward Problems' },
+        { id: 'ward_info', label: t('permissions.ward_info') || 'Ward Map' },
+        { id: 'work_history', label: t('permissions.work_history') || 'Work History' },
+        { id: 'improvements', label: t('permissions.improvements') || 'Ward Improvements' },
+        { id: 'provision', label: t('permissions.provision') || 'Ward Provision' },
 
         // Municipal
-        { id: 'gb_register', label: t('permissions.gb_register') },
-        { id: 'budget', label: t('permissions.budget') },
+        { id: 'gb_register', label: t('permissions.gb_register') || 'GB Register / Diary' },
+        { id: 'budget', label: t('permissions.budget') || 'Ward Budget' },
 
         // Gov Office
-        { id: 'gov_office', label: t('permissions.gov_office') },
+        { id: 'gov_office', label: t('permissions.gov_office') || 'Government Offices' },
 
         // Media
-        { id: 'social', label: t('permissions.social') },
-        { id: 'newspaper', label: t('permissions.newspaper') },
-        { id: 'bot', label: t('permissions.bot') },
-        { id: 'ai_content', label: t('permissions.ai_content') },
+        { id: 'social', label: t('permissions.social') || 'Social Media Analytics' },
+        { id: 'newspaper', label: t('permissions.newspaper') || 'Newspaper Clippings' },
+        { id: 'media_tracking', label: 'Media Tracking' },
+        { id: 'bot', label: t('permissions.bot') || 'WhatsApp Bot' },
+        { id: 'ai_content', label: t('permissions.ai_content') || 'AI Content Studio' },
 
         // Programs
-        { id: 'events', label: t('permissions.events') },
-        { id: 'gallery', label: t('permissions.gallery') },
+        { id: 'events', label: t('permissions.events') || 'Events & Invites' },
+        { id: 'gallery', label: t('permissions.gallery') || 'Media Gallery' },
 
         // Political
-        { id: 'results', label: t('permissions.results') },
-        { id: 'sadasya', label: t('permissions.sadasya') },
-        { id: 'surveys', label: t('permissions.surveys') },
-        { id: 'voters', label: t('permissions.voters') },
-        { id: 'staff', label: t('permissions.staff') },
-        { id: 'public_comm', label: t('permissions.public_comm') },
-        { id: 'analysis', label: t('permissions.analysis') },
+        { id: 'results', label: t('permissions.results') || 'Election Results' },
+        { id: 'sadasya', label: t('permissions.sadasya') || 'Party Members (Sadasya)' },
+        { id: 'surveys', label: t('permissions.surveys') || 'Surveys' },
+        { id: 'voters', label: t('permissions.voters') || 'Voter Search' },
+        { id: 'social_organizations', label: 'NGO & Mandals Info' },
+        { id: 'housing_societies', label: 'Society Chairmans & Voters' },
+        { id: 'voter_forms', label: 'Voter Forms' },
+        { id: 'karyakarta_work', label: 'Karyakarta Work Management' },
+        { id: 'opposition', label: 'Opposition Info' },
+        { id: 'staff', label: t('permissions.staff') || 'Staff Management' },
+
+        // Public Communication
+        { id: 'public_comm', label: t('permissions.public_comm') || 'Public Communication (All)' },
+        { id: 'sms', label: 'Send SMS' },
+        { id: 'whatsapp', label: 'WhatsApp Message' },
+        { id: 'voice_call', label: 'Voice Call' },
+        { id: 'ai_voice_call', label: 'AI Voice Call' },
+        { id: 'conference_room', label: 'Conference Room' },
+        { id: 'whatsapp_call', label: 'WhatsApp Call' },
+
+        // Analysis & Settings
+        { id: 'analysis', label: t('permissions.analysis') || 'Analysis Strategy' },
         { id: 'profile_settings', label: t('permissions.profile_settings') || 'Profile Settings' },
     ], [t]);
 

@@ -268,11 +268,14 @@ const PermissionGuard = ({ children, permission }: { children: React.ReactNode; 
   const adminRoles = ['admin', 'nagarsevak', 'amdar', 'khasdar', 'minister'];
   if (adminRoles.includes(user.role) && !user.isStaff) return <>{children}</>;
 
-  // Staff check — must have the specific permission
+  // Staff check — must have the specific permission or parent group permission
   if (user.isStaff) {
     const perms = user.permissions;
-    if (Array.isArray(perms) && perms.includes(permission)) {
-      return <>{children}</>;
+    if (Array.isArray(perms)) {
+      const publicCommPerms = ['sms', 'whatsapp', 'voice_call', 'ai_voice_call', 'conference_room', 'whatsapp_call'];
+      if (perms.includes(permission) || (publicCommPerms.includes(permission) && perms.includes('public_comm'))) {
+        return <>{children}</>;
+      }
     }
     // No permission → redirect to dashboard
     return <Navigate to="/dashboard" replace />;

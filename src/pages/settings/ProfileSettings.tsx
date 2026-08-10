@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
-import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield, Clock, Loader2, HelpCircle } from 'lucide-react';
+import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield, Clock, Loader2, HelpCircle, Sliders, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import BotDashboard from '../admin/BotDashboard';
 import SecurityLogs from './SecurityLogs';
@@ -11,12 +11,12 @@ import CropModal from '../../components/common/CropModal';
 import clsx from 'clsx';
 
 const ProfileSettings = () => {
-    const { tenant, tenantId, refreshTenant } = useTenant();
+    const { tenant, tenantId, plan, refreshTenant } = useTenant();
     const { t, language } = useLanguage();
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'security' | 'support'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'features' | 'bot' | 'security' | 'support'>('profile');
 
     const [formData, setFormData] = useState({
         nagarsevak_name_english: '',
@@ -122,8 +122,13 @@ const ProfileSettings = () => {
         }
     };
 
+    const [rawConfig, setRawConfig] = useState<any>({});
+    const [disabledFeatures, setDisabledFeatures] = useState<string[]>([]);
+    const [savingFeatures, setSavingFeatures] = useState(false);
+
     // Check permissions
     const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
+    const isAdmin = ['admin', 'nagarsevak', 'amdar', 'khasdar', 'minister'].includes(user?.role || '');
 
     useEffect(() => {
         if (tenantId) {
@@ -141,6 +146,8 @@ const ProfileSettings = () => {
                 .single();
 
             if (data && data.config) {
+                setRawConfig(data.config);
+                setDisabledFeatures(Array.isArray(data.config.disabled_features) ? data.config.disabled_features : []);
                 setFormData({
                     nagarsevak_name_english: data.config.nagarsevak_name_english || '',
                     nagarsevak_name_marathi: data.config.nagarsevak_name_marathi || '',
@@ -237,10 +244,17 @@ const ProfileSettings = () => {
 
             setFormData(updatedFormData);
 
+            // Merge with existing raw config so disabled_features are never lost
+            const mergedConfig = {
+                ...rawConfig,
+                ...updatedFormData
+            };
+            setRawConfig(mergedConfig);
+
             // Auto-save to DB immediately after upload so AppLayout refreshes
             const { error: saveError } = await supabase
                 .from('tenants')
-                .update({ config: updatedFormData })
+                .update({ config: mergedConfig })
                 .eq('id', tenantId);
 
             if (saveError) throw saveError;
@@ -263,27 +277,29 @@ const ProfileSettings = () => {
             return;
         }
         setSaving(true);
-        console.log("Saving settings for tenant:", tenantId);
-        console.log("Data:", formData);
 
         try {
-            // First try with updated_at
+            // Merge with current config to preserve disabled_features and other settings
+            const mergedConfig = {
+                ...rawConfig,
+                ...formData
+            };
+
             const { error } = await supabase
                 .from('tenants')
                 .update({
-                    config: formData,
+                    config: mergedConfig,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', tenantId);
 
             if (error) {
-                // If error is about missing column, try without updated_at
                 if (error.code === '42703' || error.message?.includes("updated_at")) {
                     console.warn("updated_at column missing, retrying without it...");
                     const { error: retryError } = await supabase
                         .from('tenants')
                         .update({
-                            config: formData
+                            config: mergedConfig
                         })
                         .eq('id', tenantId);
 
@@ -293,16 +309,57 @@ const ProfileSettings = () => {
                 }
             }
 
+            setRawConfig(mergedConfig);
             toast.success(t('sadasya.update_success') || 'Settings updated successfully!');
-            // Refresh global TenantContext so logo/profile updates everywhere
             await refreshTenant();
-            // Reload local settings
             await fetchSettings();
         } catch (error: any) {
             console.error('Error saving settings:', error);
             toast.error(error.message || t('common.error') || 'Error saving settings');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleToggleFeature = (featureKey: string) => {
+        setDisabledFeatures(prev => {
+            if (prev.includes(featureKey)) {
+                return prev.filter(k => k !== featureKey);
+            } else {
+                return [...prev, featureKey];
+            }
+        });
+    };
+
+    const handleSaveFeatures = async () => {
+        if (!tenantId) {
+            toast.error("Tenant ID is missing");
+            return;
+        }
+        setSavingFeatures(true);
+        try {
+            const mergedConfig = {
+                ...rawConfig,
+                disabled_features: disabledFeatures
+            };
+
+            const { error } = await supabase
+                .from('tenants')
+                .update({
+                    config: mergedConfig
+                })
+                .eq('id', tenantId);
+
+            if (error) throw error;
+
+            setRawConfig(mergedConfig);
+            toast.success(language === 'mr' ? 'वैशिष्ट्ये सेटिंग्ज सेव्ह झाली!' : 'Feature settings saved successfully!');
+            await refreshTenant();
+        } catch (error: any) {
+            console.error('Error saving feature settings:', error);
+            toast.error(error.message || 'Error saving feature settings');
+        } finally {
+            setSavingFeatures(false);
         }
     };
 
@@ -342,6 +399,20 @@ const ProfileSettings = () => {
                         <User className="w-4 h-4" />
                         {t('sadasya.personal_details') || 'Profile Details'}
                     </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setActiveTab('features')}
+                            className={clsx(
+                                'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                                activeTab === 'features'
+                                    ? 'bg-white text-brand-700 shadow'
+                                    : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                            )}
+                        >
+                            <Sliders className="w-4 h-4" />
+                            {language === 'mr' ? 'वैशिष्ट्ये (Features)' : 'Features & Modules'}
+                        </button>
+                    )}
                     {canAccessBot && (
                         <button
                             onClick={() => setActiveTab('bot')}
@@ -582,6 +653,198 @@ const ProfileSettings = () => {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Features & Modules Content */}
+            {activeTab === 'features' && isAdmin && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                                <h3 className="text-lg font-bold text-slate-800">
+                                    {language === 'mr' ? 'वैशिष्ट्ये व मॉड्यूल्स व्यवस्थापन' : 'Feature & Module Management'}
+                                </h3>
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200 capitalize">
+                                    {plan} Plan
+                                </span>
+                            </div>
+                            <p className="text-sm text-slate-500">
+                                {language === 'mr'
+                                    ? 'येथून आपण या उमेदवारासाठी अनावश्यक वैशिष्ट्ये चालू किंवा बंद करू शकता. बंद केलेली वैशिष्ट्ये साइडबार आणि मेनूमधून लगेच लपवली जातील.'
+                                    : 'Enable or disable specific features for this candidate workspace. Turned-off features are instantly hidden from the sidebar and navigation.'}
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleSaveFeatures}
+                            disabled={savingFeatures}
+                            className="ns-btn-primary flex items-center gap-2 shrink-0 px-5 py-2.5 shadow-md shadow-brand-200"
+                        >
+                            {savingFeatures ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>{language === 'mr' ? 'सेव्ह होत आहे...' : 'Saving...'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    <span>{language === 'mr' ? 'बदल सेव्ह करा' : 'Save Feature Settings'}</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Feature Categories Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[
+                            {
+                                title: language === 'mr' ? 'सार्वजनिक संवाद (Public Communication)' : 'Public Communication',
+                                desc: language === 'mr' ? 'कॉलिंग, एसएमएस आणि व्हॉट्सॲप संवाद' : 'Calls, SMS and WhatsApp messaging',
+                                items: [
+                                    { id: 'ai_voice_call', label: language === 'mr' ? 'एआय व्हॉइस कॉल (AI Voice Call)' : 'AI Voice Call' },
+                                    { id: 'voice_call', label: language === 'mr' ? 'व्हॉइस कॉल (Voice Call)' : 'Voice Call' },
+                                    { id: 'conference_room', label: language === 'mr' ? 'कॉन्फरन्स रूम (Conference Room)' : 'Conference Room' },
+                                    { id: 'sms', label: language === 'mr' ? 'एसएमएस पाठवा (Send SMS)' : 'Send SMS' },
+                                    { id: 'whatsapp', label: language === 'mr' ? 'व्हॉट्सॲप मेसेज (WhatsApp Message)' : 'WhatsApp Message' },
+                                    { id: 'whatsapp_call', label: language === 'mr' ? 'व्हॉट्सॲप कॉल (WhatsApp Call)' : 'WhatsApp Call' },
+                                ]
+                            },
+                            {
+                                title: language === 'mr' ? 'राजकीय व्यवस्थापन (Political)' : 'Political Management',
+                                desc: language === 'mr' ? 'मतदार, संस्था आणि निवडणूक व्यवस्थापन' : 'Voters, organisations and campaign management',
+                                items: [
+                                    { id: 'social_organizations', label: language === 'mr' ? 'एन.जी.ओ. व मंडळ माहिती (NGO & Mandals)' : 'NGO & Mandals Info' },
+                                    { id: 'housing_societies', label: language === 'mr' ? 'सोसायटी अध्यक्ष व मतदार (Societies)' : 'Society Chairmans & Voters' },
+                                    { id: 'voter_forms', label: language === 'mr' ? 'मतदार नोंदणी अर्ज (Voter Forms)' : 'Voter Forms' },
+                                    { id: 'karyakarta_work', label: language === 'mr' ? 'कार्यकर्ता काम व्यवस्थापन (Karyakarta)' : 'Karyakarta Work Management' },
+                                    { id: 'opposition', label: language === 'mr' ? 'विरोधी पक्ष माहिती (Opposition Info)' : 'Opposition Info' },
+                                    { id: 'results', label: language === 'mr' ? 'निवडणूक निकाल (Result Analysis)' : 'Election Result Analysis' },
+                                    { id: 'sadasya', label: language === 'mr' ? 'पक्ष सदस्य (Sadasya Members)' : 'Party Members (Sadasya)' },
+                                    { id: 'surveys', label: language === 'mr' ? 'सर्व्हे (Surveys)' : 'Surveys' },
+                                    { id: 'voters', label: language === 'mr' ? 'मतदार शोध (Voter Search)' : 'Voter Search' },
+                                    { id: 'staff', label: language === 'mr' ? 'माझी टीम (Staff Management)' : 'My Team / Staff' },
+                                ]
+                            },
+                            {
+                                title: language === 'mr' ? 'दैनंदिन कामकाज (Daily Work)' : 'Daily Work',
+                                desc: language === 'mr' ? 'कार्यालयीन कामकाज आणि तक्रारी' : 'Office workflow, complaints and letters',
+                                items: [
+                                    { id: 'complaints', label: language === 'mr' ? 'तक्रारी (Complaints)' : 'Complaints & Requests' },
+                                    { id: 'letters', label: language === 'mr' ? 'पत्रव्यवहार (Letters)' : 'Letters & Applications' },
+                                    { id: 'tasks', label: language === 'mr' ? 'टास्क व्यवस्थापन (Tasks)' : 'Task Management' },
+                                    { id: 'visitors', label: language === 'mr' ? 'भेट देणारे (Visitors Log)' : 'Visitor Log' },
+                                    { id: 'schemes', label: language === 'mr' ? 'शासकीय योजना (Schemes)' : 'Govt Schemes' },
+                                ]
+                            },
+                            {
+                                title: language === 'mr' ? 'प्रभाग व मनपा कामे (Ward & Municipal)' : 'Ward & Municipal Work',
+                                desc: language === 'mr' ? 'प्रभाग सुधारणा, बजेट आणि मनपा कामे' : 'Ward improvements, provision & budget',
+                                items: [
+                                    { id: 'ward_problems', label: language === 'mr' ? 'प्रभाग समस्या (Ward Problems)' : 'Ward Problems' },
+                                    { id: 'ward_info', label: language === 'mr' ? 'प्रभाग नकाशा (Ward Map)' : 'Ward Map' },
+                                    { id: 'work_history', label: language === 'mr' ? 'केलेली कामे (Work History)' : 'Work History' },
+                                    { id: 'improvements', label: language === 'mr' ? 'संभाव्य सुधारणा (Improvements)' : 'Ward Improvements' },
+                                    { id: 'provision', label: language === 'mr' ? 'प्रावधान तरतूद (Provision)' : 'Ward Provision' },
+                                    { id: 'gb_register', label: language === 'mr' ? 'जी.बी. रजिस्टर (GB Register)' : 'GB Register / Diary' },
+                                    { id: 'budget', label: language === 'mr' ? 'प्रभाग बजेट (Ward Budget)' : 'Ward Budget' },
+                                    { id: 'gov_office', label: language === 'mr' ? 'शासकीय कार्यालये (Gov Offices)' : 'Government Offices' },
+                                ]
+                            },
+                            {
+                                title: language === 'mr' ? 'प्रसिद्धी व माध्यम (Media & Promotion)' : 'Media & Promotion',
+                                desc: language === 'mr' ? 'सोशल मीडिया, बातम्या आणि एआय कंटेंट' : 'Social media, news & AI content studio',
+                                items: [
+                                    { id: 'social', label: language === 'mr' ? 'सोशल मीडिया विश्लेषण (Social Analytics)' : 'Social Analytics' },
+                                    { id: 'newspaper', label: language === 'mr' ? 'वर्तमानपत्र कात्रणे (Newspaper)' : 'Newspaper Clippings' },
+                                    { id: 'media_tracking', label: language === 'mr' ? 'मीडिया ट्रॅकिंग (Media Tracking)' : 'Media Tracking' },
+                                    { id: 'ai_content', label: language === 'mr' ? 'एआय कंटेंट स्टुडिओ (AI Studio)' : 'AI Content Studio' },
+                                    { id: 'events', label: language === 'mr' ? 'कार्यक्रम व निमंत्रणे (Events)' : 'Events & Invites' },
+                                    { id: 'gallery', label: language === 'mr' ? 'फोटो व व्हिडिओ गॅलरी (Gallery)' : 'Media Gallery' },
+                                ]
+                            },
+                            {
+                                title: language === 'mr' ? 'रणनीती व विश्लेषण (Strategy)' : 'Strategy & Analytics',
+                                desc: language === 'mr' ? 'प्रगत विश्लेषण आणि राजकीय रणनीती' : 'Advanced strategy and voter analytics',
+                                items: [
+                                    { id: 'analysis', label: language === 'mr' ? 'विश्लेषण व रणनीती (Analysis Strategy)' : 'Analysis Strategy' },
+                                ]
+                            }
+                        ].map((group, gIdx) => (
+                            <div key={gIdx} className="ns-card p-6 bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                                <div>
+                                    <h4 className="font-bold text-slate-800 text-base">{group.title}</h4>
+                                    <p className="text-xs text-slate-400 mt-0.5">{group.desc}</p>
+                                </div>
+                                <div className="divide-y divide-slate-100">
+                                    {group.items.map((item) => {
+                                        const isOff = disabledFeatures.includes(item.id);
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className="py-3 flex items-center justify-between gap-3 hover:bg-slate-50/50 px-2 rounded-lg transition-colors"
+                                            >
+                                                <div className="space-y-0.5">
+                                                    <span className={clsx("text-sm font-medium", isOff ? "text-slate-400 line-through" : "text-slate-700")}>
+                                                        {item.label}
+                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {isOff ? (
+                                                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
+                                                                <XCircle className="w-3 h-3" /> {language === 'mr' ? 'लपवले (Off)' : 'Disabled'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                                                <CheckCircle2 className="w-3 h-3" /> {language === 'mr' ? 'सुरू (On)' : 'Enabled'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Toggle Switch */}
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={!isOff}
+                                                    onClick={() => handleToggleFeature(item.id)}
+                                                    className={clsx(
+                                                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2",
+                                                        !isOff ? "bg-brand-600" : "bg-slate-300"
+                                                    )}
+                                                >
+                                                    <span
+                                                        className={clsx(
+                                                            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                                                            !isOff ? "translate-x-5" : "translate-x-0"
+                                                        )}
+                                                    />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-end pt-2 pb-6">
+                        <button
+                            onClick={handleSaveFeatures}
+                            disabled={savingFeatures}
+                            className="ns-btn-primary flex items-center gap-2 px-6 py-2.5 shadow-md shadow-brand-200"
+                        >
+                            {savingFeatures ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>{language === 'mr' ? 'सेव्ह होत आहे...' : 'Saving...'}</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="w-4 h-4" />
+                                    <span>{language === 'mr' ? 'बदल सेव्ह करा' : 'Save Feature Settings'}</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             )}

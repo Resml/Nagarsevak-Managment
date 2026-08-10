@@ -204,6 +204,10 @@ const AppLayout = () => {
     if (user?.isStaff || user?.role === 'staff') {
       const perms = user.permissions;
       if (!Array.isArray(perms) || perms.length === 0) return false;
+      const publicCommPerms = ['sms', 'whatsapp', 'voice_call', 'ai_voice_call', 'conference_room', 'whatsapp_call'];
+      if (publicCommPerms.includes(perm) && perms.includes('public_comm')) {
+        return true;
+      }
       return perms.includes(perm);
     }
     return true;
