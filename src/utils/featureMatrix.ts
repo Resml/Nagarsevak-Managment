@@ -45,6 +45,7 @@ export const checkFeatureAccess = (featureKey: string, plan: string): boolean =>
     'voter_forms',          // Voter Forms (मतदार नोंदणी अर्ज)
     'budget',               // Budget Provisions / Fund Allocation (प्रावधान तरतूद) - Budget
     'newspaper',            // Newspaper coverage/clipping (वर्तमानपत्र कात्रणे)
+    'media_tracking',       // Media Tracking
     'ai_voice_call',        // AI Voice Call (AI व्हॉइस कॉल)
     'conference_room',      // Conference Room (कॉन्फरन्स रूम)
     'voice_call',           // Voice Call (व्हॉइस कॉल)
