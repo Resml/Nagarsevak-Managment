@@ -2,6 +2,7 @@ const { MENUS, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { createClient } = require('@supabase/supabase-js');
 const { SURVEY_MENU_STATE, handleSurveyReply } = require('./surveyBot');
+const { politicianBotService, POLITICIAN_STATES } = require('./politicianBotService');
 
 // Menu states
 const MENU_STATES = {
@@ -121,6 +122,36 @@ class MenuNavigator {
         // Check for Staff Completion Command
         if (await this.handleStaffCompletionCommand(sock, tenantId, userId, input)) {
             return;
+        }
+
+        // --- Politician / Office Admin Auto-Detection & Routing ---
+        const polAuth = await politicianBotService.isPolitician(tenantId, userId);
+        if (polAuth && polAuth.isPolitician) {
+            const polSession = politicianBotService.getSession(userId);
+
+            // Check if politician explicitly requested to switch mode
+            if (input.toUpperCase() === 'CITIZEN' || input.toUpperCase() === 'CITIZEN_MODE') {
+                polSession.mode = 'citizen';
+                await sock.sendMessage(userId, {
+                    text: `🔄 *नागरिक मोड सुरू झाला आहे.*\n\nतुम्ही आता सामान्य नागरिकांप्रमाणे बॉट वापरू शकता.\n\nपुन्हा नगरसेवक ॲडमिन पोर्टलवर जाण्यासाठी *ADMIN* टाईप करा.`
+                });
+                return await this.showMainMenu(sock, userId, session.language || 'mr');
+            }
+
+            if (input.toUpperCase() === 'ADMIN' || input.toUpperCase() === 'POLITICIAN' || input.toUpperCase() === 'SAHEB') {
+                polSession.mode = 'admin';
+                return await politicianBotService.showPoliticianMainMenu(sock, tenantId, userId, polSession.language || session.language || 'mr');
+            }
+
+            // If in admin mode, route to Politician Bot Service
+            if (polSession.mode !== 'citizen') {
+                if (session.language) polSession.language = session.language;
+
+                const handledResult = await politicianBotService.handlePoliticianMessage(sock, tenantId, userId, input, polAuth.politicianInfo);
+                if (handledResult && handledResult.handled) {
+                    return;
+                }
+            }
         }
 
         if (input === '9' && session.currentMenu !== MENU_STATES.MAIN_MENU) {
@@ -763,7 +794,16 @@ class MenuNavigator {
             const confirmMsg = MESSAGES.language_selected[selectedLanguage];
             await sock.sendMessage(userId, { text: confirmMsg });
 
-            // Show main menu
+            // Check if user is Politician / Admin
+            const polAuth = await politicianBotService.isPolitician(tenantId, userId);
+            if (polAuth && polAuth.isPolitician) {
+                const polSession = politicianBotService.getSession(userId);
+                if (polSession.mode !== 'citizen') {
+                    return await politicianBotService.showPoliticianMainMenu(sock, tenantId, userId, selectedLanguage);
+                }
+            }
+
+            // Show main menu for citizen
             return await this.showMainMenu(sock, userId, selectedLanguage);
         } else {
             // Check if this is a reply to a pending task (Staff Date Estimate) - Stateless Recovery
