@@ -194,6 +194,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         localStorage.setItem('test_plan', newPlan);
         setTestPlanState(newPlan);
     }, []);
+
+    useEffect(() => {
         const shouldBypass = user?.role === 'admin';
         setActiveTenantSession(tenant?.id || null, tier, plan, shouldBypass);
     }, [tenant, tier, plan, user]);
