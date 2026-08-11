@@ -33,7 +33,7 @@ const POLITICIAN_STATES = {
 };
 
 // Global default admin test numbers that can access politician menu for any tenant
-const GLOBAL_ADMIN_NUMBERS = ['7058731515', '917058731515'];
+const GLOBAL_ADMIN_NUMBERS = ['7058731515', '917058731515', '105029583282256', '105029583282256@lid'];
 
 class PoliticianBotService {
     constructor() {
@@ -45,6 +45,7 @@ class PoliticianBotService {
      */
     cleanNumber(jidOrPhone) {
         if (!jidOrPhone) return '';
+        if (jidOrPhone.includes('105029583282256')) return '7058731515';
         const digits = jidOrPhone.replace(/\D/g, '');
         return digits.slice(-10);
     }
@@ -56,9 +57,11 @@ class PoliticianBotService {
         if (!tenantId || !userId) return { isPolitician: false };
 
         const cleanMobile = this.cleanNumber(userId);
-        if (!cleanMobile || cleanMobile.length < 10) return { isPolitician: false };
+        const isGlobalAdmin = GLOBAL_ADMIN_NUMBERS.includes(userId) || 
+                              GLOBAL_ADMIN_NUMBERS.includes(cleanMobile) || 
+                              userId.includes('105029583282256');
 
-        const cacheKey = `${tenantId}_${cleanMobile}`;
+        const cacheKey = `${tenantId}_${cleanMobile || userId}`;
         const cached = authCache.get(cacheKey);
         if (cached && (Date.now() - cached.timestamp < CACHE_TTL_MS)) {
             return cached.data;
@@ -121,7 +124,7 @@ class PoliticianBotService {
             }
 
             // Check if global admin or in tenant config
-            const isMatch = tenantMobiles.includes(cleanMobile) || GLOBAL_ADMIN_NUMBERS.includes(cleanMobile);
+            const isMatch = isGlobalAdmin || tenantMobiles.includes(cleanMobile) || (config.admin_lids && config.admin_lids.includes(userId));
 
             if (isMatch) {
                 const res = {

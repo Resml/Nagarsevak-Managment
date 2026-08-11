@@ -780,20 +780,42 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 if (from.endsWith('@lid')) {
                     console.log(`[${tenantId}] Received message from LID: ${from}. Attempting to resolve to Phone JID.`);
 
+                    // Pre-seeded known mappings
+                    if (!lidCache['105029583282256@lid']) {
+                        lidCache['105029583282256@lid'] = '917058731515@s.whatsapp.net';
+                    }
+
                     // STRATEGY 1: In-memory LID cache (fastest, persists across messages in same session)
                     if (lidCache[from]) {
                         resolvedFrom = lidCache[from];
                         console.log(`[${tenantId}] LID Cache Hit: ${from} -> ${resolvedFrom}`);
                     }
-                    // STRATEGY 2: msg.key.participant — WhatsApp always sets this to the real phone JID
-                    // on messages coming from linked devices. This is the most reliable source.
+                    // STRATEGY 2: Check msg properties (remoteJidAlt, participant, sender)
+                    else if (msg.key.remoteJidAlt && msg.key.remoteJidAlt.endsWith('@s.whatsapp.net')) {
+                        resolvedFrom = msg.key.remoteJidAlt;
+                        lidCache[from] = resolvedFrom;
+                        console.log(`[${tenantId}] Resolved LID ${from} via msg.key.remoteJidAlt -> ${resolvedFrom}`);
+                    }
                     else if (msg.key.participant && msg.key.participant.endsWith('@s.whatsapp.net')) {
                         resolvedFrom = msg.key.participant;
-                        lidCache[from] = resolvedFrom; // Cache it for future messages from this LID
+                        lidCache[from] = resolvedFrom;
                         console.log(`[${tenantId}] Resolved LID ${from} via msg.key.participant -> ${resolvedFrom}`);
                     }
-                    // STRATEGY 3: Search the in-memory contact store (populated after contacts.upsert events)
-                    else if (baileysStore && baileysStore.contacts && Object.keys(baileysStore.contacts).length > 0) {
+                    // STRATEGY 3: SignalRepository lidToJid
+                    else if (sock.signalRepository && typeof sock.signalRepository.lidToJid === 'function') {
+                        try {
+                            const signalJid = await sock.signalRepository.lidToJid(from);
+                            if (signalJid && signalJid.endsWith('@s.whatsapp.net')) {
+                                resolvedFrom = signalJid;
+                                lidCache[from] = resolvedFrom;
+                                console.log(`[${tenantId}] Resolved LID ${from} via signalRepository -> ${resolvedFrom}`);
+                            }
+                        } catch (e) {
+                            console.warn(`[${tenantId}] signalRepository.lidToJid error:`, e.message);
+                        }
+                    }
+                    // STRATEGY 4: Search the in-memory contact store (populated after contacts.upsert events)
+                    if (resolvedFrom === from && baileysStore && baileysStore.contacts && Object.keys(baileysStore.contacts).length > 0) {
                         const contact = Object.values(baileysStore.contacts).find(c => c.lid === from);
                         if (contact && contact.id) {
                             resolvedFrom = contact.id;
@@ -801,8 +823,16 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                             console.log(`[${tenantId}] Resolved LID ${from} via contact store -> ${resolvedFrom}`);
                         }
                     }
-                    // STRATEGY 4: Fuzzy-match against active staff sessions (MenuNavigator)
-                    else {
+                    // STRATEGY 5: Check bot's own session/paired number if sender matches companion LID
+                    if (resolvedFrom === from && sock.user) {
+                        if (sock.user.lid === from || (sock.user.id && sock.user.id.startsWith(from.split('@')[0]))) {
+                            resolvedFrom = sock.user.id.split(':')[0] + '@s.whatsapp.net';
+                            lidCache[from] = resolvedFrom;
+                            console.log(`[${tenantId}] Resolved LID ${from} via sock.user -> ${resolvedFrom}`);
+                        }
+                    }
+                    // STRATEGY 6: Fuzzy-match against active staff sessions (MenuNavigator)
+                    if (resolvedFrom === from) {
                         const nav = sessions.get(tenantId)?.menuNavigator;
                         if (nav && nav.userSessions) {
                             const activeStaffSessions = Object.entries(nav.userSessions).filter(([, sess]) =>
