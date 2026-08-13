@@ -107,12 +107,16 @@ async function runTests() {
 
     // Test 4: Politician Authentication Check
     console.log("\n--- TEST 4: Politician Number Detection ---");
-    const authResult = await politicianBotService.isPolitician(mockTenantId, testUserId);
-    console.log("Auth Result for 7058731515:", authResult);
-    if (authResult.isPolitician) {
+    const authResult1 = await politicianBotService.isPolitician(mockTenantId, testUserId);
+    console.log("Auth Result for 7058731515:", authResult1);
+    if (authResult1.isPolitician) {
         console.log("✅ Successfully recognized 7058731515 as Politician / Admin!");
-    } else {
-        console.log("ℹ️ Resolved auth cleanly.");
+    }
+
+    const authResult2 = await politicianBotService.isPolitician(mockTenantId, '8788114603@s.whatsapp.net');
+    console.log("Auth Result for 8788114603:", authResult2);
+    if (authResult2.isPolitician) {
+        console.log("✅ Successfully recognized 8788114603 as Politician / Admin!");
     }
 
     // Test 5: Simulate Interactive Flow

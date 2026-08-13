@@ -33,7 +33,10 @@ const POLITICIAN_STATES = {
 };
 
 // Global default admin test numbers that can access politician menu for any tenant
-const GLOBAL_ADMIN_NUMBERS = ['7058731515', '917058731515', '105029583282256', '105029583282256@lid'];
+const GLOBAL_ADMIN_NUMBERS = [
+    '7058731515', '917058731515', '105029583282256', '105029583282256@lid',
+    '8788114603', '918788114603'
+];
 
 class PoliticianBotService {
     constructor() {
