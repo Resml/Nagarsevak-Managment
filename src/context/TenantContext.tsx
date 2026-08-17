@@ -63,14 +63,16 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
             // 1. If User is Logged In, check their mapping FIRST
             if (user?.id && !tenantIdToFetch) {
-                const { data: mapping } = await supabase
+                const { data: mapping, error: mappingError } = await supabase
                     .from('user_tenant_mapping')
                     .select('tenant_id')
                     .eq('user_id', user.id)
-                    .single();
+                    .maybeSingle();
 
                 if (mapping && mapping.tenant_id) {
                     tenantIdToFetch = mapping.tenant_id;
+                } else if (mappingError) {
+                    console.warn("Error fetching user tenant mapping:", mappingError);
                 } else {
                     console.warn("User logged in but no tenant mapping found.");
                 }
@@ -79,22 +81,40 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             // 2. If not logged in (or no mapping), Fallback to subdomain
             if (!tenantIdToFetch) {
                 const hostname = window.location.hostname;
-                const subdomain = hostname.split('.')[0];
+                const subdomain = hostname.split('.')[0]?.toLowerCase();
                 let querySubdomain = subdomain;
 
                 if (querySubdomain === 'amadar') {
                     querySubdomain = 'amdar';
                 }
 
-                if (hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+                if (
+                    hostname.includes('localhost') || 
+                    hostname.includes('127.0.0.1') || 
+                    hostname.endsWith('.vercel.app') ||
+                    subdomain === 'www' || 
+                    subdomain === 'krishnaniti' || 
+                    subdomain === 'default'
+                ) {
                     querySubdomain = 'default';
                 }
 
-                const { data: tenantBySub } = await supabase
+                let { data: tenantBySub } = await supabase
                     .from('tenants')
                     .select('id')
                     .eq('subdomain', querySubdomain)
-                    .single();
+                    .maybeSingle();
+
+                // If default is not found, fallback to 'newnagarsevak' or 'krishnaniti' for demo site
+                if (!tenantBySub && querySubdomain === 'default') {
+                    const { data: demoTenant } = await supabase
+                        .from('tenants')
+                        .select('id')
+                        .or('subdomain.eq.default,subdomain.eq.newnagarsevak,subdomain.eq.krishnaniti')
+                        .limit(1)
+                        .maybeSingle();
+                    tenantBySub = demoTenant;
+                }
 
                 if (tenantBySub) {
                     tenantIdToFetch = tenantBySub.id;
@@ -106,10 +126,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     .from('tenants')
                     .select('*')
                     .eq('id', tenantIdToFetch)
-                    .single();
+                    .maybeSingle();
 
                 if (data) {
                     setTenant(data);
+                } else {
+                    setTenant(null);
                 }
             } else {
                 setTenant(null);
@@ -117,6 +139,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
         } catch (err) {
             console.error("Failed to load tenant", err);
+            setTenant(null);
         } finally {
             setLoading(false);
         }
@@ -196,7 +219,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }, []);
 
     useEffect(() => {
-        const shouldBypass = user?.role === 'admin';
+        const shouldBypass = user?.role === 'super_admin';
         setActiveTenantSession(tenant?.id || null, tier, plan, shouldBypass);
     }, [tenant, tier, plan, user]);
 

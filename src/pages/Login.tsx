@@ -11,7 +11,7 @@ import loginHero from '../assets/login_hero.png';
 const Login = () => {
     const { login, user, isLoading } = useAuth();
     const { t, language, setLanguage } = useLanguage();
-    const { tenant, plan, setTestPlan } = useTenant(); // Added
+    const { tenant, plan, setTestPlan, loading: tenantLoading } = useTenant(); // Added
     const navigate = useNavigate();
     const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || tenant?.subdomain === 'default' || window.location.hostname.includes('vercel.app') || window.location.hostname === 'krishnaniti.in' || window.location.hostname === 'www.krishnaniti.in';
     const [activeTab, setActiveTab] = useState<'nagarsevak' | 'amdar' | 'khasdar' | 'minister' | null>(null);
@@ -72,10 +72,10 @@ const Login = () => {
     }, [tenant]);
 
     useEffect(() => {
-        if (user && !isLoading) {
+        if (user && !isLoading && !tenantLoading) {
             navigate('/dashboard');
         }
-    }, [user, isLoading, navigate]);
+    }, [user, isLoading, tenantLoading, navigate]);
 
     // Apply enforced role on mount or when detectedInfo changes
     useEffect(() => {

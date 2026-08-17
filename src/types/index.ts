@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'staff' | 'citizen' | 'nagarsevak' | 'amdar' | 'khasdar' | 'minister';
+export type Role = 'admin' | 'super_admin' | 'staff' | 'citizen' | 'nagarsevak' | 'amdar' | 'khasdar' | 'minister';
 
 export interface User {
   id: string;

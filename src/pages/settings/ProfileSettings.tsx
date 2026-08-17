@@ -140,7 +140,7 @@ const ProfileSettings = () => {
                 .from('tenants')
                 .select('config')
                 .eq('id', tenantId)
-                .single();
+                .maybeSingle();
 
             if (data && data.config) {
                 setRawConfig(data.config);

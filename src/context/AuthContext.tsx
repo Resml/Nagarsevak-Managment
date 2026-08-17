@@ -183,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .from('user_tenant_mapping')
                     .select('tenant_id')
                     .eq('user_id', sessionUser.id)
-                    .single();
+                    .maybeSingle();
 
                 await supabase.from('login_logs').insert({
                     user_id: sessionUser.id,

@@ -139,18 +139,31 @@ const ComplaintDetail = () => {
                     });
                 }
             } else {
-                const { data, error } = await supabase
+                let data: any = null;
+                const { data: joinData, error: joinError } = await supabase
                     .from('complaints')
                     .select(`
                         *,
-                        voter:voters (name_english, name_marathi, mobile),
-                        staff:assigned_to (name, mobile)
+                        voter:voters (name_english, name_marathi, mobile)
                     `)
                     .eq('id', id)
                     .eq('tenant_id', tenantId)
-                    .single();
+                    .maybeSingle();
 
-                if (error) throw error;
+                if (joinError) {
+                    console.warn('Join fetch failed, retrying simple select:', joinError.message);
+                    const { data: simpleData, error: simpleError } = await supabase
+                        .from('complaints')
+                        .select('*')
+                        .eq('id', id)
+                        .eq('tenant_id', tenantId)
+                        .maybeSingle();
+
+                    if (simpleError) throw simpleError;
+                    data = simpleData;
+                } else {
+                    data = joinData;
+                }
                 console.log('Fetched Complaint Data:', data); // Debugging
 
                 if (data) {

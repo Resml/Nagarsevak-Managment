@@ -221,7 +221,7 @@ const RouteSecurityGuard = ({ children }: { children: React.ReactNode }) => {
 
 // Dashboard Redirect Component (Dynamic URL mapping)
 const DashboardRedirect = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, logout } = useAuth();
   const { tenant, tier, plan, loading: tenantLoading } = useTenant();
   const location = useLocation();
 
@@ -233,8 +233,25 @@ const DashboardRedirect = () => {
     );
   }
 
-  if (!user || !tenant) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (!tenant) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-slate-50 text-center p-4">
+        <div className="max-w-md bg-white rounded-2xl shadow-xl p-8 border border-red-100">
+          <h2 className="text-2xl font-bold text-red-600 mb-2 font-sans">Tenant Inactive</h2>
+          <p className="text-slate-600 mb-6">No active tenant found for this subdomain or login account.</p>
+          <button
+            onClick={() => logout()}
+            className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition shadow-sm cursor-pointer"
+          >
+            Logout & Try Another Account
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const categoryPath = tier.toLowerCase();

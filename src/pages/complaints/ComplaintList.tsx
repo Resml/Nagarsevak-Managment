@@ -42,7 +42,8 @@ const ComplaintList = () => {
     const fetchComplaints = async () => {
         try {
             // Select complaints and join with voters table
-            const { data: complaintsData, error: complaintsError } = await supabase
+            let complaintsData: any[] = [];
+            const { data, error: complaintsError } = await supabase
                 .from('complaints')
                 .select(`
                     *,
@@ -50,18 +51,26 @@ const ComplaintList = () => {
                         name_english,
                         name_marathi,
                         mobile
-                    ),
-                    staff:assigned_to (
-                        name,
-                        mobile
                     )
                 `)
                 .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (complaintsError) {
-                console.error('Error fetching complaints:', complaintsError);
-                return;
+                console.warn('Complaints join query failed, falling back to simple select:', complaintsError.message);
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('complaints')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .order('created_at', { ascending: false });
+
+                if (fallbackError) {
+                    console.error('Error fetching complaints:', fallbackError);
+                    return;
+                }
+                complaintsData = fallbackData || [];
+            } else {
+                complaintsData = data || [];
             }
 
             // Fetch personal requests
