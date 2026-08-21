@@ -19,6 +19,7 @@ const { startSurveyForUser } = require('./surveyBot');
 const MenuNavigator = require('./menuNavigator');
 const supabaseAuthState = require('./supabaseAuthState');
 const { sendLetterStatusNotification } = require('./notifications');
+const publicRoutes = require('./publicRoutes');
 
 // Initial LID Cache
 const lidCache = {};
@@ -98,7 +99,7 @@ app.get('/', (req, res) => {
 
 // --- Supabase Setup ---
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- Multi-Tenant Globals ---
@@ -174,6 +175,7 @@ app.use('/api/vapi', vapiRoutes);
 // --- Sarvam AI + Twilio Calling Routes ---
 const sarvamCallRoutes = require('./sarvamCallRoutes');
 app.use('/api/sarvam-call', sarvamCallRoutes);
+app.use('/api/public', publicRoutes);
 
 // --- 2-Way AI Voice Calling Routes (Inbound) ---
 const aiCallRoutes = require('./aiCallRoutes');
