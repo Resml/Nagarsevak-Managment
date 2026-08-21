@@ -13,18 +13,17 @@ export async function logSecurityEvent(
 
         console.warn(`[Security Alert] ${eventType}:`, details);
 
-        const { error } = await supabase.from('security_audit_logs').insert({
-            user_id: user?.id || null,
-            email: user?.email || null,
-            event_type: eventType,
-            details: {
+        const { error } = await supabase.rpc('log_security_event', {
+            p_event_type: eventType,
+            p_details: {
                 ...details,
+                email: user?.email || null,
                 browser: device.browser,
                 os: device.os,
-                deviceType: device.deviceType
+                deviceType: device.deviceType,
+                user_agent: device.userAgent
             },
-            user_agent: device.userAgent,
-            tenant_id: tenantId
+            p_tenant_id: tenantId
         });
 
         if (error) {
