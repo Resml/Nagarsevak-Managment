@@ -48,10 +48,44 @@ function getBaseUrl(req) {
 }
 
 // --------------------------------------------------------------------------
+// TWILIO SIGNATURE VALIDATION MIDDLEWARE
+// --------------------------------------------------------------------------
+function validateTwilioRequest(req, res, next) {
+    const twilioSignature = req.headers['x-twilio-signature'];
+    
+    if (!twilioSignature) {
+        console.warn(`[AI-Call] Missing Twilio signature from ${req.ip}`);
+        return res.status(403).send('Forbidden: Missing signature');
+    }
+
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (!authToken) {
+        console.error('[AI-Call] TWILIO_AUTH_TOKEN is not configured');
+        return res.status(500).send('Server Error: Missing Twilio configuration');
+    }
+
+    // Determine the exact URL requested. Use env var if available to avoid proxy mismatch.
+    const baseUrl = process.env.VITE_BOT_API_URL || getBaseUrl(req);
+    // req.originalUrl contains path + query string
+    const url = `${baseUrl}${req.originalUrl}`;
+
+    // Twilio validateRequest takes (authToken, signature, url, body_params)
+    // Note: requires express.urlencoded() or req.body to be correctly parsed.
+    const isValid = twilio.validateRequest(authToken, twilioSignature, url, req.body || {});
+
+    if (!isValid) {
+        console.warn(`[AI-Call] Invalid Twilio signature for URL: ${url}`);
+        return res.status(403).send('Forbidden: Invalid signature');
+    }
+
+    next();
+}
+
+// --------------------------------------------------------------------------
 // 1. INCOMING CALL WEBHOOK
 // Twilio calls this when someone dials the number.
 // --------------------------------------------------------------------------
-router.post('/incoming', async (req, res) => {
+router.post('/incoming', validateTwilioRequest, async (req, res) => {
     const callSid = req.body.CallSid;
     const fromNumber = req.body.From;
 
@@ -122,7 +156,7 @@ router.post('/incoming', async (req, res) => {
 // --------------------------------------------------------------------------
 // 2. PROCESS WEBHOOK (Twilio sends the recording here)
 // --------------------------------------------------------------------------
-router.post('/process', async (req, res) => {
+router.post('/process', validateTwilioRequest, async (req, res) => {
     const callSid = req.body.CallSid;
     const recordingUrl = req.body.RecordingUrl;
     const botBaseUrl = getBaseUrl(req);
@@ -261,7 +295,7 @@ router.get('/audio/:callSid', (req, res) => {
 });
 
 // --- Fallback Routing for Call Status ---
-router.post('/status', (req, res) => {
+router.post('/status', validateTwilioRequest, (req, res) => {
     const callSid = req.body.CallSid;
     const status = req.body.CallStatus;
     console.log(`[AI-Call][${callSid}] Status Update: ${status}`);
