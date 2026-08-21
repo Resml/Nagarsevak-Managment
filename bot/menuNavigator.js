@@ -355,7 +355,7 @@ class MenuNavigator {
     async findPendingStaffTask(sock, tenantId, userId) {
         try {
             const supabaseUrl = process.env.VITE_SUPABASE_URL;
-            const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
             const supabase = createClient(supabaseUrl, supabaseKey);
 
             // 1. Get Staff ID from Mobile
@@ -480,7 +480,7 @@ class MenuNavigator {
         // For now, let's try to update using a direct Supabase client inside the method as done in handleComplaintFormPhoto.
 
         const supabaseUrl = process.env.VITE_SUPABASE_URL;
-        const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
         const supabase = createClient(supabaseUrl, supabaseKey);
 
         const { error } = await supabase
@@ -598,7 +598,7 @@ class MenuNavigator {
             const complaintId = match[1];
 
             const supabaseUrl = process.env.VITE_SUPABASE_URL;
-            const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+            const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
             const supabase = createClient(supabaseUrl, supabaseKey);
 
             // 1. Verify if this user is the assigned staff
@@ -1109,7 +1109,7 @@ class MenuNavigator {
 
                 // Initialize Supabase (we need the client here)
                 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-                const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+                const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
                 const supabase = createClient(supabaseUrl, supabaseKey);
 
                 const fileName = `${tenantId}/${Date.now()}_${msg.key.id}.jpg`;
@@ -1124,13 +1124,11 @@ class MenuNavigator {
 
                 if (error) throw error;
 
-                // Get Public URL
-                const { data: { publicUrl } } = supabase.storage
-                    .from('complaints')
-                    .getPublicUrl(fileName);
+                // Save relative path instead of getting public URL
+                const relativePath = `complaints/${fileName}`;
 
-                console.log(`[DEBUG] Photo uploaded successfully: ${publicUrl}`);
-                session.formData.image_url = publicUrl;
+                console.log(`[DEBUG] Photo uploaded successfully: ${relativePath}`);
+                session.formData.image_url = relativePath;
 
                 return await this.saveComplaint(sock, tenantId, userId);
 
