@@ -1,0 +1,470 @@
+[
+  {
+    "table": "admin_billing",
+    "policy": "Enable all operations for admin_billing",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "admin_support_tickets",
+    "policy": "Enable all operations for admin_support_tickets",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "admin_updates",
+    "policy": "Enable all operations for admin_updates",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "ai_history",
+    "policy": "Allow anon delete access",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "ai_history",
+    "policy": "Allow anon insert access",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "ai_history",
+    "policy": "Allow anon read access",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "ai_history",
+    "policy": "Allow anon update access",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "app_settings",
+    "policy": "Allow full access app_settings",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "area_problems",
+    "policy": "area_problems_tenant_isolation",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "events",
+    "policy": "Allow public insert events",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "events",
+    "policy": "Allow public read events",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "gallery",
+    "policy": "Allow anon delete access",
+    "cmd": "DELETE",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "gallery",
+    "policy": "Allow anon insert access",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "gallery",
+    "policy": "Allow anon read access",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "gallery",
+    "policy": "Allow anon update access",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "gb_diary",
+    "policy": "Allow all for everyone",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "housing_societies",
+    "policy": "Enable all access for authenticated users on housing_societies",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "improvements",
+    "policy": "Allow public insert improvements",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "improvements",
+    "policy": "Allow public read improvements",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "improvements",
+    "policy": "Allow public update improvements",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "incoming_letters",
+    "policy": "Allow authenticated users to insert incoming letters",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "incoming_letters",
+    "policy": "Allow authenticated users to read incoming letters",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "letter_requests",
+    "policy": "Public Access Letters",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "letter_types",
+    "policy": "Public Access Letter Types",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "non_voters",
+    "policy": "Allow public insert non_voters",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "non_voters",
+    "policy": "Allow public read non_voters",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "non_voters",
+    "policy": "Allow public update non_voters",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "opposition_karyakartas",
+    "policy": "Allow manage opposition karyakartas",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "opposition_karyakartas",
+    "policy": "Allow read access opposition karyakartas",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "personal_requests",
+    "policy": "personal_requests_tenant_isolation",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "sadasya",
+    "policy": "Enable all access for authenticated users",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "schemes",
+    "policy": "Allow public insert schemes",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "schemes",
+    "policy": "Allow public read schemes",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "security_audit_logs",
+    "policy": "Users can insert security audit logs",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "social_organizations",
+    "policy": "Enable all access for authenticated users on social_organizatio",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "survey_responses",
+    "policy": "Enable insert for authenticated users",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "survey_responses",
+    "policy": "Enable insert for public",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "survey_responses",
+    "policy": "Enable select for authenticated users",
+    "cmd": "SELECT",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "survey_responses",
+    "policy": "Enable select for public",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "surveys",
+    "policy": "Enable all access for authenticated users",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "tenants",
+    "policy": "Allow public read of tenants",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "tenants",
+    "policy": "Public read access to tenants",
+    "cmd": "SELECT",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "visitors",
+    "policy": "Public Access Visitors",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "voters",
+    "policy": "Allow public insert voters",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "voters",
+    "policy": "Allow public read voters",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "voters",
+    "policy": "Allow public update voters",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "ward_provisions",
+    "policy": "Allow public insert ward_provisions",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "ward_provisions",
+    "policy": "Allow public read ward_provisions",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "ward_provisions",
+    "policy": "Allow public update ward_provisions",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  },
+  {
+    "table": "whatsapp_sessions",
+    "policy": "Allow all access to whatsapp_sessions",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "true"
+  },
+  {
+    "table": "works",
+    "policy": "Allow public insert works",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "null",
+    "check": "true"
+  },
+  {
+    "table": "works",
+    "policy": "Allow public read works",
+    "cmd": "SELECT",
+    "roles": "{anon}",
+    "issue": "Wide open (true)",
+    "qual": "true",
+    "check": "null"
+  }
+]

@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { timingSafeEqual } from "https://deno.land/std@0.168.0/crypto/timing_safe_equal.ts";
 
 interface LetterStatusWebhookPayload {
     type: string
@@ -16,10 +17,44 @@ interface LetterStatusWebhookPayload {
     }
 }
 
+function verifyAuthHeader(req: Request): boolean {
+    // We check for a dedicated webhook secret header instead of the public anon key.
+    const authHeader = req.headers.get('Webhook-Secret') || req.headers.get('x-webhook-secret')
+    if (!authHeader) return false
+
+    const configuredSecret = Deno.env.get('DB_WEBHOOK_SECRET')
+    if (!configuredSecret) return false
+    
+    // Constant-time string comparison to prevent timing attacks
+    const encoder = new TextEncoder()
+    const a = encoder.encode(authHeader)
+    const b = encoder.encode(configuredSecret)
+
+    if (a.length !== b.length) return false
+    return timingSafeEqual(a, b)
+}
+
 serve(async (req) => {
     try {
+        // 1. Verify exact webhook authentication format configured for this project
+        // As documented in deploy-notifications.sh step 5, the webhook is configured
+        // to send a dedicated Webhook-Secret header.
+        if (!verifyAuthHeader(req)) {
+            console.error('Webhook authentication failed: Invalid or missing Webhook-Secret header')
+            return new Response(JSON.stringify({ error: 'Unauthorized payload signature' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            })
+        }
+
         // Parse the webhook payload
         const payload: LetterStatusWebhookPayload = await req.json()
+        
+        // Validate payload schema
+        if (!payload || !payload.record || !payload.old_record || !payload.record.id) {
+             console.error('Invalid webhook payload schema')
+             return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 })
+        }
 
         // Only process if status changed from Pending to Approved/Rejected
         if (payload.old_record.status === 'Pending' &&
@@ -89,7 +124,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' }
         })
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Edge Function error:', error)
         return new Response(JSON.stringify({
             error: 'Internal server error',

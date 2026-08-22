@@ -202,11 +202,15 @@ export const SingleSchemePdfGenerator: React.FC<SingleSchemePdfGeneratorProps> =
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <div>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>English</h4>
-                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: eligibility.en.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }}>
+                                            {eligibility.en.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                     <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>मराठी</h4>
-                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: eligibility.mr.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>
+                                            {eligibility.mr.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -219,11 +223,15 @@ export const SingleSchemePdfGenerator: React.FC<SingleSchemePdfGeneratorProps> =
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <div>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>English</h4>
-                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: benefits.en.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }}>
+                                            {benefits.en.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                     <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>मराठी</h4>
-                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: benefits.mr.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>
+                                            {benefits.mr.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -236,11 +244,15 @@ export const SingleSchemePdfGenerator: React.FC<SingleSchemePdfGeneratorProps> =
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
                                     <div>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>English</h4>
-                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: documents.en.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '14px', color: '#334155', lineHeight: '1.6' }}>
+                                            {documents.en.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                     <div style={{ borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
                                         <h4 style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', marginBottom: '8px' }}>मराठी</h4>
-                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }} dangerouslySetInnerHTML={{ __html: documents.mr.replace(/\n/g, '<br/>') }} />
+                                        <div style={{ fontSize: '15px', color: '#334155', lineHeight: '1.6' }}>
+                                            {documents.mr.split('\\n').map((line: string, i: number) => <span key={i}>{line}<br/></span>)}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

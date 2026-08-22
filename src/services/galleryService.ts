@@ -92,6 +92,8 @@ const DUMMY_GALLERY: GalleryItem[] = [
     }
 ];
 
+import { SecureStorageService } from './secureStorageService';
+
 export const GalleryService = {
     getGalleryItems: async (category?: GalleryCategory): Promise<GalleryItem[]> => {
         try {
@@ -108,7 +110,7 @@ export const GalleryService = {
 
             if (error) throw error;
 
-            return (data || []).map((row: any) => ({
+            const items = (data || []).map((row: any) => ({
                 id: row.id,
                 title: row.title,
                 category: row.category,
@@ -120,6 +122,15 @@ export const GalleryService = {
                 descriptionKey: row.description_key,
                 createdAt: row.created_at
             }));
+
+            // Resolve secure signed URLs
+            for (const item of items) {
+                if (item.imageUrl) {
+                    item.imageUrl = await SecureStorageService.getUrl('gallery-uploads', item.imageUrl);
+                }
+            }
+
+            return items;
 
         } catch (e) {
             console.error('Error fetching gallery data:', e);
@@ -221,24 +232,9 @@ export const GalleryService = {
 
     uploadImage: async (file: File): Promise<string> => {
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const tenantId = getGlobalTenantId() || 'default-tenant';
-            const filePath = `${tenantId}/files/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('gallery-uploads')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data } = supabase.storage
-                .from('gallery-uploads')
-                .getPublicUrl(filePath);
-
-            return data.publicUrl;
+            // Upload to tenant-isolated path and get relative path
+            const relativePath = await SecureStorageService.uploadFile('gallery-uploads', 'gallery', file);
+            return relativePath;
         } catch (error) {
             console.error('Error uploading image:', error);
             throw new Error('Image upload failed. Please try again.');

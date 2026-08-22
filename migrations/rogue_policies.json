@@ -1,0 +1,298 @@
+[
+  {
+    "table": "ai_history",
+    "policyname": "Allow anon insert access",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "ai_history",
+    "policyname": "Allow anon update access",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "event_rsvps",
+    "policyname": "Enable insert access for authenticated users",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": "null",
+    "with_check": "(auth.role() = 'authenticated'::text)"
+  },
+  {
+    "table": "event_rsvps",
+    "policyname": "Enable update access for authenticated users",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "(auth.role() = 'authenticated'::text)",
+    "with_check": "null"
+  },
+  {
+    "table": "events",
+    "policyname": "Allow public insert events",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "gallery",
+    "policyname": "Allow anon insert access",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "gallery",
+    "policyname": "Allow anon update access",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "gb_diary",
+    "policyname": "Allow all for everyone",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "housing_societies",
+    "policyname": "Enable all access for authenticated users on housing_societies",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "improvements",
+    "policyname": "Allow public insert improvements",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "improvements",
+    "policyname": "Allow public update improvements",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "incoming_letters",
+    "policyname": "Allow authenticated users to insert incoming letters",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "incoming_letters",
+    "policyname": "Allow users to update own incoming letters",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(uploaded_by = auth.uid())",
+    "with_check": "null"
+  },
+  {
+    "table": "letter_requests",
+    "policyname": "Public Access Letters",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "letter_types",
+    "policyname": "Public Access Letter Types",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "letter_types",
+    "policyname": "letter_types_tenant_isolation",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "(tenant_id = (current_setting('app.current_tenant_id'::text))::uuid)",
+    "with_check": "null"
+  },
+  {
+    "table": "message_logs",
+    "policyname": "service_role_all",
+    "cmd": "ALL",
+    "roles": "{service_role}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "message_logs",
+    "policyname": "tenant_insert",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": "null",
+    "with_check": "((tenant_id)::text = ((current_setting('request.jwt.claims'::text, true))::json ->> 'tenant_id'::text))"
+  },
+  {
+    "table": "non_voters",
+    "policyname": "Allow public insert non_voters",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "non_voters",
+    "policyname": "Allow public update non_voters",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "personal_requests",
+    "policyname": "personal_requests_tenant_isolation",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "sadasya",
+    "policyname": "Enable all access for authenticated users",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "schemes",
+    "policyname": "Allow public insert schemes",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "social_organizations",
+    "policyname": "Enable all access for authenticated users on social_organizatio",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "staff",
+    "policyname": "Tenant Isolation Insert Staff",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": "null",
+    "with_check": "(tenant_id IN ( SELECT user_tenant_mapping.tenant_id FROM user_tenant_mapping WHERE (user_tenant_mapping.user_id = auth.uid())))"
+  },
+  {
+    "table": "staff",
+    "policyname": "Tenant Isolation Update Staff",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "(tenant_id IN ( SELECT user_tenant_mapping.tenant_id FROM user_tenant_mapping WHERE (user_tenant_mapping.user_id = auth.uid())))",
+    "with_check": "null"
+  },
+  {
+    "table": "surveys",
+    "policyname": "Enable all access for authenticated users",
+    "cmd": "ALL",
+    "roles": "{authenticated}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "visitors",
+    "policyname": "Public Access Visitors",
+    "cmd": "ALL",
+    "roles": "{public}",
+    "qual": "true",
+    "with_check": "true"
+  },
+  {
+    "table": "voter_applications",
+    "policyname": "Enable insert access for tenant users",
+    "cmd": "INSERT",
+    "roles": "{public}",
+    "qual": "null",
+    "with_check": "((tenant_id)::text = current_setting('app.current_tenant'::text, true))"
+  },
+  {
+    "table": "voter_applications",
+    "policyname": "Enable update access for tenant users",
+    "cmd": "UPDATE",
+    "roles": "{public}",
+    "qual": "((tenant_id)::text = current_setting('app.current_tenant'::text, true))",
+    "with_check": "null"
+  },
+  {
+    "table": "voters",
+    "policyname": "Allow public insert voters",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "voters",
+    "policyname": "Allow public update voters",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "ward_provisions",
+    "policyname": "Allow public insert ward_provisions",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  },
+  {
+    "table": "ward_provisions",
+    "policyname": "Allow public update ward_provisions",
+    "cmd": "UPDATE",
+    "roles": "{anon}",
+    "qual": "true",
+    "with_check": "null"
+  },
+  {
+    "table": "work_trackers",
+    "policyname": "Users can insert work trackers for their tenant",
+    "cmd": "INSERT",
+    "roles": "{authenticated}",
+    "qual": "null",
+    "with_check": "(EXISTS ( SELECT 1 FROM user_tenant_mapping WHERE ((user_tenant_mapping.user_id = auth.uid()) AND (user_tenant_mapping.tenant_id = work_trackers.tenant_id))))"
+  },
+  {
+    "table": "work_trackers",
+    "policyname": "Users can update work trackers for their tenant",
+    "cmd": "UPDATE",
+    "roles": "{authenticated}",
+    "qual": "(EXISTS ( SELECT 1 FROM user_tenant_mapping WHERE ((user_tenant_mapping.user_id = auth.uid()) AND (user_tenant_mapping.tenant_id = work_trackers.tenant_id))))",
+    "with_check": "null"
+  },
+  {
+    "table": "works",
+    "policyname": "Allow public insert works",
+    "cmd": "INSERT",
+    "roles": "{anon}",
+    "qual": "null",
+    "with_check": "true"
+  }
+]

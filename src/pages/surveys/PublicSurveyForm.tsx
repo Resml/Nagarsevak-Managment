@@ -27,7 +27,7 @@ const PublicSurveyForm = () => {
         try {
             const { data, error } = await supabase
                 .from('surveys')
-                .select('*')
+                .select('id, title, description, questions, target_sample_size, status, created_at')
                 .eq('id', id)
                 .single();
 
@@ -94,17 +94,13 @@ const PublicSurveyForm = () => {
             }
 
             // Insert new response
-            // To ensure compatibility across tenant boundary limitations for public links, 
-            // we will query the tenant_id of the survey itself to pass onto the response row
-            const { data: surveyData } = await supabase.from('surveys').select('tenant_id').eq('id', survey.id).single();
-
+            // The database trigger will securely derive the correct tenant_id from the survey_id
             const { error: insertError } = await supabase
                 .from('survey_responses')
                 .insert({
                     survey_id: survey.id,
                     voter_id: voterId || null,
-                    answers,
-                    tenant_id: surveyData?.tenant_id || '00000000-0000-0000-0000-000000000000'
+                    answers
                 });
 
             if (insertError) throw insertError;

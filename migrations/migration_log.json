@@ -1,0 +1,278 @@
+[
+  {
+    "bucket": "documents",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "complaints",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "incoming_letters",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/0b2bcb50-6c43-4d08-b87b-ddc607af63ee_1770742183820.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/1b53665b-6d0c-4dac-aaf3-79fc054a33db_1772264182556.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/339847a0-bfc1-43f0-9dda-3999d9903d4c_1770730377155.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/4026a464-f5ab-43de-9f96-29d7294e93f9_1770743089255.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/46f410ae-a923-4771-bf8f-cbb2995d0b50_1772264852178.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/54ceaf45-bfff-4da2-b989-0550c81fda69_1771504170927.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/6324d785-88ca-4274-85b9-02356734cf0f_1770724185950.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/6544bdb2-92e1-4356-877b-88847e9df41f_1770723721440.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/6d108b90-10ad-4df7-b84c-c1a35fc5d354_1770728888784.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/7230bdc5-6837-465c-bf97-cd04529280aa_1775728444190.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/77e5aca9-1ef8-40e0-ace6-af63801a1edc_1769158509209.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/82a77c57-c5b5-475d-8795-f5f7cc231267_1770729989468.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/92033230-2fcd-4d64-9e0b-6f3d51e613f6_1770728020023.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/96236e65-1b2e-47ff-b7c5-e1540a553c03_1770729451013.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/9e770b14-1949-4f1c-92a0-e9b7d5351c98_1769156722367.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/9fca21a4-5342-4c30-86b8-067949940861_1770730059418.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/a2887f8e-0a0d-48e8-910b-846569d9a8bc_1769796694535.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/aef2c2f5-12a9-42a3-ba7e-950884ffcc73_1770740979084.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/bf14e456-223b-4c11-8589-db25400d8716_1770740547415.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/d0977e2a-9dce-4aa2-9ce2-692d46406703_1769156908952.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/d48249cb-68e0-4744-900e-63a8e5a4414b_1772263503262.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/e73fa45b-e9c3-4648-a150-c7cb1adb95f9_1770375154300.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/ed6acfa3-3528-4b65-90a7-6bd1dea30d4c_1770742764410.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263467882.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263479881.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263480906.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263481440.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263481752.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263482057.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fa5647cc-93e5-47a5-8dee-3f7ab0a33004_1772263482634.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "documents",
+    "oldPath": "letters/fe5c16a4-aa4a-4de6-94ba-8afb35073c24_1772263490110.pdf",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "6d8df9e7-8127-45f8-9ffa-134edd2be18d",
+    "status": "SKIPPED_UNMAPPED"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_0.6973500085819638.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_0.6973500085819638.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.06395008614491304.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.06395008614491304.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.3783310991056268.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.3783310991056268.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.4131082161505253.jpeg",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.4131082161505253.jpeg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.7141047049964419.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.7141047049964419.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.7491203577280922.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.7491203577280922.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.8373457679404432.jpg",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.8373457679404432.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.9155635901803467.jpg",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_0.9155635901803467.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1776665132007.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1776665132007.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778756906864.png",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778756906864.png",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS_NO_DB_CHANGE"
+  },
+  {
+    "bucket": "app-assets",
+    "oldPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "newPath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "status": "SUCCESS"
+  }
+]

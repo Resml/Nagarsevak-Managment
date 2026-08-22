@@ -11,28 +11,14 @@ const rawSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Active Tenant Session State
 let activeTenantId: string | null = null;
-let activeTier: string | null = null;
-let activePlan: string | null = null;
-let bypassTenantFilter = false;
 
-export function setActiveTenantSession(tenantId: string | null, tier: string | null, plan: string | null, bypass: boolean = false) {
-    console.log('[SupabaseClient Proxy] Setting active tenant session:', { tenantId, tier, plan, bypass });
+export function setActiveTenantSession(tenantId: string | null) {
+    console.log('[SupabaseClient Proxy] Setting active tenant session:', { tenantId });
     activeTenantId = tenantId;
-    activeTier = tier;
-    activePlan = plan;
-    bypassTenantFilter = bypass;
 }
 
 export function getGlobalTenantId(): string | null {
     return activeTenantId;
-}
-
-export function getGlobalTenantTier(): string | null {
-    return activeTier;
-}
-
-export function getGlobalTenantPlan(): string | null {
-    return activePlan;
 }
 
 const EXEMPT_TABLES = ['tenants', 'user_tenant_mapping', 'login_logs', 'security_audit_logs'];
@@ -44,8 +30,8 @@ const supabaseProxyHandler: ProxyHandler<any> = {
             return (relation: string) => {
                 const queryBuilder = target.from(relation);
                 
-                // If it is an exempt table, or no active tenant session exists, or bypassed, bypass the wrapper
-                if (EXEMPT_TABLES.includes(relation) || !activeTenantId || bypassTenantFilter) {
+                // If it is an exempt table or no active tenant session exists, bypass the wrapper
+                if (EXEMPT_TABLES.includes(relation) || !activeTenantId) {
                     return queryBuilder;
                 }
 
@@ -59,16 +45,14 @@ const supabaseProxyHandler: ProxyHandler<any> = {
                             };
                         }
 
-                        // 2. INSERT: inject tenant details into payload
+                        // 2. INSERT: inject tenant_id into payload
                         if (builderProp === 'insert') {
                             return (values: any, ...args: any[]) => {
                                 const injectDetails = (val: any) => {
                                     if (typeof val === 'object' && val !== null) {
                                         return {
                                             ...val,
-                                            tenant_id: activeTenantId,
-                                            category: activeTier?.toUpperCase(),
-                                            plan: activePlan?.toUpperCase()
+                                            tenant_id: activeTenantId
                                         };
                                     }
                                     return val;
@@ -78,16 +62,14 @@ const supabaseProxyHandler: ProxyHandler<any> = {
                             };
                         }
 
-                        // 3. UPDATE: inject tenant details and append .eq('tenant_id', activeTenantId)
+                        // 3. UPDATE: inject tenant_id and append .eq('tenant_id', activeTenantId)
                         if (builderProp === 'update') {
                             return (values: any, ...args: any[]) => {
                                 const injectDetails = (val: any) => {
                                     if (typeof val === 'object' && val !== null) {
                                         return {
                                             ...val,
-                                            tenant_id: activeTenantId,
-                                            category: activeTier?.toUpperCase(),
-                                            plan: activePlan?.toUpperCase()
+                                            tenant_id: activeTenantId
                                         };
                                     }
                                     return val;
@@ -96,16 +78,14 @@ const supabaseProxyHandler: ProxyHandler<any> = {
                             };
                         }
 
-                        // 4. UPSERT: inject tenant details and append .eq('tenant_id', activeTenantId)
+                        // 4. UPSERT: inject tenant_id and append .eq('tenant_id', activeTenantId)
                         if (builderProp === 'upsert') {
                             return (values: any, ...args: any[]) => {
                                 const injectDetails = (val: any) => {
                                     if (typeof val === 'object' && val !== null) {
                                         return {
                                             ...val,
-                                            tenant_id: activeTenantId,
-                                            category: activeTier?.toUpperCase(),
-                                            plan: activePlan?.toUpperCase()
+                                            tenant_id: activeTenantId
                                         };
                                     }
                                     return val;

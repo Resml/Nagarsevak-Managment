@@ -314,16 +314,21 @@ const VoterForms: React.FC = () => {
                 setApplications(prev => prev.map(app => app.id === editingId ? (data as VoterApplication) : app));
                 toast.success('Application updated successfully');
             } else {
-                // Insert
-                const { data, error } = await supabase
-                    .from('voter_applications')
-                    .insert([applicationData])
-                    .select()
-                    .single();
+                // Insert via Secure Backend API
+                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+                const response = await fetch(`${apiBaseUrl}/api/public/voter_applications`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(applicationData)
+                });
 
-                if (error) throw error;
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to insert application');
+                }
+                const resJson = await response.json();
 
-                setApplications(prev => [data as VoterApplication, ...prev]);
+                setApplications(prev => [resJson.data as VoterApplication, ...prev]);
                 toast.success('Application logged successfully');
             }
 

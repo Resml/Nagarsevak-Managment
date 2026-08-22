@@ -3,7 +3,8 @@ import { supabase } from '../../services/supabaseClient';
 import { type Complaint } from '../../types';
 import { type Staff } from '../../types/staff';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save, Download, ChevronRight } from 'lucide-react';
+import { SecureStorageService } from '../../services/secureStorageService';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -167,6 +168,7 @@ const ComplaintDetail = () => {
                 console.log('Fetched Complaint Data:', data); // Debugging
 
                 if (data) {
+                    const secureImageUrl = data.image_url ? await SecureStorageService.getUrl('documents', data.image_url) : undefined;
                     const mapped: Complaint = {
                         id: data.id.toString(),
                         title: data.problem || 'Request',
@@ -197,8 +199,8 @@ const ComplaintDetail = () => {
                             })(),
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
-                        photos: data.image_url ? [data.image_url] : [], // Map image_url to photos array as fallback
-                        imageUrl: data.image_url,
+                        photos: secureImageUrl ? [secureImageUrl] : [], // Map image_url to photos array as fallback
+                        imageUrl: secureImageUrl,
                         videoUrl: data.video_url,
                         audioUrl: data.audio_url,
                         voterId: data.voter_id,
