@@ -56,8 +56,8 @@ const FileTrackerDetail = () => {
         try {
             setLoading(true);
             const [fileRes, historyRes] = await Promise.all([
-                supabase.from('work_trackers').select('*').eq('id', id).single(),
-                supabase.from('work_tracker_history').select('*').eq('work_tracker_id', id).order('created_at', { ascending: false })
+                supabase.from('work_trackers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
+                supabase.from('work_tracker_history').select('*').eq('work_tracker_id', id).eq('tenant_id', tenantId).order('created_at', { ascending: false })
             ]);
 
             if (fileRes.error) throw fileRes.error;

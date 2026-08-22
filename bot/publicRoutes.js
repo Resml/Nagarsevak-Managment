@@ -124,6 +124,20 @@ router.post('/voter_applications', async (req, res) => {
             tenant_id: req.resolvedTenantId // SECURE BINDING
         };
 
+        // 2.5 Validate voter_id belongs to the resolved tenant
+        if (payload.voter_id) {
+            const { data: voter, error: voterError } = await supabaseAdmin
+                .from('voters')
+                .select('id')
+                .eq('id', payload.voter_id)
+                .eq('tenant_id', payload.tenant_id)
+                .single();
+            
+            if (voterError || !voter) {
+                return res.status(403).json({ error: 'Invalid voter reference for this tenant.' });
+            }
+        }
+
         // 3. Insert using Service Role
         const { data, error } = await supabaseAdmin
             .from('voter_applications')

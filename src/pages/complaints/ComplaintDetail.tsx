@@ -583,10 +583,14 @@ const ComplaintDetail = () => {
 
                                                                 // Find selected staff details
                                                                 const selectedStaff = staffList.find(s => s.id === newAssignee);
+                                                                const { data: { session } } = await supabase.auth.getSession();
 
                                                                 const response = await fetch(`${apiUrl}/api/assign-complaint`, {
                                                                     method: 'POST',
-                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    headers: { 
+                                                                        'Content-Type': 'application/json',
+                                                                        'Authorization': `Bearer ${session?.access_token}`
+                                                                    },
                                                                     body: JSON.stringify({
                                                                         complaintId: actualId,
                                                                         table: table,

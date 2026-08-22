@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { toast } from 'sonner';
 import { Search, Filter, CheckCircle, XCircle, Clock, Trash2, Download } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { SchemeReportGenerator } from '../../components/reports/SchemeReportGenerator';
@@ -23,6 +24,7 @@ interface SchemeApplication {
 
 const SchemeBeneficiaryList = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [applications, setApplications] = useState<SchemeApplication[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<string>('All');
@@ -48,6 +50,7 @@ const SchemeBeneficiaryList = () => {
                     *,
                     schemes (name)
                 `)
+                .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -70,7 +73,8 @@ const SchemeBeneficiaryList = () => {
             const { error } = await supabase
                 .from('scheme_applications')
                 .update({ status: newStatus })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
             toast.success(`Application ${newStatus}`);
@@ -96,7 +100,8 @@ const SchemeBeneficiaryList = () => {
                     benefit: editBenefit,
                     rejection_reason: editRejectionReason
                 })
-                .eq('id', editTarget.id);
+                .eq('id', editTarget.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
             toast.success(t('schemes.beneficiary_list.update_success') || 'Application updated successfully');
@@ -124,7 +129,8 @@ const SchemeBeneficiaryList = () => {
             const { error } = await supabase
                 .from('scheme_applications')
                 .delete()
-                .eq('id', deleteTarget.id);
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
             toast.success(t('schemes.beneficiary_list.delete_success') || 'Application removed');

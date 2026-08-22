@@ -181,12 +181,54 @@ app.use('/api/public', publicRoutes);
 const aiCallRoutes = require('./aiCallRoutes');
 app.use('/api/inbound-ai', aiCallRoutes);
 
-// --- API Routes ---
-app.post('/api/broadcast', async (req, res) => {
-    const { eventId, tenantId } = req.body;
+// --- Security Middleware ---
+const requireAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+        }
+        
+        const token = authHeader.split(' ')[1];
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        
+        if (authError || !user) {
+            return res.status(401).json({ error: 'Unauthorized or expired token' });
+        }
+        
+        const tenantId = req.body.tenantId;
+        if (!tenantId) {
+            return res.status(400).json({ error: 'tenantId is required in request body' });
+        }
+        
+        // Verify user belongs to this tenant
+        const { data: mapping, error: mappingError } = await supabase
+            .from('user_tenant_mapping')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .eq('tenant_id', tenantId)
+            .single();
+            
+        if (mappingError || !mapping) {
+            return res.status(403).json({ error: 'User is not authorized for the requested tenant' });
+        }
+        
+        // Securely bind verified tenant ID
+        req.resolvedTenantId = tenantId;
+        next();
+    } catch (err) {
+        console.error('Auth middleware error:', err);
+        return res.status(500).json({ error: 'Internal server error during authentication' });
+    }
+};
 
-    if (!eventId || !tenantId) {
-        return res.status(400).json({ error: 'Event ID and Tenant ID required' });
+// --- API Routes ---
+app.post('/api/broadcast', requireAuth, async (req, res) => {
+    const { eventId } = req.body;
+    const tenantId = req.resolvedTenantId;
+
+    if (!eventId) {
+        return res.status(400).json({ error: 'Event ID required' });
     }
 
     const session = sessions.get(tenantId);
@@ -195,34 +237,36 @@ app.post('/api/broadcast', async (req, res) => {
     }
 
     console.log(`[${tenantId}] Received broadcast request for Event:`, eventId);
-    broadcastService.broadcastEvent(session.sock, eventId);
+    broadcastService.broadcastEvent(session.sock, eventId, tenantId);
     res.json({ success: true, message: 'Broadcast started in background' });
 });
 
 // --- Selective Event Invite Sender ---
 // POST /api/send-event-invites
 // Body: { tenantId, eventId, mobiles: [{ mobile, name }] }
-app.post('/api/send-event-invites', async (req, res) => {
-    const { eventId, tenantId, mobiles } = req.body;
+app.post('/api/send-event-invites', requireAuth, async (req, res) => {
+    const { eventId, mobiles } = req.body;
+    const tenantId = req.resolvedTenantId;
 
-    if (!eventId || !tenantId || !Array.isArray(mobiles) || mobiles.length === 0) {
-        return res.status(400).json({ error: 'eventId, tenantId, and non-empty mobiles[] are required' });
+    if (!eventId || !Array.isArray(mobiles) || mobiles.length === 0) {
+        return res.status(400).json({ error: 'eventId and non-empty mobiles[] are required' });
+    }
+
+    // Fetch event details (Scoping by tenant_id)
+    const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .eq('tenant_id', tenantId)
+        .single();
+
+    if (eventError || !event) {
+        return res.status(404).json({ error: 'Event not found or unauthorized' });
     }
 
     const session = sessions.get(tenantId);
     if (!session || session.status !== 'connected') {
         return res.status(503).json({ error: 'WhatsApp bot not connected for this tenant. Please connect the bot first.' });
-    }
-
-    // Fetch event details
-    const { data: event, error: eventError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', eventId)
-        .single();
-
-    if (eventError || !event) {
-        return res.status(404).json({ error: 'Event not found' });
     }
 
     console.log(`[${tenantId}] Sending event invites for "${event.title}" to ${mobiles.length} citizens`);
@@ -263,11 +307,24 @@ app.post('/api/send-event-invites', async (req, res) => {
 // --- Survey via WhatsApp Bot ---
 // POST /api/send-survey
 // Body: { tenantId, surveyId, mobiles: [{ mobile, name, voterId? }] }
-app.post('/api/send-survey', async (req, res) => {
-    const { surveyId, tenantId, mobiles } = req.body;
+app.post('/api/send-survey', requireAuth, async (req, res) => {
+    const { surveyId, mobiles } = req.body;
+    const tenantId = req.resolvedTenantId;
 
-    if (!surveyId || !tenantId || !Array.isArray(mobiles) || mobiles.length === 0) {
-        return res.status(400).json({ error: 'surveyId, tenantId, and non-empty mobiles[] are required' });
+    if (!surveyId || !Array.isArray(mobiles) || mobiles.length === 0) {
+        return res.status(400).json({ error: 'surveyId and non-empty mobiles[] are required' });
+    }
+
+    // Fetch survey with questions from DB (Scoping by tenant_id)
+    const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .select('*')
+        .eq('id', surveyId)
+        .eq('tenant_id', tenantId)
+        .single();
+
+    if (surveyError || !survey) {
+        return res.status(404).json({ error: 'Survey not found or unauthorized' });
     }
 
     const session = sessions.get(tenantId);
@@ -277,17 +334,6 @@ app.post('/api/send-survey', async (req, res) => {
 
     if (!session.menuNavigator) {
         return res.status(500).json({ error: 'MenuNavigator not initialized' });
-    }
-
-    // Fetch survey with questions from DB
-    const { data: survey, error: surveyError } = await supabase
-        .from('surveys')
-        .select('*')
-        .eq('id', surveyId)
-        .single();
-
-    if (surveyError || !survey) {
-        return res.status(404).json({ error: 'Survey not found' });
     }
 
     // Normalize questions (could be JSONB array in DB)
@@ -425,35 +471,36 @@ app.post('/webhook/letter-status', async (req, res) => {
 });
 
 // --- Endpoint for Staff Assignment Notification ---
-app.post('/api/assign-complaint', async (req, res) => {
+app.post('/api/assign-complaint', requireAuth, async (req, res) => {
     try {
-        const { complaintId, staffId, tenantId, table = 'complaints' } = req.body;
+        const { complaintId, staffId, table = 'complaints' } = req.body;
+        const tenantId = req.resolvedTenantId;
 
-        if (!complaintId || !staffId || !tenantId) {
+        if (!complaintId || !staffId) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
         console.log(`[${tenantId}] Assigning ${table} #${complaintId} to staff ${staffId}`);
 
-        // Get bot session
-        const session = sessions.get(tenantId);
-        if (!session || !session.sock) {
-            return res.status(503).json({ error: 'Bot not connected for this tenant' });
-        }
-
-        // Fetch item details based on table
-        let query = supabase.from(table).select('*').eq('id', complaintId).single();
+        // Fetch item details based on table (Scoping by tenant_id)
+        let query = supabase.from(table).select('*').eq('id', complaintId).eq('tenant_id', tenantId).single();
 
         // Add specific joins based on table
         if (table === 'complaints') {
-            query = supabase.from(table).select('*, voter:voters(name_english, name_marathi, mobile)').eq('id', complaintId).single();
+            query = supabase.from(table).select('*, voter:voters(name_english, name_marathi, mobile)').eq('id', complaintId).eq('tenant_id', tenantId).single();
         }
 
         const { data: item, error: itemError } = await query;
 
         if (itemError || !item) {
             console.error(`[${tenantId}] Error fetching item from ${table}:`, itemError);
-            return res.status(404).json({ error: 'Item not found' });
+            return res.status(404).json({ error: 'Item not found or unauthorized' });
+        }
+
+        // Get bot session
+        const session = sessions.get(tenantId);
+        if (!session || !session.sock) {
+            return res.status(503).json({ error: 'Bot not connected for this tenant' });
         }
 
         // Map item to common structure for Notification
@@ -480,19 +527,20 @@ app.post('/api/assign-complaint', async (req, res) => {
             };
         }
 
-        // Fetch staff details (Or use provided details to bypass RLS)
+        // Fetch staff details (Or use provided details to bypass DB check, BUT we must enforce scoping anyway)
         let staffMobile = req.body.staffMobile;
 
-        if (!staffMobile) {
+        if (!staffMobile || true) { // Always verify staff belongs to tenant securely
             const { data: staff, error: staffError } = await supabase
                 .from('staff')
                 .select('*')
                 .eq('id', staffId)
+                .eq('tenant_id', tenantId)
                 .single();
 
             if (staffError || !staff) {
                 console.error(`[${tenantId}] Error fetching staff:`, staffError);
-                return res.status(404).json({ error: 'Staff not found' });
+                return res.status(404).json({ error: 'Staff not found or unauthorized' });
             }
             staffMobile = staff.mobile;
         }
