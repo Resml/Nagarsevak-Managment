@@ -6,6 +6,7 @@ import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2,
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 interface FamilyMember {
     id: string;
@@ -24,6 +25,7 @@ const VoterProfile = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [voter, setVoter] = useState<Voter | undefined>(undefined);
     const [complaintHistory, setComplaintHistory] = useState<Complaint[]>([]);
     const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -59,6 +61,7 @@ const VoterProfile = () => {
                     .from('voters')
                     .select('*')
                     .eq('id', id)
+                    .eq('tenant_id', tenantId)
                     .single();
 
                 if (error) {
@@ -154,6 +157,7 @@ const VoterProfile = () => {
                 const baseQuery = supabase
                     .from('voters')
                     .select('id, name_english, name_marathi, age, gender, relation_type, relation_name, serial_no, epic_no, house_no')
+                    .eq('tenant_id', tenantId)
                     .neq('id', voter.id);
 
                 // Try to match by house_no + part_no if available
@@ -301,7 +305,8 @@ const VoterProfile = () => {
             const { error } = await supabase
                 .from('voters')
                 .update(updates)
-                .eq('id', voter.id);
+                .eq('id', voter.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -375,7 +380,8 @@ const VoterProfile = () => {
                                     const { error } = await supabase
                                         .from('voters')
                                         .update({ is_friend_relative: newStatus })
-                                        .eq('id', voter.id);
+                                        .eq('id', voter.id)
+                                        .eq('tenant_id', tenantId);
                                     if (error) throw error;
                                     setVoter({ ...voter, is_friend_relative: newStatus });
                                     toast.success(newStatus ? t('voter_profile.mark_friend') : t('voter_profile.unmark_friend'));

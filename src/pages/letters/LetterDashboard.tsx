@@ -275,7 +275,7 @@ const LetterDashboard = () => {
 
         try {
             // 2. Try to lookup in voters table by mobile or name
-            let query = supabase.from('voters').select('gender');
+            let query = supabase.from('voters').select('gender').eq('tenant_id', tenantId);
             if (details.mobile && details.mobile.length >= 10) {
                 // If mobile ends with the provided number (to handle +91 vs 91 vs raw)
                 const mobileStr = details.mobile.slice(-10);
