@@ -1,4 +1,5 @@
-const { MENUS, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
+const { getMenus, MESSAGES, PERSONAL_REQUEST_MENU } = require('./menus');
+const { formatJid } = require('./utils');
 const { downloadMediaMessage } = require('@whiskeysockets/baileys');
 const { createClient } = require('@supabase/supabase-js');
 const { SURVEY_MENU_STATE, handleSurveyReply } = require('./surveyBot');
@@ -452,6 +453,33 @@ class MenuNavigator {
             `Please reply with the *estimated completion date* for this task (e.g., "Tomorrow", "2 days", "${dateStr}").`;
 
         await sock.sendMessage(whatsappId, { text: msg });
+
+        // Notify Citizen
+        if (complainantMobile !== 'N/A') {
+            const citizenJid = formatJid(complainantMobile);
+            if (citizenJid) {
+                // Get citizen language preference
+                const citizenSession = this.getSession(citizenJid);
+                const citizenLang = citizenSession.language || 'mr';
+                const staffName = complaint.assignedStaff ? complaint.assignedStaff.name : 'Staff';
+                const staffPhone = complaint.assignedStaff ? complaint.assignedStaff.mobile : '';
+
+                let updateMsg = '';
+                if (citizenLang === 'mr') {
+                    updateMsg = `🎫 *तक्रार अपडेट* (ID: #${complaint.id})\n\nतुमची तक्रार *${staffName}* (${staffPhone}) यांच्याकडे सोपवण्यात आली आहे.\nते लवकरच यावर कार्यवाही करतील.`;
+                } else if (citizenLang === 'hi') {
+                    updateMsg = `🎫 *शिकायत अपडेट* (ID: #${complaint.id})\n\nआपकी शिकायत *${staffName}* (${staffPhone}) को सौंप दी गई है।\nवे जल्द ही इस पर कार्रवाई करेंगे।`;
+                } else {
+                    updateMsg = `🎫 *Ticket Update* (ID: #${complaint.id})\n\nYour complaint has been assigned to *${staffName}* (${staffPhone}).\nThey will take action on it soon.`;
+                }
+
+                try {
+                    await sock.sendMessage(citizenJid, { text: updateMsg });
+                } catch (e) {
+                    console.error('Failed to notify citizen of assignment:', e);
+                }
+            }
+        }
     }
 
     /**
@@ -765,7 +793,7 @@ class MenuNavigator {
         session.previousMenu = null;
 
         // Send multi-language welcome message
-        const welcomeText = MENUS.language.en.text;
+        const welcomeText = getMenus().language.en.text;
         await sock.sendMessage(userId, { text: welcomeText });
     }
 
@@ -818,7 +846,7 @@ class MenuNavigator {
             }
 
             // Invalid selection, show menu again
-            const errorMsg = MESSAGES.invalid_option.en + '\n\n' + MENUS.language.en.text;
+            const errorMsg = MESSAGES.invalid_option.en + '\n\n' + getMenus().language.en.text;
             await sock.sendMessage(userId, { text: errorMsg });
         }
     }
@@ -831,7 +859,7 @@ class MenuNavigator {
         session.currentMenu = MENU_STATES.MAIN_MENU;
         session.previousMenu = null;
 
-        const menuText = MENUS.main[language].text;
+        const menuText = getMenus().main[language].text;
         await sock.sendMessage(userId, { text: menuText });
     }
 
@@ -869,7 +897,7 @@ class MenuNavigator {
                     }
                 }
 
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.main[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().main[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
@@ -883,7 +911,7 @@ class MenuNavigator {
         session.currentMenu = MENU_STATES.COMPLAINTS_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.complaints[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().complaints[lang].text });
     }
 
     async handleComplaintsMenu(sock, tenantId, userId, input) {
@@ -914,7 +942,7 @@ class MenuNavigator {
                 await sock.sendMessage(userId, { text: viewMsg });
                 break;
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.complaints[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().complaints[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
         }
     }
@@ -1146,74 +1174,6 @@ class MenuNavigator {
         await sock.sendMessage(userId, { text: promptAgain });
     }
 
-    async handleStaffAssignment(sock, staffMobile, complaintData, tenantId) {
-        if (!staffMobile) return;
-
-        // Ensure mobile format
-        const staffJid = staffMobile.includes('@') ? staffMobile : `${staffMobile.replace(/\D/g, '')}@s.whatsapp.net`;
-
-        // 1. Notify Staff
-        const staffLang = 'mr'; // Default to Marathi for staff for now, or fetch from session if possible
-        // Ideally we should get staff language preference, but standardizing on Marathi/English is fine.
-
-        const taskMsg = `🆕 *नवीन तक्रार सोपवण्यात आली आहे*
-(New Task Assigned)
-
-🆔 *ID:* #${complaintData.id}
-📂 *विषय:* ${complaintData.category}
-📍 *ठिकाण:* ${complaintData.location || 'N/A'}
-👤 *नागरिक:* ${complaintData.voter ? (complaintData.voter.name_marathi || complaintData.voter.name_english) : (complaintData.user_name || 'नागरिक')}
-📱 *मोबाईल:* ${complaintData.voter ? complaintData.voter.mobile : (complaintData.mobile || 'N/A')}
-
-📝 *तक्रार:*
-${complaintData.problem}
-
----
-सदर काम पूर्ण करण्यासाठी अंदाजित तारीख आणि वेळ द्या.
-(Please reply with estimated date and time for completion)
-उदा. 25/10/2023 05:00 PM`;
-
-        await sock.sendMessage(staffJid, { text: taskMsg });
-
-        // Set Staff Session State to wait for estimate
-        const staffSession = this.getSession(staffJid);
-        staffSession.currentMenu = MENU_STATES.STAFF_TASK_DATE_ESTIMATE;
-        staffSession.currentTask = complaintData;
-        staffSession.currentComplaintId = complaintData.id; // Fix: Add this for handleStaffTaskDateEstimate
-
-        // 2. Notify Citizen
-        const citizenMobile = complaintData.user_id || (complaintData.voter ? complaintData.voter.mobile : null);
-        if (citizenMobile) {
-            const citizenJid = citizenMobile.includes('@') ? citizenMobile : `${citizenMobile.replace(/\D/g, '')}@s.whatsapp.net`;
-
-            // Get citizen language preference
-            const citizenSession = this.getSession(citizenJid);
-            const citizenLang = citizenSession.language || 'mr';
-
-            const staffName = complaintData.assignedStaff ? complaintData.assignedStaff.name : 'Staff';
-            const staffPhone = complaintData.assignedStaff ? complaintData.assignedStaff.mobile : '';
-
-            let updateMsg = '';
-            if (citizenLang === 'mr') {
-                updateMsg = `🎫 *तक्रार अपडेट* (ID: #${complaintData.id})
-
-तुमची तक्रार *${staffName}* (${staffPhone}) यांच्याकडे सोपवण्यात आली आहे.
-ते लवकरच यावर कार्यवाही करतील.`;
-            } else if (citizenLang === 'hi') {
-                updateMsg = `🎫 *शिकायत अपडेट* (ID: #${complaintData.id})
-
-आपकी शिकायत *${staffName}* (${staffPhone}) को सौंप दी गई है।
-वे जल्द ही इस पर कार्रवाई करेंगे।`;
-            } else {
-                updateMsg = `🎫 *Ticket Update* (ID: #${complaintData.id})
-
-Your complaint has been assigned to *${staffName}* (${staffPhone}).
-They will take action on it soon.`;
-            }
-
-            await sock.sendMessage(citizenJid, { text: updateMsg });
-        }
-    }
 
     async saveComplaint(sock, tenantId, userId) {
         const session = this.getSession(userId);
@@ -1417,7 +1377,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.SCHEMES_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.schemes[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().schemes[lang].text });
     }
 
     async handleSchemesMenu(sock, tenantId, userId, input) {
@@ -1465,7 +1425,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 break;
 
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.schemes[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().schemes[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
@@ -1683,7 +1643,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.VOTER_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.voter[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().voter[lang].text });
     }
 
     async handleVoterMenu(sock, tenantId, userId, input) {
@@ -1713,7 +1673,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 break;
 
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.voter[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().voter[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
@@ -1937,7 +1897,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.EVENTS_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.events[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().events[lang].text });
     }
 
     async handleEventsMenu(sock, tenantId, userId, input) {
@@ -1949,7 +1909,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         else if (input === '2') filter = 'today';
         else if (input === '3') filter = 'past';
         else {
-            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.events[lang].text;
+            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().events[lang].text;
             await sock.sendMessage(userId, { text: errorMsg });
             return;
         }
@@ -1990,7 +1950,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.WORKS_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.works[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().works[lang].text });
     }
 
     async handleWorksMenu(sock, tenantId, userId, input) {
@@ -2024,7 +1984,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
             await this.showWorksMenu(sock, userId, lang);
             return;
         } else {
-            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.works[lang].text;
+            const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().works[lang].text;
             await sock.sendMessage(userId, { text: errorMsg });
             return;
         }
@@ -2061,7 +2021,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.WARD_PROBLEMS_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.ward_problems[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().ward_problems[lang].text });
     }
 
     async handleWardProblemsMenu(sock, tenantId, userId, input) {
@@ -2131,7 +2091,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                 break;
 
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.ward_problems[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().ward_problems[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
@@ -2147,7 +2107,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
         session.currentMenu = MENU_STATES.CONTACT_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.contact[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().contact[lang].text });
     }
 
     async handleContactMenu(sock, tenantId, userId, input) {
@@ -2196,7 +2156,7 @@ _नवीनतम शिकायत दिखाई गई। कुल: ${co
                         `📱 *हमें फॉलो करें*\n\nसोशल मीडिया: ${social}`;
                 break;
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.contact[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().contact[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }
@@ -2774,7 +2734,7 @@ Your request has been sent to the office for approval. You will be notified once
         session.currentMenu = MENU_STATES.OTHER_MENU;
         session.previousMenu = MENU_STATES.MAIN_MENU;
 
-        await sock.sendMessage(userId, { text: MENUS.other[lang].text });
+        await sock.sendMessage(userId, { text: getMenus().other[lang].text });
     }
 
     async handleOtherMenu(sock, tenantId, userId, input) {
@@ -2795,7 +2755,7 @@ Your request has been sent to the office for approval. You will be notified once
             case '6': // Newspaper Clippings
             case '7': // Ward Budget Info
             default:
-                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + MENUS.other[lang].text;
+                const errorMsg = MESSAGES.invalid_option[lang] + '\n\n' + getMenus().other[lang].text;
                 await sock.sendMessage(userId, { text: errorMsg });
                 return;
         }

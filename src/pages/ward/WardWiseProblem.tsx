@@ -489,7 +489,7 @@ const WardWiseProblem = () => {
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {filteredComplaints.map((complaint, index) => (
-                                    <tr key={complaint.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/complaints/${complaint.id}`, { state: { from: '/dashboard/ward/problems' } })}>
+                                    <tr key={complaint.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => navigate(`/dashboard/ward/problems/${complaint.id}`, { state: { from: '/dashboard/ward/problems' } })}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{index + 1}</td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">
@@ -548,7 +548,7 @@ const WardWiseProblem = () => {
                         return (
                             <div
                                 key={complaint.id}
-                                onClick={() => navigate(`/dashboard/complaints/${complaint.id}`, { state: { from: '/dashboard/ward/problems' } })}
+                                onClick={() => navigate(`/dashboard/ward/problems/${complaint.id}`, { state: { from: '/dashboard/ward/problems' } })}
                                 className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group"
                             >
                                 <div className="flex justify-between items-start mb-3">

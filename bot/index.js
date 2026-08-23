@@ -485,12 +485,12 @@ app.post('/api/assign-complaint', requireAuth, async (req, res) => {
         // Fetch item details based on table (Scoping by tenant_id)
         let query = supabase.from(table).select('*').eq('id', complaintId).eq('tenant_id', tenantId).single();
 
-        // Add specific joins based on table
-        if (table === 'complaints') {
-            query = supabase.from(table).select('*, voter:voters(name_english, name_marathi, mobile)').eq('id', complaintId).eq('tenant_id', tenantId).single();
-        }
-
         const { data: item, error: itemError } = await query;
+        
+        if (table === 'complaints' && item && item.voter_id) {
+            const { data: voter } = await supabase.from('voters').select('name_english, name_marathi, mobile').eq('id', item.voter_id).single();
+            if (voter) item.voter = voter;
+        }
 
         if (itemError || !item) {
             console.error(`[${tenantId}] Error fetching item from ${table}:`, itemError);
@@ -543,6 +543,10 @@ app.post('/api/assign-complaint', requireAuth, async (req, res) => {
                 return res.status(404).json({ error: 'Staff not found or unauthorized' });
             }
             staffMobile = staff.mobile;
+            complaintData.assignedStaff = {
+                name: staff.name,
+                mobile: staff.mobile
+            };
         }
 
         if (!staffMobile) {

@@ -77,7 +77,10 @@ const Gallery = () => {
         if (e.target.files && e.target.files[0]) {
             setUploading(true);
             try {
-                const url = await GalleryService.uploadImage(e.target.files[0]);
+                const file = e.target.files[0];
+                const objectUrl = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, previewUrl: objectUrl }));
+                const url = await GalleryService.uploadImage(file);
                 setFormData(prev => ({ ...prev, imageUrl: url }));
             } catch (error) {
                 toast.error(t('gallery.upload_error'));
@@ -115,14 +118,15 @@ const Gallery = () => {
     };
 
     const handleEdit = (item: GalleryItem) => {
-        setEditingId(item.id);
         setFormData({
             title: item.title,
             category: item.category,
             imageUrl: item.imageUrl,
             description: item.description || '',
-            date: item.date
-        });
+            date: item.date,
+            previewUrl: (item as any).previewUrl || item.imageUrl
+        } as any);
+        setEditingId(item.id);
         setIsModalOpen(true);
     };
 
@@ -244,7 +248,7 @@ const Gallery = () => {
                                     </div>
                                 ) : (
                                     <img
-                                        src={item.imageUrl}
+                                        src={(item as any).previewUrl || item.imageUrl}
                                         alt={item.title}
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                         onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
@@ -342,7 +346,7 @@ const Gallery = () => {
                                                     {uploading ? (
                                                         <p className="text-sm text-slate-500">{t('gallery.uploading')}</p>
                                                     ) : formData.imageUrl ? (
-                                                        <img src={formData.imageUrl} alt="preview" className="h-28 object-contain" />
+                                                        <img src={formData.imageUrl.startsWith('http') || formData.imageUrl.startsWith('blob:') ? formData.imageUrl : ((formData as any).previewUrl || formData.imageUrl)} alt="preview" className="h-28 object-contain" />
                                                     ) : (
                                                         <>
                                                             <Upload className="w-8 h-8 mb-3 text-slate-400" />

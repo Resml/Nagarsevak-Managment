@@ -16,8 +16,8 @@ const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'));
 const VoterList = lazy(() => import('./pages/voters/VoterList'));
 const ComplaintList = lazy(() => import('./pages/complaints/ComplaintList'));
 const Tasks = lazy(() => import('./pages/tasks/Tasks'));
-
 const VoterProfile = lazy(() => import('./pages/voters/VoterProfile'));
+const PersonalRequestList = lazy(() => import('./pages/complaints/PersonalRequestList'));
 const ComplaintForm = lazy(() => import('./pages/complaints/ComplaintForm'));
 const ComplaintDetail = lazy(() => import('./pages/complaints/ComplaintDetail'));
 const PersonalRequestForm = lazy(() => import('./pages/complaints/PersonalRequestForm'));
@@ -33,6 +33,8 @@ const EventManagement = lazy(() => import('./pages/events/EventManagement'));
 const EventDetail = lazy(() => import('./pages/events/EventDetail'));
 const StaffList = lazy(() => import('./pages/staff/StaffList'));
 const LetterDashboard = lazy(() => import('./pages/letters/LetterDashboard'));
+const IncomingLetters = lazy(() => import('./pages/letters/IncomingLetters'));
+const OutgoingLetters = lazy(() => import('./pages/letters/OutgoingLetters'));
 const LetterForm = lazy(() => import('./pages/letters/LetterForm'));
 const LetterTypeManager = lazy(() => import('./pages/letters/LetterTypeManager'));
 const VisitorLog = lazy(() => import('./pages/office/VisitorLog'));
@@ -342,8 +344,11 @@ function App() {
 
             <Route path="complaints" element={<PermissionGuard permission="complaints"><ComplaintList /></PermissionGuard>} />
             <Route path="complaints/new" element={<PermissionGuard permission="complaints"><ComplaintForm /></PermissionGuard>} />
-            <Route path="personal-requests/new" element={<PermissionGuard permission="complaints"><PersonalRequestForm /></PermissionGuard>} />
             <Route path="complaints/:id" element={<PermissionGuard permission="complaints"><ComplaintDetail /></PermissionGuard>} />
+
+            <Route path="personal-requests" element={<PermissionGuard permission="complaints"><PersonalRequestList /></PermissionGuard>} />
+            <Route path="personal-requests/new" element={<PermissionGuard permission="complaints"><PersonalRequestForm /></PermissionGuard>} />
+            <Route path="personal-requests/:id" element={<PermissionGuard permission="complaints"><ComplaintDetail /></PermissionGuard>} />
 
             <Route path="schemes" element={<PermissionGuard permission="schemes"><SchemeList /></PermissionGuard>} />
             <Route path="schemes/new" element={<PermissionGuard permission="schemes"><SchemeForm /></PermissionGuard>} />
@@ -355,7 +360,9 @@ function App() {
             <Route path="tasks" element={<PermissionGuard permission="tasks"><Tasks /></PermissionGuard>} />
             <Route path="staff" element={<PermissionGuard permission="staff"><StaffList /></PermissionGuard>} />
 
-            <Route path="letters" element={<PermissionGuard permission="letters"><LetterDashboard /></PermissionGuard>} />
+            <Route path="letters" element={<Navigate to="incoming" replace />} />
+            <Route path="letters/incoming" element={<PermissionGuard permission="letters"><IncomingLetters /></PermissionGuard>} />
+            <Route path="letters/outgoing" element={<PermissionGuard permission="letters"><OutgoingLetters /></PermissionGuard>} />
             <Route path="letters/new" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
             <Route path="letters/edit/:id" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
             <Route path="letters/types" element={<PermissionGuard permission="letters"><LetterTypeManager /></PermissionGuard>} />
@@ -384,6 +391,8 @@ function App() {
 
             {/* New Routes */}
             <Route path="ward/problems" element={<PermissionGuard permission="ward_problems"><WardWiseProblem /></PermissionGuard>} />
+            <Route path="ward/problems/new" element={<PermissionGuard permission="ward_problems"><ComplaintForm /></PermissionGuard>} />
+            <Route path="ward/problems/:id" element={<PermissionGuard permission="ward_problems"><ComplaintDetail /></PermissionGuard>} />
             <Route path="ward/map" element={<PermissionGuard permission="ward_info"><WardMap /></PermissionGuard>} />
             <Route path="ward/improvements" element={<PermissionGuard permission="improvements"><PossibleImprovements /></PermissionGuard>} />
             <Route path="ward/improvements/:id" element={<PermissionGuard permission="improvements"><ImprovementDetail /></PermissionGuard>} />

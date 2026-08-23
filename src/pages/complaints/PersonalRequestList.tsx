@@ -12,14 +12,14 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
 
-const ComplaintList = () => {
+const PersonalRequestList = () => {
     const { t, language } = useLanguage();
     const { tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
-    const [activeTab, setActiveTab] = useState<'Complaints'>('Complaints');
+    const [activeTab, setActiveTab] = useState<'Personal Help'>('Personal Help');
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [showComplaintReport, setShowComplaintReport] = useState(false);
     const [selectedComplaintsForReport, setSelectedComplaintsForReport] = useState<Complaint[]>([]);
@@ -102,6 +102,17 @@ const ComplaintList = () => {
                 staff?: { name: string; mobile: string; } | null;
             };
 
+            type PersonalRequestRow = {
+                id: string | number;
+                reporter_name: string;
+                reporter_mobile: string;
+                request_type: string;
+                description: string;
+                status: ComplaintStatus;
+                created_at: string;
+            };
+
+
             const allowedTypes: readonly ComplaintType[] = [
                 'Cleaning',
                 'Water',
@@ -181,8 +192,25 @@ const ComplaintList = () => {
                 updatedAt: row.created_at
             }));
 
+            // Map personal requests to Complaint type
+            const mappedPersonalRequests: Complaint[] = (personalRequestsData || []).map((row: PersonalRequestRow) => ({
+                id: `pr-${row.id}`,
+                title: row.request_type,
+                description: row.description,
+                type: 'Personal Help',
+                status: row.status,
+                ward: 'WhatsApp',
+                createdAt: row.created_at,
+                voter: {
+                    name_english: row.reporter_name,
+                    mobile: row.reporter_mobile
+                },
+                photos: [],
+                updatedAt: row.created_at
+            }));
+
             // Merge and sort
-            const merged = [...mappedComplaints].sort(
+            const merged = [...mappedComplaints, ...mappedPersonalRequests].sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
 
@@ -203,7 +231,7 @@ const ComplaintList = () => {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .subscribe();
@@ -242,8 +270,8 @@ const ComplaintList = () => {
 
         const statusMatch = filterStatus === 'All' || c.status === filterStatus;
         
-        // Area Complaints: Exclude Personal Help, Help, and SelfIdentified (Ward Problems)
-        const typeMatch = c.type !== 'Personal Help' && c.type !== 'Help' && c.type !== 'SelfIdentified';
+        // Personal Help: Include personal_requests table AND regular Help complaints
+        const typeMatch = c.type === 'Personal Help' || c.type === 'Help';
 
         return statusMatch && typeMatch && matchesSearch && matchesArea && matchesDate;
     });
@@ -330,17 +358,17 @@ const ComplaintList = () => {
                             <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
                         </button>
                         <Link
-                            to={'/dashboard/complaints/new'}
+                            to={'/dashboard/personal-requests/new'}
                             className="ns-btn-primary tutorial-complaint-new"
                         >
                             <Plus className="w-4 h-4" />
                             <span>
                                 {isTranslated ? (
                                     <span className="notranslate">
-                                        नवीन तक्रार
+                                        नवीन विनंती
                                     </span>
                                 ) : (
-                                    t('complaints.new_request')
+                                    t('complaints.new_personal_request')
                                 )}
                             </span>
                         </Link>
@@ -470,7 +498,7 @@ const ComplaintList = () => {
 
                     {/* Status Filters */}
                     <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide tutorial-complaint-status">
-                        {(['All', 'Pending', 'Assigned', 'InProgress', 'Resolved']).map((status) => (
+                        {(['All', 'Pending', 'Resolved']).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status as ComplaintStatus | 'All')}
@@ -695,4 +723,4 @@ const ComplaintList = () => {
     );
 };
 
-export default ComplaintList;
+export default PersonalRequestList;

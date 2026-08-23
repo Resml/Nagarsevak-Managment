@@ -26,13 +26,14 @@ function formatQuestion(question, index, total) {
     const header = `📋 *प्रश्न ${index + 1}/${total}*\n\n`;
     let body = `*${question.text}*\n`;
 
-    if (question.type === 'yes_no') {
+    const qType = question.type ? question.type.toLowerCase() : '';
+    if (qType === 'yes_no') {
         body += `\n1️⃣ होय (Yes)\n2️⃣ नाही (No)`;
-    } else if (question.type === 'mcq' && Array.isArray(question.options)) {
+    } else if (qType === 'mcq' && Array.isArray(question.options)) {
         question.options.forEach((opt, i) => {
             body += `\n${i + 1}️⃣ ${opt}`;
         });
-    } else if (question.type === 'rating') {
+    } else if (qType === 'rating') {
         body += `\n\n⭐ 1 ते 5 मधील रेटिंग द्या (Type 1 to 5)`;
     } else {
         // text / open-ended
@@ -48,8 +49,9 @@ function formatQuestion(question, index, total) {
  */
 function parseAnswer(question, input) {
     const trimmed = input.trim();
+    const qType = question.type ? question.type.toLowerCase() : '';
 
-    if (question.type === 'yes_no') {
+    if (qType === 'yes_no') {
         if (trimmed === '1' || /^(होय|yes|हो|हां|ha|y)$/i.test(trimmed)) {
             return { valid: true, value: 'yes', display: 'होय (Yes)' };
         } else if (trimmed === '2' || /^(नाही|no|nahi|n)$/i.test(trimmed)) {
@@ -58,7 +60,7 @@ function parseAnswer(question, input) {
         return { valid: false, value: null, display: '' };
     }
 
-    if (question.type === 'mcq' && Array.isArray(question.options)) {
+    if (qType === 'mcq' && Array.isArray(question.options)) {
         const idx = parseInt(trimmed) - 1;
         if (!isNaN(idx) && idx >= 0 && idx < question.options.length) {
             return { valid: true, value: question.options[idx], display: question.options[idx] };
@@ -69,7 +71,7 @@ function parseAnswer(question, input) {
         return { valid: false, value: null, display: '' };
     }
 
-    if (question.type === 'rating') {
+    if (qType === 'rating') {
         const num = parseInt(trimmed);
         if (!isNaN(num) && num >= 1 && num <= 5) {
             return { valid: true, value: num, display: `${num} ⭐` };
@@ -207,10 +209,11 @@ async function handleSurveyReply(sock, userId, session, input) {
 
     if (!parsed.valid) {
         // Invalid answer — show hint and re-ask
+        const qType = q.type ? q.type.toLowerCase() : '';
         let hint = '❌ अवैध उत्तर. ';
-        if (q.type === 'yes_no') hint += '1 (होय) किंवा 2 (नाही) टाइप करा.';
-        else if (q.type === 'mcq') hint += `कृपया 1 ते ${q.options.length} मधील क्रमांक टाइप करा.`;
-        else if (q.type === 'rating') hint += '1 ते 5 मधील रेटिंग टाइप करा.';
+        if (qType === 'yes_no') hint += '1 (होय) किंवा 2 (नाही) टाइप करा.';
+        else if (qType === 'mcq') hint += `कृपया 1 ते ${q.options.length} मधील क्रमांक टाइप करा.`;
+        else if (qType === 'rating') hint += '1 ते 5 मधील रेटिंग टाइप करा.';
         else hint += 'कृपया उत्तर टाइप करा.';
 
         await sock.sendMessage(userId, { text: hint });

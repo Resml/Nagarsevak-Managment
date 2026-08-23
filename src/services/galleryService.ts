@@ -126,7 +126,7 @@ export const GalleryService = {
             // Resolve secure signed URLs
             for (const item of items) {
                 if (item.imageUrl) {
-                    item.imageUrl = await SecureStorageService.getUrl('gallery-uploads', item.imageUrl);
+                    (item as any).previewUrl = await SecureStorageService.getUrl('app-assets', item.imageUrl);
                 }
             }
 
@@ -233,7 +233,7 @@ export const GalleryService = {
     uploadImage: async (file: File): Promise<string> => {
         try {
             // Upload to tenant-isolated path and get relative path
-            const relativePath = await SecureStorageService.uploadFile('gallery-uploads', 'gallery', file);
+            const relativePath = await SecureStorageService.uploadFile('app-assets', 'gallery', file);
             return relativePath;
         } catch (error) {
             console.error('Error uploading image:', error);

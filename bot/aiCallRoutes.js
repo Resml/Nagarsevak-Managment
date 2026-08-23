@@ -13,6 +13,12 @@ const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
 const SARVAM_STT_URL = 'https://api.sarvam.ai/speech-to-text-translate';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 
+// --- Supabase Config for Tenant Lookup ---
+const { createClient } = require('@supabase/supabase-js');
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // --- In-Memory State for Conversations ---
 // We store conversation history grouped by Twilio's CallSid.
 // In a production app with multiple instances, use Redis or Supabase.
@@ -88,11 +94,52 @@ function validateTwilioRequest(req, res, next) {
 router.post('/incoming', validateTwilioRequest, async (req, res) => {
     const callSid = req.body.CallSid;
     const fromNumber = req.body.From;
+    const toNumber = req.body.To || '';
 
-    console.log(`[AI-Call] 📞 Incoming call from ${fromNumber} (Sid: ${callSid})`);
+    console.log(`[AI-Call] 📞 Incoming call from ${fromNumber} to ${toNumber} (Sid: ${callSid})`);
+
+    // Lookup Tenant by incoming phone number (To)
+    let tenantId = null;
+    let tenantName = 'नगरसेवक';
+    
+    if (toNumber) {
+        const cleanToNumber = toNumber.replace(/\D/g, '');
+        const searchNumber = cleanToNumber.length > 10 ? cleanToNumber.slice(-10) : cleanToNumber;
+        
+        try {
+            const { data: tenant } = await supabase
+                .from('tenants')
+                .select('id, name, config')
+                .or(`mobile.ilike.%${searchNumber}%,config->>vapi_phone.ilike.%${searchNumber}%,config->>twilio_phone.ilike.%${searchNumber}%`)
+                .limit(1)
+                .single();
+                
+            if (tenant) {
+                tenantId = tenant.id;
+                tenantName = tenant.name || 'नगरसेवक';
+                console.log(`[AI-Call] Matched tenant: ${tenantId} (${tenantName}) for number ${searchNumber}`);
+            } else {
+                console.warn(`[AI-Call] No tenant found for incoming number ${searchNumber}`);
+            }
+        } catch (err) {
+            console.error(`[AI-Call] Error looking up tenant for ${searchNumber}:`, err.message);
+        }
+    }
+
+    if (!tenantId) {
+        console.warn(`[AI-Call] Rejecting call for unknown number ${toNumber}`);
+        res.type('text/xml');
+        return res.send(`
+            <Response>
+                <Say language="hi-IN">क्षमा करें, यह नंबर किसी भी कार्यालय से जुड़ा नहीं है।</Say>
+                <Hangup />
+            </Response>
+        `);
+    }
 
     // Initialize conversation state
     activeCalls.set(callSid, {
+        tenantId,
         history: [
             { role: "user", parts: [{ text: "System Instruction: " + SYSTEM_PROMPT }] },
             { role: "model", parts: [{ text: "Understood." }] }
@@ -107,8 +154,8 @@ router.post('/incoming', validateTwilioRequest, async (req, res) => {
     // or we can generate the intro via Sarvam right now.
 
     try {
-        const introText = "नमस्कार! नगरसेवक कार्यालयात आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकेन?";
-        console.log(`[AI-Call][${callSid}] Generating welcome TTS...`);
+        const introText = `नमस्कार! ${tenantName} कार्यालयात आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकेन?`;
+        console.log(`[AI-Call][${callSid}] Generating welcome TTS for tenant ${tenantId}...`);
 
         const ttsRes = await axios.post(SARVAM_TTS_URL, {
             inputs: [introText],
@@ -137,7 +184,7 @@ router.post('/incoming', validateTwilioRequest, async (req, res) => {
     } catch (err) {
         console.error(`[AI-Call][${callSid}] Failed to generate welcome TTS:`, err.message);
         // Fallback to basic Twilio voice if Sarvam fails
-        twiml.say({ language: 'mr-IN' }, "Namaskar. Nagarsevak karyalayat aaple swagat aahe. Kashi madat karu shakto?");
+        twiml.say({ language: 'mr-IN' }, `Namaskar. ${tenantName} karyalayat aaple swagat aahe. Kashi madat karu shakto?`);
     }
 
     // Start recording user's voice

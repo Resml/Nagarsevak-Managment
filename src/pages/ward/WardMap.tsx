@@ -20,6 +20,7 @@ import { GoogleMap, LoadScript, Polygon, Marker } from '@react-google-maps/api';
 import { X, MapPin, Navigation, Share2, Map as MapIcon, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTutorial } from '../../context/TutorialContext';
+import { useTenant } from '../../context/TenantContext';
 import WardMapTutorial from '../../components/tutorial/WardMapTutorial';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
@@ -47,6 +48,7 @@ interface PlaceDetails {
 
 const WardMap = () => {
     const { t, language } = useLanguage();
+    const { tenant } = useTenant();
     const { startTutorial } = useTutorial();
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [isTracing, setIsTracing] = useState(false);
@@ -55,7 +57,7 @@ const WardMap = () => {
     const [isLoadingPlace, setIsLoadingPlace] = useState(false);
 
     // Official Boundary (Red) - Traced by User (Converted to Google Maps format)
-    const officialBoundary = [
+    const fallbackBoundary = [
         { lat: 18.500915479427793, lng: 73.85857343673707 },
         { lat: 18.511455786342182, lng: 73.84511947631837 },
         { lat: 18.51213742477151, lng: 73.8438105583191 },
@@ -91,6 +93,7 @@ const WardMap = () => {
         { lat: 18.49258248025489, lng: 73.8498616218567 },
         { lat: 18.492378983140718, lng: 73.8577687740326 }
     ];
+    const officialBoundary = tenant?.config?.wardBoundary || fallbackBoundary;
 
     const onLoad = useCallback(function callback(map: google.maps.Map) {
         setMap(map);
@@ -98,7 +101,7 @@ const WardMap = () => {
         // Auto-fit to ward boundary
         if (officialBoundary.length > 0) {
             const bounds = new google.maps.LatLngBounds();
-            officialBoundary.forEach(coord => {
+            officialBoundary.forEach((coord: { lat: number, lng: number }) => {
                 bounds.extend(coord);
             });
             map.fitBounds(bounds);

@@ -27,7 +27,7 @@ interface MessageLog {
 
 const PublicCommunication = () => {
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenantId, isAmdar, isKhasdar, isMinister } = useTenant();
 
     // Tab state
     const [activeTab, setActiveTab] = useState<'send' | 'history' | 'call'>('send');
@@ -612,7 +612,7 @@ const PublicCommunication = () => {
                                 <textarea
                                     value={callMessage}
                                     onChange={e => setCallMessage(e.target.value)}
-                                    placeholder={callLanguage === 'mr-IN' ? 'नमस्कार, मी नगरसेवक कार्यालयातून बोलत आहे...' : callLanguage === 'hi-IN' ? 'नमस्ते, मैं नगरसेवक कार्यालय से बोल रहा हूं...' : 'Hello, I am calling from the Nagarsevak office...'}
+                                    placeholder={callLanguage === 'mr-IN' ? `नमस्कार, मी ${isAmdar ? 'आमदार' : isKhasdar ? 'खासदार' : isMinister ? 'मंत्री' : 'नगरसेवक'} कार्यालयातून बोलत आहे...` : callLanguage === 'hi-IN' ? `नमस्ते, मैं ${isAmdar ? 'विधायक' : isKhasdar ? 'सांसद' : isMinister ? 'मंत्री' : 'नगरसेवक'} कार्यालय से बोल रहा हूं...` : `Hello, I am calling from the ${isAmdar ? 'MLA' : isKhasdar ? 'MP' : isMinister ? 'Minister' : 'Nagarsevak'} office...`}
                                     className="ns-input w-full p-3 resize-none text-sm min-h-[120px]"
                                 />
                                 <p className="text-xs text-slate-400 mt-1">{callMessage.length} characters · ~{Math.ceil(callMessage.length / 15)} seconds of audio</p>
