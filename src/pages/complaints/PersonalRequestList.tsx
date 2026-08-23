@@ -227,8 +227,7 @@ const PersonalRequestList = () => {
 
         // Real-time Subscription
         // Real-time Subscription
-        const subscription = supabase
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+        const subscription = supabase.channel('realtime-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
