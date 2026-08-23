@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { type GalleryItem, type GalleryCategory } from '../types';
+import { SecureStorageService } from './secureStorageService';
 
 export const GalleryService = {
     getGalleryItems: async (category: GalleryCategory | undefined, tenantId: string): Promise<GalleryItem[]> => {

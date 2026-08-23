@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
-import { useTenant } from '../../context/TenantContext';
 import { supabase } from '../../services/supabaseClient';
 import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save, Users, Heart, Baby, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
