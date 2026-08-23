@@ -9,9 +9,11 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import GalleryTutorial from '../../components/tutorial/GalleryTutorial';
 import { HelpCircle } from 'lucide-react';
+import { useTenant } from '../../context/TenantContext';
 
 const Gallery = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const { startTutorial } = useTutorial();
     const [items, setItems] = useState<GalleryItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -38,16 +40,19 @@ const Gallery = () => {
 
     useEffect(() => {
         loadGallery();
-    }, []);
+    }, [tenantId]);
 
     const loadGallery = async () => {
+        if (!tenantId) return;
         setLoading(true);
-        // Simulate network delay
-        setTimeout(async () => {
-            const allItems = await GalleryService.getGalleryItems();
+        try {
+            const allItems = await GalleryService.getGalleryItems(undefined, tenantId);
             setItems(allItems);
+        } catch (e) {
+            console.error('Failed to load gallery', e);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
     };
 
     const getFilteredItems = () => {
@@ -74,10 +79,10 @@ const Gallery = () => {
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
+        if (e.target.files && e.target.files[0] && tenantId) {
             setUploading(true);
             try {
-                const url = await GalleryService.uploadImage(e.target.files[0]);
+                const url = await GalleryService.uploadImage(e.target.files[0], tenantId);
                 setFormData(prev => ({ ...prev, imageUrl: url }));
             } catch (error) {
                 toast.error(t('gallery.upload_error'));
@@ -90,11 +95,13 @@ const Gallery = () => {
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            if (!tenantId) return;
+
             if (editingId) {
-                await GalleryService.updateGalleryItem(editingId, formData);
+                await GalleryService.updateGalleryItem(editingId, formData, tenantId);
                 toast.success('Gallery item updated successfully');
             } else {
-                await GalleryService.addGalleryItem(formData);
+                await GalleryService.addGalleryItem(formData, tenantId);
                 toast.success('Gallery item added successfully');
             }
 
@@ -135,9 +142,9 @@ const Gallery = () => {
     };
 
     const confirmDelete = async () => {
-        if (!deleteTarget) return;
+        if (!deleteTarget || !tenantId) return;
         try {
-            await GalleryService.deleteGalleryItem(deleteTarget.id);
+            await GalleryService.deleteGalleryItem(deleteTarget.id, tenantId);
             toast.success('Gallery item deleted successfully');
             loadGallery();
         } catch (error) {

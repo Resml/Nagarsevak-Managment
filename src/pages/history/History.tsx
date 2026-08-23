@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { MockService } from '../../services/mockData';
+import { supabase } from '../../services/supabaseClient';
+import { useTenant } from '../../context/TenantContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { type Complaint } from '../../types';
 import { Download, Filter } from 'lucide-react';
@@ -7,20 +8,27 @@ import { format } from 'date-fns';
 
 const History = () => {
     const { t } = useLanguage();
+    const { tenantId } = useTenant();
     const [history, setHistory] = useState<Complaint[]>([]);
     const [filterWard, setFilterWard] = useState<string>('All');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Simulate network delay for loading state
-        setTimeout(() => {
-            const all = MockService.getComplaints();
-            // In history, we typically show resolved/closed items
-            const resolved = all.filter(c => c.status === 'Resolved' || c.status === 'Closed');
-            setHistory(resolved);
-            setLoading(false);
-        }, 800);
-    }, []);
+        const fetchHistory = async () => {
+            if (!tenantId) return;
+            try {
+                const { data } = await supabase.from('complaints').select('*').eq('tenant_id', tenantId);
+                const all = data || [];
+                const resolved = all.filter((c: any) => c.status === 'Resolved' || c.status === 'Closed');
+                setHistory(resolved);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchHistory();
+    }, [tenantId]);
 
     const filteredHistory = filterWard === 'All'
         ? history

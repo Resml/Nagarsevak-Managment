@@ -114,10 +114,8 @@ const DiaryList = () => {
         if (!formData.subject || !formData.meetingDate || !tenantId) return;
 
         if (editingEntry) {
-            // Update logic (simplified for now as service update is placeholder)
-            // await DiaryService.updateEntry(editingEntry.id, formData);
-            toast.info('Update feature coming in next iteration, creating new for now to demo.');
-            await DiaryService.addEntry(formData as any, tenantId);
+            await DiaryService.updateEntry(editingEntry.id, formData, tenantId);
+            toast.success(t('Entry updated successfully!') || 'Entry updated successfully!');
         } else {
             await DiaryService.addEntry(formData as any, tenantId);
             toast.success(t('Entry added successfully!') || 'Entry added successfully!');

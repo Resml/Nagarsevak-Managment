@@ -10,25 +10,9 @@ import {
     Activity, Building2, TrendingUp, UsersRound, Download
 } from 'lucide-react';
 import { HousingSocietiesPdfGenerator } from '../../components/reports/HousingSocietiesPdfGenerator';
+import { HousingSocietyService, type HousingSocietyRecord } from '../../services/housingSocietyService';
 
-interface HousingSociety {
-    id: string;
-    tenant_id: string;
-    name: string;
-    name_marathi?: string;
-    name_english?: string;
-    chairman_name: string;
-    chairman_mobile: string;
-    secretary_name: string;
-    secretary_mobile: string;
-    voter_count: number;
-    favourable_voter_count: number;
-    area: string;
-    address: string;
-    notes: string;
-    status: 'Active' | 'Inactive';
-    created_at?: string;
-}
+export type HousingSociety = HousingSocietyRecord;
 
 const DEFAULT_SOCIETIES: HousingSociety[] = [
     {
@@ -142,7 +126,6 @@ const HousingSocieties = () => {
 
     const [societies, setSocieties] = useState<HousingSociety[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isLocalStorageMode, setIsLocalStorageMode] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
     // Search and filters
@@ -173,38 +156,29 @@ const HousingSocieties = () => {
     const fetchSocieties = async () => {
         setLoading(true);
         try {
-            // First check database table
-            const { data, error } = await supabase
-                .from('housing_societies')
-                .select('*')
-                .eq('tenant_id', tenantId || '00000000-0000-0000-0000-000000000000')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                if (error.code === 'PGRST116' || error.message.includes('relation "public.housing_societies" does not exist')) {
-                    throw new Error('Table does not exist');
-                }
-                throw error;
-            }
-
-            setSocieties(data || []);
-            setIsLocalStorageMode(false);
-        } catch (err) {
-            console.log('Falling back to Local Storage mode for Housing Societies due to:', err);
-            setIsLocalStorageMode(true);
+            if (!tenantId) return;
             
-            const stored = localStorage.getItem(`housing_socs_${tenantId || 'default'}`);
+            // Perform Idempotent Migration if any localStorage data exists
+            const localKey = `housing_socs_${tenantId}`;
+            const stored = localStorage.getItem(localKey);
             if (stored) {
                 try {
-                    setSocieties(JSON.parse(stored));
-                } catch {
-                    setSocieties(DEFAULT_SOCIETIES);
-                    localStorage.setItem(`housing_socs_${tenantId || 'default'}`, JSON.stringify(DEFAULT_SOCIETIES));
+                    const parsed = JSON.parse(stored);
+                    const migrated = await HousingSocietyService.migrateData(parsed, tenantId);
+                    if (migrated) {
+                        localStorage.removeItem(localKey);
+                        console.log('Successfully migrated Housing Societies from localStorage to Supabase');
+                    }
+                } catch (e) {
+                    console.error('Migration failed:', e);
                 }
-            } else {
-                setSocieties(DEFAULT_SOCIETIES);
-                localStorage.setItem(`housing_socs_${tenantId || 'default'}`, JSON.stringify(DEFAULT_SOCIETIES));
             }
+
+            const data = await HousingSocietyService.getSocieties(tenantId);
+            setSocieties(data);
+        } catch (err) {
+            console.error('Error fetching Housing Societies:', err);
+            toast.error(isMr ? 'सोसायटी डेटा लोड करण्यात एरर.' : 'Error loading society data.');
         } finally {
             setLoading(false);
         }
@@ -322,42 +296,16 @@ const HousingSocieties = () => {
         };
 
         try {
-            if (isLocalStorageMode) {
-                let updated = [...societies];
-                if (editingSoc) {
-                    updated = updated.map(s => s.id === editingSoc.id ? { ...payload, id: editingSoc.id } : s);
-                    toast.success(isMr ? 'माहिती यशस्वीरित्या बदलली!' : 'Society updated successfully!');
-                } else {
-                    const newSoc: HousingSociety = {
-                        ...payload,
-                        id: `soc-${Date.now()}`
-                    };
-                    updated = [newSoc, ...updated];
-                    toast.success(isMr ? 'नवीन सोसायटी नोंदणी यशस्वी झाली!' : 'Society registered successfully!');
-                }
-                setSocieties(updated);
-                localStorage.setItem(`housing_socs_${tenantId || 'default'}`, JSON.stringify(updated));
-                setShowModal(false);
+            if (!tenantId) throw new Error('Tenant ID missing');
+            if (editingSoc) {
+                await HousingSocietyService.updateSociety(editingSoc.id, payload, tenantId);
+                toast.success(isMr ? 'माहिती यशस्वीरित्या बदलली!' : 'Society updated successfully!');
             } else {
-                if (editingSoc) {
-                    const { error } = await supabase
-                        .from('housing_societies')
-                        .update(payload)
-                        .eq('id', editingSoc.id);
-
-                    if (error) throw error;
-                    toast.success(isMr ? 'माहिती यशस्वीरित्या बदलली!' : 'Society updated successfully!');
-                } else {
-                    const { error } = await supabase
-                        .from('housing_societies')
-                        .insert([payload]);
-
-                    if (error) throw error;
-                    toast.success(isMr ? 'नवीन सोसायटी नोंदणी यशस्वी झाली!' : 'Society registered successfully!');
-                }
-                fetchSocieties();
-                setShowModal(false);
+                await HousingSocietyService.addSociety(payload, tenantId);
+                toast.success(isMr ? 'नवीन सोसायटी नोंदणी यशस्वी झाली!' : 'Society registered successfully!');
             }
+            fetchSocieties();
+            setShowModal(false);
         } catch (err) {
             console.error('Error saving housing society:', err);
             toast.error(isMr ? 'माहिती जतन करताना चूक झाली' : 'Failed to save society details');
@@ -371,21 +319,10 @@ const HousingSocieties = () => {
         }
 
         try {
-            if (isLocalStorageMode) {
-                const updated = societies.filter(s => s.id !== id);
-                setSocieties(updated);
-                localStorage.setItem(`housing_socs_${tenantId || 'default'}`, JSON.stringify(updated));
-                toast.success(isMr ? 'सोसायटी यशस्वीरित्या हटवली!' : 'Society deleted successfully!');
-            } else {
-                const { error } = await supabase
-                    .from('housing_societies')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-                toast.success(isMr ? 'सोसायटी यशस्वीरित्या हटवली!' : 'Society deleted successfully!');
-                fetchSocieties();
-            }
+            if (!tenantId) return;
+            await HousingSocietyService.deleteSociety(id, tenantId);
+            toast.success(isMr ? 'सोसायटी यशस्वीरित्या हटवली!' : 'Society deleted successfully!');
+            fetchSocieties();
         } catch (err) {
             console.error('Error deleting society:', err);
             toast.error(isMr ? 'हटवताना एरर आला' : 'Failed to delete society');
@@ -394,8 +331,7 @@ const HousingSocieties = () => {
 
     return (
         <div className="space-y-6">
-            {/* Fallback Banner */}
-            {isLocalStorageMode && (
+            {false && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3.5 shadow-sm animate-in slide-in-from-top-4 duration-300">
                     <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="space-y-1">

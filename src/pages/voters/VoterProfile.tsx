@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
+import { useTenant } from '../../context/TenantContext';
 import { supabase } from '../../services/supabaseClient';
 import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2, Save, Users, Heart, Baby, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ const VoterProfile = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [voter, setVoter] = useState<Voter | undefined>(undefined);
     const [complaintHistory, setComplaintHistory] = useState<Complaint[]>([]);
     const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
@@ -301,7 +303,8 @@ const VoterProfile = () => {
             const { error } = await supabase
                 .from('voters')
                 .update(updates)
-                .eq('id', voter.id);
+                .eq('id', voter.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -375,7 +378,8 @@ const VoterProfile = () => {
                                     const { error } = await supabase
                                         .from('voters')
                                         .update({ is_friend_relative: newStatus })
-                                        .eq('id', voter.id);
+                                        .eq('id', voter.id)
+                                        .eq('tenant_id', tenantId);
                                     if (error) throw error;
                                     setVoter({ ...voter, is_friend_relative: newStatus });
                                     toast.success(newStatus ? t('voter_profile.mark_friend') : t('voter_profile.unmark_friend'));

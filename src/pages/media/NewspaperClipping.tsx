@@ -9,9 +9,11 @@ import { useTutorial } from '../../context/TutorialContext';
 import NewspaperTutorial from '../../components/tutorial/NewspaperTutorial';
 import { HelpCircle, Download } from 'lucide-react';
 import { NewspaperReportGenerator } from '../../components/reports/NewspaperReportGenerator';
+import { useTenant } from '../../context/TenantContext';
 
 const NewspaperClipping = () => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const { startTutorial } = useTutorial();
     const [activeSection, setActiveSection] = useState<'positive' | 'negative'>('positive');
     const [items, setItems] = useState<GalleryItem[]>([]);
@@ -43,16 +45,19 @@ const NewspaperClipping = () => {
 
     useEffect(() => {
         loadClippings();
-    }, []);
+    }, [tenantId]);
 
     const loadClippings = async () => {
+        if (!tenantId) return;
         setLoading(true);
-        // Simulate network delay
-        setTimeout(async () => {
-            const allItems = await GalleryService.getGalleryItems('Newspaper');
+        try {
+            const allItems = await GalleryService.getGalleryItems('Newspaper', tenantId);
             setItems(allItems);
+        } catch (error) {
+            console.error(error);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
     };
 
     const getFilteredItems = () => {
@@ -76,10 +81,10 @@ const NewspaperClipping = () => {
     };
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
+        if (e.target.files && e.target.files[0] && tenantId) {
             setUploading(true);
             try {
-                const url = await GalleryService.uploadImage(e.target.files[0]);
+                const url = await GalleryService.uploadImage(e.target.files[0], tenantId);
                 setFormData(prev => ({ ...prev, imageUrl: url }));
             } catch (error) {
                 toast.error(t('gallery.upload_error'));
@@ -92,11 +97,12 @@ const NewspaperClipping = () => {
     const handleAdd = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            if (!tenantId) return;
             if (editingId) {
-                await GalleryService.updateGalleryItem(editingId, formData);
+                await GalleryService.updateGalleryItem(editingId, formData, tenantId);
                 toast.success(t('newspaper.update_success'));
             } else {
-                await GalleryService.addGalleryItem(formData);
+                await GalleryService.addGalleryItem(formData, tenantId);
                 toast.success(t('newspaper.upload_success'));
             }
 
@@ -137,9 +143,9 @@ const NewspaperClipping = () => {
     };
 
     const confirmDelete = async () => {
-        if (!deleteTarget) return;
+        if (!deleteTarget || !tenantId) return;
         try {
-            await GalleryService.deleteGalleryItem(deleteTarget.id);
+            await GalleryService.deleteGalleryItem(deleteTarget.id, tenantId);
             toast.success(t('newspaper.delete_success'));
             loadClippings();
         } catch (error) {

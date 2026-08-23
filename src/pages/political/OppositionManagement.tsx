@@ -136,7 +136,8 @@ const OppositionManagement = () => {
                 const { error } = await supabase
                     .from('opposition_karyakartas')
                     .update(payload)
-                    .eq('id', editingMemberId);
+                    .eq('id', editingMemberId)
+                    .eq('tenant_id', tenantId);
                 if (error) throw error;
                 toast.success(isMr ? 'विरोधी सदस्याची माहिती यशस्वीरित्या अद्ययावत केली!' : 'Opposition member updated successfully!');
             } else {
@@ -187,7 +188,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .delete()
-                .eq('id', deleteTarget.id);
+                .eq('id', deleteTarget.id)
+                .eq('tenant_id', tenantId);
             if (error) throw error;
             toast.success('Opposition member deleted successfully!');
             setDeleteTarget(null);
@@ -220,7 +222,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ activities: updatedActivities })
-                .eq('id', selectedMember.id);
+                .eq('id', selectedMember.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -254,7 +257,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ activities: updatedActivities })
-                .eq('id', selectedMember.id);
+                .eq('id', selectedMember.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -308,7 +312,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ negative_stories: updatedStories })
-                .eq('id', selectedMember.id);
+                .eq('id', selectedMember.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -343,7 +348,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ negative_stories: updatedStories })
-                .eq('id', selectedMember.id);
+                .eq('id', selectedMember.id)
+                .eq('tenant_id', tenantId);
 
             if (error) throw error;
 
@@ -397,7 +403,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ candidate_id: selectedMember.id })
-                .eq('id', selectedWorkerToLink);
+                .eq('id', selectedWorkerToLink)
+                .eq('tenant_id', tenantId);
             if (error) throw error;
             
             toast.success(isMr ? 'कार्यकर्ता यशस्वीरित्या जोडला गेला!' : 'Worker linked successfully!');
@@ -482,7 +489,8 @@ const OppositionManagement = () => {
             const { error } = await supabase
                 .from('opposition_karyakartas')
                 .update({ candidate_id: null })
-                .eq('id', workerId);
+                .eq('id', workerId)
+                .eq('tenant_id', tenantId);
             if (error) throw error;
             
             toast.success(isMr ? 'कार्यकर्ता यशस्वीरित्या वेगळा केला गेला!' : 'Worker unlinked successfully!');

@@ -9,6 +9,7 @@ import {
     ChevronUp, Heart, Award, Info, Copy, Check, CheckCircle2,
     Flag, Shield, Layers, HelpCircle, FileText, Download
 } from 'lucide-react';
+import { SocialOrganizationService, type SocialOrganizationRecord } from '../../services/socialOrganizationService';
 import { MandalNgoReportPdfGenerator } from '../../components/reports/MandalNgoReportPdfGenerator';
 
 interface EventConducted {
@@ -20,142 +21,7 @@ interface EventConducted {
     description_mr?: string;
 }
 
-interface SocialOrganization {
-    id: string;
-    tenant_id: string;
-    name: string;
-    name_marathi?: string;
-    name_english?: string;
-    type: 'ngo' | 'sports_cricket' | 'ganpati_mandal' | 'navratri_mandal' | 'other';
-    president_name: string;
-    president_mobile: string;
-    members_count: number;
-    area: string;
-    established_year: number;
-    support_received: string;
-    events_conducted: EventConducted[];
-    description: string;
-    status: 'Active' | 'Inactive';
-    created_at?: string;
-}
-
-const DEFAULT_ORGANIZATIONS: SocialOrganization[] = [
-    {
-        id: 'mock-1',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'मावळा सामाजिक प्रतिष्ठान',
-        name_marathi: 'मावळा सामाजिक प्रतिष्ठान',
-        name_english: 'Mavala Social Foundation',
-        type: 'ngo',
-        president_name: 'सचिन तावडे',
-        president_mobile: '9876543210',
-        members_count: 45,
-        area: 'शास्त्री नगर (Shastri Nagar)',
-        established_year: 2018,
-        support_received: 'वृक्षारोपण मोहिमेसाठी निधी व कचरा कुंडी वाटप (Provided funds for tree plantation & distributed dustbins)',
-        description: 'स्थानिक पर्यावरण संवर्धन आणि रक्तदान शिबिर आयोजित करणारी संस्था.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-1', title: 'रक्तदान शिबिर २०२५', title_mr: 'रक्तदान शिबिर २०२५', year: 2025, description: '१०० हून अधिक बाटल्यांचे संकलन', description_mr: '१०० हून अधिक बाटल्यांचे संकलन' },
-            { id: 'e-2', title: 'वृक्षारोपण मोहीम २०२४', title_mr: 'वृक्षारोपण मोहीम २०२४', year: 2024, description: '५०० पेक्षा जास्त रोपांची लागवड', description_mr: '५०० पेक्षा जास्त रोपांची लागवड' }
-        ]
-    },
-    {
-        id: 'mock-2',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'शिवतेज क्रीडा व क्रिकेट क्लब',
-        name_marathi: 'शिवतेज क्रीडा व क्रिकेट क्लब',
-        name_english: 'Shivtej Sports & Cricket Club',
-        type: 'sports_cricket',
-        president_name: 'राहुल गायकवाड',
-        president_mobile: '9822334455',
-        members_count: 32,
-        area: 'गांधी मैदान प्रभाग (Gandhi Maidan Ward)',
-        established_year: 2021,
-        support_received: 'क्रिकेट किट्स आणि क्रीडा गणवेश प्रायोजकत्व (Sponsored cricket kits and sports uniforms)',
-        description: 'स्थानिक तरुणांना क्रिकेटचे प्रशिक्षण देणे आणि प्रभाग स्तरावर स्पर्धा आयोजित करणे.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-3', title: 'चषक स्पर्धा २०२६', title_mr: 'चषक स्पर्धा २०२६', year: 2026, description: 'प्रभागीय भव्य क्रिकेट स्पर्धा', description_mr: 'प्रभागीय भव्य क्रिकेट स्पर्धा' }
-        ]
-    },
-    {
-        id: 'mock-3',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'जय भवानी गणेश मंडळ',
-        name_marathi: 'जय भवानी गणेश मंडळ',
-        name_english: 'Jai Bhavani Ganesh Mandal',
-        type: 'ganpati_mandal',
-        president_name: 'प्रशांत सूर्यवंशी',
-        president_mobile: '9988776655',
-        members_count: 80,
-        area: 'नेहरू चौक (Nehru Chowk)',
-        established_year: 2012,
-        support_received: 'मंडपासाठी आर्थिक मदत व सुरक्षा सीसीटीव्ही कॅमेरे (Financial assistance for Pandal and CCTV cameras)',
-        description: 'नेहरू चौक भागातील जुने आणि नामांकित सार्वजनिक गणेशोत्सव मंडळ.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-4', title: 'गणेशोत्सव २०२५', title_mr: 'गणेशोत्सव २०२५', year: 2025, description: 'आरोग्य शिबिर व अन्नदान उपक्रम', description_mr: 'आरोग्य शिबिर व अन्नदान उपक्रम' }
-        ]
-    },
-    {
-        id: 'mock-4',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'अष्टविनायक नवरात्रौत्सव मंडळ',
-        name_marathi: 'अष्टविनायक नवरात्रौत्सव मंडळ',
-        name_english: 'Ashtavinayak Navratri Mandal',
-        type: 'navratri_mandal',
-        president_name: 'किरण मोहिते',
-        president_mobile: '9765432109',
-        members_count: 55,
-        area: 'शिवाजी नगर चौक (Shivaji Nagar Chowk)',
-        established_year: 2015,
-        support_received: 'दांडिया स्पर्धा करंडक प्रायोजकत्व (Sponsored Dandiya Competition Trophies)',
-        description: 'नवरात्री काळात गरबा, दांडिया आणि विविध महिला सशक्तीकरण उपक्रम राबवणारे मंडळ.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-5', title: 'गरबा दांडिया रात्र २०२५', title_mr: 'गरबा दांडिया रात्र २०२५', year: 2025, description: 'महिलांसाठी विशेष सुरक्षित दांडिया रात्र', description_mr: 'महिलांसाठी विशेष सुरक्षित दांडिया रात्र' }
-        ]
-    },
-    {
-        id: 'mock-5',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'जिजाऊ महिला बचत गट व संस्था',
-        name_marathi: 'जिजाऊ महिला बचत गट व संस्था',
-        name_english: 'Jijau Mahila Bachat Gat & Org',
-        type: 'ngo',
-        president_name: 'सुनिता कदम',
-        president_mobile: '9123456789',
-        members_count: 60,
-        area: 'संजय नगर (Sanjay Nagar)',
-        established_year: 2019,
-        support_received: 'बचत गटासाठी शिवणयंत्रे व उद्योग प्रदर्शन जागा (Provided Sewing Machines & Exhibition Space)',
-        description: 'गृहिणींना आणि बचत गटातील महिलांना रोजगार प्रशिक्षण आणि साहित्याचे वाटप करणारी अग्रगण्य संस्था.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-6', title: 'शिवणकाम कार्यशाळा २०२५', title_mr: 'शिवणकाम कार्यशाळा २०२५', year: 2025, description: '४० महिलांना मोफत प्रशिक्षण व शिवणयंत्र वाटप', description_mr: '४० महिलांना मोफत प्रशिक्षण व शिवणयंत्र वाटप' }
-        ]
-    },
-    {
-        id: 'mock-6',
-        tenant_id: '00000000-0000-0000-0000-000000000000',
-        name: 'बाजीप्रभू क्रीडा मंडळ',
-        name_marathi: 'बाजीप्रभू क्रीडा मंडळ',
-        name_english: 'Bajiprabhu Sports Club',
-        type: 'sports_cricket',
-        president_name: 'अमित सावंत',
-        president_mobile: '9654321987',
-        members_count: 28,
-        area: 'हनुमान आळी (Hanuman Ali)',
-        established_year: 2022,
-        support_received: 'मैदान सपाटीकरण आणि व्यायामशाळा साहित्याची मदत (Assisted with ground levelling & gym equipment)',
-        description: 'स्थानिक पातळीवर कबड्डी आणि कुस्तीच्या खेळाडूंना प्रोत्साहन व मोफत प्रशिक्षण.',
-        status: 'Active',
-        events_conducted: [
-            { id: 'e-7', title: 'कबड्डी चषक २०२५', title_mr: 'कबड्डी चषक २०२५', year: 2025, description: 'राज्यस्तरीय खेळाडूंच्या सहभागासह स्पर्धा', description_mr: 'राज्यस्तरीय खेळाडूंच्या सहभागासह स्पर्धा' }
-        ]
-    }
-];
+export type SocialOrganization = SocialOrganizationRecord;
 
 const SocialOrganizations = () => {
     const { language } = useLanguage();
@@ -164,17 +30,14 @@ const SocialOrganizations = () => {
 
     const [orgs, setOrgs] = useState<SocialOrganization[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isLocalStorageMode, setIsLocalStorageMode] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
 
-    // Filter states
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [expandedOrgId, setExpandedOrgId] = useState<string | null>(null);
     const [showPdf, setShowPdf] = useState(false);
 
-    // Modal & Form states
     const [showModal, setShowModal] = useState(false);
     const [editingOrg, setEditingOrg] = useState<SocialOrganization | null>(null);
     const [formData, setFormData] = useState({
@@ -202,44 +65,30 @@ const SocialOrganizations = () => {
 
     const [tempEvents, setTempEvents] = useState<EventConducted[]>([]);
 
-    // Fetch organizations
     const fetchOrgs = async () => {
         setLoading(true);
         try {
-            // First check if supabase table is ready
-            const { data, error } = await supabase
-                .from('social_organizations')
-                .select('*')
-                .eq('tenant_id', tenantId || '00000000-0000-0000-0000-000000000000')
-                .order('created_at', { ascending: false });
+            if (!tenantId) return;
 
-            if (error) {
-                // If the relation doesn't exist, we fall back to LocalStorage gracefully
-                if (error.code === 'PGRST116' || error.message.includes('relation "public.social_organizations" does not exist')) {
-                    throw new Error('Table does not exist');
-                }
-                throw error;
-            }
-
-            setOrgs(data || []);
-            setIsLocalStorageMode(false);
-        } catch (err) {
-            console.log('Falling back to Local Storage mode for Social Organizations due to:', err);
-            setIsLocalStorageMode(true);
-            
-            // Read from LocalStorage
-            const stored = localStorage.getItem(`social_orgs_${tenantId || 'default'}`);
+            const localKey = `social_orgs_${tenantId}`;
+            const stored = localStorage.getItem(localKey);
             if (stored) {
                 try {
-                    setOrgs(JSON.parse(stored));
-                } catch {
-                    setOrgs(DEFAULT_ORGANIZATIONS);
-                    localStorage.setItem(`social_orgs_${tenantId || 'default'}`, JSON.stringify(DEFAULT_ORGANIZATIONS));
+                    const parsed = JSON.parse(stored);
+                    const migrated = await SocialOrganizationService.migrateData(parsed, tenantId);
+                    if (migrated) {
+                        localStorage.removeItem(localKey);
+                    }
+                } catch (e) {
+                    console.error('Migration failed:', e);
                 }
-            } else {
-                setOrgs(DEFAULT_ORGANIZATIONS);
-                localStorage.setItem(`social_orgs_${tenantId || 'default'}`, JSON.stringify(DEFAULT_ORGANIZATIONS));
             }
+
+            const data = await SocialOrganizationService.getOrganizations(tenantId);
+            setOrgs(data);
+        } catch (err) {
+            console.error('Error fetching Social Organizations:', err);
+            toast.error(isMr ? 'डेटा लोड करण्यात एरर.' : 'Error loading organization data.');
         } finally {
             setLoading(false);
         }
@@ -249,7 +98,6 @@ const SocialOrganizations = () => {
         fetchOrgs();
     }, [tenantId]);
 
-    // Handle Mobile Copy
     const copyToClipboard = (text: string, id: string) => {
         navigator.clipboard.writeText(text);
         setCopiedId(id);
@@ -257,7 +105,6 @@ const SocialOrganizations = () => {
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    // Filter logic
     const filteredOrgs = orgs.filter(org => {
         const nameToSearch = `${org.name} ${org.name_english || ''} ${org.name_marathi || ''} ${org.president_name} ${org.area}`.toLowerCase();
         const matchesSearch = nameToSearch.includes(searchQuery.toLowerCase());
@@ -266,7 +113,6 @@ const SocialOrganizations = () => {
         return matchesSearch && matchesType && matchesStatus;
     });
 
-    // Stats calculations
     const stats = {
         total: filteredOrgs.length,
         ngos: filteredOrgs.filter(o => o.type === 'ngo').length,
@@ -274,7 +120,6 @@ const SocialOrganizations = () => {
         mandals: filteredOrgs.filter(o => o.type === 'ganpati_mandal' || o.type === 'navratri_mandal').length
     };
 
-    // Open Add Modal
     const handleOpenAdd = () => {
         setEditingOrg(null);
         setFormData({
@@ -295,7 +140,6 @@ const SocialOrganizations = () => {
         setShowModal(true);
     };
 
-    // Open Edit Modal
     const handleOpenEdit = (org: SocialOrganization) => {
         setEditingOrg(org);
         setFormData({
@@ -312,11 +156,10 @@ const SocialOrganizations = () => {
             description: org.description || '',
             status: org.status || 'Active'
         });
-        setTempEvents(org.events_conducted || []);
+        setTempEvents((typeof org.events_conducted === 'string' ? JSON.parse(org.events_conducted) : org.events_conducted) || []);
         setShowModal(true);
     };
 
-    // Add Event in Form
     const handleAddEvent = () => {
         if (!newEventData.title && !newEventData.title_mr) {
             toast.error(isMr ? 'कृपया कार्यक्रमाचे नाव टाका' : 'Please enter event title');
@@ -343,14 +186,13 @@ const SocialOrganizations = () => {
         toast.success(isMr ? 'कार्यक्रम जोडला!' : 'Event added to list!');
     };
 
-    // Delete Event in Form
     const handleRemoveEvent = (id: string) => {
         setTempEvents(tempEvents.filter(e => e.id !== id));
     };
 
-    // Save Form
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!tenantId) return;
 
         const nameMain = formData.name_marathi || formData.name_english || formData.name;
         if (!nameMain) {
@@ -358,95 +200,55 @@ const SocialOrganizations = () => {
             return;
         }
 
-        const orgPayload: Omit<SocialOrganization, 'id'> = {
-            tenant_id: tenantId || '00000000-0000-0000-0000-000000000000',
+        const payload: Omit<SocialOrganization, 'id'> = {
+            tenant_id: tenantId,
             name: nameMain,
             name_marathi: formData.name_marathi || nameMain,
             name_english: formData.name_english || nameMain,
             type: formData.type as any,
             president_name: formData.president_name,
             president_mobile: formData.president_mobile,
-            members_count: Number(formData.members_count) || 0,
+            members_count: Number(formData.members_count || 0),
             area: formData.area,
-            established_year: Number(formData.established_year) || new Date().getFullYear(),
+            established_year: String(formData.established_year || new Date().getFullYear()),
             support_received: formData.support_received,
-            events_conducted: tempEvents,
+            events_conducted: tempEvents as any,
             description: formData.description,
             status: formData.status as any
         };
 
         try {
-            if (isLocalStorageMode) {
-                let updatedOrgs = [...orgs];
-                if (editingOrg) {
-                    updatedOrgs = updatedOrgs.map(o => o.id === editingOrg.id ? { ...orgPayload, id: editingOrg.id } : o);
-                    toast.success(isMr ? 'माहिती यशस्वीरित्या सुधारली!' : 'Organization updated successfully!');
-                } else {
-                    const newOrg: SocialOrganization = {
-                        ...orgPayload,
-                        id: `org-${Date.now()}`
-                    };
-                    updatedOrgs = [newOrg, ...updatedOrgs];
-                    toast.success(isMr ? 'नवीन संस्था यशस्वीरित्या जोडली!' : 'Organization added successfully!');
-                }
-                setOrgs(updatedOrgs);
-                localStorage.setItem(`social_orgs_${tenantId || 'default'}`, JSON.stringify(updatedOrgs));
-                setShowModal(false);
+            if (editingOrg) {
+                await SocialOrganizationService.updateOrganization(editingOrg.id, payload, tenantId);
+                toast.success(isMr ? 'माहिती यशस्वीरित्या बदलली!' : 'Organization updated successfully!');
             } else {
-                if (editingOrg) {
-                    const { error } = await supabase
-                        .from('social_organizations')
-                        .update(orgPayload)
-                        .eq('id', editingOrg.id);
-
-                    if (error) throw error;
-                    toast.success(isMr ? 'माहिती यशस्वीरित्या सुधारली!' : 'Organization updated successfully!');
-                } else {
-                    const { error } = await supabase
-                        .from('social_organizations')
-                        .insert([orgPayload]);
-
-                    if (error) throw error;
-                    toast.success(isMr ? 'नवीन संस्था यशस्वीरित्या जोडली!' : 'Organization added successfully!');
-                }
-                fetchOrgs();
-                setShowModal(false);
+                await SocialOrganizationService.addOrganization(payload, tenantId);
+                toast.success(isMr ? 'नवीन संस्था नोंदणी यशस्वी झाली!' : 'Organization registered successfully!');
             }
-        } catch (err: any) {
+            fetchOrgs();
+            setShowModal(false);
+        } catch (err) {
             console.error('Error saving organization:', err);
-            toast.error(isMr ? 'माहिती सेव्ह करताना त्रुटी आली' : 'Failed to save organization data');
+            toast.error(isMr ? 'माहिती जतन करताना चूक झाली' : 'Failed to save organization details');
         }
     };
 
-    // Delete Organization
     const handleDelete = async (id: string) => {
         if (!window.confirm(isMr ? 'तुम्हाला खात्री आहे की ही संस्था हटवायची आहे?' : 'Are you sure you want to delete this organization?')) {
             return;
         }
 
         try {
-            if (isLocalStorageMode) {
-                const updated = orgs.filter(o => o.id !== id);
-                setOrgs(updated);
-                localStorage.setItem(`social_orgs_${tenantId || 'default'}`, JSON.stringify(updated));
-                toast.success(isMr ? 'संस्था यशस्वीरित्या हटवली!' : 'Organization deleted successfully!');
-            } else {
-                const { error } = await supabase
-                    .from('social_organizations')
-                    .delete()
-                    .eq('id', id);
-
-                if (error) throw error;
-                toast.success(isMr ? 'संस्था यशस्वीरित्या हटवली!' : 'Organization deleted successfully!');
-                fetchOrgs();
-            }
+            if (!tenantId) return;
+            await SocialOrganizationService.deleteOrganization(id, tenantId);
+            toast.success(isMr ? 'संस्था यशस्वीरित्या हटवली!' : 'Organization deleted successfully!');
+            fetchOrgs();
         } catch (err) {
             console.error('Error deleting organization:', err);
             toast.error(isMr ? 'हटवताना एरर आला' : 'Failed to delete organization');
         }
     };
 
-    // Helpers to get specific localized labels
     const getOrgTypeName = (type: string) => {
         switch (type) {
             case 'ngo': return isMr ? 'एन.जी.ओ / सामाजिक संस्था' : 'NGO / Foundation';
@@ -525,7 +327,7 @@ const SocialOrganizations = () => {
     return (
         <div className="space-y-6">
             {/* Banner for standalone mode */}
-            {isLocalStorageMode && (
+            {false && (
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3.5 shadow-sm animate-in slide-in-from-top-4 duration-300">
                     <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="space-y-1">
@@ -817,7 +619,7 @@ const SocialOrganizations = () => {
                                     {/* Expanded events details panel */}
                                     {isExpanded && org.events_conducted && (
                                         <div className="space-y-3 pl-2.5 border-l-2 border-slate-200 animate-in slide-in-from-top-2 duration-200 pt-1">
-                                            {org.events_conducted.map((evt) => (
+                                            {(Array.isArray(org.events_conducted) ? org.events_conducted : (typeof org.events_conducted === 'string' ? JSON.parse(org.events_conducted) : [])).map((evt: any) => (
                                                 <div key={evt.id} className="space-y-0.5">
                                                     <div className="flex items-center justify-between gap-2">
                                                         <span className="font-bold text-xs text-slate-800">
@@ -1164,7 +966,7 @@ const SocialOrganizations = () => {
             {/* PDF Report Generator */}
             {showPdf && (
                 <MandalNgoReportPdfGenerator
-                    organizations={filteredOrgs}
+                    organizations={filteredOrgs as any}
                     onClose={() => setShowPdf(false)}
                 />
             )}

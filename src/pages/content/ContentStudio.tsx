@@ -8,9 +8,11 @@ import { type AIHistoryItem } from '../../types';
 import { useTutorial } from '../../context/TutorialContext';
 import ContentStudioTutorial from '../../components/tutorial/ContentStudioTutorial';
 import { HelpCircle } from 'lucide-react';
+import { useTenant } from '../../context/TenantContext';
 
 const ContentStudio = () => {
     const { t, language: uiLanguage } = useLanguage();
+    const { tenantId } = useTenant();
     const { startTutorial } = useTutorial();
     const [topic, setTopic] = useState('');
     const [contentType, setContentType] = useState<ContentType>('Speech');
@@ -28,16 +30,20 @@ const ContentStudio = () => {
 
     useEffect(() => {
         loadHistory();
-    }, []);
+    }, [tenantId]);
 
     const loadHistory = async () => {
+        if (!tenantId) return;
         setHistoryLoading(true);
-        // Simulate network delay
-        setTimeout(async () => {
-            const items = await AIHistoryService.getHistory();
+        try {
+            await AIHistoryService.migrateData(tenantId);
+            const items = await AIHistoryService.getHistory(tenantId);
             setHistory(items);
+        } catch (e) {
+            console.error(e);
+        } finally {
             setHistoryLoading(false);
-        }, 800);
+        }
     };
 
     const handleGenerate = async (e: React.FormEvent) => {
@@ -51,17 +57,17 @@ const ContentStudio = () => {
             setCopied(false);
 
             // Save to history
-            await AIHistoryService.addToHistory({
-                title: topic,
-                contentType: contentType,
-                tone: tone,
-                language: aiLanguage,
-                generatedContent: content,
-                messages: [] // Placeholder for future chat context
-            });
-
-            // Reload history to show new item
-            loadHistory();
+            if (tenantId) {
+                await AIHistoryService.addToHistory({
+                    title: topic,
+                    contentType: contentType,
+                    tone: tone,
+                    language: aiLanguage,
+                    generatedContent: content,
+                    messages: [] // Placeholder for future chat context
+                }, tenantId);
+                loadHistory();
+            }
 
         } catch (error: any) {
             toast.error(error.message);

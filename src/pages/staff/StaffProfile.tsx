@@ -4,8 +4,9 @@ import { format } from 'date-fns';
 import { type Staff } from '../../types/staff';
 import { type Complaint } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { MockService } from '../../services/mockData';
+import { supabase } from '../../services/supabaseClient';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTenant } from '../../context/TenantContext';
 
 interface StaffProfileProps {
     member: Staff;
@@ -16,16 +17,19 @@ interface StaffProfileProps {
 
 const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onDelete }) => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [workHistory, setWorkHistory] = useState<Complaint[]>([]);
 
     useEffect(() => {
-        // Fetch complaints assigned to this staff member
-        // In a real app, we would query Supabase for complaints where assignedTo == member.id (or member.user_id)
-        // For now, using MockService to simulate finding assigned work if IDs match (or just showing empty/mock if no link exists yet)
-        const allComplaints = MockService.getComplaints();
-        const history = allComplaints.filter(c => c.assignedTo === member.id);
-        setWorkHistory(history);
-    }, [member]);
+        const fetchHistory = async () => {
+            if (!tenantId) return;
+            const { data } = await supabase.from('complaints').select('*').eq('tenant_id', tenantId);
+            const allComplaints = data || [];
+            const history = allComplaints.filter((c: any) => c.assigned_to === member.id);
+            setWorkHistory(history);
+        };
+        fetchHistory();
+    }, [member, tenantId]);
 
     const getStatusColor = (status: string) => {
         switch (status) {

@@ -1,103 +1,13 @@
-import { supabase, getGlobalTenantId } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import { type GalleryItem, type GalleryCategory } from '../types';
 
-const GALLERY_STORAGE_KEY = 'ns_gallery';
-
-// Dummy Data
-const DUMMY_GALLERY: GalleryItem[] = [
-    {
-        id: '1',
-        title: 'Ganpati Visarjan 2024',
-        titleKey: 'gallery.items.ganpati_title',
-        category: 'Event',
-        imageUrl: 'https://images.unsplash.com/photo-1567591414240-e19730eb66ac?auto=format&fit=crop&q=80',
-        description: 'Grand celebration of Ganpati Visarjan in Ward 12 with all residents.',
-        descriptionKey: 'gallery.items.ganpati_desc',
-        date: '2024-09-17',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '2',
-        title: 'Road Inauguration',
-        titleKey: 'gallery.items.road_title',
-        category: 'Work',
-        imageUrl: 'https://images.unsplash.com/photo-1590059395928-9833512630f7?auto=format&fit=crop&q=80',
-        description: 'Inauguration of the new concrete road in Lane 5.',
-        descriptionKey: 'gallery.items.road_desc',
-        date: '2025-01-10',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '3',
-        title: 'Best Nagar Sevak Award',
-        titleKey: 'gallery.items.award_title',
-        category: 'Award',
-        imageUrl: 'https://images.unsplash.com/photo-1594122230689-45899d9e6f69?auto=format&fit=crop&q=80',
-        description: 'Received the Best Nagar Sevak award from the Municipal Commissioner.',
-        descriptionKey: 'gallery.items.award_desc',
-        date: '2024-12-15',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '4',
-        title: 'Lokmat News Coverage',
-        titleKey: 'gallery.items.newspaper_1_title',
-        category: 'Newspaper',
-        imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&q=80',
-        description: 'Coverage of our successful vaccination drive in Lokmat.',
-        descriptionKey: 'gallery.items.newspaper_1_desc',
-        date: '2025-01-05',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '5',
-        title: 'Sakal Times Feature',
-        titleKey: 'gallery.items.newspaper_2_title',
-        category: 'Newspaper',
-        imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?auto=format&fit=crop&q=80',
-        description: 'Feature article on the drainage improvement project.',
-        descriptionKey: 'gallery.items.newspaper_2_desc',
-        date: '2024-11-20',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '6',
-        title: 'प्रभाग 12 मध्ये सक्रिय नेतृत्वाखाली पायाभूत सुविधांना चालना मिळत आहे',
-        category: 'Newspaper',
-        imageUrl: 'https://picsum.photos/seed/n1/800/600',
-        description: 'प्रभाग 12 मधील रहिवाशांनी अलीकडेच स्थानिक नगरसेवकांनी सुरू केलेल्या पायाभूत सुविधांच्या सुधारणांचे कौतुक केले आहे.',
-        date: '2026-02-20',
-        sentiment: 'positive',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '7',
-        title: 'डिजिटल कंप्लेंट ॲप तक्रारींचे निराकरण करण्याची वेळ कमी करते',
-        category: 'Newspaper',
-        imageUrl: 'https://picsum.photos/seed/n2/800/600',
-        description: 'नगरसेवकांनी नव्याने सादर केलेल्या वॉर्ड मॅनेजमेंट ॲपने तक्रार निवारण वेळेत लक्षणीय घट केली आहे.',
-        date: '2026-02-20',
-        sentiment: 'positive',
-        createdAt: new Date().toISOString()
-    },
-    {
-        id: '8',
-        title: '500 हून अधिक रहिवाशांना मोफत आरोग्य शिबिराचा लाभ',
-        category: 'Newspaper',
-        imageUrl: 'https://picsum.photos/seed/n3/800/600',
-        description: 'स्थानिक रुग्णालयांच्या सहकार्याने आयोजित मोफत वैद्यकीय तपासणी शिबिरात 500 हून अधिक रहिवाशांचा सहभाग होता.',
-        date: '2026-02-20',
-        sentiment: 'positive',
-        createdAt: new Date().toISOString()
-    }
-];
-
 export const GalleryService = {
-    getGalleryItems: async (category?: GalleryCategory): Promise<GalleryItem[]> => {
+    getGalleryItems: async (category: GalleryCategory | undefined, tenantId: string): Promise<GalleryItem[]> => {
         try {
             let query = supabase
                 .from('gallery')
                 .select('*')
+                .eq('tenant_id', tenantId)
                 .order('date', { ascending: false });
 
             if (category) {
@@ -123,11 +33,11 @@ export const GalleryService = {
 
         } catch (e) {
             console.error('Error fetching gallery data:', e);
-            return [];
+            throw e;
         }
     },
 
-    addGalleryItem: async (item: Omit<GalleryItem, 'id' | 'createdAt'>): Promise<GalleryItem | null> => {
+    addGalleryItem: async (item: Omit<GalleryItem, 'id' | 'createdAt'>, tenantId: string): Promise<GalleryItem | null> => {
         try {
             const { data, error } = await supabase
                 .from('gallery')
@@ -137,7 +47,8 @@ export const GalleryService = {
                     image_url: item.imageUrl,
                     description: item.description,
                     date: item.date,
-                    sentiment: item.sentiment
+                    sentiment: item.sentiment,
+                    tenant_id: tenantId
                 })
                 .select()
                 .single();
@@ -155,20 +66,12 @@ export const GalleryService = {
                 createdAt: data.created_at
             };
         } catch (e) {
-            console.warn('Falling back to local storage for addGalleryItem');
-            const current = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
-            const newItem: GalleryItem = {
-                ...item,
-                id: `local_${Date.now()}`,
-                createdAt: new Date().toISOString()
-            };
-            current.unshift(newItem);
-            localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(current));
-            return newItem;
+            console.error('Error adding gallery item:', e);
+            throw e;
         }
     },
 
-    updateGalleryItem: async (id: string, item: Partial<GalleryItem>): Promise<GalleryItem | null> => {
+    updateGalleryItem: async (id: string, item: Partial<GalleryItem>, tenantId: string): Promise<GalleryItem | null> => {
         try {
             const { data, error } = await supabase
                 .from('gallery')
@@ -181,6 +84,7 @@ export const GalleryService = {
                     sentiment: item.sentiment
                 })
                 .eq('id', id)
+                .eq('tenant_id', tenantId)
                 .select()
                 .single();
 
@@ -197,33 +101,30 @@ export const GalleryService = {
                 createdAt: data.created_at
             };
         } catch (e) {
-            console.warn('Falling back to local storage for updateGalleryItem');
-            const current = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
-            const index = current.findIndex((x: GalleryItem) => x.id === id);
-            if (index !== -1) {
-                current[index] = { ...current[index], ...item };
-                localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(current));
-                return current[index];
-            }
-            return null;
+            console.error('Error updating gallery item:', e);
+            throw e;
         }
     },
 
-    deleteGalleryItem: async (id: string): Promise<void> => {
+    deleteGalleryItem: async (id: string, tenantId: string): Promise<void> => {
         try {
-            await supabase.from('gallery').delete().eq('id', id);
+            const { error } = await supabase
+                .from('gallery')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
         } catch (e) {
-            const current = JSON.parse(localStorage.getItem(GALLERY_STORAGE_KEY) || '[]');
-            const filtered = current.filter((x: GalleryItem) => x.id !== id);
-            localStorage.setItem(GALLERY_STORAGE_KEY, JSON.stringify(filtered));
+            console.error('Error deleting gallery item:', e);
+            throw e;
         }
     },
 
-    uploadImage: async (file: File): Promise<string> => {
+    uploadImage: async (file: File, tenantId: string): Promise<string> => {
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
-            const tenantId = getGlobalTenantId() || 'default-tenant';
             const filePath = `${tenantId}/files/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
@@ -244,17 +145,4 @@ export const GalleryService = {
             throw new Error('Image upload failed. Please try again.');
         }
     }
-};
-
-const filteredDummy = (category?: GalleryCategory) => {
-    if (!category) return DUMMY_GALLERY;
-    // Newspaper tab shows only newspapers
-    if (category === 'Newspaper') return DUMMY_GALLERY.filter(d => d.category === 'Newspaper');
-    // Events tab shows all except newspapers if filtered specifically, but UI logic might differ
-    return DUMMY_GALLERY.filter(d => d.category === category);
-};
-
-const filterItems = (items: GalleryItem[], category?: GalleryCategory) => {
-    if (!category) return items;
-    return items.filter(d => d.category === category);
 };

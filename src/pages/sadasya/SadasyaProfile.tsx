@@ -3,8 +3,9 @@ import { ArrowLeft, MapPin, Phone, Calendar, Trash2, Edit2, User } from 'lucide-
 import { format } from 'date-fns';
 import { type Sadasya, type Complaint } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { MockService } from '../../services/mockData';
+import { supabase } from '../../services/supabaseClient';
 import { TranslatedText } from '../../components/TranslatedText';
+import { useTenant } from '../../context/TenantContext';
 
 interface SadasyaProfileProps {
     member: Sadasya;
@@ -15,17 +16,19 @@ interface SadasyaProfileProps {
 
 const SadasyaProfile: React.FC<SadasyaProfileProps> = ({ member, onBack, onEdit, onDelete }) => {
     const { t, language } = useLanguage();
+    const { tenantId } = useTenant();
     const [workHistory, setWorkHistory] = useState<Complaint[]>([]);
 
     useEffect(() => {
-        // Fetch complaints assigned to this member (assuming assignedTo might match member ID)
-        const allComplaints = MockService.getComplaints();
-        // Loose matching for now as Sadasya aren't strictly Users in this mock setup
-        // matching by ID or even specific tag if we implemented that. 
-        // For now, simple ID match.
-        const history = allComplaints.filter(c => c.assignedTo === member.id);
-        setWorkHistory(history);
-    }, [member]);
+        const fetchHistory = async () => {
+            if (!tenantId) return;
+            const { data } = await supabase.from('complaints').select('*').eq('tenant_id', tenantId);
+            const allComplaints = data || [];
+            const history = allComplaints.filter((c: any) => c.assigned_to === member.id);
+            setWorkHistory(history);
+        };
+        fetchHistory();
+    }, [member, tenantId]);
 
     const getDisplayName = (m: Sadasya) => {
         if (language === 'mr') {

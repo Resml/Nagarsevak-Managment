@@ -1,21 +1,17 @@
 import { supabase } from './supabaseClient';
 import { type DiaryEntry } from '../types';
 
-// Mock storage key for fallback/dev
-const DIARY_STORAGE_KEY = 'ns_gb_diary';
-
 export const DiaryService = {
-    // Get all entries with optional filtering (client-side filtering for simplicity first)
     getEntries: async (tenantId: string): Promise<DiaryEntry[]> => {
         try {
             const { data, error } = await supabase
                 .from('gb_diary')
                 .select('*')
-                .eq('tenant_id', tenantId) // Secured
+                .eq('tenant_id', tenantId)
                 .order('meeting_date', { ascending: false });
 
             if (error) {
-                console.warn('Supabase error (or table missing), falling back to mock:', error);
+                console.error('Supabase error fetching gb_diary:', error);
                 throw error;
             }
 
@@ -35,8 +31,8 @@ export const DiaryService = {
                 updatedAt: row.updated_at
             }));
         } catch (e) {
-            // Fallback to local storage if DB not ready
-            return JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY) || '[]');
+            console.error('Failed to get diary entries:', e);
+            throw e;
         }
     },
 
@@ -53,7 +49,7 @@ export const DiaryService = {
                 beneficiaries: entry.beneficiaries,
                 response: entry.response,
                 tags: entry.tags,
-                tenant_id: tenantId // Secured
+                tenant_id: tenantId
             };
 
             const { data, error } = await supabase
@@ -80,33 +76,50 @@ export const DiaryService = {
                 updatedAt: data.updated_at
             };
         } catch (e) {
-            console.warn('Falling back to local storage for addEntry');
-            const current = JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY) || '[]');
-            const newEntry: DiaryEntry = {
-                ...entry,
-                id: `local_${Date.now()}`,
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-            };
-            current.unshift(newEntry);
-            localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(current));
-            return newEntry;
+            console.error('Failed to add diary entry:', e);
+            throw e;
         }
     },
 
-    updateEntry: async (id: string, updates: Partial<DiaryEntry>): Promise<void> => {
-        // Implementation for update would go here (similar pattern: try DB, fallback local)
-        // Skipping detail for brevity in this step, focusing on List/Add first.
+    updateEntry: async (id: string, updates: Partial<DiaryEntry>, tenantId: string): Promise<void> => {
+        try {
+            const dbUpdates: any = {};
+            if (updates.meetingDate !== undefined) dbUpdates.meeting_date = updates.meetingDate;
+            if (updates.meetingType !== undefined) dbUpdates.meeting_type = updates.meetingType;
+            if (updates.subject !== undefined) dbUpdates.subject = updates.subject;
+            if (updates.description !== undefined) dbUpdates.description = updates.description;
+            if (updates.department !== undefined) dbUpdates.department = updates.department;
+            if (updates.area !== undefined) dbUpdates.area = updates.area;
+            if (updates.status !== undefined) dbUpdates.status = updates.status;
+            if (updates.beneficiaries !== undefined) dbUpdates.beneficiaries = updates.beneficiaries;
+            if (updates.response !== undefined) dbUpdates.response = updates.response;
+            if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+
+            const { error } = await supabase
+                .from('gb_diary')
+                .update(dbUpdates)
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+
+            if (error) throw error;
+        } catch (e) {
+            console.error('Failed to update diary entry:', e);
+            throw e;
+        }
     },
 
     deleteEntry: async (id: string, tenantId: string): Promise<void> => {
         try {
-            const { error } = await supabase.from('gb_diary').delete().eq('id', id).eq('tenant_id', tenantId);
+            const { error } = await supabase
+                .from('gb_diary')
+                .delete()
+                .eq('id', id)
+                .eq('tenant_id', tenantId);
+                
             if (error) throw error;
         } catch (e) {
-            const current = JSON.parse(localStorage.getItem(DIARY_STORAGE_KEY) || '[]');
-            const filtered = current.filter((x: DiaryEntry) => x.id !== id);
-            localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(filtered));
+            console.error('Failed to delete diary entry:', e);
+            throw e;
         }
     }
 };
