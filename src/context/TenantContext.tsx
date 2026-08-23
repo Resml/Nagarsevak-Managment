@@ -3,6 +3,9 @@ import { supabase, setActiveTenantSession } from '../services/supabaseClient';
 import { useAuth } from './AuthContext';
 import { checkFeatureAccess } from '../utils/featureMatrix';
 
+// Build-time constant — false in production, true in dev. Never changes at runtime.
+const IS_DEV = import.meta.env.DEV;
+
 export type TenantTier = 'nagarsevak' | 'amdar' | 'khasdar' | 'minister';
 export type TenantPlan = 'basic' | 'pro' | 'advance';
 
@@ -27,7 +30,6 @@ interface TenantContextType {
     isKhasdar: boolean;
     isMinister: boolean;
     hasFeature: (featureKey: string) => boolean;
-    setTestPlan: (plan: TenantPlan) => void;
 }
 
 const TenantContext = createContext<TenantContextType>({
@@ -41,8 +43,7 @@ const TenantContext = createContext<TenantContextType>({
     isAmdar: false,
     isKhasdar: false,
     isMinister: false,
-    hasFeature: () => true,
-    setTestPlan: () => {}
+    hasFeature: () => true
 });
 
 export const useTenant = () => useContext(TenantContext);
@@ -180,70 +181,36 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const pathParts = currentPath.split('/');
     const pathCategory = pathParts[1]?.toLowerCase();
-    const pathPlan = pathParts[2]?.toLowerCase();
-    
+    // NOTE: pathParts[2] (plan segment) is cosmetic routing only — it no longer overrides the effective plan.
+
     const validCategories = ['nagarsevak', 'amdar', 'khasdar', 'minister'];
-    const validPlans = ['basic', 'pro', 'advance', 'advanced'];
 
     let tier = tenant?.tier || 'nagarsevak';
     if (validCategories.includes(pathCategory)) {
         tier = pathCategory as TenantTier;
     }
-    
-    // Explicit plan override via URL query parameter for manual testing (?plan=pro)
-    const searchParams = new URLSearchParams(window.location.search);
-    const queryPlan = searchParams.get('plan');
-    
-    // Determine plan:
-    // 1. Path-based plan (e.g. /nagarsevak/basic/dashboard)
-    // 2. Query param (?plan=basic)
-    // 3. Database tenant plan (normalized: 'advanced' -> 'advance')
-    // 4. Fallback to 'basic'
+
+    // Plan is authoritative from the database only (tenants.plan).
+    // No URL path, query param, or client-side override in production.
     const rawTenantPlan = String(tenant?.plan || 'basic');
     const normalizedTenantPlan = (rawTenantPlan === 'advanced' ? 'advance' : rawTenantPlan) as TenantPlan;
 
-    let plan: TenantPlan = normalizedTenantPlan;
-    if (validPlans.includes(pathPlan)) {
-        plan = (pathPlan === 'advanced' ? 'advance' : pathPlan) as TenantPlan;
-    } else if (queryPlan && validPlans.includes(queryPlan.toLowerCase())) {
-        plan = (queryPlan.toLowerCase() === 'advanced' ? 'advance' : queryPlan.toLowerCase()) as TenantPlan;
-    }
-
-    const [testPlan, setTestPlanState] = useState<TenantPlan>(() => {
-        return (localStorage.getItem('test_plan') as TenantPlan) || normalizedTenantPlan;
-    });
-
-    const setTestPlan = useCallback((newPlan: TenantPlan) => {
-        localStorage.setItem('test_plan', newPlan);
-        setTestPlanState(newPlan);
-    }, []);
-
+    // Authoritative plan source: tenants.plan from the database.
+    const plan: TenantPlan = normalizedTenantPlan;
     useEffect(() => {
-        const shouldBypass = user?.role === 'super_admin';
-        setActiveTenantSession(tenant?.id || null, tier, plan, shouldBypass);
-    }, [tenant, tier, plan, user]);
+        // Pass tenant_id only — plan/tier/bypass injection removed from proxy.
+        setActiveTenantSession(tenant?.id || null);
+    }, [tenant]);
 
     const isNagarsevak = tier === 'nagarsevak';
     const isAmdar = tier === 'amdar';
     const isKhasdar = tier === 'khasdar';
     const isMinister = tier === 'minister';
 
+    // UI/UX gate only. DB RLS (has_feature_access) is the authoritative enforcement layer.
     const hasFeature = useCallback((featureKey: string) => {
-        // 1. DYNAMIC DATABASE CHECK: If explicitly disabled for this tenant in config, ALWAYS block it
-        const disabledFeatures: string[] = tenant?.config?.disabled_features || [];
-        if (disabledFeatures.includes(featureKey)) {
-            return false;
-        }
-
-        // 2. DYNAMIC DATABASE CHECK: If explicitly enabled for this tenant in config, ALWAYS allow it
-        const enabledFeatures: string[] = tenant?.config?.enabled_features || [];
-        if (enabledFeatures.includes(featureKey)) {
-            return true;
-        }
-
-        // 3. Subscription Plan-based matrix access
         return checkFeatureAccess(featureKey, plan);
-    }, [plan, tenant]);
+    }, [plan]);
 
     return (
         <TenantContext.Provider value={{
@@ -257,8 +224,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             isAmdar,
             isKhasdar,
             isMinister,
-            hasFeature,
-            setTestPlan
+            hasFeature
         }}>
             {loading ? (
                 <div className="h-screen w-full flex items-center justify-center bg-gray-50">

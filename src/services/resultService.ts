@@ -1,14 +1,17 @@
 import { supabase } from './supabaseClient';
 import { type ElectionResult } from '../types';
-import localElectionData from '../data/election_data.json';
-
-const RESULT_STORAGE_KEY = 'ns_election_results';
 
 export const ResultService = {
-    getResults: async (ward?: string): Promise<ElectionResult[]> => {
+    getResults: async (tenantId: string, ward?: string): Promise<ElectionResult[]> => {
+        if (!tenantId) {
+            console.warn('[ResultService] No tenantId provided, returning empty results');
+            return [];
+        }
+
         try {
             console.log('[ResultService] Fetching election results from database...');
-            let query = supabase.from('election_results').select('*');
+            let query = supabase.from('election_results').select('*').eq('tenant_id', tenantId);
+            
             if (ward) {
                 query = query.eq('ward_name', ward);
                 console.log(`[ResultService] Filtering by ward: ${ward}`);
@@ -23,9 +26,7 @@ export const ResultService = {
 
             console.log(`[ResultService] Database returned ${data?.length || 0} results`);
 
-            // If we got data from the database, use it!
             if (data && data.length > 0) {
-                console.log('[ResultService] Using database results');
                 return data.map((row: any) => ({
                     id: row.id,
                     wardName: row.ward_name,
@@ -40,36 +41,10 @@ export const ResultService = {
                 }));
             }
 
-            // Only check localStorage if database is empty
-            console.log('[ResultService] No database results, checking localStorage...');
-            const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
-            if (stored.length > 0) {
-                console.log('[ResultService] Using localStorage data');
-                return filterResults(stored, ward);
-            }
-
-            // Fall back to bundled local JSON
-            console.log('[ResultService] No data anywhere, using bundled election_data.json');
-            return filterResults(localElectionData as unknown as ElectionResult[], ward);
-
+            return [];
         } catch (e) {
             console.error('[ResultService] Exception in getResults:', e);
-
-            // Try localStorage as last resort
-            const stored = JSON.parse(localStorage.getItem(RESULT_STORAGE_KEY) || '[]');
-            if (stored.length > 0) {
-                console.log('[ResultService] Exception - using localStorage data');
-                return filterResults(stored, ward);
-            }
-
-            // Fall back to bundled local JSON
-            console.log('[ResultService] Exception - using bundled election_data.json');
-            return filterResults(localElectionData as unknown as ElectionResult[], ward);
+            return [];
         }
     },
-};
-
-const filterResults = (items: ElectionResult[], ward?: string) => {
-    if (!ward) return items;
-    return items.filter(i => i.wardName === ward);
 };

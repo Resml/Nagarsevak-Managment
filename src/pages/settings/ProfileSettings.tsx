@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
+import { SecureStorageService } from '../../services/secureStorageService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useAuth } from '../../context/AuthContext';
@@ -211,31 +212,27 @@ const ProfileSettings = () => {
             // If a previous image exists, try to delete it (best effort)
             const oldUrl = type === 'profile' ? formData.profile_image_url : formData.party_logo_url;
             if (oldUrl) {
-                const oldPath = oldUrl.split('/app-assets/')[1];
+                // Determine if it's an old absolute URL or a relative path
+                let oldPath = oldUrl;
+                if (oldUrl.includes('/app-assets/')) {
+                    oldPath = oldUrl.split('/app-assets/')[1].split('?')[0]; // Strip cache busters
+                } else if (oldUrl.startsWith('http')) {
+                    // Ignore legacy fully unknown domains if any
+                    oldPath = '';
+                }
+
                 if (oldPath) {
-                    await supabase.storage.from('app-assets').remove([oldPath]);
+                    await supabase.storage.from('app-assets').remove([oldPath.split('?')[0]]);
                 }
             }
 
-            const { error: uploadError } = await supabase.storage
-                .from('app-assets')
-                .upload(filePath, croppedBlob, { 
-                    upsert: true,
-                    contentType: 'image/jpeg'
-                });
+            // Provide custom filename because profile settings creates its own name
+            const relativePath = await SecureStorageService.uploadFile('app-assets', 'profile', new File([croppedBlob], fileName, { type: 'image/jpeg' }), fileName);
 
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('app-assets')
-                .getPublicUrl(filePath);
-
-            // Add cache-busting param so browser shows new image immediately
-            const bustUrl = `${publicUrl}?t=${Date.now()}`;
-
+            // Store the relative path instead of absolute URL
             const updatedFormData = {
                 ...formData,
-                [type === 'profile' ? 'profile_image_url' : 'party_logo_url']: bustUrl
+                [type === 'profile' ? 'profile_image_url' : 'party_logo_url']: relativePath
             };
 
             setFormData(updatedFormData);

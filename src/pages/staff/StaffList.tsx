@@ -9,6 +9,7 @@ import clsx from 'clsx';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
+import { checkFeatureAccess } from '../../utils/featureMatrix';
 
 const PARTY_WINGS = [
     'युवक आघाडी',
@@ -29,7 +30,7 @@ const PARTY_WINGS = [
 
 const StaffList = () => {
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenantId, tenant } = useTenant();
 
     const tr = (en: string, mr: string) => language === 'mr' ? mr : en;
 
@@ -263,7 +264,10 @@ const StaffList = () => {
         // Analysis & Settings
         { id: 'analysis', label: t('permissions.analysis') || 'Analysis Strategy' },
         { id: 'profile_settings', label: t('permissions.profile_settings') || 'Profile Settings' },
-    ], [t]);
+    ].filter(perm => {
+        if (!tenant?.plan) return false;
+        return checkFeatureAccess(perm.id, tenant.plan);
+    }), [t, tenant?.plan]);
 
     const COMPLAINT_CATEGORIES = [
         { id: 'Road', label: 'Roads (रस्ते)' },
@@ -347,8 +351,14 @@ const StaffList = () => {
         }
     };
 
-    const handleSave = async (e: React.FormEvent) => {
+    const handleSaveStaff = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!formData.permissions || formData.permissions.length === 0) {
+            toast.error(t('staff.select_permission') || 'Please select at least one permission.');
+            return;
+        }
+
         setSavingStaff(true);
         try {
             // Merge manual input keywords with selected categories
@@ -1504,7 +1514,7 @@ const StaffList = () => {
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl max-w-lg w-full p-4 md:p-6 shadow-xl max-h-[85vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4 text-gray-900">{editingStaffId ? 'Edit Staff Member' : t('staff.modal.title')}</h2>
-                        <form onSubmit={handleSave} className="space-y-4">
+                        <form onSubmit={handleSaveStaff} className="space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('staff.modal.category')}</label>

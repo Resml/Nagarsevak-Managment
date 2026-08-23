@@ -18,7 +18,7 @@ export const GalleryService = {
 
             if (error) throw error;
 
-            return (data || []).map((row: any) => ({
+            const items = (data || []).map((row: any) => ({
                 id: row.id,
                 title: row.title,
                 category: row.category,
@@ -30,6 +30,15 @@ export const GalleryService = {
                 descriptionKey: row.description_key,
                 createdAt: row.created_at
             }));
+
+            // Resolve secure signed URLs
+            for (const item of items) {
+                if (item.imageUrl) {
+                    (item as any).previewUrl = await SecureStorageService.getUrl('app-assets', item.imageUrl);
+                }
+            }
+
+            return items;
 
         } catch (e) {
             console.error('Error fetching gallery data:', e);

@@ -118,9 +118,13 @@ const InviteVoterModal = ({ meeting, tenantId, onClose, onSent }: InviteVoterMod
         setSending(true);
         let sentCount = 0;
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const res = await fetch(`${BOT_URL}/api/send-event-invites`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify({ eventId: meeting.id, tenantId, mobiles: targets.map(v => ({ mobile: v.mobile, name: v.name_marathi || v.name })) })
             });
             if (res.ok) {

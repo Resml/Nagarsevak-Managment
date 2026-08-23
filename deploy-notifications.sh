@@ -1,122 +1,136 @@
 #!/bin/bash
+set -euo pipefail
 
+# ==============================================================================
 # Letter Approval Notification System - Deployment Script
-# This script helps automate the deployment process
-
-echo "🚀 Letter Approval Notification System - Deployment"
-echo "=================================================="
-echo ""
+# ==============================================================================
+# WARNING: Run this script ONLY in Git Bash (recommended on Windows) or WSL. 
+# Do NOT use PowerShell for executing bash scripts natively.
+# ==============================================================================
 
 # Colors for output
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
+SECRETS_FILE=".deploy-secrets.tmp"
 
-# Step 1: Generate Webhook Secret
-echo -e "${YELLOW}Step 1: Generate Webhook Secret${NC}"
-WEBHOOK_SECRET=$(openssl rand -hex 32)
-echo "Generated secret: $WEBHOOK_SECRET"
-echo ""
-echo -e "${GREEN}✅ Copy this secret - you'll need it for Render and Supabase${NC}"
-echo ""
+echo -e "${YELLOW}🚀 Letter Approval Notification System - Deployment${NC}"
+echo "=================================================="
 
-# Step 2: Render Configuration
-echo -e "${YELLOW}Step 2: Configure Render Environment Variable${NC}"
-echo "1. Go to: https://dashboard.render.com"
-echo "2. Select your bot service: nagarsevak-managment-1"
-echo "3. Go to Environment tab"
-echo "4. Add new environment variable:"
-echo "   Key: WEBHOOK_SECRET"
-echo "   Value: $WEBHOOK_SECRET"
-echo "5. Click 'Save Changes' (bot will auto-redeploy)"
-echo ""
-read -p "Press Enter when Render configuration is complete..."
-echo ""
-
-# Step 3: Deploy Supabase Edge Function
-echo -e "${YELLOW}Step 3: Deploy Supabase Edge Function${NC}"
-echo "Running: supabase functions deploy notify-letter-status"
-echo ""
-
-# Check if supabase CLI is installed
+# Check requirements
 if ! command -v supabase &> /dev/null; then
     echo -e "${RED}❌ Supabase CLI not found${NC}"
-    echo "Install it: npm install -g supabase"
-    echo "Then run this script again"
+    echo "Please install it: npm install -g supabase or via Scoop/Brew."
     exit 1
 fi
 
-# Check if project is linked
-if [ ! -f "supabase/.temp/project-ref" ]; then
-    echo "Project not linked. Let's link it now..."
-    read -p "Enter your Supabase project ref: " PROJECT_REF
-    supabase link --project-ref $PROJECT_REF
+if ! command -v openssl &> /dev/null; then
+    echo -e "${RED}❌ OpenSSL not found${NC}"
+    echo "Please install OpenSSL or use Git Bash which includes it."
+    exit 1
 fi
 
-# Deploy function
-supabase functions deploy notify-letter-status
+if [ ! -f "supabase/.temp/project-ref" ] && [ -z "${SUPABASE_PROJECT_REF:-}" ]; then
+    echo -e "${YELLOW}Project not linked. Let's link it now...${NC}"
+    read -p "Enter your Supabase project ref: " PROJECT_REF
+    supabase link --project-ref "$PROJECT_REF"
+fi
 
-if [ $? -eq 0 ]; then
+# ==============================================================================
+# Step 1: Secure Secret Generation
+# ==============================================================================
+echo -e "\n${YELLOW}Step 1: Generate Webhook Secrets${NC}"
+WEBHOOK_SECRET=$(openssl rand -hex 32)
+DB_WEBHOOK_SECRET=$(openssl rand -hex 32)
+
+# Write to ephemeral un-tracked file to avoid stdout/logs exposure
+touch "$SECRETS_FILE"
+chmod 600 "$SECRETS_FILE"
+echo "WEBHOOK_SECRET=${WEBHOOK_SECRET}" > "$SECRETS_FILE"
+echo "DB_WEBHOOK_SECRET=${DB_WEBHOOK_SECRET}" >> "$SECRETS_FILE"
+
+echo -e "${GREEN}✅ Secrets generated securely and saved to $SECRETS_FILE${NC}"
+echo "⚠️  DO NOT commit this file. It will be deleted automatically later."
+
+# ==============================================================================
+# Step 2: Supabase Edge Function Configuration
+# ==============================================================================
+echo -e "\n${YELLOW}Step 2: Set Supabase Secrets${NC}"
+
+# Configure secrets in Supabase BEFORE deployment
+echo "Setting BOT_WEBHOOK_URL..."
+supabase secrets set BOT_WEBHOOK_URL="https://nagarsevak-managment-1.onrender.com"
+
+echo "Setting WEBHOOK_SECRET (for Render bot auth)..."
+supabase secrets set WEBHOOK_SECRET="$WEBHOOK_SECRET"
+
+echo "Setting DB_WEBHOOK_SECRET (for Database webhook auth)..."
+supabase secrets set DB_WEBHOOK_SECRET="$DB_WEBHOOK_SECRET"
+
+echo -e "${GREEN}✅ Edge Function secrets configured successfully${NC}"
+
+# ==============================================================================
+# Step 3: Deploy Supabase Edge Function
+# ==============================================================================
+echo -e "\n${YELLOW}Step 3: Deploy Supabase Edge Function${NC}"
+echo "Deploying 'notify-letter-status'..."
+
+if supabase functions deploy notify-letter-status; then
     echo -e "${GREEN}✅ Edge Function deployed successfully${NC}"
 else
     echo -e "${RED}❌ Edge Function deployment failed${NC}"
-    echo "Try manually: supabase functions deploy notify-letter-status"
     exit 1
 fi
+
+# ==============================================================================
+# Step 4: Render Configuration (Manual)
+# ==============================================================================
+echo -e "\n${YELLOW}Step 4: Configure Render Environment Variable${NC}"
+echo "1. Go to: https://dashboard.render.com"
+echo "2. Select your bot service: nagarsevak-managment-1"
+echo "3. Go to Environment tab"
+echo "4. Update/Add environment variable:"
+echo "   Key: WEBHOOK_SECRET"
+echo -e "   Value: ${RED}(Read from $SECRETS_FILE)${NC}"
+echo "5. Click 'Save Changes' (bot will auto-redeploy)"
 echo ""
+read -p "Press Enter when Render configuration is complete..."
 
-# Step 4: Set Supabase Secrets
-echo -e "${YELLOW}Step 4: Set Supabase Secrets${NC}"
-echo "Setting BOT_WEBHOOK_URL..."
-supabase secrets set BOT_WEBHOOK_URL=https://nagarsevak-managment-1.onrender.com
-
-echo "Setting WEBHOOK_SECRET..."
-supabase secrets set WEBHOOK_SECRET=$WEBHOOK_SECRET
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✅ Secrets configured successfully${NC}"
-else
-    echo -e "${RED}❌ Failed to set secrets${NC}"
-    exit 1
-fi
-echo ""
-
-# Step 5: Configure Database Webhook
-echo -e "${YELLOW}Step 5: Configure Database Webhook${NC}"
+# ==============================================================================
+# Step 5: Configure Database Webhook (Manual)
+# ==============================================================================
+echo -e "\n${YELLOW}Step 5: Configure Database Webhook${NC}"
 echo "⚠️  This step must be done manually in Supabase Dashboard:"
+echo "1. Go to: https://app.supabase.com/project/_/database/webhooks"
+echo "2. Edit existing 'notify-letter-status-webhook'"
+echo "3. Delete any old 'Authorization: Bearer' headers."
+echo "4. Add NEW HTTP Header:"
+echo "   - Key: Webhook-Secret"
+echo -e "   - Value: ${RED}(Read DB_WEBHOOK_SECRET from $SECRETS_FILE)${NC}"
+echo "5. Click 'Save Webhook'"
 echo ""
-echo "1. Go to: https://app.supabase.com/project/YOUR_PROJECT/database/webhooks"
-echo "2. Click 'Create a new hook'"
-echo "3. Configure:"
-echo "   - Name: notify-letter-status-webhook"
-echo "   - Table: letter_requests"
-echo "   - Events: ☑️ Update (only)"
-echo "   - Type: HTTP Request"
-echo "   - Method: POST"
-echo "   - URL: https://YOUR_PROJECT_REF.supabase.co/functions/v1/notify-letter-status"
-echo "4. Add HTTP Header:"
-echo "   - Key: Authorization"
-echo "   - Value: Bearer YOUR_SUPABASE_ANON_KEY"
-echo "5. Click 'Create webhook'"
-echo ""
-read -p "Press Enter when database webhook is configured..."
-echo ""
+read -p "Press Enter when database webhook is re-configured..."
 
-# Step 6: Test
-echo -e "${YELLOW}Step 6: Test the System${NC}"
+# ==============================================================================
+# Step 6: Cleanup & Test Instructions
+# ==============================================================================
+echo -e "\n${YELLOW}Step 6: Cleanup${NC}"
+echo "Please confirm that you have successfully copied and configured:"
+echo "1. WEBHOOK_SECRET in Render"
+echo "2. DB_WEBHOOK_SECRET in Supabase Database Webhooks"
+read -p "Press Enter to securely delete $SECRETS_FILE and finish..."
+
+rm -f "$SECRETS_FILE"
+echo -e "\n${GREEN}✅ Temporary secrets file deleted.${NC}"
+
+echo -e "\n${YELLOW}Step 7: Test the System${NC}"
 echo "To test the notification system:"
-echo "1. Go to your Supabase Dashboard"
-echo "2. Find a letter_request with status='Pending'"
-echo "3. Update status to 'Approved' or 'Rejected'"
-echo "4. User should receive WhatsApp notification"
+echo "1. Go to your Supabase Dashboard -> Table Editor -> letter_requests"
+echo "2. Find a request with status='Pending' and update it to 'Approved'"
+echo "3. User should receive WhatsApp notification."
 echo ""
-echo "Check logs:"
-echo "  - Supabase: https://app.supabase.com/project/YOUR_PROJECT/functions/notify-letter-status/logs"
-echo "  - Render: https://dashboard.render.com (your bot service logs)"
-echo ""
+echo "Check Edge Function logs if it fails:"
+echo "https://app.supabase.com/project/_/functions/notify-letter-status/logs"
 
-echo -e "${GREEN}🎉 Deployment Complete!${NC}"
-echo ""
-echo "Webhook Secret (save this): $WEBHOOK_SECRET"
-echo ""
+echo -e "\n${GREEN}🎉 Deployment Complete!${NC}"

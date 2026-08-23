@@ -8,6 +8,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import ResultTutorial from '../../components/tutorial/ResultTutorial';
 import { HelpCircle } from 'lucide-react';
 import { ResultAnalysisPdfGenerator } from '../../components/reports/ResultAnalysisPdfGenerator';
+import { useTenant } from '../../context/TenantContext';
 
 const ResultAnalysis = () => {
     const { t, language } = useLanguage();
@@ -20,16 +21,20 @@ const ResultAnalysis = () => {
     const [availableCandidates, setAvailableCandidates] = useState<string[]>([]);
     const [showPdf, setShowPdf] = useState(false);
 
+    const { tenantId } = useTenant();
+
     // Fetch all wards on mount
     useEffect(() => {
-        loadAllWards();
-    }, []);
+        if (tenantId) {
+            loadAllWards();
+        }
+    }, [tenantId]);
 
     useEffect(() => {
-        if (ward) {
+        if (ward && tenantId) {
             loadResults();
         }
-    }, [ward]);
+    }, [ward, tenantId]);
 
     // Update available candidates and default selection when results change
     useEffect(() => {
@@ -55,7 +60,8 @@ const ResultAnalysis = () => {
     }, [results]);
 
     const loadAllWards = async () => {
-        const allResults = await ResultService.getResults();
+        if (!tenantId) return;
+        const allResults = await ResultService.getResults(tenantId);
         const uniqueWards = [...new Set(allResults.map(r => r.wardName))].filter(Boolean);
         setAvailableWards(uniqueWards);
 
@@ -66,8 +72,9 @@ const ResultAnalysis = () => {
     };
 
     const loadResults = async () => {
+        if (!tenantId) return;
         setLoading(true);
-        const data = await ResultService.getResults(ward);
+        const data = await ResultService.getResults(tenantId, ward);
         setResults(data);
         setLoading(false);
     };
@@ -137,7 +144,15 @@ const ResultAnalysis = () => {
                 </div>
             </div>
 
-            {/* Stats Cards */}
+            {results.length === 0 && !loading ? (
+                <div className="ns-card p-12 flex flex-col items-center justify-center text-center">
+                    <FileText className="w-16 h-16 text-slate-300 mb-4" />
+                    <h3 className="text-xl font-bold text-slate-700 mb-2">No Election Results</h3>
+                    <p className="text-slate-500 max-w-md">No election results are available for this tenant. Election data can be imported by an administrator.</p>
+                </div>
+            ) : (
+                <React.Fragment>
+                    {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 tutorial-result-stats">
                 <div className="ns-card p-5">
                     <div className="flex justify-between mb-2">
@@ -238,6 +253,8 @@ const ResultAnalysis = () => {
                     </table>
                 </div>
             </div>
+            </React.Fragment>
+            )}
             <ResultTutorial />
 
             {showPdf && (

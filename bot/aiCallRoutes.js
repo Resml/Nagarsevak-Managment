@@ -13,6 +13,12 @@ const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
 const SARVAM_STT_URL = 'https://api.sarvam.ai/speech-to-text-translate';
 const SARVAM_TTS_URL = 'https://api.sarvam.ai/text-to-speech';
 
+// --- Supabase Config for Tenant Lookup ---
+const { createClient } = require('@supabase/supabase-js');
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 // --- In-Memory State for Conversations ---
 // We store conversation history grouped by Twilio's CallSid.
 // In a production app with multiple instances, use Redis or Supabase.
@@ -48,17 +54,92 @@ function getBaseUrl(req) {
 }
 
 // --------------------------------------------------------------------------
+// TWILIO SIGNATURE VALIDATION MIDDLEWARE
+// --------------------------------------------------------------------------
+function validateTwilioRequest(req, res, next) {
+    const twilioSignature = req.headers['x-twilio-signature'];
+    
+    if (!twilioSignature) {
+        console.warn(`[AI-Call] Missing Twilio signature from ${req.ip}`);
+        return res.status(403).send('Forbidden: Missing signature');
+    }
+
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (!authToken) {
+        console.error('[AI-Call] TWILIO_AUTH_TOKEN is not configured');
+        return res.status(500).send('Server Error: Missing Twilio configuration');
+    }
+
+    // Determine the exact URL requested. Use env var if available to avoid proxy mismatch.
+    const baseUrl = process.env.VITE_BOT_API_URL || getBaseUrl(req);
+    // req.originalUrl contains path + query string
+    const url = `${baseUrl}${req.originalUrl}`;
+
+    // Twilio validateRequest takes (authToken, signature, url, body_params)
+    // Note: requires express.urlencoded() or req.body to be correctly parsed.
+    const isValid = twilio.validateRequest(authToken, twilioSignature, url, req.body || {});
+
+    if (!isValid) {
+        console.warn(`[AI-Call] Invalid Twilio signature for URL: ${url}`);
+        return res.status(403).send('Forbidden: Invalid signature');
+    }
+
+    next();
+}
+
+// --------------------------------------------------------------------------
 // 1. INCOMING CALL WEBHOOK
 // Twilio calls this when someone dials the number.
 // --------------------------------------------------------------------------
-router.post('/incoming', async (req, res) => {
+router.post('/incoming', validateTwilioRequest, async (req, res) => {
     const callSid = req.body.CallSid;
     const fromNumber = req.body.From;
+    const toNumber = req.body.To || '';
 
-    console.log(`[AI-Call] 📞 Incoming call from ${fromNumber} (Sid: ${callSid})`);
+    console.log(`[AI-Call] 📞 Incoming call from ${fromNumber} to ${toNumber} (Sid: ${callSid})`);
+
+    // Lookup Tenant by incoming phone number (To)
+    let tenantId = null;
+    let tenantName = 'नगरसेवक';
+    
+    if (toNumber) {
+        const cleanToNumber = toNumber.replace(/\D/g, '');
+        const searchNumber = cleanToNumber.length > 10 ? cleanToNumber.slice(-10) : cleanToNumber;
+        
+        try {
+            const { data: tenant } = await supabase
+                .from('tenants')
+                .select('id, name, config')
+                .or(`mobile.ilike.%${searchNumber}%,config->>vapi_phone.ilike.%${searchNumber}%,config->>twilio_phone.ilike.%${searchNumber}%`)
+                .limit(1)
+                .single();
+                
+            if (tenant) {
+                tenantId = tenant.id;
+                tenantName = tenant.name || 'नगरसेवक';
+                console.log(`[AI-Call] Matched tenant: ${tenantId} (${tenantName}) for number ${searchNumber}`);
+            } else {
+                console.warn(`[AI-Call] No tenant found for incoming number ${searchNumber}`);
+            }
+        } catch (err) {
+            console.error(`[AI-Call] Error looking up tenant for ${searchNumber}:`, err.message);
+        }
+    }
+
+    if (!tenantId) {
+        console.warn(`[AI-Call] Rejecting call for unknown number ${toNumber}`);
+        res.type('text/xml');
+        return res.send(`
+            <Response>
+                <Say language="hi-IN">क्षमा करें, यह नंबर किसी भी कार्यालय से जुड़ा नहीं है।</Say>
+                <Hangup />
+            </Response>
+        `);
+    }
 
     // Initialize conversation state
     activeCalls.set(callSid, {
+        tenantId,
         history: [
             { role: "user", parts: [{ text: "System Instruction: " + SYSTEM_PROMPT }] },
             { role: "model", parts: [{ text: "Understood." }] }
@@ -73,8 +154,8 @@ router.post('/incoming', async (req, res) => {
     // or we can generate the intro via Sarvam right now.
 
     try {
-        const introText = "नमस्कार! नगरसेवक कार्यालयात आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकेन?";
-        console.log(`[AI-Call][${callSid}] Generating welcome TTS...`);
+        const introText = `नमस्कार! ${tenantName} कार्यालयात आपले स्वागत आहे. मी तुम्हाला कशी मदत करू शकेन?`;
+        console.log(`[AI-Call][${callSid}] Generating welcome TTS for tenant ${tenantId}...`);
 
         const ttsRes = await axios.post(SARVAM_TTS_URL, {
             inputs: [introText],
@@ -103,7 +184,7 @@ router.post('/incoming', async (req, res) => {
     } catch (err) {
         console.error(`[AI-Call][${callSid}] Failed to generate welcome TTS:`, err.message);
         // Fallback to basic Twilio voice if Sarvam fails
-        twiml.say({ language: 'mr-IN' }, "Namaskar. Nagarsevak karyalayat aaple swagat aahe. Kashi madat karu shakto?");
+        twiml.say({ language: 'mr-IN' }, `Namaskar. ${tenantName} karyalayat aaple swagat aahe. Kashi madat karu shakto?`);
     }
 
     // Start recording user's voice
@@ -122,7 +203,7 @@ router.post('/incoming', async (req, res) => {
 // --------------------------------------------------------------------------
 // 2. PROCESS WEBHOOK (Twilio sends the recording here)
 // --------------------------------------------------------------------------
-router.post('/process', async (req, res) => {
+router.post('/process', validateTwilioRequest, async (req, res) => {
     const callSid = req.body.CallSid;
     const recordingUrl = req.body.RecordingUrl;
     const botBaseUrl = getBaseUrl(req);
@@ -261,7 +342,7 @@ router.get('/audio/:callSid', (req, res) => {
 });
 
 // --- Fallback Routing for Call Status ---
-router.post('/status', (req, res) => {
+router.post('/status', validateTwilioRequest, (req, res) => {
     const callSid = req.body.CallSid;
     const status = req.body.CallStatus;
     console.log(`[AI-Call][${callSid}] Status Update: ${status}`);

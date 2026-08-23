@@ -3,17 +3,17 @@
  * All menus with multi-language support (Marathi, Hindi, English)
  */
 
-const MENUS = {
+const getMenus = (polNameEn = 'Nagarsevak', polNameMr = 'नगरसेवक', polNameHi = 'नगरसेवक') => ({
     // Language Selection Menu
     language: {
         en: {
-            text: `🙏 *Welcome!*\n\nI am your Nagarsevak Assistant Bot.\n\nPlease select your language:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_Reply with 1, 2, or 3_`
+            text: `🙏 *Welcome!*\n\nI am your ${polNameEn} Assistant Bot.\n\nPlease select your language:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_Reply with 1, 2, or 3_`
         },
         mr: {
-            text: `🙏 *स्वागत आहे!*\n\nमी तुमचा नगरसेवक सहाय्यक बॉट आहे.\n\nकृपया तुमची भाषा निवडा:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_1, 2, किंवा 3 टाइप करा_`
+            text: `🙏 *स्वागत आहे!*\n\nमी तुमचा ${polNameMr} सहाय्यक बॉट आहे.\n\nकृपया तुमची भाषा निवडा:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_1, 2, किंवा 3 टाइप करा_`
         },
         hi: {
-            text: `🙏 *स्वागत है!*\n\nमैं आपका नगरसेवक सहायक बॉट हूं.\n\nकृपया अपनी भाषा चुनें:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_1, 2, या 3 टाइप करें_`
+            text: `🙏 *स्वागत है!*\n\nमैं आपका ${polNameHi} सहायक बॉट हूं.\n\nकृपया अपनी भाषा चुनें:\n\n1️⃣ English\n2️⃣ मराठी (Marathi)\n3️⃣ हिंदी (Hindi)\n\n_1, 2, या 3 टाइप करें_`
         }
     },
 
@@ -133,7 +133,7 @@ const MENUS = {
             text: `🔧 *अन्य सेवाएं*\n\n1️⃣ कार्यक्रम/इवेंट\n2️⃣ विकास कार्य\n3️⃣ संपर्क जानकारी\n\n9️⃣ मुख्य मेनू\n0️⃣ भाषा बदलें\n\n_कृपया नंबर चुनें_`
         }
     }
-};
+});
 
 const PERSONAL_REQUEST_MENU = {
     en: {
@@ -231,4 +231,4 @@ const MESSAGES = {
     }
 };
 
-module.exports = { MENUS, MESSAGES, PERSONAL_REQUEST_MENU };
+module.exports = { getMenus, MESSAGES, PERSONAL_REQUEST_MENU };

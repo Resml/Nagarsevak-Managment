@@ -1,0 +1,44 @@
+[
+  {
+    "op": "copy",
+    "status": "success",
+    "sourcePath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "targetPath": "e5a973bb-54de-4a92-bd17-91a97d7fefc3/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "timestamp": "2026-08-19T11:56:34.715Z"
+  },
+  {
+    "op": "copy",
+    "status": "success",
+    "sourcePath": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "targetPath": "e5a973bb-54de-4a92-bd17-91a97d7fefc3/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "timestamp": "2026-08-19T11:56:34.979Z"
+  },
+  {
+    "op": "update_db",
+    "status": "success",
+    "tenant_id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "old_db_value": {
+      "party": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg?t=1778758534544",
+      "profile": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg?t=1778757111849"
+    },
+    "new_db_value": {
+      "party": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+      "profile": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg"
+    },
+    "timestamp": "2026-08-19T11:56:35.152Z"
+  },
+  {
+    "op": "update_db",
+    "status": "success",
+    "tenant_id": "e5a973bb-54de-4a92-bd17-91a97d7fefc3",
+    "old_db_value": {
+      "party": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg?t=1778758534544",
+      "profile": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg?t=1778757111849"
+    },
+    "new_db_value": {
+      "party": "e5a973bb-54de-4a92-bd17-91a97d7fefc3/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+      "profile": "e5a973bb-54de-4a92-bd17-91a97d7fefc3/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg"
+    },
+    "timestamp": "2026-08-19T11:56:35.278Z"
+  }
+]

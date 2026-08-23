@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Upload, X, FileText, Image as ImageIcon, Search, User, Loader2, PlusCircle, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
+import { SecureStorageService } from '../../services/secureStorageService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import type { Voter } from '../../types';
@@ -260,23 +261,12 @@ const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLette
 
             // 1. Upload file to Supabase Storage if new file selected
             if (file) {
-                const fileExt = file.name.split('.').pop();
-                const activeTenantId = tenantId || 'default-tenant';
-                const fileName = `${activeTenantId}/files/incoming_letters/${Date.now()}_${title.replace(/\s+/g, '_').toLowerCase()}.${fileExt}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from('documents')
-                    .upload(fileName, file, {
-                        contentType: file.type
-                    });
-
-                if (uploadError) throw uploadError;
-
-                const { data } = supabase.storage
-                    .from('documents')
-                    .getPublicUrl(fileName);
-
-                publicUrl = data.publicUrl;
+                const fileExt = file.name.split('.').pop() || '';
+                const titleSlug = title.replace(/\s+/g, '_').toLowerCase();
+                const customFileName = `${Date.now()}_${titleSlug}.${fileExt}`;
+                
+                // Store relative path instead of absolute URL
+                publicUrl = await SecureStorageService.uploadFile('documents', 'incoming_letters', file, customFileName);
                 fileType = file.type;
             }
 

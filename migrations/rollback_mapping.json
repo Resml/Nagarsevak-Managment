@@ -1,0 +1,46 @@
+[
+  {
+    "bucket": "app-assets",
+    "old_path": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "new_path": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "column": "config",
+    "old_db_value": {
+      "ward_name": "",
+      "party_name": "",
+      "ward_number": "",
+      "office_hours": "",
+      "phone_number": "",
+      "email_address": "mamit@gmail.com",
+      "office_address": "",
+      "party_logo_url": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg?t=1778758534544",
+      "profile_image_url": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg?t=1778757111849",
+      "social_media_link": "",
+      "nagarsevak_name_english": "Krishnaniti",
+      "nagarsevak_name_marathi": ""
+    }
+  },
+  {
+    "bucket": "app-assets",
+    "old_path": "bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "new_path": "bf4c7152-6006-41b5-9c7d-84c76ea67da4/files/profile/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg",
+    "table": "tenants",
+    "id": "bf4c7152-6006-41b5-9c7d-84c76ea67da4",
+    "column": "config",
+    "old_db_value": {
+      "ward_name": "",
+      "party_name": "",
+      "ward_number": "",
+      "office_hours": "",
+      "phone_number": "",
+      "email_address": "mamit@gmail.com",
+      "office_address": "",
+      "party_logo_url": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_party_1778758534146.jpg?t=1778758534544",
+      "profile_image_url": "https://qdvciisgxvupvrjygedr.supabase.co/storage/v1/object/public/app-assets/bf4c7152-6006-41b5-9c7d-84c76ea67da4_profile_1778757111210.jpg?t=1778757111849",
+      "social_media_link": "",
+      "nagarsevak_name_english": "Krishnaniti",
+      "nagarsevak_name_marathi": ""
+    }
+  }
+]

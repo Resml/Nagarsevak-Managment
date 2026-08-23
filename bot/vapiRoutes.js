@@ -5,12 +5,12 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- Vapi Assistant Configuration ---
-const ASSISTANT_CONFIG = {
-    name: "Nagarsevak Voice Assistant",
+const getAssistantConfig = (tenantName) => ({
+    name: `${tenantName} Voice Assistant`,
     voice: {
         provider: "11labs",
         voiceId: "sarah", // Good standard voice, enables multilingual
@@ -20,7 +20,7 @@ const ASSISTANT_CONFIG = {
         messages: [
             {
                 role: "system",
-                content: `You are a helpful voice assistant for a Nagarsevak (City Councilor) office. 
+                content: `You are a helpful voice assistant for the ${tenantName} office. 
 Your goal is to help citizens with their complaints, schemes information, and emergency contacts.
 
 **Language Handling:**
@@ -114,7 +114,7 @@ Your goal is to help citizens with their complaints, schemes information, and em
             }
         ]
     }
-};
+});
 
 // --- Webhook for Vapi ---
 // Vapi sends a POST request here when the call starts or when a tool is called.
@@ -123,11 +123,44 @@ router.post('/', async (req, res) => {
         const body = req.body;
         console.log('[Vapi] Received webhook:', body.type || 'Unknown Type');
 
+        const systemNumber = body.message?.call?.system?.number || body.message?.call?.phoneNumber?.number || '';
+        let tenantId = null;
+        let tenantName = 'नगरसेवक';
+        
+        if (systemNumber) {
+            const cleanSystemNumber = systemNumber.replace(/\D/g, '');
+            const searchNumber = cleanSystemNumber.length > 10 ? cleanSystemNumber.slice(-10) : cleanSystemNumber;
+            
+            try {
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('id, name, config')
+                    .or(`mobile.ilike.%${searchNumber}%,config->>vapi_phone.ilike.%${searchNumber}%,config->>twilio_phone.ilike.%${searchNumber}%`)
+                    .limit(1)
+                    .single();
+                    
+                if (tenant) {
+                    tenantId = tenant.id;
+                    tenantName = tenant.name || 'नगरसेवक';
+                    console.log(`[Vapi] Matched tenant: ${tenantId} (${tenantName}) for number ${searchNumber}`);
+                } else {
+                    console.warn(`[Vapi] No tenant found for incoming number ${searchNumber}`);
+                }
+            } catch (err) {
+                console.error(`[Vapi] Error looking up tenant for ${searchNumber}:`, err.message);
+            }
+        }
+        
+        if (!tenantId) {
+            console.warn(`[Vapi] Rejecting call for unknown number`);
+            return res.status(404).json({ error: "No tenant associated with this phone number." });
+        }
+
         // 1. Assistant Request (Call Start)
         // Vapi asks "What assistant should I use?"
         if (body.message && body.message.type === 'assistant-request') {
-            console.log('[Vapi] Sending Assistant Config');
-            return res.json(ASSISTANT_CONFIG);
+            console.log(`[Vapi] Sending Assistant Config for Tenant: ${tenantName}`);
+            return res.json(getAssistantConfig(tenantName));
         }
 
         // 2. Tool Calls (Function Execution)
@@ -146,16 +179,16 @@ router.post('/', async (req, res) => {
                 try {
                     switch (func.name) {
                         case 'checkComplaintStatus':
-                            resultPayload = await handleCheckStatus(func.arguments);
+                            resultPayload = await handleCheckStatus(func.arguments, tenantId);
                             break;
                         case 'registerComplaint':
-                            resultPayload = await handleRegisterComplaint(func.arguments);
+                            resultPayload = await handleRegisterComplaint(func.arguments, tenantId);
                             break;
                         case 'searchSchemes':
-                            resultPayload = await handleSearchSchemes(func.arguments);
+                            resultPayload = await handleSearchSchemes(func.arguments, tenantId);
                             break;
                         case 'getEmergencyContacts':
-                            resultPayload = await handleGetContacts();
+                            resultPayload = await handleGetContacts(tenantId);
                             break;
                         default:
                             resultPayload = { error: "Function not found" };
@@ -189,32 +222,10 @@ router.post('/', async (req, res) => {
 
 // --- Helper Functions (Tool Implementations) ---
 
-async function handleCheckStatus(args) {
+// --- Helper Functions (Tool Implementations) ---
+
+async function handleCheckStatus(args, tenantId) {
     const { mobile } = args;
-    // Hardcoded tenantId for now or pass via custom param if Vapi allows
-    // For this context, we'll try to get it from the call metadata if possible,
-    // but usually, we might need a default or lookup.
-    // Assuming a default tenant or searching across tenants (less ideal).
-    // Let's assume the first active tenant for now or a specific ID.
-    // A better way is to pass tenantId in the "SIP Headers" or "Custom Data" from Vapi.
-
-    // For now, let's look up the user by mobile across tenants? No, `getComplaintsByMobile` needs tenantId.
-    // We'll peek at the sessions map or just use a known test tenant ID if available.
-    // HACK: We will try to find a tenant where this user exists, or just use a default.
-
-    // REALITY: We need the Tenant ID.
-    // For this demo, let's grab the first session from the store? No access to `sessions` map here directly easily without exporting it.
-    // Let's rely on `store.getComplaintsByMobile` but we need a tenantId.
-
-    // We'll define a default tenant ID if one isn't provided.
-    // In a real multi-tenant Vapi setup, you'd embed the tenantId in the "Server URL": https://api.com/vapi?tenantId=123
-    // But since `req.query` isn't easily passed in the tool-call flow (it is stateful), 
-    // we might need to hardcode IT for this specific test or user.
-
-    // Let's fetch ANY tenant for now (or a specific one if user provided).
-    // TODO: Make this dynamic.
-    const { data } = await supabase.from('tenants').select('id').limit(1);
-    const tenantId = data?.[0]?.id;
 
     if (!tenantId) return { message: "System error: No organization found." };
 
@@ -236,12 +247,9 @@ async function handleCheckStatus(args) {
     };
 }
 
-async function handleRegisterComplaint(args) {
+async function handleRegisterComplaint(args, tenantId) {
     const { name, mobile, category, location, description } = args;
 
-    // Get Tenant ID (See note above)
-    const { data } = await supabase.from('tenants').select('id').limit(1);
-    const tenantId = data?.[0]?.id;
     if (!tenantId) return { error: "System error: No organization found." };
 
     const complaintData = {
@@ -269,10 +277,8 @@ async function handleRegisterComplaint(args) {
     };
 }
 
-async function handleSearchSchemes(args) {
+async function handleSearchSchemes(args, tenantId) {
     const { query } = args;
-    const { data } = await supabase.from('tenants').select('id').limit(1);
-    const tenantId = data?.[0]?.id;
 
     if (!tenantId) return { error: "No organization found." };
 
@@ -288,7 +294,7 @@ async function handleSearchSchemes(args) {
     };
 }
 
-async function handleGetContacts() {
+async function handleGetContacts(tenantId) {
     // Return dummy or real contacts
     return {
         contacts: [

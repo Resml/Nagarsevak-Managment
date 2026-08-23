@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
 import { Link, useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle, XCircle, Printer, Send, Plus, Settings, Search, Upload, ExternalLink, Edit2, Trash2, AlertTriangle, LayoutGrid, HelpCircle, Download } from 'lucide-react';
+import { SecureStorageService } from '../../services/secureStorageService';
 import { LetterReportGenerator } from '../../components/reports/LetterReportGenerator';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -274,7 +275,7 @@ const LetterDashboard = () => {
 
         try {
             // 2. Try to lookup in voters table by mobile or name
-            let query = supabase.from('voters').select('gender');
+            let query = supabase.from('voters').select('gender').eq('tenant_id', tenantId);
             if (details.mobile && details.mobile.length >= 10) {
                 // If mobile ends with the provided number (to handle +91 vs 91 vs raw)
                 const mobileStr = details.mobile.slice(-10);
@@ -519,23 +520,11 @@ const LetterDashboard = () => {
                     throw new Error('PDF generation failed to return a valid blob');
                 }
 
-                const activeTenantId = tenantId || 'default-tenant';
-                const fileName = `${activeTenantId}/files/letters/${id}_${Date.now()}.pdf`;
+                const customFileName = `${id}_${Date.now()}.pdf`;
+                const relativePath = await SecureStorageService.uploadFile('documents', 'letters', new File([pdfBlob], customFileName, { type: 'application/pdf' }), customFileName);
 
-                const { data, error: uploadError } = await supabase.storage
-                    .from('documents')
-                    .upload(fileName, pdfBlob, {
-                        contentType: 'application/pdf'
-                    });
-
-                if (uploadError) throw uploadError;
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('documents')
-                    .getPublicUrl(fileName);
-
-                updateData.pdf_url = publicUrl;
-                console.log('PDF Uploaded:', publicUrl);
+                updateData.pdf_url = relativePath;
+                console.log('PDF Uploaded to relative path:', relativePath);
             } catch (err) {
                 console.error('Failed to upload PDF:', err);
                 toast.error('Failed to generate/upload PDF. Check console.');

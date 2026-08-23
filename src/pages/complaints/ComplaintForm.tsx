@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
+import { SecureStorageService } from '../../services/secureStorageService';
 import { type ComplaintType, type Voter } from '../../types';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
@@ -269,43 +270,32 @@ const ComplaintForm = () => {
             let imageUrl = null;
             if (files.length > 0) {
                 const file = files[0];
-                const fileExt = file.name.split('.').pop();
-                const activeTenantId = tenantId || 'default-tenant';
-                const fileName = `${activeTenantId}/files/complaints/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-                const { error: uploadError } = await supabase.storage
-                    .from('documents') // Using documents bucket as confirmed working
-                    .upload(fileName, file);
-
-                if (uploadError) throw uploadError;
-
-                const { data } = supabase.storage
-                    .from('documents')
-                    .getPublicUrl(fileName);
-
-                imageUrl = data.publicUrl;
+                const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                imageUrl = relativePath;
             }
 
+            // 2. Submit directly to Supabase
             const { error } = await supabase.from('complaints').insert([{
+                tenant_id: tenantId,
                 problem: title + '\n' + description,
                 category: type,
-                status: 'Pending',
                 priority: urgency,
                 location: 'Ward ' + ward,
                 area: area,
                 source: 'Website',
-                voter_id: selectedVoterId ? parseInt(selectedVoterId) : null,
-                tenant_id: tenantId,
                 image_url: imageUrl,
-                description_meta: JSON.stringify({
+                voter_id: selectedVoterId,
+                description_meta: {
                     submitter_name: fullName,
                     submitter_mobile: mobile,
                     people_affected: peopleAffected,
                     translation: translationData
-                })
+                }
             }]);
 
-            if (error) throw error;
+            if (error) {
+                throw error;
+            }
             toast.success('Complaint submitted successfully!');
 
             // Clear all drafts upon success

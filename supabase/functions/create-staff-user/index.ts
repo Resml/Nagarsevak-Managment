@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3"
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -12,16 +12,52 @@ serve(async (req) => {
     }
 
     try {
-        const supabaseClient = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        )
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+        const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+
+        // 1. Authenticate the caller
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
+            throw new Error("Missing Authorization header")
+        }
+
+        const authSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+            global: { headers: { Authorization: authHeader } }
+        })
+
+        const { data: { user: caller }, error: authError } = await authSupabase.auth.getUser()
+        if (authError || !caller) {
+            throw new Error("Invalid or expired JWT")
+        }
 
         const { email, password, name, role, tenant_id, mobile, area, category, keywords, permissions } = await req.json()
-        console.log("Received request:", { email, name, role, tenant_id, mobile, permissions })
+        
+        // Input validation
+        if (!email || !password || !name || !tenant_id || !mobile) {
+            throw new Error("Missing required fields")
+        }
 
-        // 1. Create Auth User
-        const { data: userData, error: userError } = await supabaseClient.auth.admin.createUser({
+        const serviceSupabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+
+        // 2. Authorize the caller for the requested tenant_id
+        const { data: callerMapping, error: callerMappingError } = await serviceSupabase
+            .from('user_tenant_mapping')
+            .select('role')
+            .eq('user_id', caller.id)
+            .eq('tenant_id', tenant_id)
+            .single()
+
+        if (callerMappingError || !callerMapping) {
+            throw new Error("Unauthorized: You do not have access to this tenant")
+        }
+
+        if (callerMapping.role !== 'admin' && callerMapping.role !== 'super_admin') {
+            throw new Error("Unauthorized: Must be an admin or super_admin to create staff")
+        }
+
+        // 3. Create Auth User (using Service Role)
+        const { data: userData, error: userError } = await serviceSupabase.auth.admin.createUser({
             email: email,
             password: password,
             email_confirm: true,
@@ -30,33 +66,30 @@ serve(async (req) => {
 
         if (userError) {
             console.error("User Creation Error:", userError)
-            throw userError
+            throw new Error(userError.message)
         }
 
         const userId = userData.user.id
 
-        // 2. Create User Tenant Mapping
-        const { error: mappingError } = await supabaseClient
+        // 4. Create User Tenant Mapping
+        const { error: mappingError } = await serviceSupabase
             .from('user_tenant_mapping')
             .insert({
                 user_id: userId,
                 tenant_id: tenant_id,
-                role: 'staff' // Always use system role 'staff' for auth/permissions logic
+                role: 'staff' // Always use system role 'staff'
             })
 
         if (mappingError) {
-            // Rollback user creation if mapping fails (optional but good practice)
-            await supabaseClient.auth.admin.deleteUser(userId)
-            throw mappingError
+            await serviceSupabase.auth.admin.deleteUser(userId)
+            throw new Error(mappingError.message)
         }
 
-        // 3. Create Staff Record
-        // We check if a staff with this mobile already exists to avoid duplicates if the UI didn't catch it
-        // But typically we just insert.
-        const { error: staffError } = await supabaseClient
+        // 5. Create Staff Record
+        const { error: staffError } = await serviceSupabase
             .from('staff')
             .insert({
-                id: userId, // Link staff ID to Auth User ID for easy reference
+                id: userId,
                 name: name,
                 mobile: mobile,
                 role: role,
@@ -68,10 +101,9 @@ serve(async (req) => {
             })
 
         if (staffError) {
-            // Rollback everything
-            await supabaseClient.from('user_tenant_mapping').delete().eq('user_id', userId)
-            await supabaseClient.auth.admin.deleteUser(userId)
-            throw staffError
+            await serviceSupabase.from('user_tenant_mapping').delete().eq('user_id', userId)
+            await serviceSupabase.auth.admin.deleteUser(userId)
+            throw new Error(staffError.message)
         }
 
         return new Response(
@@ -82,15 +114,13 @@ serve(async (req) => {
             }
         )
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Edge Function Error:", error)
-        // Return 200 even on error so the client can read the error message in the body
-        // instead of getting a generic FunctionsHttpError
         return new Response(
             JSON.stringify({ error: error.message || "An unexpected error occurred" }),
             {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                status: 200,
+                status: 200, // Returning 200 to allow client to read error body smoothly
             }
         )
     }

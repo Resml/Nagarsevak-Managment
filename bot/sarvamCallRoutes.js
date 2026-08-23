@@ -156,10 +156,40 @@ router.post('/initiate', async (req, res) => {
 });
 
 // -----------------------------------------------------------------------
+// TWILIO SIGNATURE VALIDATION MIDDLEWARE
+// -----------------------------------------------------------------------
+function validateTwilioRequest(req, res, next) {
+    const twilioSignature = req.headers['x-twilio-signature'];
+    
+    if (!twilioSignature) {
+        console.warn(`[SarvamCall] Missing Twilio signature from ${req.ip}`);
+        return res.status(403).send('Forbidden: Missing signature');
+    }
+
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    if (!authToken) {
+        return res.status(500).send('Server Error: Missing Twilio configuration');
+    }
+
+    // Determine the exact URL requested. Use env var if available to avoid proxy mismatch.
+    const baseUrl = process.env.VITE_BOT_API_URL || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.headers.host}`;
+    const url = `${baseUrl}${req.originalUrl}`;
+
+    const isValid = twilio.validateRequest(authToken, twilioSignature, url, req.body || {});
+
+    if (!isValid) {
+        console.warn(`[SarvamCall] Invalid Twilio signature for URL: ${url}`);
+        return res.status(403).send('Forbidden: Invalid signature');
+    }
+
+    next();
+}
+
+// -----------------------------------------------------------------------
 // ALL /api/sarvam-call/twiml/:callBatchId
 // Twilio calls this when the recipient picks up — returns the TwiML with audio
 // -----------------------------------------------------------------------
-router.all('/twiml/:callBatchId', (req, res) => {
+router.all('/twiml/:callBatchId', validateTwilioRequest, (req, res) => {
     console.log(`[SarvamCall] Twilio requested TwiML for batch ${req.params.callBatchId}`);
     const { callBatchId } = req.params;
     const entry = audioStore[callBatchId];

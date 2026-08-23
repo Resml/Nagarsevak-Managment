@@ -7,6 +7,7 @@ import { MapPin, Phone, Calendar, ArrowLeft, PlusCircle, User, Edit2, X, Trash2,
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
+import { useTenant } from '../../context/TenantContext';
 
 interface FamilyMember {
     id: string;
@@ -61,6 +62,7 @@ const VoterProfile = () => {
                     .from('voters')
                     .select('*')
                     .eq('id', id)
+                    .eq('tenant_id', tenantId)
                     .single();
 
                 if (error) {
@@ -156,6 +158,7 @@ const VoterProfile = () => {
                 const baseQuery = supabase
                     .from('voters')
                     .select('id, name_english, name_marathi, age, gender, relation_type, relation_name, serial_no, epic_no, house_no')
+                    .eq('tenant_id', tenantId)
                     .neq('id', voter.id);
 
                 // Try to match by house_no + part_no if available

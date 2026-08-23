@@ -84,7 +84,10 @@ const NewspaperClipping = () => {
         if (e.target.files && e.target.files[0] && tenantId) {
             setUploading(true);
             try {
-                const url = await GalleryService.uploadImage(e.target.files[0], tenantId);
+                const file = e.target.files[0];
+                const objectUrl = URL.createObjectURL(file);
+                setFormData(prev => ({ ...prev, previewUrl: objectUrl }));
+                const url = await GalleryService.uploadImage(file, tenantId);
                 setFormData(prev => ({ ...prev, imageUrl: url }));
             } catch (error) {
                 toast.error(t('gallery.upload_error'));
@@ -124,15 +127,16 @@ const NewspaperClipping = () => {
     };
 
     const handleEdit = (item: GalleryItem) => {
-        setEditingId(item.id);
         setFormData({
             title: item.title,
             category: item.category,
             sentiment: item.sentiment || 'positive',
             imageUrl: item.imageUrl,
             description: item.description || '',
-            date: item.date
-        });
+            date: item.date,
+            previewUrl: (item as any).previewUrl || item.imageUrl
+        } as any);
+        setEditingId(item.id);
         setIsModalOpen(true);
     };
 
@@ -292,7 +296,7 @@ const NewspaperClipping = () => {
                                     </div>
                                 ) : (
                                     <img
-                                        src={item.imageUrl}
+                                        src={(item as any).previewUrl || item.imageUrl}
                                         alt={item.titleKey ? t(item.titleKey) : item.title}
                                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                         onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))}
@@ -387,7 +391,7 @@ const NewspaperClipping = () => {
                                                 {imageErrors[item.id] ? (
                                                     <Newspaper className="w-6 h-6 text-slate-300" />
                                                 ) : (
-                                                    <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))} />
+                                                    <img src={(item as any).previewUrl || item.imageUrl} alt={item.title} className="h-full w-full object-cover" onError={() => setImageErrors(prev => ({ ...prev, [item.id]: true }))} />
                                                 )}
                                             </div>
                                         </td>
@@ -475,7 +479,7 @@ const NewspaperClipping = () => {
                                                     {uploading ? (
                                                         <p className="text-sm text-slate-500">{t('gallery.uploading')}</p>
                                                     ) : formData.imageUrl ? (
-                                                        <img src={formData.imageUrl} alt="preview" className="h-28 object-contain" />
+                                                        <img src={formData.imageUrl.startsWith('http') || formData.imageUrl.startsWith('blob:') ? formData.imageUrl : ((formData as any).previewUrl || formData.imageUrl)} alt="preview" className="h-28 object-contain" />
                                                     ) : (
                                                         <>
                                                             <Upload className="w-8 h-8 mb-3 text-slate-400" />

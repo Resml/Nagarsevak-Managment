@@ -159,7 +159,7 @@ const PersonalRequestForm = () => {
 
             if (error) throw error;
             toast.success('Personal help request submitted successfully!');
-            navigate(-1);
+            navigate('/dashboard/personal-requests');
         } catch (err) {
             console.error('Error submitting request:', err);
             toast.error('Failed to submit request');
