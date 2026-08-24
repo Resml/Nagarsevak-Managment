@@ -360,9 +360,7 @@ function App() {
             <Route path="tasks" element={<PermissionGuard permission="tasks"><Tasks /></PermissionGuard>} />
             <Route path="staff" element={<PermissionGuard permission="staff"><StaffList /></PermissionGuard>} />
 
-            <Route path="letters" element={<Navigate to="incoming" replace />} />
-            <Route path="letters/incoming" element={<PermissionGuard permission="letters"><IncomingLetters /></PermissionGuard>} />
-            <Route path="letters/outgoing" element={<PermissionGuard permission="letters"><OutgoingLetters /></PermissionGuard>} />
+            <Route path="letters" element={<PermissionGuard permission="letters"><LetterDashboard /></PermissionGuard>} />
             <Route path="letters/new" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
             <Route path="letters/edit/:id" element={<PermissionGuard permission="letters"><LetterForm /></PermissionGuard>} />
             <Route path="letters/types" element={<PermissionGuard permission="letters"><LetterTypeManager /></PermissionGuard>} />
