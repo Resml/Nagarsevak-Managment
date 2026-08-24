@@ -19,7 +19,9 @@ const ComplaintList = () => {
     const location = useLocation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
     const [filterStatus, setFilterStatus] = useState<ComplaintStatus | 'All'>('All');
-    const [activeTab, setActiveTab] = useState<'Complaints'>('Complaints');
+    const [activeTab, setActiveTab] = useState<'Complaints' | 'Personal Help'>(
+        (location.state as any)?.tab === 'Personal Help' ? 'Personal Help' : 'Complaints'
+    );
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [showComplaintReport, setShowComplaintReport] = useState(false);
     const [selectedComplaintsForReport, setSelectedComplaintsForReport] = useState<Complaint[]>([]);
@@ -102,6 +104,17 @@ const ComplaintList = () => {
                 staff?: { name: string; mobile: string; } | null;
             };
 
+            type PersonalRequestRow = {
+                id: string | number;
+                reporter_name: string;
+                reporter_mobile: string;
+                request_type: string;
+                description: string;
+                status: ComplaintStatus;
+                created_at: string;
+            };
+
+
             const allowedTypes: readonly ComplaintType[] = [
                 'Cleaning',
                 'Water',
@@ -181,8 +194,25 @@ const ComplaintList = () => {
                 updatedAt: row.created_at
             }));
 
+            // Map personal requests to Complaint type
+            const mappedPersonalRequests: Complaint[] = (personalRequestsData || []).map((row: PersonalRequestRow) => ({
+                id: `pr-${row.id}`,
+                title: row.request_type,
+                description: row.description,
+                type: 'Personal Help',
+                status: row.status,
+                ward: 'WhatsApp',
+                createdAt: row.created_at,
+                voter: {
+                    name_english: row.reporter_name,
+                    mobile: row.reporter_mobile
+                },
+                photos: [],
+                updatedAt: row.created_at
+            }));
+
             // Merge and sort
-            const merged = [...mappedComplaints].sort(
+            const merged = [...mappedComplaints, ...mappedPersonalRequests].sort(
                 (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
 
@@ -199,7 +229,12 @@ const ComplaintList = () => {
 
         // Real-time Subscription
         // Real-time Subscription
-        const subscription = supabase.channel('realtime-changes').on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+        const subscription = supabase
+            .channel('complaints_personal_channel')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'complaints', filter: `tenant_id=eq.${tenantId}` }, () => {
+                fetchComplaints();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_requests', filter: `tenant_id=eq.${tenantId}` }, () => {
                 fetchComplaints();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'area_problems', filter: `tenant_id=eq.${tenantId}` }, () => {
@@ -240,9 +275,15 @@ const ComplaintList = () => {
         const matchesDate = !dateSearch || format(new Date(c.createdAt), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase());
 
         const statusMatch = filterStatus === 'All' || c.status === filterStatus;
-        
-        // Area Complaints: Exclude Personal Help, Help, and SelfIdentified (Ward Problems)
-        const typeMatch = c.type !== 'Personal Help' && c.type !== 'Help' && c.type !== 'SelfIdentified';
+        let typeMatch = false;
+
+        if (activeTab === 'Complaints') {
+            // Area Complaints: Exclude Personal Help, Help, and SelfIdentified (Ward Problems)
+            typeMatch = c.type !== 'Personal Help' && c.type !== 'Help' && c.type !== 'SelfIdentified';
+        } else if (activeTab === 'Personal Help') {
+            // Personal Help: Include personal_requests table AND regular Help complaints
+            typeMatch = c.type === 'Personal Help' || c.type === 'Help';
+        }
 
         return statusMatch && typeMatch && matchesSearch && matchesArea && matchesDate;
     });
@@ -329,17 +370,17 @@ const ComplaintList = () => {
                             <span className="font-semibold">{language === 'mr' ? 'मदत' : 'Help'}</span>
                         </button>
                         <Link
-                            to={'/dashboard/complaints/new'}
+                            to={activeTab === 'Personal Help' ? '/dashboard/personal-requests/new' : '/dashboard/complaints/new'}
                             className="ns-btn-primary tutorial-complaint-new"
                         >
                             <Plus className="w-4 h-4" />
                             <span>
                                 {isTranslated ? (
                                     <span className="notranslate">
-                                        नवीन तक्रार
+                                        {activeTab === 'Personal Help' ? 'नवीन विनंती' : 'नवीन तक्रार'}
                                     </span>
                                 ) : (
-                                    t('complaints.new_request')
+                                    activeTab === 'Personal Help' ? t('complaints.new_personal_request') : t('complaints.new_request')
                                 )}
                             </span>
                         </Link>
@@ -369,7 +410,34 @@ const ComplaintList = () => {
                     </div>
                 </div>
 
-                {/* Tabs Removed */}
+                {/* Tabs */}
+                <div className="border-b border-gray-200 overflow-x-auto tutorial-complaint-tabs">
+                    <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
+                        <button
+                            onClick={() => setActiveTab('Complaints')}
+                            className={clsx(
+                                activeTab === 'Complaints'
+                                    ? 'border-brand-500 text-brand-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                            )}
+                        >
+                            {isTranslated ? <span className="notranslate">परिसरातील तक्रारी</span> : t('complaints.tabs.area')}
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('Personal Help')}
+                            className={clsx(
+                                activeTab === 'Personal Help'
+                                    ? 'border-brand-500 text-brand-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                            )}
+                        >
+                            {isTranslated ? <span className="notranslate">वैयक्तिक विनंती</span> : t('complaints.tabs.personal')}
+                        </button>
+
+                    </nav>
+                </div>
 
 
 
@@ -469,7 +537,10 @@ const ComplaintList = () => {
 
                     {/* Status Filters */}
                     <div className="flex overflow-x-auto space-x-2 pb-1 scrollbar-hide tutorial-complaint-status">
-                        {(['All', 'Pending', 'Assigned', 'InProgress', 'Resolved']).map((status) => (
+                        {(activeTab === 'Personal Help'
+                            ? ['All', 'Pending', 'Resolved']
+                            : ['All', 'Pending', 'Assigned', 'InProgress', 'Resolved']
+                        ).map((status) => (
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status as ComplaintStatus | 'All')}

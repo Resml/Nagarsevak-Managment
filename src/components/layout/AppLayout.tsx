@@ -249,7 +249,6 @@ const AppLayout = () => {
         // permission: 'daily_work', // Removed to allow granular access
         items: [
           { to: '/dashboard/complaints', icon: Newspaper, label: t('nav.complaints'), show: true, permission: 'complaints' },
-          { to: '/dashboard/personal-requests', icon: MessageSquare, label: t('dashboard.personal_requests') || 'Personal Requests', show: true, permission: 'complaints' },
           { to: '/dashboard/letters', icon: FileText, label: t('nav.letters'), show: true, permission: 'letters' },
           { to: '/dashboard/tasks', icon: CheckSquare, label: t('nav.task_management'), show: isAdminOrStaff, permission: 'tasks' },
           { to: '/dashboard/visitors', icon: Users, label: t('nav.visitor_log'), show: true, permission: 'visitors' },
