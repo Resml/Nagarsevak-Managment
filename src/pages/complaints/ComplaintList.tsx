@@ -161,25 +161,32 @@ const ComplaintList = () => {
                         try {
                             if (!row.description_meta) return undefined;
 
-                            const cleanMeta = row.description_meta.trim();
-                            if (/^\d{10}$/.test(cleanMeta)) {
-                                return { mobile: cleanMeta };
+                            let meta: any = null;
+                            
+                            if (typeof row.description_meta === 'object') {
+                                meta = row.description_meta;
+                            } else if (typeof row.description_meta === 'string') {
+                                const cleanMeta = row.description_meta.trim();
+                                if (/^\d{10}$/.test(cleanMeta)) {
+                                    return { mobile: cleanMeta };
+                                }
+                                meta = JSON.parse(cleanMeta);
                             }
 
-                            const meta = JSON.parse(row.description_meta);
+                            if (meta) {
+                                // Check for various keys found in historical bot data
+                                const name = meta.submitter_name || meta.userName;
+                                const mobile = meta.mobile || meta.submitter_mobile || meta.userMobile;
 
-                            // Check for various keys found in historical bot data
-                            const name = meta.submitter_name || meta.userName;
-                            const mobile = meta.mobile || meta.submitter_mobile || meta.userMobile;
-
-                            if (name || mobile) {
-                                return {
-                                    name_english: name,
-                                    mobile: mobile
-                                };
+                                if (name || mobile) {
+                                    return {
+                                        name_english: name,
+                                        mobile: mobile
+                                    };
+                                }
                             }
                         } catch (e) {
-                            const cleanMeta = row.description_meta?.trim();
+                            const cleanMeta = typeof row.description_meta === 'string' ? row.description_meta.trim() : '';
                             if (cleanMeta && /^\d{10}$/.test(cleanMeta)) {
                                 return { mobile: cleanMeta };
                             }
