@@ -47,6 +47,7 @@ import { useTenant } from '../../context/TenantContext';
 import { cn } from '../../utils/cn';
 import { type Language } from '../../utils/translations';
 import { supabase } from '../../services/supabaseClient';
+import { SecureStorageService } from '../../services/secureStorageService';
 
 type NavItemDef = {
   kind: 'item';
@@ -229,8 +230,16 @@ const AppLayout = () => {
         name_marathi: tenant.config.nagarsevak_name_marathi,
         ward_name: tenant.config.ward_name,
         party_name: tenant.config.party_name,
-        profile_image: tenant.config.profile_image_url
+        profile_image: ''
       });
+
+      if (tenant.config.profile_image_url) {
+        SecureStorageService.getUrl('app-assets', tenant.config.profile_image_url)
+          .then(url => {
+            setBranding(prev => prev ? { ...prev, profile_image: url } : null);
+          })
+          .catch(e => console.error("Error loading profile image", e));
+      }
     }
   }, [tenant]);
 

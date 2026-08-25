@@ -124,6 +124,8 @@ const ProfileSettings = () => {
     };
 
     const [rawConfig, setRawConfig] = useState<any>({});
+    const [profilePreviewUrl, setProfilePreviewUrl] = useState('');
+    const [partyPreviewUrl, setPartyPreviewUrl] = useState('');
 
     // Check permissions
     const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
@@ -159,6 +161,17 @@ const ProfileSettings = () => {
                     email_address: data.config.email_address || '',
                     social_media_link: data.config.social_media_link || ''
                 });
+
+                if (data.config.profile_image_url) {
+                    SecureStorageService.getUrl('app-assets', data.config.profile_image_url)
+                        .then(setProfilePreviewUrl)
+                        .catch(console.error);
+                }
+                if (data.config.party_logo_url) {
+                    SecureStorageService.getUrl('app-assets', data.config.party_logo_url)
+                        .then(setPartyPreviewUrl)
+                        .catch(console.error);
+                }
             }
         } catch (error) {
             console.error("Error fetching settings:", error);
@@ -228,6 +241,10 @@ const ProfileSettings = () => {
 
             // Provide custom filename because profile settings creates its own name
             const relativePath = await SecureStorageService.uploadFile('app-assets', 'profile', new File([croppedBlob], fileName, { type: 'image/jpeg' }), fileName);
+
+            const signedUrl = await SecureStorageService.getUrl('app-assets', relativePath);
+            if (type === 'profile') setProfilePreviewUrl(signedUrl);
+            else setPartyPreviewUrl(signedUrl);
 
             // Store the relative path instead of absolute URL
             const updatedFormData = {
@@ -556,8 +573,8 @@ const ProfileSettings = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="text-center space-y-2">
                                         <div className="w-24 h-24 mx-auto bg-slate-100 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
-                                            {formData.profile_image_url ? (
-                                                <img src={formData.profile_image_url} alt="Profile" className="w-full h-full object-cover" />
+                                            {profilePreviewUrl ? (
+                                                <img src={profilePreviewUrl} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
                                                 <User className="w-8 h-8 text-slate-400" />
                                             )}
@@ -573,8 +590,8 @@ const ProfileSettings = () => {
 
                                     <div className="text-center space-y-2">
                                         <div className="w-24 h-24 mx-auto bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
-                                            {formData.party_logo_url ? (
-                                                <img src={formData.party_logo_url} alt="Party Logo" className="w-full h-full object-contain p-2" />
+                                            {partyPreviewUrl ? (
+                                                <img src={partyPreviewUrl} alt="Party Logo" className="w-full h-full object-contain p-2" />
                                             ) : (
                                                 <Flag className="w-8 h-8 text-slate-400" />
                                             )}
