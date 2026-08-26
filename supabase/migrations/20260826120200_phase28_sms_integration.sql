@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS "public"."sms_connections" (
 );
 
 -- Ensure a tenant has only one active httpSMS connection
-CREATE UNIQUE INDEX "idx_sms_connections_active_tenant" 
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_sms_connections_active_tenant" 
 ON "public"."sms_connections" ("tenant_id") 
 WHERE "status" != 'DISCONNECTED';
 

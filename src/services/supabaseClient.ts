@@ -7,7 +7,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase Environment Variables');
 }
 
-const rawSupabase = createClient(supabaseUrl, supabaseAnonKey);
+export const rawSupabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Active Tenant Session State
 let activeTenantId: string | null = null;

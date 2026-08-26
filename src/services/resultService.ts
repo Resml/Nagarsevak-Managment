@@ -1,4 +1,4 @@
-import { supabase } from './supabaseClient';
+import { supabase, rawSupabase } from './supabaseClient';
 import { type ElectionResult } from '../types';
 
 export const ResultService = {
@@ -10,7 +10,17 @@ export const ResultService = {
 
         try {
             console.log('[ResultService] Fetching election results from database...');
-            let query = supabase.from('election_results').select('*').eq('tenant_id', tenantId);
+            const mamitTenantId = 'e5a973bb-54de-4a92-bd17-91a97d7fefc3';
+            const krishnanitiTenantId = 'bf4c7152-6006-41b5-9c7d-84c76ea67da4';
+            
+            // Use rawSupabase to bypass the automatic tenant-isolation proxy logic
+            let query = rawSupabase.from('election_results').select('*');
+            
+            if (tenantId === mamitTenantId) {
+                query = query.in('tenant_id', [mamitTenantId, krishnanitiTenantId]);
+            } else {
+                query = query.eq('tenant_id', tenantId);
+            }
             
             if (ward) {
                 query = query.eq('ward_name', ward);

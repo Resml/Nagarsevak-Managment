@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../services/supabaseClient';
+import { supabase, rawSupabase } from '../../services/supabaseClient';
 import { useTenant } from '../../context/TenantContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useNavigate } from 'react-router-dom';
@@ -295,7 +295,8 @@ const AnalysisStrategy = () => {
             const matchedProvisions = provisionsData ?? [];
 
             // 8. Election Results — client-side fine (small table)
-            const { data: electionResultsData } = await supabase
+            // Use rawSupabase so Mamit can read shared Krishnaniti results as dictated by RLS
+            const { data: electionResultsData } = await rawSupabase
                 .from('election_results')
                 .select('*');
             const electionResults = electionResultsData ?? [];
