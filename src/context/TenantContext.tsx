@@ -21,6 +21,7 @@ interface Tenant {
 interface TenantContextType {
     tenant: Tenant | null;
     loading: boolean;
+    featureAccessReady: boolean;
     tenantId: string | null;
     refreshTenant: () => Promise<void>;
     tier: TenantTier;
@@ -35,6 +36,7 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType>({
     tenant: null,
     loading: true,
+    featureAccessReady: false,
     tenantId: null,
     refreshTenant: async () => {},
     tier: 'nagarsevak',
@@ -51,10 +53,19 @@ export const useTenant = () => useContext(TenantContext);
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { user, isLoading: authLoading } = useAuth();
     const [tenant, setTenant] = useState<Tenant | null>(null);
+    const [featureOverrides, setFeatureOverrides] = useState<Record<string, boolean> | null>(null);
     const [loading, setLoading] = useState(true);
+    const [featureAccessReady, setFeatureAccessReady] = useState(false);
+    const [lastFetchedUserId, setLastFetchedUserId] = useState<string | null | undefined>(undefined);
+
+    // Compute derived readiness: if the user has changed but fetchTenant hasn't finished, we are NOT ready.
+    const isSynchronized = user?.id === lastFetchedUserId;
+    const actualFeatureAccessReady = featureAccessReady && isSynchronized;
 
     const fetchTenant = useCallback(async () => {
         setLoading(true);
+        setFeatureAccessReady(false);
+        setFeatureOverrides(null);
         try {
             let tenantIdToFetch: string | null = null;
 
@@ -131,17 +142,42 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 if (data) {
                     setTenant(data);
+                    
+                    const { data: overridesData, error: overridesError } = await supabase
+                        .from('tenant_feature_overrides')
+                        .select('is_enabled, features!inner(feature_key)')
+                        .eq('tenant_id', tenantIdToFetch);
+                    if (overridesData && !overridesError) {
+                        const overridesMap: Record<string, boolean> = {};
+                        overridesData.forEach((row: any) => {
+                            if (row.features?.feature_key) {
+                                overridesMap[row.features.feature_key] = row.is_enabled;
+                            }
+                        });
+                        setFeatureOverrides(overridesMap);
+                        setFeatureAccessReady(true);
+                    } else {
+                        setFeatureOverrides({});
+                        setFeatureAccessReady(true);
+                    }
                 } else {
                     setTenant(null);
+                    setFeatureOverrides({});
+                    setFeatureAccessReady(true);
                 }
             } else {
                 setTenant(null);
+                setFeatureOverrides({});
+                setFeatureAccessReady(true);
             }
 
         } catch (err) {
             console.error("Failed to load tenant", err);
             setTenant(null);
+            setFeatureOverrides({});
+            setFeatureAccessReady(true);
         } finally {
+            setLastFetchedUserId(user?.id || null);
             setLoading(false);
         }
     }, [user]);
@@ -209,13 +245,25 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // UI/UX gate only. DB RLS (has_feature_access) is the authoritative enforcement layer.
     const hasFeature = useCallback((featureKey: string) => {
-        return checkFeatureAccess(featureKey, plan);
-    }, [plan]);
+        // DO NOT expose any features if overrides have not finished initializing for the CURRENT user.
+        if (!actualFeatureAccessReady) {
+            return false;
+        }
+
+        let result = false;
+        if (featureOverrides && featureOverrides[featureKey] !== undefined) {
+            result = featureOverrides[featureKey];
+            return result;
+        }
+        result = checkFeatureAccess(featureKey, plan);
+        return result;
+    }, [plan, featureOverrides, actualFeatureAccessReady]);
 
     return (
         <TenantContext.Provider value={{
             tenant,
             loading,
+            featureAccessReady: actualFeatureAccessReady,
             tenantId: tenant?.id || null,
             refreshTenant: fetchTenant,
             tier,
@@ -226,7 +274,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             isMinister,
             hasFeature
         }}>
-            {loading ? (
+            {loading || !actualFeatureAccessReady ? (
                 <div className="h-screen w-full flex items-center justify-center bg-gray-50">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
                 </div>
