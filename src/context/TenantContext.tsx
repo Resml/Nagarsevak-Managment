@@ -59,7 +59,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [lastFetchedUserId, setLastFetchedUserId] = useState<string | null | undefined>(undefined);
 
     // Compute derived readiness: if the user has changed but fetchTenant hasn't finished, we are NOT ready.
-    const isSynchronized = user?.id === lastFetchedUserId;
+    const currentUserId = user?.id || null;
+    const isSynchronized = currentUserId === lastFetchedUserId;
     const actualFeatureAccessReady = featureAccessReady && isSynchronized;
 
     const fetchTenant = useCallback(async () => {
