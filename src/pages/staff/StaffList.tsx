@@ -30,7 +30,7 @@ const PARTY_WINGS = [
 
 const StaffList = () => {
     const { t, language } = useLanguage();
-    const { tenantId, tenant } = useTenant();
+    const { tenantId, tenant, hasFeature } = useTenant();
 
     const tr = (en: string, mr: string) => language === 'mr' ? mr : en;
 
@@ -265,9 +265,8 @@ const StaffList = () => {
         { id: 'analysis', label: t('permissions.analysis') || 'Analysis Strategy' },
         { id: 'profile_settings', label: t('permissions.profile_settings') || 'Profile Settings' },
     ].filter(perm => {
-        if (!tenant?.plan) return false;
-        return checkFeatureAccess(perm.id, tenant.plan);
-    }), [t, tenant?.plan]);
+        return hasFeature(perm.id);
+    }), [t, hasFeature]);
 
     const COMPLAINT_CATEGORIES = [
         { id: 'Road', label: 'Roads (रस्ते)' },
@@ -370,6 +369,7 @@ const StaffList = () => {
                 return;
             }
             const fullMobile = `+91${formData.mobile}`;
+            const validPermissions = (formData.permissions || []).filter(p => hasFeature(p));
 
             if (editingStaffId) {
                 // Update Logic (Existing staff)
@@ -383,7 +383,7 @@ const StaffList = () => {
                         category: formData.category || 'Office',
                         area: formData.area || '',
                         keywords: finalKeywords,
-                        permissions: formData.permissions || []
+                        permissions: validPermissions
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
@@ -419,7 +419,7 @@ const StaffList = () => {
                         area: formData.area,
                         category: formData.category,
                         keywords: finalKeywords,
-                        permissions: formData.permissions
+                        permissions: (formData.permissions || []).filter(p => hasFeature(p))
                     }
                 });
 
@@ -447,7 +447,7 @@ const StaffList = () => {
                     area: formData.area || '',
                     category: formData.category || 'Office',
                     keywords: finalKeywords,
-                    permissions: formData.permissions || []
+                    permissions: (formData.permissions || []).filter(p => hasFeature(p))
                 };
 
                 // Upsert directly into staff table

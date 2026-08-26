@@ -15,6 +15,7 @@ const ComplaintForm = () => {
     const { tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
+    const isWardProblemForm = location.pathname.includes('/ward/problems/new');
 
     // Pre-fill if coming from Voter Profile
     const prefillVoterId = location.state?.voterId || '';
@@ -128,7 +129,7 @@ const ComplaintForm = () => {
                 setIsAnalyzing(true);
                 const result = await AIAnalysisService.analyzeComplaint(title, description);
 
-                if (result.category && result.category !== 'Other') {
+                if (result.category && result.category !== 'Other' && !isWardProblemForm) {
                     // Only auto-categorize if it's not a personal help type (which shouldn't be here anyway now)
                     const allowedTypes: ComplaintType[] = ['Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'SelfIdentified', 'Other'];
                     if (allowedTypes.includes(result.category as ComplaintType)) {
@@ -278,7 +279,7 @@ const ComplaintForm = () => {
             const { error } = await supabase.from('complaints').insert([{
                 tenant_id: tenantId,
                 problem: title + '\n' + description,
-                category: type,
+                category: isWardProblemForm ? 'SelfIdentified' : type,
                 priority: urgency,
                 location: 'Ward ' + ward,
                 area: area,
@@ -353,7 +354,9 @@ const ComplaintForm = () => {
 
             <div className="ns-card overflow-hidden">
                 <div className="p-6 border-b border-slate-200/70 bg-gradient-to-br from-brand-50 to-white">
-                    <h1 className="text-xl font-bold text-slate-900">{t('complaints.form.title')}</h1>
+                    <h1 className="text-xl font-bold text-slate-900">
+                        {isWardProblemForm ? (t('permissions.ward_problems') || 'Add Ward Problem') : t('complaints.form.title')}
+                    </h1>
                     {prefillVoterName && (
                         <p className="text-sm text-brand-700 mt-2">
                             Linking to Voter: <span className="font-semibold">{prefillVoterName}</span>
@@ -458,22 +461,24 @@ const ComplaintForm = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.type')}</label>
-                                <select
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value as ComplaintType)}
-                                    className="ns-input"
-                                >
-                                    <option value="Cleaning">{t('complaints.form.types.cleaning')}</option>
-                                    <option value="Water">{t('complaints.form.types.water')}</option>
-                                    <option value="Road">{t('complaints.form.types.road')}</option>
-                                    <option value="Drainage">{t('complaints.form.types.drainage')}</option>
-                                    <option value="StreetLight">{t('complaints.form.types.streetlight')}</option>
-                                    <option value="SelfIdentified">{t('complaints.form.types.self_identified')}</option>
-                                    <option value="Other">{t('complaints.form.types.other')}</option>
-                                </select>
-                            </div>
+                            {!isWardProblemForm && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.type')}</label>
+                                    <select
+                                        value={type}
+                                        onChange={(e) => setType(e.target.value as ComplaintType)}
+                                        className="ns-input"
+                                    >
+                                        <option value="Cleaning">{t('complaints.form.types.cleaning')}</option>
+                                        <option value="Water">{t('complaints.form.types.water')}</option>
+                                        <option value="Road">{t('complaints.form.types.road')}</option>
+                                        <option value="Drainage">{t('complaints.form.types.drainage')}</option>
+                                        <option value="StreetLight">{t('complaints.form.types.streetlight')}</option>
+                                        <option value="SelfIdentified">{t('complaints.form.types.self_identified')}</option>
+                                        <option value="Other">{t('complaints.form.types.other')}</option>
+                                    </select>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.ward')}</label>
                                 <select

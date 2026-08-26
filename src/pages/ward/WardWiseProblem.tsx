@@ -38,7 +38,8 @@ const WardWiseProblem = () => {
         try {
             // Select complaints and join with voters table
             // Filtering for 'SelfIdentified' category specifically
-            const { data, error } = await supabase
+            let complaintsData: any[] = [];
+            const { data, error: complaintsError } = await supabase
                 .from('complaints')
                 .select(`
                     *,
@@ -55,9 +56,21 @@ const WardWiseProblem = () => {
                 .eq('category', 'SelfIdentified')
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Error fetching complaints:', error);
-                return;
+            if (complaintsError) {
+                console.warn('Ward problems join query failed, falling back to simple select:', complaintsError.message);
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('complaints')
+                    .select('*')
+                    .eq('category', 'SelfIdentified')
+                    .order('created_at', { ascending: false });
+
+                if (fallbackError) {
+                    console.error('Error fetching ward problems:', fallbackError);
+                    return;
+                }
+                complaintsData = fallbackData || [];
+            } else {
+                complaintsData = data || [];
             }
 
             type ComplaintRow = {
@@ -120,7 +133,7 @@ const WardWiseProblem = () => {
             }
 
             // Map Supabase data to App Type
-            const mappedComplaints: Complaint[] = (data || []).map((row: ComplaintRow) => ({
+            const mappedComplaints: Complaint[] = (complaintsData || []).map((row: ComplaintRow) => ({
                 id: row.id.toString(),
                 title: row.problem ?? 'Request',
                 description: row.problem ?? '',
