@@ -26,9 +26,11 @@ serve(async (req) => {
             global: { headers: { Authorization: authHeader } }
         })
 
-        const { data: { user: caller }, error: authError } = await authSupabase.auth.getUser()
+        const jwt = authHeader.replace('Bearer ', '');
+        const { data: { user: caller }, error: authError } = await authSupabase.auth.getUser(jwt)
         if (authError || !caller) {
-            throw new Error("Invalid or expired JWT")
+            console.error("Auth Error details:", authError);
+            throw new Error(`Invalid or expired JWT: ${authError?.message || 'No user'}`)
         }
 
         const { email, password, name, role, tenant_id, mobile, area, category, keywords, permissions } = await req.json()
@@ -86,7 +88,7 @@ serve(async (req) => {
         }
 
         // 5. Create Staff Record
-        const { error: staffError } = await serviceSupabase
+        const { error: staffError } = await authSupabase
             .from('staff')
             .insert({
                 id: userId,

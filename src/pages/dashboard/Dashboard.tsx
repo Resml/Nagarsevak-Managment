@@ -4,6 +4,7 @@ import { supabase } from '../../services/supabaseClient';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext'; // Added useTenant
+import { useAuth } from '../../context/AuthContext'; // Added useAuth
 import {
     Users,
     CheckCircle,
@@ -29,6 +30,7 @@ const Dashboard = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
     const { tenantId, hasFeature } = useTenant(); // Added tenantId and hasFeature
+    const { user } = useAuth(); // Added user
     const hasComplaints = hasFeature('complaints');
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
@@ -214,20 +216,25 @@ const Dashboard = () => {
                     {t('dashboard.quick_actions')}
                 </div>
                 <div className="sm:ml-auto flex flex-wrap gap-2">
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/voters')}>
-                        <Search className="w-4 h-4" />
-                        {t('dashboard.action_voter')}
-                    </button>
-                    <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/staff')}>
-                        <UserPlus className="w-4 h-4" />
-                        {t('dashboard.action_staff')}
-                    </button>
-                    {hasComplaints ? (
+                    {(!user?.isStaff || (user?.permissions?.includes('voters'))) && (
+                        <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/voters')}>
+                            <Search className="w-4 h-4" />
+                            {t('dashboard.action_voter')}
+                        </button>
+                    )}
+                    {(!user?.isStaff || (user?.permissions?.includes('staff'))) && (
+                        <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/staff')}>
+                            <UserPlus className="w-4 h-4" />
+                            {t('dashboard.action_staff')}
+                        </button>
+                    )}
+                    {hasComplaints && (!user?.isStaff || user?.permissions?.includes('complaints')) && (
                         <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/complaints')}>
                             <Megaphone className="w-4 h-4" />
                             {t('dashboard.action_complaints')}
                         </button>
-                    ) : (
+                    )}
+                    {!hasComplaints && (!user?.isStaff || user?.permissions?.includes('tasks')) && (
                         <button className="ns-btn-ghost border border-slate-200" onClick={() => navigate('/dashboard/tasks')}>
                             <CheckSquare className="w-4 h-4" />
                             {language === 'mr' ? 'माझी कामे' : 'My Tasks'}

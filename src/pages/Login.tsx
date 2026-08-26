@@ -110,7 +110,7 @@ const Login = () => {
                     }
                 }
                 toast.success(`Welcome back, ${roleName}!`);
-                navigate('/dashboard');
+                window.location.href = '/dashboard';
             } else {
                 toast.error(authError || 'Invalid credentials. Please check your email and password.');
             }
