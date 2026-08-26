@@ -8,6 +8,7 @@ import { Save, Upload, User, Building2, Flag, Smartphone, AlertTriangle, Shield,
 import { toast } from 'sonner';
 import BotDashboard from '../admin/BotDashboard';
 import SecurityLogs from './SecurityLogs';
+import SmsConnectionSettings from './SmsConnectionSettings';
 import CropModal from '../../components/common/CropModal';
 import clsx from 'clsx';
 
@@ -17,7 +18,7 @@ const ProfileSettings = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'security' | 'support'>('profile');
+    const [activeTab, setActiveTab] = useState<'profile' | 'bot' | 'sms' | 'security' | 'support'>('profile');
 
     const [formData, setFormData] = useState({
         nagarsevak_name_english: '',
@@ -128,7 +129,8 @@ const ProfileSettings = () => {
     const [partyPreviewUrl, setPartyPreviewUrl] = useState('');
 
     // Check permissions
-    const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('bot');
+    const canAccessBot = user?.role === 'admin' || user?.permissions?.includes('whatsapp_bot');
+    const canAccessSms = user?.role === 'admin' || user?.role === 'super_admin';
 
     useEffect(() => {
         if (tenantId) {
@@ -381,6 +383,20 @@ const ProfileSettings = () => {
                             {t('whatsapp_bot.title') || 'WhatsApp Bot'}
                         </button>
                     )}
+                    {canAccessSms && (
+                        <button
+                            onClick={() => setActiveTab('sms')}
+                            className={clsx(
+                                'flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-brand-400 focus:outline-none focus:ring-2',
+                                activeTab === 'sms'
+                                    ? 'bg-white text-brand-700 shadow'
+                                    : 'text-slate-600 hover:bg-white/[0.12] hover:text-slate-800'
+                            )}
+                        >
+                            <Smartphone className="w-4 h-4" />
+                            {language === 'mr' ? 'SMS गेटवे' : 'SMS Gateway'}
+                        </button>
+                    )}
                     <button
                         onClick={() => setActiveTab('security')}
                         className={clsx(
@@ -613,14 +629,20 @@ const ProfileSettings = () => {
 
             {/* Bot Content */}
             {activeTab === 'bot' && canAccessBot && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <BotDashboard />
+                </div>
+            )}
+            
+            {activeTab === 'sms' && canAccessSms && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <SmsConnectionSettings />
                 </div>
             )}
 
             {/* Security Content */}
             {activeTab === 'security' && (
-                <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <SecurityLogs />
                 </div>
             )}

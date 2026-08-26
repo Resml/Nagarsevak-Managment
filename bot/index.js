@@ -223,6 +223,10 @@ const requireAuth = async (req, res, next) => {
 };
 
 // --- API Routes ---
+const smsRoutes = require('./smsRoutes');
+const startSmsWorker = require('./smsWorker');
+app.use('/api/sms/connections', smsRoutes);
+
 app.post('/api/broadcast', requireAuth, async (req, res) => {
     const { eventId } = req.body;
     const tenantId = req.resolvedTenantId;
@@ -247,6 +251,7 @@ app.post('/api/broadcast', requireAuth, async (req, res) => {
 app.post('/api/send-event-invites', requireAuth, async (req, res) => {
     const { eventId, mobiles } = req.body;
     const tenantId = req.resolvedTenantId;
+
 
     if (!eventId || !Array.isArray(mobiles) || mobiles.length === 0) {
         return res.status(400).json({ error: 'eventId and non-empty mobiles[] are required' });
@@ -1114,6 +1119,9 @@ server.listen(PORT, async () => {
 
     // Restore previous sessions
     await restoreSessions();
+    
+    // Start background SMS Worker
+    startSmsWorker();
 
     // Keep-Alive Mechanism for Render Free Tier
     // Pings the server every 10 minutes to prevent it from spinning down

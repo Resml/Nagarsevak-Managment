@@ -14,14 +14,21 @@ const PAGE_SIZE = 50;
 
 import { CommunicationHistoryPdfGenerator } from '../../components/reports/CommunicationHistoryPdfGenerator';
 
-interface MessageLog {
+const BOT_URL = import.meta.env.VITE_BOT_URL || 'http://localhost:3000';
+
+interface SmsCampaign {
     id: string;
-    sent_at: string;
-    channel: 'whatsapp' | 'sms' | 'call';
-    message: string;
-    recipients: number;
-    sent_count: number;
-    failed_count: number;
+    name: string;
+    status: string;
+    total_recipients: number;
+    created_at: string;
+    stats?: {
+        QUEUED: number;
+        SENDING: number;
+        SENT: number;
+        DELIVERED: number;
+        FAILED: number;
+    };
 }
 
 const SMSCommunication = () => {
@@ -49,10 +56,41 @@ const SMSCommunication = () => {
     const [message, setMessage] = useState('');
     const [sending, setSending] = useState(false);
 
-    const [logs, setLogs] = useState<MessageLog[]>([]);
+    const [logs, setLogs] = useState<SmsCampaign[]>([]);
     const [logsLoading, setLogsLoading] = useState(false);
-    const [expandedLog, setExpandedLog] = useState<string | null>(null);
     const [showPdf, setShowPdf] = useState(false);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    
+    // Polling interval for live status updates
+    useEffect(() => {
+        if (activeTab === 'history' && logs.length > 0) {
+            // Find active campaigns that are not in terminal states
+            const activeCampaigns = logs.filter(c => !['COMPLETED', 'FAILED', 'CANCELLED'].includes(c.status));
+            if (activeCampaigns.length === 0) return;
+
+            const interval = setInterval(() => {
+                activeCampaigns.forEach(async (campaign) => {
+                    try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session) return;
+                        
+                        const res = await fetch(`${BOT_URL}/api/sms/campaigns/${campaign.id}`, {
+                            headers: { 'Authorization': `Bearer ${session.access_token}` }
+                        });
+                        
+                        if (res.ok) {
+                            const updated = await res.json();
+                            setLogs(prev => prev.map(c => c.id === campaign.id ? { ...c, ...updated } : c));
+                        }
+                    } catch (err) {
+                        console.error('Failed to poll campaign status', err);
+                    }
+                });
+            }, 5000); // Poll every 5s
+
+            return () => clearInterval(interval);
+        }
+    }, [activeTab, logs]);
 
     const fetchVoters = useCallback(async (currentPage: number, reset: boolean = false) => {
         if (reset) setLoading(true);
@@ -129,11 +167,10 @@ const SMSCommunication = () => {
         setLogsLoading(true);
         try {
             const { data, error } = await supabase
-                .from('message_logs')
+                .from('sms_campaigns')
                 .select('*')
                 .eq('tenant_id', tenantId)
-                .eq('channel', 'sms')
-                .order('sent_at', { ascending: false })
+                .order('created_at', { ascending: false })
                 .limit(100);
 
             if (error) throw error;
@@ -172,33 +209,59 @@ const SMSCommunication = () => {
     const getDisplayName = (voter: Voter) =>
         language === 'mr' ? (voter.name_marathi || voter.name) : (voter.name_english || voter.name);
 
-    const handleSendSMS = async () => {
+    const handleSendSMSClick = () => {
         if (selectedVoterIds.size === 0) { toast.error(t('communication_page.error_select_voter')); return; }
         if (!message.trim()) { toast.error(t('communication_page.error_enter_message')); return; }
+        setShowConfirmation(true);
+    };
 
+    const confirmSendSMS = async () => {
         setSending(true);
-        setTimeout(async () => {
-            const { error } = await supabase.from('message_logs').insert({
-                tenant_id: tenantId,
-                channel: 'sms',
-                message: message,
-                recipients: selectedVoterIds.size,
-                sent_count: selectedVoterIds.size,
-                failed_count: 0,
-                sent_at: new Date().toISOString()
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Not authenticated');
+
+            const voterIds = Array.from(selectedVoterIds);
+            const idempotencyKey = `sms_${Date.now()}_${voterIds.length}`;
+            const campaignName = `SMS Campaign ${format(new Date(), 'dd MMM HH:mm')}`;
+
+            const response = await fetch(`${BOT_URL}/api/sms/campaigns`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({
+                    voterIds,
+                    messageBody: message,
+                    idempotencyKey,
+                    name: campaignName
+                })
             });
 
-            if (error) {
-                toast.error('Failed to log message');
-            } else {
-                toast.success(t('communication_page.success_sms', { count: selectedVoterIds.size }));
-                setMessage('');
-                setSelectedVoterIds(new Set());
-                setSelectAll(false);
-                if (activeTab === 'history') fetchLogs();
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to dispatch SMS campaign');
             }
+
+            if (data.resumed) {
+                toast.success('Successfully resumed existing SMS campaign');
+            } else {
+                toast.success(`Successfully queued ${data.queuedCount} messages.`);
+            }
+
+            setMessage('');
+            setSelectedVoterIds(new Set());
+            setSelectAll(false);
+            setShowConfirmation(false);
+            if (activeTab === 'history') fetchLogs();
+        } catch (err: any) {
+            console.error('Send SMS error:', err);
+            toast.error(err.message || 'Error sending SMS campaign');
+        } finally {
             setSending(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -312,7 +375,7 @@ const SMSCommunication = () => {
                                     placeholder={t('communication_page.message_placeholder')}
                                 />
                                 <button
-                                    onClick={handleSendSMS}
+                                    onClick={handleSendSMSClick}
                                     disabled={sending || selectedVoterIds.size === 0}
                                     className="w-full ns-btn-primary py-3 flex items-center justify-center gap-2 tutorial-sms-send"
                                 >
@@ -354,12 +417,23 @@ const SMSCommunication = () => {
                             <div key={log.id} className="ns-card p-4">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-800">{format(new Date(log.sent_at), 'dd MMM yyyy, hh:mm a')}</p>
-                                        <p className="text-xs text-slate-500">{log.recipients} {t('communication_page.recipients')} • {log.sent_count} {t('communication_page.sent')}</p>
+                                        <h3 className="text-md font-bold text-slate-800">{log.name}</h3>
+                                        <p className="text-sm text-slate-600">{format(new Date(log.created_at), 'dd MMM yyyy, hh:mm a')}</p>
+                                        <p className="text-xs text-slate-500 mt-1 font-medium text-brand-600">{log.status}</p>
                                     </div>
-                                    <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{t('communication_page.channel_sms')}</span>
+                                    <span className="px-2 py-1 bg-brand-50 text-brand-700 text-[10px] font-bold uppercase rounded">{log.total_recipients} {t('communication_page.recipients')}</span>
                                 </div>
-                                <p className="text-sm text-slate-600 line-clamp-2">{log.message}</p>
+                                
+                                {/* Live Stats display if available */}
+                                {log.stats && (
+                                    <div className="mt-3 pt-3 border-t border-slate-100 flex gap-4 text-xs font-semibold">
+                                        <div className="text-slate-500">Queued: <span className="text-slate-700">{log.stats.QUEUED || 0}</span></div>
+                                        <div className="text-amber-500">Sending: <span className="text-amber-600">{log.stats.SENDING || 0}</span></div>
+                                        <div className="text-blue-500">Sent: <span className="text-blue-600">{log.stats.SENT || 0}</span></div>
+                                        <div className="text-emerald-500">Delivered: <span className="text-emerald-600">{log.stats.DELIVERED || 0}</span></div>
+                                        <div className="text-red-500">Failed: <span className="text-red-600">{log.stats.FAILED || 0}</span></div>
+                                    </div>
+                                )}
                             </div>
                         ))
                     )}
@@ -370,11 +444,56 @@ const SMSCommunication = () => {
             {/* PDF Report Generator */}
             {showPdf && (
                 <CommunicationHistoryPdfGenerator
-                    logs={logs}
+                    logs={logs.map(l => ({ id: l.id, sent_at: l.created_at, channel: 'sms', message: l.name, recipients: l.total_recipients, sent_count: l.stats?.SENT || 0, failed_count: l.stats?.FAILED || 0 }))}
                     onClose={() => setShowPdf(false)}
                 />
             )}
             
+            {/* Confirmation Modal */}
+            {showConfirmation && (
+                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className="p-5 border-b border-slate-100 flex justify-between items-center bg-brand-50/50">
+                            <h3 className="font-bold text-lg text-slate-800">Confirm SMS Campaign</h3>
+                        </div>
+                        <div className="p-6">
+                            <p className="text-slate-600 mb-6">
+                                I confirm that I have reviewed the recipients and message and want to send this SMS campaign using my connected phone.
+                            </p>
+                            <div className="bg-slate-50 p-4 rounded-lg mb-6 border border-slate-100">
+                                <div className="flex justify-between mb-2">
+                                    <span className="text-sm text-slate-500 font-medium">Recipients:</span>
+                                    <span className="text-sm font-bold text-slate-800">{selectedVoterIds.size}</span>
+                                </div>
+                                <div>
+                                    <span className="text-sm text-slate-500 font-medium block mb-1">Message Preview:</span>
+                                    <p className="text-sm text-slate-700 bg-white p-2 border border-slate-200 rounded line-clamp-3">
+                                        {message}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 justify-end mt-4">
+                                <button
+                                    onClick={() => setShowConfirmation(false)}
+                                    disabled={sending}
+                                    className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmSendSMS}
+                                    disabled={sending}
+                                    className="ns-btn-primary px-6 py-2.5 flex items-center justify-center gap-2"
+                                >
+                                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                                    Confirm & Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <SMSTutorial />
         </div>
     );
