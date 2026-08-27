@@ -712,9 +712,9 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut && statusCode !== 405;
             console.log(`[${tenantId}] Connection closed due to:`, lastDisconnect.error, ', Reconnecting:', shouldReconnect);
 
-            updateSessionStatus(tenantId, 'disconnected');
-
             if (shouldReconnect) {
+                updateSessionStatus(tenantId, 'connecting'); // Prevent frontend from auto-starting new session
+
                 // Increment retry count
                 const session = sessions.get(tenantId);
                 if (session) {
@@ -727,9 +727,10 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
                 console.log(`[${tenantId}] Retrying connection in ${delay / 1000} seconds...`);
 
                 setTimeout(() => {
-                    connectToWhatsApp(tenantId);
+                    connectToWhatsApp(tenantId, null, true); // Pass isRetry = true
                 }, delay);
             } else {
+                updateSessionStatus(tenantId, 'disconnected');
                 console.log(`[${tenantId}] Unrecoverable connection drop. Performing full logout/cleanup.`);
                 // We use the full logoutSession function to guarantee DB and FileSystem cleanup
                 logoutSession(tenantId);
