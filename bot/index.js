@@ -639,7 +639,7 @@ async function connectToWhatsApp(tenantId, socketToEmit = null, isRetry = false)
         logger: pino({ level: 'silent' }),
         msgRetryCounterCache,
         printQRInTerminal: true, // Enable terminal QR for debugging empty sessions on Render
-        browser: ['Ubuntu', 'Chrome', '120.0.0'], // Explicit generic desktop browser to prevent 405 drop
+        browser: Browsers.macOS('Desktop'), // Use Baileys default macOS browser string to prevent 405 drop
         getMessage: async (key) => {
             if (baileysStore) {
                 const msg = await baileysStore.loadMessage(key.remoteJid, key.id);
