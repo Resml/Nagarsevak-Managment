@@ -365,27 +365,33 @@ const Gallery = () => {
                                             </label>
                                         </div>
 
-                                        <div className="relative">
-                                            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                                <div className="w-full border-t border-gray-300"></div>
-                                            </div>
-                                            <div className="relative flex justify-center">
-                                                <span className="px-2 bg-white text-sm text-slate-500">{t('gallery.use_url')}</span>
-                                            </div>
-                                        </div>
+                                        {/* Show Use URL only if we don't have an uploaded image */}
+                                        {(!formData.imageUrl || formData.imageUrl.startsWith('http') || formData.imageUrl.startsWith('blob:')) && (
+                                            <>
+                                                <div className="relative">
+                                                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                        <div className="w-full border-t border-gray-300"></div>
+                                                    </div>
+                                                    <div className="relative flex justify-center">
+                                                        <span className="px-2 bg-white text-sm text-slate-500">{t('gallery.use_url')}</span>
+                                                    </div>
+                                                </div>
 
-                                        <div className="flex rounded-md shadow-sm">
-                                            <input
-                                                type="url"
-                                                className="ns-input rounded-r-none"
-                                                value={formData.imageUrl}
-                                                onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
-                                                placeholder="https://..."
-                                            />
-                                            <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm">
-                                                URL
-                                            </span>
-                                        </div>
+                                                <div className="flex rounded-md shadow-sm">
+                                                    <input
+                                                        type="url"
+                                                        className="ns-input rounded-r-none"
+                                                        value={formData.imageUrl}
+                                                        onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                                                        placeholder="https://..."
+                                                        required={!formData.imageUrl}
+                                                    />
+                                                    <span className="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm">
+                                                        URL
+                                                    </span>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 

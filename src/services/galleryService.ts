@@ -35,7 +35,12 @@ export const GalleryService = {
             // Resolve secure signed URLs
             for (const item of items) {
                 if (item.imageUrl) {
-                    (item as any).previewUrl = await SecureStorageService.getUrl('app-assets', item.imageUrl);
+                    try {
+                        (item as any).previewUrl = await SecureStorageService.getUrl('app-assets', item.imageUrl);
+                    } catch (err) {
+                        console.warn(`Failed to resolve signed URL for item ${item.id}:`, err);
+                        (item as any).previewUrl = null;
+                    }
                 }
             }
 
@@ -133,23 +138,9 @@ export const GalleryService = {
 
     uploadImage: async (file: File, tenantId: string): Promise<string> => {
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${tenantId}/files/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('gallery-uploads')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                throw uploadError;
-            }
-
-            const { data } = supabase.storage
-                .from('gallery-uploads')
-                .getPublicUrl(filePath);
-
-            return data.publicUrl;
+            // Use SecureStorageService to ensure correct tenant isolation and bucket mapping
+            const relativePath = await SecureStorageService.uploadFile('app-assets', 'gallery', file);
+            return relativePath;
         } catch (error) {
             console.error('Error uploading image:', error);
             throw new Error('Image upload failed. Please try again.');
