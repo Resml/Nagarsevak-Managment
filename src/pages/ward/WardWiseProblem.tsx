@@ -345,7 +345,7 @@ const WardWiseProblem = () => {
                                 <span>{language === 'mr' ? 'मदत' : 'Help'}</span>
                             </button>
                             <Link
-                                to="/dashboard/complaints/new?type=SelfIdentified"
+                                to="/dashboard/ward/problems/new?type=SelfIdentified"
                                 className="ns-btn-primary tutorial-ward-new"
                             >
                                 <Plus className="w-4 h-4" />
@@ -623,7 +623,7 @@ const WardWiseProblem = () => {
                         <div className="col-span-full w-full py-12 text-center text-gray-500 bg-white rounded-lg border border-dashed border-gray-200 flex flex-col items-center justify-center">
                             <p className="mb-4">{t('complaints.no_requests')} "{filterStatus !== 'All' ? filterStatus : ''}"</p>
                             <Link
-                                to="/dashboard/complaints/new?type=SelfIdentified"
+                                to="/dashboard/ward/problems/new?type=SelfIdentified"
                                 className="bg-brand-600 text-white px-4 py-2 rounded-lg hover:bg-brand-700 transition shadow-sm flex items-center gap-2"
                             >
                                 <Plus className="w-4 h-4" />

@@ -15,7 +15,7 @@ const ComplaintForm = () => {
     const { tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
-    const isWardProblemForm = location.pathname.includes('/ward/problems/new');
+    const isWardProblemForm = location.pathname.includes('/ward/problems/new') || location.search.includes('type=SelfIdentified');
 
     // Pre-fill if coming from Voter Profile
     const prefillVoterId = location.state?.voterId || '';
@@ -312,7 +312,11 @@ const ComplaintForm = () => {
             clearLNameDraft();
             clearMobileDraft();
 
-            navigate(-1);
+            if (isWardProblemForm) {
+                navigate('/dashboard/ward/problems');
+            } else {
+                navigate('/dashboard/complaints');
+            }
         } catch (err) {
             console.error('Error submitting complaint:', err);
             toast.error('Failed to submit complaint');
@@ -346,7 +350,13 @@ const ComplaintForm = () => {
     return (
         <div className="max-w-3xl mx-auto pb-12">
             <button
-                onClick={() => navigate(-1)}
+                onClick={() => {
+                    if (isWardProblemForm) {
+                        navigate('/dashboard/ward/problems');
+                    } else {
+                        navigate('/dashboard/complaints');
+                    }
+                }}
                 className="ns-btn-ghost px-0 py-0 text-slate-600 hover:text-brand-700 mb-6"
             >
                 <ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back')}
