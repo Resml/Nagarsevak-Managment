@@ -28,7 +28,7 @@ const ComplaintForm = () => {
     const [title, setTitle, clearTitleDraft] = useFormDraft('draft_complaint_title', '');
     const [description, setDescription, clearDescDraft] = useFormDraft('draft_complaint_desc', '');
     const [type, setType, clearTypeDraft] = useFormDraft<ComplaintType>('draft_complaint_type', 'Other');
-    const [ward, setWard, clearWardDraft] = useFormDraft('draft_complaint_ward', '12'); // Default to 12 for MVP
+    const [ward, setWard, clearWardDraft] = useFormDraft('draft_complaint_ward', '5'); // Default to 5
     const [area, setArea, clearAreaDraft] = useFormDraft('draft_complaint_area', '');
     const [peopleAffected, setPeopleAffected, clearAffectedDraft] = useFormDraft('draft_complaint_affected', '');
 
@@ -486,9 +486,14 @@ const ComplaintForm = () => {
                                     onChange={(e) => setWard(e.target.value)}
                                     className="ns-input"
                                 >
-                                    <option value="12">{t('complaints.form.wards.ward_12')}</option>
-                                    <option value="13">{t('complaints.form.wards.ward_13')}</option>
-                                    <option value="14">{t('complaints.form.wards.ward_14')}</option>
+                                    <option value="5">Ward 5</option>
+                                    <option value="6">Ward 6</option>
+                                    <option value="7">Ward 7</option>
+                                    <option value="8">Ward 8</option>
+                                    <option value="9">Ward 9</option>
+                                    <option value="10">Ward 10</option>
+                                    <option value="14">Ward 14</option>
+                                    <option value="15">Ward 15</option>
                                 </select>
                             </div>
                             <div className="md:col-span-2">

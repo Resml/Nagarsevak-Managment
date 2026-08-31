@@ -25,7 +25,12 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
             if (!tenantId) return;
             const { data } = await supabase.from('complaints').select('*').eq('tenant_id', tenantId);
             const allComplaints = data || [];
-            const history = allComplaints.filter((c: any) => c.assigned_to === member.id);
+            const history = allComplaints
+                .filter((c: any) => c.assigned_to === member.id)
+                .map((c: any) => ({
+                    ...c,
+                    createdAt: c.created_at || c.createdAt || new Date().toISOString()
+                }));
             setWorkHistory(history);
         };
         fetchHistory();
