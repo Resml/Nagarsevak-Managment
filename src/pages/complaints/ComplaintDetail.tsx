@@ -547,7 +547,7 @@ const ComplaintDetail = () => {
                                 </div>
 
                                 {/* Assignment */}
-                                {user?.role === 'admin' && (
+                                {(user?.role === 'admin' || user?.can_assign_work === true) && (
                                     <div className="pt-4 border-t border-slate-200/70">
                                         <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">{t('complaints.form.detail.assign_staff')}</label>
                                         <div className="flex space-x-2">

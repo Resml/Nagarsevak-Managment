@@ -292,7 +292,8 @@ const StaffList = () => {
         party_wing: '',
         paksh: '',
         pad: '',
-        society_name: ''
+        society_name: '',
+        can_assign_work: false
     });
     const [showPassword, setShowPassword] = useState(false);
 
@@ -383,7 +384,8 @@ const StaffList = () => {
                         category: formData.category || 'Office',
                         area: formData.area || '',
                         keywords: finalKeywords,
-                        permissions: validPermissions
+                        permissions: validPermissions,
+                        can_assign_work: formData.can_assign_work
                     })
                     .eq('id', editingStaffId)
                     .eq('tenant_id', tenantId); // Secured
@@ -419,7 +421,8 @@ const StaffList = () => {
                         area: formData.area,
                         category: formData.category,
                         keywords: finalKeywords,
-                        permissions: (formData.permissions || []).filter(p => hasFeature(p))
+                        permissions: (formData.permissions || []).filter(p => hasFeature(p)),
+                        can_assign_work: formData.can_assign_work
                     }
                 });
 
@@ -447,7 +450,8 @@ const StaffList = () => {
                     area: formData.area || '',
                     category: formData.category || 'Office',
                     keywords: finalKeywords,
-                    permissions: (formData.permissions || []).filter(p => hasFeature(p))
+                    permissions: (formData.permissions || []).filter(p => hasFeature(p)),
+                    can_assign_work: formData.can_assign_work
                 };
 
                 // Upsert directly into staff table
@@ -463,7 +467,7 @@ const StaffList = () => {
             }
 
             setShowModal(false);
-            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [], party_wing: '', paksh: '', pad: '', society_name: '' });
+            setFormData({ name: '', mobile: '', user_email: '', password: '', role: '', area: '', category: 'Office', keywords: '', categories: [], permissions: [], party_wing: '', paksh: '', pad: '', society_name: '', can_assign_work: false });
             setEditingStaffId(null);
             fetchStaff();
         } catch (err: any) {
@@ -503,7 +507,8 @@ const StaffList = () => {
             party_wing: staffMember.party_wing || '',
             paksh: staffMember.paksh || '',
             pad: staffMember.pad || '',
-            society_name: staffMember.society_name || ''
+            society_name: staffMember.society_name || '',
+            can_assign_work: !!staffMember.can_assign_work
         });
         setShowModal(true);
         // We might want to keep the profile open or close it?
@@ -1780,6 +1785,26 @@ const StaffList = () => {
                                             <span className="text-gray-700">{perm.label}</span>
                                         </label>
                                     ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Management Access
+                                </label>
+                                <div className="p-3 border border-gray-100 rounded-lg bg-yellow-50/50">
+                                    <label className="flex items-center space-x-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-gray-300 w-4 h-4 text-brand-600 focus:ring-brand-500"
+                                            checked={formData.can_assign_work}
+                                            onChange={(e) => setFormData({ ...formData, can_assign_work: e.target.checked })}
+                                        />
+                                        <div>
+                                            <span className="text-gray-900 font-semibold text-sm">Assign Work to Other Staff</span>
+                                            <p className="text-xs text-gray-500">Allow this user to delegate tasks and complaints to other staff members</p>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
 

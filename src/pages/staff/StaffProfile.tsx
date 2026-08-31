@@ -88,6 +88,11 @@ const StaffProfile: React.FC<StaffProfileProps> = ({ member, onBack, onEdit, onD
                                         {member.pad}
                                     </span>
                                 )}
+                                {member.can_assign_work && (
+                                    <span className="text-xs bg-purple-50 px-2 py-0.5 rounded text-purple-800 border border-purple-200 font-semibold shadow-sm animate-in fade-in">
+                                        Can Assign Work
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

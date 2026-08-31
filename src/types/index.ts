@@ -9,6 +9,7 @@ export interface User {
   assignedWard?: string; // For staff restricted to specific wards
   permissions?: string[];
   isStaff?: boolean; // true if user exists in staff table (used for permission enforcement)
+  can_assign_work?: boolean;
 }
 
 export type ComplaintType = 'Cleaning' | 'Water' | 'Road' | 'Drainage' | 'StreetLight' | 'Other' | 'Help' | 'Personal Help' | 'Complaint' | 'SelfIdentified' | 'Admission' | 'Medical' | 'Financial';
@@ -114,6 +115,7 @@ export interface Staff {
   paksh?: string;
   pad?: string;
   society_name?: string;
+  can_assign_work?: boolean;
 }
 
 export interface Sadasya {

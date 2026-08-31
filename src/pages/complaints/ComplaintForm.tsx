@@ -496,14 +496,15 @@ const ComplaintForm = () => {
                                     onChange={(e) => setWard(e.target.value)}
                                     className="ns-input"
                                 >
-                                    <option value="5">Ward 5</option>
-                                    <option value="6">Ward 6</option>
-                                    <option value="7">Ward 7</option>
-                                    <option value="8">Ward 8</option>
-                                    <option value="9">Ward 9</option>
-                                    <option value="10">Ward 10</option>
-                                    <option value="14">Ward 14</option>
-                                    <option value="15">Ward 15</option>
+                                    <option value="Sector 5">Sector 5</option>
+                                    <option value="Sector 6">Sector 6</option>
+                                    <option value="Sector 7">Sector 7</option>
+                                    <option value="Sector 8">Sector 8</option>
+                                    <option value="Sector 9">Sector 9</option>
+                                    <option value="Sector 10">Sector 10</option>
+                                    <option value="Sector 14">Sector 14</option>
+                                    <option value="Sector 15">Sector 15</option>
+                                    <option value="Out of Ward">Out of Ward</option>
                                 </select>
                             </div>
                             <div className="md:col-span-2">

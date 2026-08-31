@@ -12,4 +12,5 @@ export interface Staff {
     paksh?: string;
     pad?: string;
     society_name?: string;
+    can_assign_work?: boolean;
 }

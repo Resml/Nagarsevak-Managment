@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Fetch permissions from staff table by staff ID
             const { data: staffData } = await supabase
                 .from('staff')
-                .select('permissions, id, role')
+                .select('permissions, id, role, can_assign_work')
                 .eq('id', sessionUser.id)
                 .maybeSingle();
 
@@ -68,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 role: userRole,
                 permissions,
                 isStaff: isStaffUser,
+                can_assign_work: !!staffData?.can_assign_work,
             });
             setIsLoading(false);
 
@@ -96,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 : [];
                             setUser((prev) =>
                                 prev
-                                    ? { ...prev, permissions: updatedPermissions }
+                                    ? { ...prev, permissions: updatedPermissions, can_assign_work: !!payload.new.can_assign_work }
                                     : prev
                             );
                         }

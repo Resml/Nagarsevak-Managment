@@ -33,7 +33,7 @@ serve(async (req) => {
             throw new Error(`Invalid or expired JWT: ${authError?.message || 'No user'}`)
         }
 
-        const { email, password, name, role, tenant_id, mobile, area, category, keywords, permissions } = await req.json()
+        const { email, password, name, role, tenant_id, mobile, area, category, keywords, permissions, can_assign_work } = await req.json()
         
         // Input validation
         if (!email || !password || !name || !tenant_id || !mobile) {
@@ -99,7 +99,8 @@ serve(async (req) => {
                 category: category,
                 keywords: keywords,
                 permissions: permissions,
-                tenant_id: tenant_id
+                tenant_id: tenant_id,
+                can_assign_work: can_assign_work || false
             })
 
         if (staffError) {
