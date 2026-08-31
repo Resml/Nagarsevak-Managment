@@ -25,6 +25,7 @@ const ComplaintList = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'report'>('grid');
     const [showComplaintReport, setShowComplaintReport] = useState(false);
     const [selectedComplaintsForReport, setSelectedComplaintsForReport] = useState<Complaint[]>([]);
+    const [staffList, setStaffList] = useState<any[]>([]);
     const { startTutorial } = useTutorial();
 
     // Derived state for translation - simplified and more robust matching AppLayout logic
@@ -84,6 +85,12 @@ const ComplaintList = () => {
                 console.error('Error fetching personal requests:', personalError);
             }
 
+            // Fetch staff list for Added By names
+            const { data: staffData } = await supabase.from('staff').select('id, name, role').eq('tenant_id', tenantId);
+            if (staffData) {
+                setStaffList(staffData);
+            }
+
             type ComplaintRow = {
                 id: string | number;
                 problem: string | null;
@@ -102,6 +109,7 @@ const ComplaintList = () => {
                 user_name?: string | null;
                 description_meta?: string | null;
                 staff?: { name: string; mobile: string; } | null;
+                added_by_staff_id?: string | null;
             };
 
             type PersonalRequestRow = {
@@ -198,6 +206,7 @@ const ComplaintList = () => {
                 createdAt: row.created_at,
                 photos: [],
                 staff: row.staff ? { name: row.staff.name, mobile: row.staff.mobile } : undefined,
+                added_by_staff_id: row.added_by_staff_id ?? undefined,
                 updatedAt: row.created_at
             }));
 
@@ -620,6 +629,13 @@ const ComplaintList = () => {
                                             ? complaint.voter.name_marathi
                                             : <TranslatedText text={complaint.voter.name_english || complaint.voter.name_marathi || ''} isName={true} />}
                                         {complaint.voter.mobile && ` | ${complaint.voter.mobile}`}
+                                    </div>
+                                )}
+
+                                {complaint.added_by_staff_id && (
+                                    <div className="mb-2 text-xs text-slate-700 font-medium bg-slate-100 px-2 py-1 rounded flex items-center gap-1.5 w-fit border border-slate-200">
+                                        <User className="w-3.5 h-3.5" />
+                                        Added By: <TranslatedText text={staffList.find(s => s.id === complaint.added_by_staff_id)?.name || 'Unknown Staff'} isName={true} />
                                     </div>
                                 )}
 

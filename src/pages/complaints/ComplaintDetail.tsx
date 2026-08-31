@@ -204,7 +204,8 @@ const ComplaintDetail = () => {
                         videoUrl: data.video_url,
                         audioUrl: data.audio_url,
                         voterId: data.voter_id,
-                        assignedTo: data.assigned_to
+                        assignedTo: data.assigned_to,
+                        added_by_staff_id: data.added_by_staff_id
                     };
                     setComplaint(mapped);
                     setAssignee(data.assigned_to || '');
@@ -665,6 +666,14 @@ const ComplaintDetail = () => {
                                     )}
                                 </div>
                             </li>
+                            {complaint.added_by_staff_id && (
+                                <li className="flex justify-between border-b border-slate-100 pb-2">
+                                    <span className="text-slate-500">Added By</span>
+                                    <div className="text-right font-medium text-slate-900">
+                                        <TranslatedText text={staffList.find(s => s.id === complaint.added_by_staff_id)?.name || 'Unknown Staff'} isName={true} />
+                                    </div>
+                                </li>
+                            )}
                         </ul>
                     </div>
                 </div>

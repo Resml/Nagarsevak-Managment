@@ -46,6 +46,10 @@ export interface Complaint {
   createdAt: string; // ISO Date
   updatedAt: string;
   resolvedAt?: string;
+  added_by_staff_id?: string;
+  addedByStaff?: {
+    name?: string;
+  };
 }
 
 export interface VoterApplication {

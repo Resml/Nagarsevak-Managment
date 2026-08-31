@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
 import { SecureStorageService } from '../../services/secureStorageService';
 import { type ComplaintType, type Voter } from '../../types';
+import { type Staff } from '../../types/staff';
 import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
@@ -58,6 +59,18 @@ const ComplaintForm = () => {
     const [showHouseNoSuggestions, setShowHouseNoSuggestions] = useState(false);
     const [addressSuggestions, setAddressSuggestions] = useState<{ address: string; count: number }[]>([]);
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+
+    const [staffList, setStaffList] = useState<Staff[]>([]);
+    const [addedByStaffId, setAddedByStaffId] = useState('');
+
+    useEffect(() => {
+        if (!tenantId) return;
+        const fetchStaff = async () => {
+            const { data } = await supabase.from('staff').select('*').eq('tenant_id', tenantId);
+            if (data) setStaffList(data);
+        };
+        fetchStaff();
+    }, [tenantId]);
 
     const houseNoWrapperRef = React.useRef<HTMLDivElement>(null);
     const addressWrapperRef = React.useRef<HTMLDivElement>(null);
@@ -286,6 +299,7 @@ const ComplaintForm = () => {
                 source: 'Website',
                 image_url: imageUrl,
                 voter_id: selectedVoterId,
+                added_by_staff_id: addedByStaffId || null,
                 description_meta: {
                     submitter_name: fullName,
                     submitter_mobile: mobile,
@@ -539,6 +553,19 @@ const ComplaintForm = () => {
                                 className="ns-input min-h-[120px]"
                                 placeholder={t('complaints.form.desc_placeholder')}
                             />
+                                <div className="mt-4">
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Added By (Staff)</label>
+                                    <select
+                                        className="ns-input"
+                                        value={addedByStaffId}
+                                        onChange={e => setAddedByStaffId(e.target.value)}
+                                    >
+                                        <option value="">Select Staff (Optional)</option>
+                                        {staffList.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                                        ))}
+                                    </select>
+                                </div>
                         </div>
 
                         <div>
