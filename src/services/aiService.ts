@@ -145,12 +145,11 @@ export const AIAnalysisService = {
             1. Detect the language of the input (e.g., 'English', 'Marathi', 'Hindi', 'Hinglish').
             2. Categorize it into one of: 'Cleaning', 'Water', 'Road', 'Drainage', 'StreetLight', 'Other'.
             3. Determine Urgency (Low, Medium, High) based on keywords like 'safety', 'danger', 'health', 'broken'.
-            4. **Translate** the Title and Description into:
-               - English (Professional Standard)
-               - Marathi (Formal Std)
-            5. If an image is provided, verify if it matches the description. If no image, set validation to "No image provided".
+            4. Translate exactly what is in "Input Title" into English ("translated_title_en") and Marathi ("translated_title_mr"). Do NOT add the description text into the title. Keep the title short.
+            5. Translate exactly what is in "Input Description" into English ("translated_description_en") and Marathi ("translated_description_mr"). Do NOT add the title text into the description. Keep the description exactly as provided.
+            6. If an image is provided, verify if it matches the description. If no image, set validation to "No image provided".
             
-            Return JSON: 
+            Return ONLY a valid JSON object matching this schema exactly: 
             { 
               "category": "...", 
               "urgency": "...", 

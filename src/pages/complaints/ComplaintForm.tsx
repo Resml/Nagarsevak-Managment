@@ -315,7 +315,9 @@ const ComplaintForm = () => {
                     submitter_name: fullName,
                     submitter_mobile: mobile,
                     people_affected: peopleAffected,
-                    translation: translationData
+                    translation: translationData,
+                    original_title: title,
+                    original_description: description
                 }
             }]);
 

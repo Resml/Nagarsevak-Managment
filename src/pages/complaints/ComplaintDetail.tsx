@@ -203,10 +203,34 @@ const ComplaintDetail = () => {
                         );
                     }
 
+                    let parsedMeta = null;
+                    try {
+                        parsedMeta = typeof data.description_meta === 'string' ? JSON.parse(data.description_meta) : (data.description_meta || null);
+                    } catch (e) {
+                        console.error("Error parsing meta", e);
+                    }
+
+                    let extractTitle = 'Request';
+                    let extractDesc = data.problem || '';
+                    if (parsedMeta?.original_title) {
+                        extractTitle = parsedMeta.original_title;
+                        extractDesc = parsedMeta.original_description || '';
+                    } else if (data.problem) {
+                        // Fallback logic for old complaints
+                        const parts = data.problem.split('\n');
+                        if (parts.length > 1) {
+                            extractTitle = parts[0];
+                            extractDesc = parts.slice(1).join('\n');
+                        } else {
+                            extractTitle = parts[0];
+                            extractDesc = '';
+                        }
+                    }
+
                     const mapped: Complaint = {
                         id: data.id.toString(),
-                        title: data.problem || 'Request',
-                        description: data.problem,
+                        title: extractTitle,
+                        description: extractDesc,
                         type: data.category || 'Complaint',
                         status: data.status,
                         ward: data.location || 'N/A',
@@ -470,14 +494,11 @@ const ComplaintDetail = () => {
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-6">
                     <div className="ns-card p-6">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex flex-col items-start space-y-3">
                                 <span className={`notranslate ns-badge border-transparent ${complaint.type === 'Help' ? 'bg-purple-100 text-purple-700' : 'bg-brand-50 text-brand-800'}`}>
                                     {t(`complaints.form.types.${complaint.type == 'Personal Help' ? 'personal_help' : complaint.type.toLowerCase().replace(/ /g, '_')}`) || complaint.type}
                                 </span>
-                                <h1 className="text-2xl font-bold text-slate-900 mt-3">
-                                    {translatedData ? translatedData.title : complaint.title}
-                                </h1>
                             </div>
                             <span className={`ns-badge px-3 py-1 text-sm border ${complaint.status === 'Resolved' ? 'bg-green-100 text-green-800 border-green-200' :
                                 complaint.status === 'Pending' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-100 text-gray-800'
@@ -490,10 +511,22 @@ const ComplaintDetail = () => {
                             </span>
                         </div>
 
-                        <div className="text-slate-700 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                            <p className="whitespace-pre-wrap font-medium leading-relaxed">
-                                {translatedData ? translatedData.description : complaint.description}
-                            </p>
+                        <div className="mb-8">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Issue Title</h4>
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+                                {translatedData ? translatedData.title : complaint.title}
+                            </h1>
+                        </div>
+
+                        <div className="mb-8">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <FileText className="w-4 h-4" /> Description
+                            </h4>
+                            <div className="text-slate-700 bg-white border-l-4 border-brand-500 pl-4 py-1">
+                                <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-600">
+                                    {translatedData ? translatedData.description : complaint.description}
+                                </p>
+                            </div>
                         </div>
 
                         {/* Media Section */}

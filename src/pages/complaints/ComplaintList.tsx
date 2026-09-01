@@ -140,10 +140,34 @@ const ComplaintList = () => {
                 (allowedTypes as readonly string[]).includes(value);
 
             // Map complaints
-            const mappedComplaints: Complaint[] = (complaintsData || []).map((row: ComplaintRow) => ({
-                id: row.id.toString(),
-                title: row.problem ?? 'Request',
-                description: row.problem ?? '',
+            const mappedComplaints: Complaint[] = (complaintsData || []).map((row: ComplaintRow) => {
+                let parsedMeta = null;
+                try {
+                    parsedMeta = typeof row.description_meta === 'string' ? JSON.parse(row.description_meta) : (row.description_meta || null);
+                } catch (e) {
+                    console.error("Error parsing meta", e);
+                }
+                
+                let extractTitle = 'Request';
+                let extractDesc = row.problem || '';
+                if (parsedMeta?.original_title) {
+                    extractTitle = parsedMeta.original_title;
+                    extractDesc = parsedMeta.original_description || '';
+                } else if (row.problem) {
+                    const parts = row.problem.split('\n');
+                    if (parts.length > 1) {
+                        extractTitle = parts[0];
+                        extractDesc = parts.slice(1).join('\n');
+                    } else {
+                        extractTitle = parts[0];
+                        extractDesc = '';
+                    }
+                }
+
+                return {
+                    id: row.id.toString(),
+                    title: extractTitle,
+                    description: extractDesc,
                 type: row.category && isComplaintType(row.category) ? row.category : 'Complaint',
                 status: row.status,
                 ward: row.location || 'N/A',
@@ -208,7 +232,8 @@ const ComplaintList = () => {
                 staff: row.staff ? { name: row.staff.name, mobile: row.staff.mobile } : undefined,
                 added_by_staff_id: row.added_by_staff_id ?? undefined,
                 updatedAt: row.created_at
-            }));
+            };
+        });
 
             // Map personal requests to Complaint type
             const mappedPersonalRequests: Complaint[] = (personalRequestsData || []).map((row: PersonalRequestRow) => ({
