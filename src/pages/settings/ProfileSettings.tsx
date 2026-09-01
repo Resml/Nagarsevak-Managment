@@ -11,6 +11,7 @@ import SecurityLogs from './SecurityLogs';
 import SmsConnectionSettings from './SmsConnectionSettings';
 import CropModal from '../../components/common/CropModal';
 import clsx from 'clsx';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ProfileSettings = () => {
     const { tenant, tenantId, refreshTenant } = useTenant();
@@ -697,15 +698,13 @@ const ProfileSettings = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
                                     {language === 'mr' ? 'प्राधान्य / तीव्रता' : 'Priority / Severity'}
                                 </label>
-                                <select
-                                    value={supportPriority}
-                                    onChange={(e) => setSupportPriority(e.target.value as any)}
-                                    className="ns-input w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white"
+                                <CustomSelect value={supportPriority}
+                                    onChange={(e) => setSupportPriority(e.target.value as any)} className="ns-input w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white"
                                 >
                                     <option value="Low">{language === 'mr' ? 'कमी (Low)' : 'Low'}</option>
                                     <option value="Medium">{language === 'mr' ? 'मध्यम (Medium)' : 'Medium'}</option>
                                     <option value="High">{language === 'mr' ? 'जास्त (High)' : 'High'}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
                             <div className="pt-2 flex justify-end">

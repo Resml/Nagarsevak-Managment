@@ -16,6 +16,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import EventTutorial from '../../components/tutorial/EventTutorial';
 import { HelpCircle, Download } from 'lucide-react';
 import { EventReportGenerator } from './EventReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface Event {
     id: string;
@@ -850,17 +851,17 @@ const EventManagement = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.type_label')}</label>
-                                    <select className="ns-input w-full" value={newEvent.type} onChange={e => setNewEvent({ ...newEvent, type: e.target.value })}>
+                                    <CustomSelect className="ns-input w-full" value={newEvent.type} onChange={e => setNewEvent({ ...newEvent, type: e.target.value })}>
                                         <option value="Public Meeting">{t('events.types.Public Meeting')}</option>
                                         <option value="Rally">{t('events.types.Rally')}</option>
                                         <option value="Door-to-Door">{t('events.types.Door-to-Door')}</option>
                                         <option value="Inauguration">{t('events.types.Inauguration')}</option>
                                         <option value="Other">{t('events.types.Other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.audience_label')}</label>
-                                    <select className="ns-input w-full" value={newEvent.target_audience} onChange={e => setNewEvent({ ...newEvent, target_audience: e.target.value })}>
+                                    <CustomSelect className="ns-input w-full" value={newEvent.target_audience} onChange={e => setNewEvent({ ...newEvent, target_audience: e.target.value })}>
                                         <option value="All">{t('events.audiences.All')}</option>
                                         <option value="OPEN">{t('events.audiences.OPEN')}</option>
                                         <option value="OBC">{t('events.audiences.OBC')}</option>
@@ -868,7 +869,7 @@ const EventManagement = () => {
                                         <option value="ST">{t('events.audiences.ST')}</option>
                                         <option value="VJNT">{t('events.audiences.VJNT')}</option>
                                         <option value="SBC">{t('events.audiences.SBC')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

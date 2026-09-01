@@ -11,6 +11,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 import type { Voter } from '../../types';
 
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface Visitor {
     id: string;
@@ -501,7 +502,7 @@ const VisitorLog = () => {
 
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('office.purpose')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.purpose}
                                         onChange={e => setFormData({ ...formData, purpose: e.target.value })}
@@ -512,7 +513,7 @@ const VisitorLog = () => {
                                         <option value="Donation">{t('office.purpose_donation')}</option>
                                         <option value="Help">{t('office.purpose_help')}</option>
                                         <option value="Other">{t('office.purpose_other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">

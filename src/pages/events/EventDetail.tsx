@@ -9,6 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { AIService } from '../../services/aiService';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface Event {
     id: string;
@@ -600,7 +601,7 @@ const EventDetail = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.type_label')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input w-full"
                                         value={editForm.type}
                                         onChange={e => setEditForm({ ...editForm, type: e.target.value })}
@@ -610,11 +611,11 @@ const EventDetail = () => {
                                         <option value="Door-to-Door">{t('events.types.Door-to-Door')}</option>
                                         <option value="Inauguration">{t('events.types.Inauguration')}</option>
                                         <option value="Other">{t('events.types.Other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.status.status')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input w-full"
                                         value={editForm.status}
                                         onChange={e => setEditForm({ ...editForm, status: e.target.value })}
@@ -622,7 +623,7 @@ const EventDetail = () => {
                                         <option value="Planned">{t('complaints.status.pending')}</option>
                                         <option value="Completed">{t('status.Resolved')}</option>
                                         <option value="Cancelled">{t('status.Closed')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

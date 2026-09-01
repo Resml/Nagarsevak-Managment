@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../services/supabaseClient';
 import { toast } from 'sonner';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const AddVoter = () => {
     const { t } = useLanguage();
@@ -135,7 +136,7 @@ const AddVoter = () => {
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700">{t('add_voter.form.gender')}</label>
-                            <select
+                            <CustomSelect
                                 name="gender"
                                 value={formData.gender}
                                 onChange={handleChange}
@@ -144,7 +145,7 @@ const AddVoter = () => {
                                 <option value="M">{t('voters.gender_male')}</option>
                                 <option value="F">{t('voters.gender_female')}</option>
                                 <option value="O">{t('voters.gender_other')}</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-slate-700">{t('add_voter.form.caste')}</label>

@@ -12,6 +12,7 @@ const PAGE_SIZE = 50;
 const SOCKET_URL = import.meta.env.VITE_BOT_API_URL || import.meta.env.VITE_BOT_URL || 'https://nagarsevak-managment-1.onrender.com';
 
 import { CommunicationHistoryPdfGenerator } from '../../components/reports/CommunicationHistoryPdfGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 // ---- Types ----
 interface MessageLog {
@@ -399,11 +400,11 @@ const PublicCommunication = () => {
                         </div>
                         <div className="relative">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                            <select value={genderFilter} onChange={e => setGenderFilter(e.target.value)} className="ns-input pl-9 w-full appearance-none bg-white text-sm">
+                            <CustomSelect value={genderFilter} onChange={e => setGenderFilter(e.target.value)} className="ns-input pl-9 w-full appearance-none bg-white text-sm">
                                 <option value="">{t('voters.all_genders')}</option>
                                 <option value="M">{t('voters.gender_male')}</option>
                                 <option value="F">{t('voters.gender_female')}</option>
-                            </select>
+                            </CustomSelect>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         </div>
                         <div className="relative">

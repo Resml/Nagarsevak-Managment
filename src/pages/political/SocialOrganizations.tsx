@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { SocialOrganizationService, type SocialOrganizationRecord } from '../../services/socialOrganizationService';
 import { MandalNgoReportPdfGenerator } from '../../components/reports/MandalNgoReportPdfGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface EventConducted {
     id: string;
@@ -439,10 +440,8 @@ const SocialOrganizations = () => {
 
                 <div className="flex flex-wrap gap-2">
                     {/* Type Filters */}
-                    <select
-                        value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    <CustomSelect value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)} className="ns-input bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     >
                         <option value="all">{isMr ? 'सर्व प्रकार' : 'All Types'}</option>
                         <option value="ngo">{isMr ? 'एन.जी.ओ / सामाजिक संस्था' : 'NGO / Foundations'}</option>
@@ -450,18 +449,16 @@ const SocialOrganizations = () => {
                         <option value="ganpati_mandal">{isMr ? 'गणपती मंडळ' : 'Ganpati Mandals'}</option>
                         <option value="navratri_mandal">{isMr ? 'नवरात्रौत्सव मंडळ' : 'Navratri Mandals'}</option>
                         <option value="other">{isMr ? 'इतर संस्था व मंडळ' : 'Other'}</option>
-                    </select>
+                    </CustomSelect>
 
                     {/* Status Filters */}
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    <CustomSelect value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)} className="ns-input bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500"
                     >
                         <option value="all">{isMr ? 'सर्व स्थिती' : 'All Status'}</option>
                         <option value="Active">{isMr ? 'सक्रिय' : 'Active'}</option>
                         <option value="Inactive">{isMr ? 'निष्क्रिय' : 'Inactive'}</option>
-                    </select>
+                    </CustomSelect>
                 </div>
             </div>
 
@@ -708,17 +705,15 @@ const SocialOrganizations = () => {
                                     <label className="text-xs font-bold text-slate-650 block uppercase tracking-wider">
                                         {isMr ? 'संस्थेचा प्रकार' : 'Organization Type'}
                                     </label>
-                                    <select
-                                        value={formData.type}
-                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                        className="w-full p-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                                    <CustomSelect value={formData.type}
+                                        onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="ns-input w-full p-2.5 border border-slate-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none"
                                     >
                                         <option value="ngo">{isMr ? 'एन.जी.ओ / सामाजिक संस्था' : 'NGO / Social Foundation'}</option>
                                         <option value="sports_cricket">{isMr ? 'क्रीडा व क्रिकेट क्लब' : 'Cricket & Sports Club'}</option>
                                         <option value="ganpati_mandal">{isMr ? 'सार्वजनिक गणेश उत्सव मंडळ' : 'Ganpati Mandal'}</option>
                                         <option value="navratri_mandal">{isMr ? 'सार्वजनिक नवरात्र उत्सव मंडळ' : 'Navratri Mandal'}</option>
                                         <option value="other">{isMr ? 'इतर संस्था व मंडळ' : 'Other'}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
                                 {/* Area */}

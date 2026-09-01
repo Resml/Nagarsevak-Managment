@@ -10,6 +10,7 @@ import NewspaperTutorial from '../../components/tutorial/NewspaperTutorial';
 import { HelpCircle, Download } from 'lucide-react';
 import { NewspaperReportGenerator } from '../../components/reports/NewspaperReportGenerator';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const NewspaperClipping = () => {
     const { t, language } = useLanguage();
@@ -441,14 +442,14 @@ const NewspaperClipping = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700">{t('newspaper.type_label')}</label>
-                                        <select
+                                        <CustomSelect
                                             className="ns-input mt-1"
                                             value={formData.sentiment}
                                             onChange={e => setFormData({ ...formData, sentiment: e.target.value as 'positive' | 'negative' })}
                                         >
                                             <option value="positive">{t('newspaper.positive_news')}</option>
                                             <option value="negative">{t('newspaper.negative_news')}</option>
-                                        </select>
+                                        </CustomSelect>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700">{t('gallery.date')}</label>

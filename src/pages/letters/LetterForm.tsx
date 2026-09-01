@@ -9,6 +9,7 @@ import { useTenant } from '../../context/TenantContext'; // Import Tenant Contex
 import { useAuth } from '../../context/AuthContext';
 import { useFormDraft } from '../../hooks/useFormDraft';
 import type { Voter } from '../../types';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const LetterForm = () => {
     const { t, language } = useLanguage();
@@ -490,7 +491,7 @@ const LetterForm = () => {
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.gender') || 'Gender'}</label>
-                            <select
+                            <CustomSelect
                                 required
                                 name="gender"
                                 value={formData.gender}
@@ -501,11 +502,11 @@ const LetterForm = () => {
                                 <option value="Male">{t('common.male')}</option>
                                 <option value="Female">{t('common.female')}</option>
                                 <option value="Other">{t('common.other')}</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">{t('letters.letter_type')}</label>
-                            <select
+                            <CustomSelect
                                 name="type"
                                 value={formData.type}
                                 onChange={handleChange}
@@ -534,7 +535,7 @@ const LetterForm = () => {
                                         </option>
                                     );
                                 })}
-                            </select>
+                            </CustomSelect>
                         </div>
                     </div>
 
@@ -699,19 +700,17 @@ const LetterForm = () => {
                                     value={ageFilter}
                                     onChange={(e) => setAgeFilter(e.target.value)}
                                 />
-                                <select
-                                    className="ns-input"
-                                    value={genderFilter}
+                                <CustomSelect value={genderFilter}
                                     onChange={(e) => setGenderFilter(e.target.value)}
                                 >
                                     <option value="">{t('sadasya.all_genders') || "All Genders"}</option>
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
                                     <option value="O">Other</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                             <div>
-                                <div className="relative" ref={addressWrapperRef}>
+                                <div className="ns-input relative" ref={addressWrapperRef}>
                                     <input
                                         type="text"
                                         placeholder={t('sadasya.search_address') || "Search Address"}

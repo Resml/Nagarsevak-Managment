@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Search, MapPin } from 'lucide-react';
+import { CustomSelect } from './CustomSelect';
 
 interface AddressSelectorProps {
     value: string;
@@ -103,13 +104,11 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                     </p>
                     <div className="relative">
                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 z-10 pointer-events-none" />
-                        <select
-                            value={value}
+                        <CustomSelect value={value}
                             onChange={(e) => {
                                 onChange(e.target.value);
                                 setShowSuggestions(false);
-                            }}
-                            className="pl-12 pr-10 py-4 w-full bg-white font-semibold text-slate-800 border border-slate-300 focus:ring-brand-500 focus:border-brand-500 rounded-xl text-sm shadow-sm appearance-none cursor-pointer"
+                            }} className="ns-input pl-12 pr-10 py-4 w-full bg-white font-semibold text-slate-800 border border-slate-300 focus:ring-brand-500 focus:border-brand-500 rounded-xl text-sm shadow-sm appearance-none cursor-pointer"
                         >
                             <option value="">{isMr ? '-- सर्व पत्ते --' : '-- All Addresses --'}</option>
                             {allVoterAddresses.map((addr, idx) => (
@@ -117,7 +116,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
                                     {addr}
                                 </option>
                             ))}
-                        </select>
+                        </CustomSelect>
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold">
                             ▼
                         </div>

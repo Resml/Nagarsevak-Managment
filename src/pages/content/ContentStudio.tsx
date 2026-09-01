@@ -9,6 +9,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import ContentStudioTutorial from '../../components/tutorial/ContentStudioTutorial';
 import { HelpCircle } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ContentStudio = () => {
     const { t, language: uiLanguage } = useLanguage();
@@ -140,9 +141,7 @@ const ContentStudio = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('content_studio.type_label')}</label>
-                                    <select
-                                        className="ns-input"
-                                        value={contentType}
+                                    <CustomSelect value={contentType}
                                         onChange={(e) => setContentType(e.target.value as ContentType)}
                                     >
                                         <option value="Speech">{t('content_studio.types.Speech')}</option>
@@ -150,14 +149,12 @@ const ContentStudio = () => {
                                         <option value="Press Release">{t('content_studio.types.Press Release')}</option>
                                         <option value="Letter/Notice">{t('content_studio.types.Letter/Notice')}</option>
                                         <option value="Email">{t('content_studio.types.Email')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">{t('content_studio.tone_label')}</label>
-                                    <select
-                                        className="ns-input"
-                                        value={tone}
+                                    <label className="ns-input block text-sm font-medium text-slate-700 mb-1">{t('content_studio.tone_label')}</label>
+                                    <CustomSelect value={tone}
                                         onChange={(e) => setTone(e.target.value as ToneType)}
                                     >
                                         <option value="Enthusiastic">{t('content_studio.tones.Enthusiastic')}</option>
@@ -165,27 +162,24 @@ const ContentStudio = () => {
                                         <option value="Professional">{t('content_studio.tones.Professional')}</option>
                                         <option value="Emotional">{t('content_studio.tones.Emotional')}</option>
                                         <option value="Urgent">{t('content_studio.tones.Urgent')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('content_studio.language_label')}</label>
-                                <select
-                                    className="ns-input"
-                                    value={aiLanguage}
+                                <label className="ns-input block text-sm font-medium text-slate-700 mb-1">{t('content_studio.language_label')}</label>
+                                <CustomSelect value={aiLanguage}
                                     onChange={(e) => setAiLanguage(e.target.value as LanguageType)}
                                 >
                                     <option value="Marathi">मराठी (Marathi)</option>
                                     <option value="English">English</option>
                                     <option value="Hindi">हिंदी (Hindi)</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
                             <button
                                 type="submit"
-                                disabled={loading || !topic}
-                                className="ns-btn-primary w-full justify-center py-2.5 disabled:opacity-50 disabled:cursor-not-allowed tutorial-ai-generate"
+                                disabled={loading || !topic} className="ns-input ns-btn-primary w-full justify-center py-2.5 disabled:opacity-50 disabled:cursor-not-allowed tutorial-ai-generate"
                             >
                                 {loading ? (
                                     <>

@@ -10,6 +10,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { checkFeatureAccess } from '../../utils/featureMatrix';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const PARTY_WINGS = [
     'युवक आघाडी',
@@ -903,16 +904,14 @@ const StaffList = () => {
                                                     {task.priority === 'High' ? tr("High Priority", "उच्च प्राथमिकता") : task.priority === 'Medium' ? tr("Medium Priority", "मध्यम प्राथमिकता") : tr("Low Priority", "कमी प्राथमिकता")}
                                                 </span>
                                             </div>
-                                            <select
-                                                value=""
-                                                onChange={(e) => handleAssignTask(task.id, e.target.value)}
-                                                className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
+                                            <CustomSelect value=""
+                                                onChange={(e) => handleAssignTask(task.id, e.target.value)} className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
                                             >
                                                 <option value="">{tr("Assign Karyakarta...", "कार्यकर्ता निवडा...")}</option>
                                                 {staff.map(m => (
                                                     <option key={m.id} value={m.id}>{m.name}</option>
                                                 ))}
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                     ))}
                                     {unassignedTasks.length === 0 && (
@@ -934,16 +933,14 @@ const StaffList = () => {
                                                     {tr(complaint.category || 'Complaint', complaint.category === 'Water' ? 'पाणी समस्या' : complaint.category === 'Electricity' ? 'वीज समस्या' : complaint.category === 'Roads' ? 'रस्ते समस्या' : complaint.category === 'Garbage' ? 'कचरा समस्या' : complaint.category || 'तक्रार')}
                                                 </span>
                                             </div>
-                                            <select
-                                                value=""
-                                                onChange={(e) => handleAssignComplaint(complaint.id, e.target.value)}
-                                                className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
+                                            <CustomSelect value=""
+                                                onChange={(e) => handleAssignComplaint(complaint.id, e.target.value)} className="ns-input text-xs py-1 px-2 border-slate-200 focus:ring-brand-500 rounded bg-white w-40 flex-shrink-0 cursor-pointer"
                                             >
                                                 <option value="">{tr("Assign Karyakarta...", "कार्यकर्ता निवडा...")}</option>
                                                 {staff.map(m => (
                                                     <option key={m.id} value={m.id}>{m.name}</option>
                                                 ))}
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                     ))}
                                     {unassignedComplaints.length === 0 && (
@@ -1006,15 +1003,13 @@ const StaffList = () => {
                                             </div>
                                             <div className="flex items-center gap-3 self-start md:self-center">
                                                 <label className="text-xs font-bold text-slate-600">{tr("Status:", "स्थिती:")}</label>
-                                                <select
-                                                    value={task.status}
-                                                    onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
-                                                    className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
+                                                <CustomSelect value={task.status}
+                                                    onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)} className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
                                                 >
                                                     <option value="Pending">{tr("Pending", "प्रलंबित")}</option>
                                                     <option value="In Progress">{tr("In Progress", "चालू")}</option>
                                                     <option value="Completed">{tr("Completed", "पूर्ण")}</option>
-                                                </select>
+                                                </CustomSelect>
                                             </div>
                                         </div>
                                     ))}
@@ -1046,17 +1041,15 @@ const StaffList = () => {
                                             </div>
                                             <div className="flex items-center gap-3 self-start md:self-center">
                                                 <label className="text-xs font-bold text-slate-600">{tr("Status:", "स्थिती:")}</label>
-                                                <select
-                                                    value={complaint.status}
-                                                    onChange={(e) => handleUpdateComplaintStatus(complaint.id, e.target.value)}
-                                                    className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
+                                                <CustomSelect value={complaint.status}
+                                                    onChange={(e) => handleUpdateComplaintStatus(complaint.id, e.target.value)} className="ns-input py-1 px-3 text-xs bg-white border-slate-250 focus:ring-brand-500 font-semibold"
                                                 >
                                                     <option value="Pending">{tr("Pending", "प्रलंबित")}</option>
                                                     <option value="Assigned">{tr("Assigned", "सोपवले")}</option>
                                                     <option value="InProgress">{tr("In Progress", "काम सुरू")}</option>
                                                     <option value="Resolved">{tr("Resolved", "निवारण झाले")}</option>
                                                     <option value="Closed">{tr("Closed", "बंद केले")}</option>
-                                                </select>
+                                                </CustomSelect>
                                             </div>
                                         </div>
                                     ))}
@@ -1099,18 +1092,16 @@ const StaffList = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Priority", "प्राथमिकता")}</label>
-                                            <select
-                                                className="ns-input"
-                                                value={quickTaskForm.priority}
+                                            <CustomSelect value={quickTaskForm.priority}
                                                 onChange={e => setQuickTaskForm({ ...quickTaskForm, priority: e.target.value as any })}
                                             >
                                                 <option value="Low">{tr("Low", "कमी")}</option>
                                                 <option value="Medium">{tr("Medium", "मध्यम")}</option>
                                                 <option value="High">{tr("High", "उच्च")}</option>
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Due Date", "मुदत तारीख")}</label>
+                                            <label className="ns-input block text-sm font-semibold text-slate-700 mb-1">{tr("Due Date", "मुदत तारीख")}</label>
                                             <input
                                                 type="date"
                                                 className="ns-input"
@@ -1262,10 +1253,8 @@ const StaffList = () => {
                     </div>
                     <div className="relative">
                         <Flag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-                        <select
-                            value={wingFilter}
-                            onChange={(e) => setWingFilter(e.target.value)}
-                            className="ns-input pl-9 pr-10 w-full appearance-none bg-white text-slate-700"
+                        <CustomSelect value={wingFilter}
+                            onChange={(e) => setWingFilter(e.target.value)} className="ns-input pl-9 pr-10 w-full appearance-none bg-white text-slate-700"
                         >
                             <option value="">{tr('All Wings', 'सर्व आघाड्या / सेल')}</option>
                             {uniqueWings.map((wing, index) => (
@@ -1273,7 +1262,7 @@ const StaffList = () => {
                                     {wing}
                                 </option>
                             ))}
-                        </select>
+                        </CustomSelect>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                     </div>
                 </div>
@@ -1523,7 +1512,7 @@ const StaffList = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('staff.modal.category')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value as any })}
@@ -1531,14 +1520,14 @@ const StaffList = () => {
                                         <option value="Office">{t('staff.modal.office_desc')}</option>
                                         <option value="Party">{t('staff.modal.party_desc')}</option>
                                         <option value="Cooperative">{t('staff.modal.coop_desc')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 font-semibold text-slate-800">
                                         {tr('Political Party (Paksh)', 'राजकीय पक्ष (पक्ष)')}
                                         <span className="ml-2 text-xs text-gray-500 font-normal">{t('staff.modal.optional')}</span>
                                     </label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.paksh || ''}
                                         onChange={e => setFormData({ ...formData, paksh: e.target.value })}
@@ -1553,7 +1542,7 @@ const StaffList = () => {
                                         <option value="AAP">{tr('AAP (Aam Aadmi Party)', 'आप (आम आदमी पक्ष)')}</option>
                                         <option value="Independent">{tr('Independent', 'अपक्ष')}</option>
                                         <option value="Other">{tr('Other / None', 'इतर / कोणताही नाही')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

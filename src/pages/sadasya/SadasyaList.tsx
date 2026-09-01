@@ -14,6 +14,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import SadasyaTutorial from '../../components/tutorial/SadasyaTutorial';
 import { HelpCircle, Download } from 'lucide-react';
 import { SadasyaReportGenerator } from './SadasyaReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 const getGenderDisplay = (gender: string) => {
     switch (gender) {
         case 'M': return 'Male';
@@ -754,7 +755,7 @@ const SadasyaList = () => {
                         </div>
 
                         <div>
-                            <select
+                            <CustomSelect
                                 className="ns-input w-full"
                                 value={filterVoter}
                                 onChange={(e) => setFilterVoter(e.target.value as any)}
@@ -762,7 +763,7 @@ const SadasyaList = () => {
                                 <option value="all">{t('sadasya.filter_all')}</option>
                                 <option value="voter">{t('sadasya.filter_voters')}</option>
                                 <option value="non-voter">{t('sadasya.filter_non_voters')}</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                     </div>
                 </div>
@@ -1132,19 +1133,17 @@ const SadasyaList = () => {
                                                     value={ageFilter}
                                                     onChange={(e) => setAgeFilter(e.target.value)}
                                                 />
-                                                <select
-                                                    className="ns-input"
-                                                    value={genderFilter}
+                                                <CustomSelect value={genderFilter}
                                                     onChange={(e) => setGenderFilter(e.target.value)}
                                                 >
                                                     <option value="">{t('sadasya.all_genders')}</option>
                                                     <option value="M">Male</option>
                                                     <option value="F">Female</option>
                                                     <option value="O">Other</option>
-                                                </select>
+                                                </CustomSelect>
                                             </div>
 
-                                            <div className="relative" ref={addressWrapperRef}>
+                                            <div className="ns-input relative" ref={addressWrapperRef}>
                                                 <input
                                                     type="text"
                                                     placeholder={t('sadasya.search_address')}
@@ -1272,7 +1271,7 @@ const SadasyaList = () => {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700">{t('sadasya.gender')}</label>
-                                                <select
+                                                <CustomSelect
                                                     className="ns-input mt-1"
                                                     value={manualForm.gender}
                                                     onChange={(e) => setManualForm({ ...manualForm, gender: e.target.value as 'M' | 'F' | 'O' })}
@@ -1281,7 +1280,7 @@ const SadasyaList = () => {
                                                     <option value="M">{t('voter_profile.gender_male')}</option>
                                                     <option value="F">{t('voter_profile.gender_female')}</option>
                                                     <option value="O">{t('voter_profile.gender_other')}</option>
-                                                </select>
+                                                </CustomSelect>
                                             </div>
                                         </div>
                                         <div>

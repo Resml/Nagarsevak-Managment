@@ -27,6 +27,7 @@ import {
 import { useTutorial } from '../../context/TutorialContext';
 import VoterFormTutorial from '../../components/tutorial/VoterFormTutorial';
 import { VoterFormsPdfGenerator } from '../../components/reports/VoterFormsPdfGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const VoterForms: React.FC = () => {
     const { t, language } = useLanguage();
@@ -752,7 +753,7 @@ const VoterForms: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">{t('voter_forms.form_type')}</label>
-                                        <select
+                                        <CustomSelect
                                             className="ns-input w-full"
                                             value={formData.formType}
                                             onChange={(e) => setFormData(prev => ({ ...prev, formType: e.target.value }))}
@@ -762,11 +763,11 @@ const VoterForms: React.FC = () => {
                                                     {getFormTypeLabel(type)}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </CustomSelect>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">{t('voter_forms.status')}</label>
-                                        <select
+                                        <CustomSelect
                                             className="ns-input w-full"
                                             value={formData.status}
                                             onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
@@ -776,7 +777,7 @@ const VoterForms: React.FC = () => {
                                                     {getStatusLabel(status)}
                                                 </option>
                                             ))}
-                                        </select>
+                                        </CustomSelect>
                                     </div>
                                 </div>
 

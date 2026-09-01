@@ -26,6 +26,7 @@ interface ImprovementParam {
 }
 
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const PossibleImprovements = () => {
     const { t, language } = useLanguage();
@@ -612,19 +613,17 @@ const PossibleImprovements = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('improvements.status')}</label>
-                                <select
-                                    className="ns-input"
-                                    value={newImprovement.status}
+                                <CustomSelect value={newImprovement.status}
                                     onChange={e => setNewImprovement({ ...newImprovement, status: e.target.value as any })}
                                 >
                                     <option value="Pending">{t('improvements.status_pending')}</option>
                                     <option value="Planned">{t('improvements.status_planned')}</option>
                                     <option value="In Progress">{t('improvements.status_in_progress')}</option>
                                     <option value="Complete">{t('improvements.status_complete')}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-6 border-t border-slate-100 mt-4">
+                            <div className="ns-input flex justify-end gap-3 pt-6 border-t border-slate-100 mt-4">
                                 <button
                                     type="button"
                                     onClick={() => setShowModal(false)}

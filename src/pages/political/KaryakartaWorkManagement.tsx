@@ -12,6 +12,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { KaryakartaWorkloadPdfGenerator } from '../../components/reports/KaryakartaWorkloadPdfGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 type TeamTab = 'Office' | 'Cooperative' | 'Party';
 
@@ -755,17 +756,15 @@ const KaryakartaWorkManagement = () => {
                                                             </button>
                                                         )}
                                                         {/* Reassign */}
-                                                        <select
-                                                            value={task.assigned_staff_id || ''}
+                                                        <CustomSelect value={task.assigned_staff_id || ''}
                                                             onChange={e => handleAssignTask(task.id, e.target.value)}
-                                                            onClick={e => e.stopPropagation()}
-                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 cursor-pointer hover:border-brand-300 focus:outline-none"
+                                                            onClick={e => e.stopPropagation()} className="ns-input text-[10px] border border-slate-200 rounded-lg px-2 py-1 bg-white text-slate-600 cursor-pointer hover:border-brand-300 focus:outline-none"
                                                         >
                                                             <option value="">{tr('Unassigned', 'न सोपवलेले')}</option>
                                                             {allStaff.map(s => (
                                                                 <option key={s.id} value={s.id}>{s.name}</option>
                                                             ))}
-                                                        </select>
+                                                        </CustomSelect>
                                                     </div>
                                                 </div>
                                             </div>
@@ -885,16 +884,14 @@ const KaryakartaWorkManagement = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <select
-                                                defaultValue=""
-                                                onChange={e => { if (e.target.value) handleAssignTask(task.id, e.target.value); }}
-                                                className="text-xs border border-amber-300 rounded-lg px-2 py-1.5 bg-white text-slate-700 cursor-pointer hover:border-brand-400 focus:outline-none min-w-[140px] font-medium"
+                                            <CustomSelect defaultValue=""
+                                                onChange={e => { if (e.target.value) handleAssignTask(task.id, e.target.value); }} className="ns-input text-xs border border-amber-300 rounded-lg px-2 py-1.5 bg-white text-slate-700 cursor-pointer hover:border-brand-400 focus:outline-none min-w-[140px] font-medium"
                                             >
                                                 <option value="">{tr('— Assign to —', '— सोपवा —')}</option>
                                                 {allStaff.map(s => (
                                                     <option key={s.id} value={s.id}>{s.name} ({s.category})</option>
                                                 ))}
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                     ))}
                                     {unassignedTasks.length > 5 && (
@@ -923,8 +920,7 @@ const KaryakartaWorkManagement = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <select
-                                                defaultValue=""
+                                            <CustomSelect defaultValue=""
                                                 onChange={e => {
                                                     if (e.target.value) {
                                                         supabase
@@ -936,14 +932,13 @@ const KaryakartaWorkManagement = () => {
                                                                 fetchAll();
                                                             });
                                                     }
-                                                }}
-                                                className="text-xs border border-amber-300 rounded-lg px-2 py-1.5 bg-white text-slate-700 cursor-pointer hover:border-brand-400 focus:outline-none min-w-[140px] font-medium"
+                                                }} className="ns-input text-xs border border-amber-300 rounded-lg px-2 py-1.5 bg-white text-slate-700 cursor-pointer hover:border-brand-400 focus:outline-none min-w-[140px] font-medium"
                                             >
                                                 <option value="">{tr('— Assign to —', '— सोपवा —')}</option>
                                                 {allStaff.map(s => (
                                                     <option key={s.id} value={s.id}>{s.name} ({s.category})</option>
                                                 ))}
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                     ))}
                                     {unassignedComplaints.length > 5 && (
@@ -998,17 +993,15 @@ const KaryakartaWorkManagement = () => {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">
                                         {tr('Priority', 'प्राधान्य')}
                                     </label>
-                                    <select
-                                        value={quickTaskForm.priority}
+                                    <CustomSelect value={quickTaskForm.priority}
                                         onChange={e =>
                                             setQuickTaskForm({ ...quickTaskForm, priority: e.target.value as any })
-                                        }
-                                        className="ns-input w-full"
+                                        } className="ns-input w-full"
                                     >
                                         <option value="Low">{tr('Low', 'कमी')}</option>
                                         <option value="Medium">{tr('Medium', 'मध्यम')}</option>
                                         <option value="High">{tr('High', 'उच्च')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">

@@ -10,6 +10,7 @@ import { useTutorial } from '../../context/TutorialContext';
 import GalleryTutorial from '../../components/tutorial/GalleryTutorial';
 import { HelpCircle } from 'lucide-react';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const Gallery = () => {
     const { t, language } = useLanguage();
@@ -321,7 +322,7 @@ const Gallery = () => {
                             <form onSubmit={handleAdd} className="p-6 space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('gallery.category')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.category}
                                         onChange={e => setFormData({ ...formData, category: e.target.value as GalleryCategory })}
@@ -329,7 +330,7 @@ const Gallery = () => {
                                         <option value="Event">{t('gallery.categories.Event')}</option>
                                         <option value="Work">{t('gallery.categories.Work')}</option>
                                         <option value="Award">{t('gallery.categories.Award')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
                                 <div>

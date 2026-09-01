@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { OppositionReportPdfGenerator } from '../../components/reports/OppositionReportPdfGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const OppositionManagement = () => {
     const { t, language } = useLanguage();
@@ -615,23 +616,19 @@ const OppositionManagement = () => {
 
                     {/* Record Type Filter */}
                     <div className="md:col-span-3">
-                        <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="ns-input w-full bg-white shadow-sm"
+                        <CustomSelect value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)} className="ns-input w-full bg-white shadow-sm"
                         >
                             <option value="">{t('opposition.filter_type') || 'All Types'}</option>
                             <option value="worker">{t('opposition.worker') || 'Opposition Worker'}</option>
                             <option value="candidate">{t('opposition.candidate') || 'Opposition Candidate'}</option>
-                        </select>
+                        </CustomSelect>
                     </div>
 
                     {/* Party Filter */}
                     <div className="md:col-span-3">
-                        <select
-                            value={partyFilter}
-                            onChange={(e) => setPartyFilter(e.target.value)}
-                            className="ns-input w-full bg-white shadow-sm"
+                        <CustomSelect value={partyFilter}
+                            onChange={(e) => setPartyFilter(e.target.value)} className="ns-input w-full bg-white shadow-sm"
                         >
                             <option value="">{t('opposition.filter_party') || 'All Opposition Parties'}</option>
                             {getUniqueParties().map((party) => (
@@ -643,7 +640,7 @@ const OppositionManagement = () => {
                             <option value="MNS">MNS</option>
                             <option value="BJP">BJP</option>
                             <option value="Independent">Independent</option>
-                        </select>
+                        </CustomSelect>
                     </div>
 
                     {/* Area Filter */}
@@ -1269,7 +1266,7 @@ const OppositionManagement = () => {
                                         <label className="block text-sm font-semibold text-slate-700 mb-1">
                                             {t('opposition.candidacy_status') || 'Candidacy Status'}
                                         </label>
-                                        <select
+                                        <CustomSelect
                                             className="ns-input bg-white"
                                             value={formState.candidacy_status}
                                             onChange={e => setFormState({ ...formState, candidacy_status: e.target.value })}
@@ -1279,7 +1276,7 @@ const OppositionManagement = () => {
                                             <option value="Withdrawn">{t('opposition.status_withdrawn') || 'Withdrawn'}</option>
                                             <option value="Won">{t('opposition.status_won') || 'Won'}</option>
                                             <option value="Lost">{t('opposition.status_lost') || 'Lost'}</option>
-                                        </select>
+                                        </CustomSelect>
                                     </div>
                                 </div>
                             )}
@@ -1290,7 +1287,7 @@ const OppositionManagement = () => {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">
                                         {t('opposition.belongs_to_candidate') || 'Belongs to Candidate'} <span className="text-xs text-slate-400">({isMr ? 'पर्यायी' : 'Optional'})</span>
                                     </label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input bg-white w-full"
                                         value={formState.candidate_id}
                                         onChange={e => setFormState({ ...formState, candidate_id: e.target.value })}
@@ -1304,7 +1301,7 @@ const OppositionManagement = () => {
                                                 </option>
                                             ))
                                         }
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             )}
 
@@ -1487,11 +1484,9 @@ const OppositionManagement = () => {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">
                                         {t('opposition.select_worker_label') || 'Select Opposition Worker'}
                                     </label>
-                                    <select
-                                        required
+                                    <CustomSelect required
                                         value={selectedWorkerToLink}
-                                        onChange={e => setSelectedWorkerToLink(e.target.value)}
-                                        className="ns-input bg-white w-full"
+                                        onChange={e => setSelectedWorkerToLink(e.target.value)} className="ns-input bg-white w-full"
                                     >
                                         <option value="">{t('opposition.select_worker_placeholder') || 'Choose an unassigned worker...'}</option>
                                         {members
@@ -1502,7 +1497,7 @@ const OppositionManagement = () => {
                                                 </option>
                                             ))
                                         }
-                                    </select>
+                                    </CustomSelect>
                                     {members.filter(m => !m.is_candidate && !m.candidate_id).length === 0 && (
                                         <p className="text-xs text-brand-700 mt-2 font-medium bg-brand-50 p-2 rounded-lg border border-brand-100">
                                             ⚠️ {t('opposition.unassigned_workers_empty') || 'No unassigned workers available. Create a new worker instead!'}
@@ -1683,7 +1678,7 @@ const OppositionManagement = () => {
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                                     {t('opposition.negative_story_severity') || 'Severity / Political Impact'}
                                 </label>
-                                <select
+                                <CustomSelect
                                     className="ns-input bg-white w-full"
                                     value={negativeStoryForm.severity}
                                     onChange={e => setNegativeStoryForm({ ...negativeStoryForm, severity: e.target.value })}
@@ -1691,7 +1686,7 @@ const OppositionManagement = () => {
                                     <option value="High">{t('opposition.severity_high') || 'High Impact (तीव्र)'}</option>
                                     <option value="Medium">{t('opposition.severity_medium') || 'Medium Impact (मध्यम)'}</option>
                                     <option value="Low">{t('opposition.severity_low') || 'Low Impact (सौम्य)'}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">

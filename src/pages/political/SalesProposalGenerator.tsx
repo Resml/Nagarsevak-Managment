@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface FeatureItem {
     id: string;
@@ -393,7 +394,7 @@ const SalesProposalGenerator = () => {
 
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-slate-500">{propLang === 'mr' ? 'पद / पदभार वर्गवारी' : 'Designation Category'}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input bg-slate-50/50 w-full"
                                         value={clientRole}
                                         onChange={e => setClientRole(e.target.value as any)}
@@ -403,7 +404,7 @@ const SalesProposalGenerator = () => {
                                         <option value="khasdar">{propLang === 'mr' ? 'खासदार / MP' : 'Member of Parliament (MP)'}</option>
                                         <option value="minister">{propLang === 'mr' ? 'मंत्री / Cabinet Minister' : 'Cabinet Minister'}</option>
                                         <option value="custom">{propLang === 'mr' ? 'इतर सानुकूल / Custom Role' : 'Custom Designation'}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
                                 {clientRole === 'custom' && (
@@ -557,7 +558,7 @@ const SalesProposalGenerator = () => {
 
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-semibold text-slate-500">{propLang === 'mr' ? 'बिलिंग चक्र (Billing Cycle)' : 'Billing Cycle'}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input bg-slate-50/50 w-full"
                                         value={billingCycle}
                                         onChange={e => setBillingCycle(e.target.value as any)}
@@ -565,7 +566,7 @@ const SalesProposalGenerator = () => {
                                         <option value="monthly">{propLang === 'mr' ? 'मासिक / Monthly' : 'Monthly'}</option>
                                         <option value="quarterly">{propLang === 'mr' ? 'त्रैमासिक / Quarterly' : 'Quarterly'}</option>
                                         <option value="yearly">{propLang === 'mr' ? 'वार्षिक / Yearly' : 'Yearly'}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
                                 {/* Included Features Checklist */}

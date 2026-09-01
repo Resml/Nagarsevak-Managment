@@ -11,6 +11,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { format } from 'date-fns';
 import { type DiaryEntry, type MeetingType, type DiaryStatus } from '../../types';
 import { DiaryReportGenerator } from './DiaryReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const DiaryList = () => {
     const { t, language } = useLanguage();
@@ -292,9 +293,7 @@ const DiaryList = () => {
                     </div>
                     <div className="flex items-center gap-2 tutorial-diary-filter">
                         <Filter className="text-slate-400 w-5 h-5" />
-                        <select
-                            className="ns-input"
-                            value={filterType}
+                        <CustomSelect value={filterType}
                             onChange={(e) => setFilterType(e.target.value as any)}
                         >
                             <option value="All">{t('diary.all_types')}</option>
@@ -303,14 +302,14 @@ const DiaryList = () => {
                             <option value="Ward Committee">{t('diary.type_ward')}</option>
                             <option value="Special GB">{t('diary.type_special_gb')}</option>
                             <option value="Other">{t('diary.type_other')}</option>
-                        </select>
+                        </CustomSelect>
                     </div>
                 </div>
             </div>
 
             {/* List */}
             {viewMode === 'report' ? (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-transparent">
+                <div className="ns-input bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden print:shadow-none print:border-transparent">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
@@ -528,7 +527,7 @@ const DiaryList = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('diary.meeting_type')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.meetingType}
                                         onChange={e => setFormData({ ...formData, meetingType: e.target.value as MeetingType })}
@@ -538,7 +537,7 @@ const DiaryList = () => {
                                         <option value="Ward Committee">{t('diary.type_ward')}</option>
                                         <option value="Special GB">{t('diary.type_special_gb')}</option>
                                         <option value="Other">{t('diary.type_other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 
@@ -612,7 +611,7 @@ const DiaryList = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('diary.status')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={formData.status}
                                         onChange={e => setFormData({ ...formData, status: e.target.value as DiaryStatus })}
@@ -621,7 +620,7 @@ const DiaryList = () => {
                                         <option value="In Discussion">{t('diary.status_discussion')}</option>
                                         <option value="Resolved">{t('diary.status_resolved')}</option>
                                         <option value="Action Taken">{t('diary.status_action')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { HousingSocietiesPdfGenerator } from '../../components/reports/HousingSocietiesPdfGenerator';
 import { HousingSocietyService, type HousingSocietyRecord } from '../../services/housingSocietyService';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 export type HousingSociety = HousingSocietyRecord;
 
@@ -443,27 +444,23 @@ const HousingSocieties = () => {
 
                 <div className="flex flex-wrap gap-2">
                     {/* Area filter */}
-                    <select
-                        value={areaFilter}
-                        onChange={(e) => setAreaFilter(e.target.value)}
-                        className="ns-input py-2 px-3 text-xs font-semibold text-slate-700 w-auto bg-white"
+                    <CustomSelect value={areaFilter}
+                        onChange={(e) => setAreaFilter(e.target.value)} className="ns-input py-2 px-3 text-xs font-semibold text-slate-700 w-auto bg-white"
                     >
                         <option value="all">{isMr ? 'सर्व परिसर' : 'All Areas'}</option>
                         {uniqueAreas.map((area, idx) => (
                             <option key={idx} value={area}>{area}</option>
                         ))}
-                    </select>
+                    </CustomSelect>
 
                     {/* Status filter */}
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="ns-input py-2 px-3 text-xs font-semibold text-slate-700 w-auto bg-white"
+                    <CustomSelect value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)} className="ns-input py-2 px-3 text-xs font-semibold text-slate-700 w-auto bg-white"
                     >
                         <option value="all">{isMr ? 'सर्व स्थिती' : 'All Status'}</option>
                         <option value="Active">{isMr ? 'सक्रिय' : 'Active'}</option>
                         <option value="Inactive">{isMr ? 'निष्क्रिय' : 'Inactive'}</option>
-                    </select>
+                    </CustomSelect>
                 </div>
             </div>
 

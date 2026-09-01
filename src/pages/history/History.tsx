@@ -5,6 +5,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { type Complaint } from '../../types';
 import { Download, Filter } from 'lucide-react';
 import { format } from 'date-fns';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const History = () => {
     const { t } = useLanguage();
@@ -54,16 +55,14 @@ const History = () => {
                         <Filter className="w-4 h-4" />
                         <span>{t('work_history.filter_ward')}</span>
                     </div>
-                    <select
-                        value={filterWard}
-                        onChange={(e) => setFilterWard(e.target.value)}
-                        className="ns-input text-sm py-1.5"
+                    <CustomSelect value={filterWard}
+                        onChange={(e) => setFilterWard(e.target.value)} className="ns-input text-sm py-1.5"
                     >
                         <option value="All">{t('work_history.all_wards')}</option>
                         <option value="12">{t('work_history.ward_12')}</option>
                         <option value="13">{t('work_history.ward_13')}</option>
                         <option value="14">{t('work_history.ward_14')}</option>
-                    </select>
+                    </CustomSelect>
                 </div>
 
                 {/* Table */}

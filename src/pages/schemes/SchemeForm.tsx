@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabaseClient';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const SchemeForm = () => {
     const { t } = useLanguage();
@@ -130,7 +131,7 @@ const SchemeForm = () => {
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">{t('common.report_columns.category') || 'Category'}</label>
-                        <select
+                        <CustomSelect
                             name="category"
                             value={formData.category}
                             onChange={handleChange}
@@ -139,7 +140,7 @@ const SchemeForm = () => {
                             {categories.map(cat => (
                                 <option key={cat.id} value={cat.id}>{cat.label}</option>
                             ))}
-                        </select>
+                        </CustomSelect>
                         <p className="text-xs text-slate-500 mt-1">{t('schemes.form.category_help') || 'Select the target group for this scheme (helps with filtering in the Schemes list).'}</p>
                     </div>
 

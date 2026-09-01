@@ -6,6 +6,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { VoterReportGenerator } from '../../components/reports/VoterReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const PAGE_SIZE = 50;
 
@@ -709,33 +710,29 @@ const VoterList = () => {
                     <div className="relative">
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <select
-                            value={genderFilter}
-                            onChange={(e) => setGenderFilter(e.target.value)}
-                            className="ns-input pl-9 w-full appearance-none bg-white"
+                        <CustomSelect value={genderFilter}
+                            onChange={(e) => setGenderFilter(e.target.value)} className="ns-input pl-9 w-full appearance-none bg-white"
                         >
                             <option value="">{t('voters.all_genders')}</option>
                             <option value="M">{t('voters.gender_male') || 'Male'}</option>
                             <option value="F">{t('voters.gender_female') || 'Female'}</option>
                             <option value="O">{t('voters.gender_other') || 'Other'}</option>
-                        </select>
+                        </CustomSelect>
                     </div>
 
                     {/* Favour Filter */}
                     <div className="relative">
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                        <select
-                            value={favourFilter}
-                            onChange={(e) => setFavourFilter(e.target.value)}
-                            className="ns-input pl-9 w-full appearance-none bg-white font-semibold"
+                        <CustomSelect value={favourFilter}
+                            onChange={(e) => setFavourFilter(e.target.value)} className="ns-input pl-9 w-full appearance-none bg-white font-semibold"
                         >
                             <option value="">{t('voters.favour_label') || "Favour Status"}</option>
                             <option value="Favourable">Favourable (अनुकूल)</option>
                             <option value="Against">Against (प्रतिकूल)</option>
                             <option value="Neutral">Neutral (तटस्थ)</option>
                             <option value="Doubtful">Doubtful (संशयास्पद)</option>
-                        </select>
+                        </CustomSelect>
                     </div>
 
                     {/* Caste Filter with Suggestions */}
@@ -1436,16 +1433,14 @@ const VoterList = () => {
                                             </span>
                                             <div className="relative">
                                                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                <select
-                                                    value={selectedCasteForBulk}
-                                                    onChange={(e) => setSelectedCasteForBulk(e.target.value)}
-                                                    className="ns-input pl-9 py-1.5 pr-8 text-sm focus:ring-brand-500 bg-white"
+                                                <CustomSelect value={selectedCasteForBulk}
+                                                    onChange={(e) => setSelectedCasteForBulk(e.target.value)} className="ns-input pl-9 py-1.5 pr-8 text-sm focus:ring-brand-500 bg-white"
                                                 >
                                                     <option value="">{t('voters.select_caste')}</option>
                                                     {casteSuggestions.map((c, i) => (
                                                         <option key={i} value={c.caste}>{c.caste}</option>
                                                     ))}
-                                                </select>
+                                                </CustomSelect>
                                             </div>
                                             <button
                                                 disabled={!selectedCasteForBulk || isAllocating}
@@ -1660,17 +1655,15 @@ const VoterList = () => {
                                             </span>
                                             <div className="relative">
                                                 <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                                <select
-                                                    value={selectedFavourForBulk}
-                                                    onChange={(e) => setSelectedFavourForBulk(e.target.value)}
-                                                    className="ns-input pl-9 py-1.5 pr-8 text-sm focus:ring-brand-500 bg-white font-semibold"
+                                                <CustomSelect value={selectedFavourForBulk}
+                                                    onChange={(e) => setSelectedFavourForBulk(e.target.value)} className="ns-input pl-9 py-1.5 pr-8 text-sm focus:ring-brand-500 bg-white font-semibold"
                                                 >
                                                     <option value="">{t('voters.select_favour') || 'Select Favour'}</option>
                                                     <option value="Favourable">Favourable (अनुकूल)</option>
                                                     <option value="Against">Against (प्रतिकूल)</option>
                                                     <option value="Neutral">Neutral (तटस्थ)</option>
                                                     <option value="Doubtful">Doubtful (संशयास्पद)</option>
-                                                </select>
+                                                </CustomSelect>
                                             </div>
                                             <button
                                                 disabled={!selectedFavourForBulk || isAllocating}

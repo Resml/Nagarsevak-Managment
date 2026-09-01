@@ -10,6 +10,7 @@ import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useFormDraft } from '../../hooks/useFormDraft';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ComplaintForm = () => {
     const { t, language } = useLanguage();
@@ -488,10 +489,8 @@ const ComplaintForm = () => {
                             {!isWardProblemForm && (
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.type')}</label>
-                                    <select
-                                        value={type}
-                                        onChange={(e) => setType(e.target.value as ComplaintType)}
-                                        className="ns-input"
+                                    <CustomSelect value={type}
+                                        onChange={(e) => setType(e.target.value as ComplaintType)} className="ns-input"
                                     >
                                         <option value="Cleaning">{t('complaints.form.types.cleaning')}</option>
                                         <option value="Water">{t('complaints.form.types.water')}</option>
@@ -500,15 +499,13 @@ const ComplaintForm = () => {
                                         <option value="StreetLight">{t('complaints.form.types.streetlight')}</option>
                                         <option value="SelfIdentified">{t('complaints.form.types.self_identified')}</option>
                                         <option value="Other">{t('complaints.form.types.other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.ward')}</label>
-                                <select
-                                    value={ward}
-                                    onChange={(e) => setWard(e.target.value)}
-                                    className="ns-input"
+                                <CustomSelect value={ward}
+                                    onChange={(e) => setWard(e.target.value)} className="ns-input"
                                 >
                                     <option value="Sector 5">Sector 5</option>
                                     <option value="Sector 6">Sector 6</option>
@@ -519,7 +516,7 @@ const ComplaintForm = () => {
                                     <option value="Sector 14">Sector 14</option>
                                     <option value="Sector 15">Sector 15</option>
                                     <option value="Out of Ward">Out of Ward</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.area')}</label>
@@ -555,21 +552,19 @@ const ComplaintForm = () => {
                             />
                                 <div className="mt-4">
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Added By (Staff)</label>
-                                    <select
-                                        className="ns-input"
-                                        value={addedByStaffId}
+                                    <CustomSelect value={addedByStaffId}
                                         onChange={e => setAddedByStaffId(e.target.value)}
                                     >
                                         <option value="">Select Staff (Optional)</option>
                                         {staffList.map(s => (
                                             <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
                                         ))}
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">{t('complaints.form.photos')}</label>
+                            <label className="ns-input block text-sm font-medium text-slate-700 mb-2">{t('complaints.form.photos')}</label>
                             <div className="flex flex-wrap gap-4">
                                 {photos.map((photo, index) => (
                                     <div key={index} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200">
@@ -664,19 +659,17 @@ const ComplaintForm = () => {
                                     value={ageFilter}
                                     onChange={(e) => setAgeFilter(e.target.value)}
                                 />
-                                <select
-                                    className="ns-input"
-                                    value={genderFilter}
+                                <CustomSelect value={genderFilter}
                                     onChange={(e) => setGenderFilter(e.target.value)}
                                 >
                                     <option value="">{t('sadasya.all_genders') || "All Genders"}</option>
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
                                     <option value="O">Other</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                             <div>
-                                <div className="relative" ref={addressWrapperRef}>
+                                <div className="ns-input relative" ref={addressWrapperRef}>
                                     <input
                                         type="text"
                                         placeholder={t('sadasya.search_address') || "Search Address"}

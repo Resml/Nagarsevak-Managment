@@ -10,6 +10,7 @@ import WardBudgetTutorial from '../../components/tutorial/WardBudgetTutorial';
 import { HelpCircle, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { BudgetReportGenerator } from './BudgetReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const BudgetDashboard = () => {
     const { t, language } = useLanguage();
@@ -186,15 +187,15 @@ const BudgetDashboard = () => {
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-budget-year">
                             <Calendar className="w-4 h-4 text-slate-400 ml-1" />
-                            <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700"
+                            <CustomSelect
+                                className="ns-input bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
                             >
                                 <option value="2024-2025">FY 2024-2025</option>
                                 <option value="2023-2024">FY 2023-2024</option>
                                 <option value="2022-2023">FY 2022-2023</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                         <button
                             onClick={() => setShowReport(true)}
@@ -406,7 +407,7 @@ const BudgetDashboard = () => {
                         <form onSubmit={handleAdd} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700">{t('budget.financial_year')}</label>
-                                <select
+                                <CustomSelect
                                     className="ns-input mt-1"
                                     value={formData.financialYear}
                                     onChange={e => setFormData({ ...formData, financialYear: e.target.value })}
@@ -414,7 +415,7 @@ const BudgetDashboard = () => {
                                     <option value="2024-2025">2024-2025</option>
                                     <option value="2023-2024">2023-2024</option>
                                     <option value="2022-2023">2022-2023</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
                             <div>

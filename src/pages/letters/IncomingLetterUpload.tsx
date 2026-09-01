@@ -6,6 +6,7 @@ import { SecureStorageService } from '../../services/secureStorageService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import type { Voter } from '../../types';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface IncomingLetterUploadProps {
     onClose: () => void;
@@ -605,19 +606,17 @@ const IncomingLetterUpload = ({ onClose, onSuccess, initialData }: IncomingLette
                                     value={ageFilter}
                                     onChange={(e) => setAgeFilter(e.target.value)}
                                 />
-                                <select
-                                    className="ns-input"
-                                    value={genderFilter}
+                                <CustomSelect value={genderFilter}
                                     onChange={(e) => setGenderFilter(e.target.value)}
                                 >
                                     <option value="">{t('sadasya.all_genders') || "All Genders"}</option>
                                     <option value="M">Male</option>
                                     <option value="F">Female</option>
                                     <option value="O">Other</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                             <div>
-                                <div className="relative" ref={addressWrapperRef}>
+                                <div className="ns-input relative" ref={addressWrapperRef}>
                                     <input
                                         type="text"
                                         placeholder={t('sadasya.search_address') || "Search Address"}

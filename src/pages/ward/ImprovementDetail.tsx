@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { supabase } from '../../services/supabaseClient';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ImprovementDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -418,7 +419,7 @@ const ImprovementDetail = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.status')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input w-full"
                                         value={editForm.status}
                                         onChange={e => setEditForm({ ...editForm, status: e.target.value })}
@@ -427,7 +428,7 @@ const ImprovementDetail = () => {
                                         <option value="Planned">{t('improvements.status_planned')}</option>
                                         <option value="In Progress">{t('improvements.status_in_progress')}</option>
                                         <option value="Complete">{t('improvements.status_complete')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

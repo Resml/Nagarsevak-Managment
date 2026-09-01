@@ -11,6 +11,7 @@ import WardProvisionsTutorial from '../../components/tutorial/WardProvisionsTuto
 import { HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { WardProvisionReportGenerator } from './WardProvisionReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const WardProvisions = () => {
     const { t, language } = useLanguage();
@@ -170,14 +171,14 @@ const WardProvisions = () => {
                     <div className="flex items-center gap-3 w-full sm:w-auto">
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 flex-1 sm:flex-none justify-center tutorial-provision-year">
                             <Calendar className="w-4 h-4 text-slate-400 ml-1" />
-                            <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 w-full sm:w-auto"
+                            <CustomSelect
+                                className="ns-input bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 w-full sm:w-auto"
                                 value={year}
                                 onChange={(e) => setYear(e.target.value)}
                             >
                                 <option value="2024-2025">FY 2024-2025</option>
                                 <option value="2023-2024">FY 2023-2024</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                         <button
                             onClick={() => setShowReport(true)}
@@ -412,17 +413,15 @@ const WardProvisions = () => {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.form_year')}</label>
-                                    <select
-                                        className="ns-input"
-                                        value={formData.financialYear}
+                                    <CustomSelect value={formData.financialYear}
                                         onChange={e => setFormData({ ...formData, financialYear: e.target.value })}
                                     >
                                         <option value="2024-2025">2024-2025</option>
                                         <option value="2023-2024">2023-2024</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
 
-                                <div className="col-span-2">
+                                <div className="ns-input col-span-2">
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.form_letter_ref')}</label>
                                     <input
                                         required type="text"

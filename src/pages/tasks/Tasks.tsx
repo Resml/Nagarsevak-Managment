@@ -11,6 +11,7 @@ import { useTenant } from '../../context/TenantContext';
 import { useTutorial } from '../../context/TutorialContext';
 import { TaskTutorial } from '../../components/tutorial/TaskTutorial';
 import { TaskReportGenerator } from '../../components/reports/TaskReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const Tasks = () => {
     const { t, language } = useLanguage();
@@ -547,15 +548,13 @@ const Tasks = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.priority')}</label>
-                                    <select
-                                        value={newTask.priority}
-                                        onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}
-                                        className="ns-input"
+                                    <CustomSelect value={newTask.priority}
+                                        onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })} className="ns-input"
                                     >
                                         <option value="Low">{t('tasks.priority_low')}</option>
                                         <option value="Medium">{t('tasks.priority_medium')}</option>
                                         <option value="High">{t('tasks.priority_high')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.due_date')}</label>
@@ -615,10 +614,8 @@ const Tasks = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.assign_staff')}</label>
-                                <select
-                                    value={newTask.assigned_staff_id}
-                                    onChange={e => setNewTask({ ...newTask, assigned_staff_id: e.target.value })}
-                                    className="ns-input"
+                                <CustomSelect value={newTask.assigned_staff_id}
+                                    onChange={e => setNewTask({ ...newTask, assigned_staff_id: e.target.value })} className="ns-input"
                                 >
                                     <option value="">{t('tasks.select_staff')}</option>
                                     {staffList.map(staff => (
@@ -626,7 +623,7 @@ const Tasks = () => {
                                             {staff.name} ({staff.role})
                                         </option>
                                     ))}
-                                </select>
+                                </CustomSelect>
                             </div>
 
                             <div>

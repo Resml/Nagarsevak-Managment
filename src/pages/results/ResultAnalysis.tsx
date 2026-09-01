@@ -9,6 +9,7 @@ import ResultTutorial from '../../components/tutorial/ResultTutorial';
 import { HelpCircle } from 'lucide-react';
 import { ResultAnalysisPdfGenerator } from '../../components/reports/ResultAnalysisPdfGenerator';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ResultAnalysis = () => {
     const { t, language } = useLanguage();
@@ -117,28 +118,28 @@ const ResultAnalysis = () => {
                         </button>
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-result-ward">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('voters.ward')}:</span>
-                            <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 min-w-[140px]"
+                            <CustomSelect
+                                className="ns-input bg-transparent border-none focus:ring-0 text-sm font-semibold text-slate-700 min-w-[140px]"
                                 value={ward}
                                 onChange={(e) => setWard(e.target.value)}
                             >
                                 {availableWards.map(w => (
                                     <option key={w} value={w}>{w}</option>
                                 ))}
-                            </select>
+                            </CustomSelect>
                         </div>
 
                         <div className="flex items-center gap-2 bg-white p-2 rounded-xl border border-slate-200 tutorial-result-candidate">
                             <span className="text-sm font-medium text-slate-500 ml-1">{t('election.analyze_for')}</span>
-                            <select
-                                className="bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 min-w-[200px]"
+                            <CustomSelect
+                                className="ns-input bg-transparent border-none focus:ring-0 text-sm font-semibold text-brand-700 min-w-[200px]"
                                 value={selectedCandidate}
                                 onChange={(e) => setSelectedCandidate(e.target.value)}
                             >
                                 {availableCandidates.map(c => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
-                            </select>
+                            </CustomSelect>
                         </div>
                     </div>
                 </div>

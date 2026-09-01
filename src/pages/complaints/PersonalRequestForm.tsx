@@ -6,6 +6,7 @@ import { type ComplaintType, type Voter } from '../../types';
 import { ArrowLeft, X, Search, User, Phone, Check, Loader2, PlusCircle, HelpCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const PersonalRequestForm = () => {
     const { t, language } = useLanguage();
@@ -262,17 +263,15 @@ const PersonalRequestForm = () => {
                         <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.type')}</label>
-                                <select
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value as ComplaintType)}
-                                    className="ns-input"
+                                <CustomSelect value={type}
+                                    onChange={(e) => setType(e.target.value as ComplaintType)} className="ns-input"
                                 >
                                     <option value="Admission">{t('complaints.form.types.admission')}</option>
                                     <option value="Medical">{t('complaints.form.types.medical')}</option>
                                     <option value="Financial">{t('complaints.form.types.financial')}</option>
                                     <option value="Help">{t('complaints.form.types.help')}</option>
                                     <option value="Personal Help">{t('complaints.form.types.personal_help')}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
                         </div>
 

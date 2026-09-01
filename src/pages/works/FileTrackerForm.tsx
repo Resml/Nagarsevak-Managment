@@ -4,6 +4,7 @@ import { ChevronLeft, Save, Loader2, FileText, Building2, Hash, BookOpen } from 
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const FileTrackerForm = () => {
     const { t } = useLanguage();
@@ -199,9 +200,7 @@ const FileTrackerForm = () => {
                             <label className="text-sm font-bold text-slate-700">
                                 {t('common.status')}
                             </label>
-                            <select
-                                className="ns-input"
-                                value={formData.current_status}
+                            <CustomSelect value={formData.current_status}
                                 onChange={(e) => setFormData({ ...formData, current_status: e.target.value })}
                             >
                                 <option value="Pending">{t('file_tracking.status.pending')}</option>
@@ -210,11 +209,11 @@ const FileTrackerForm = () => {
                                 <option value="Completed">{t('file_tracking.status.completed')}</option>
                                 <option value="Delayed">{t('file_tracking.status.delayed')}</option>
                                 <option value="Rejected">{t('file_tracking.status.rejected')}</option>
-                            </select>
+                            </CustomSelect>
                         </div>
 
                         {/* Description */}
-                        <div className="space-y-1.5">
+                        <div className="ns-input space-y-1.5">
                             <label className="text-sm font-bold text-slate-700">
                                 {t('file_tracking.form.description')}
                             </label>

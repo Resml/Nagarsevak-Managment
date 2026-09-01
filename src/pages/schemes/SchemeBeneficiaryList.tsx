@@ -7,6 +7,7 @@ import { useTenant } from '../../context/TenantContext';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { SchemeReportGenerator } from '../../components/reports/SchemeReportGenerator';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface SchemeApplication {
     id: number;
@@ -350,15 +351,13 @@ const SchemeBeneficiaryList = () => {
                         <div className="flex-1 overflow-y-auto bg-slate-50 p-5 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.beneficiary_list.status_col') || 'Status'}</label>
-                                <select
-                                    value={editStatus}
-                                    onChange={e => setEditStatus(e.target.value as any)}
-                                    className="ns-input"
+                                <CustomSelect value={editStatus}
+                                    onChange={e => setEditStatus(e.target.value as any)} className="ns-input"
                                 >
                                     <option value="Pending">{t('schemes.beneficiary_list.pending') || 'Pending'}</option>
                                     <option value="Approved">{t('schemes.beneficiary_list.approved') || 'Approved'}</option>
                                     <option value="Rejected">{t('schemes.beneficiary_list.rejected') || 'Rejected'}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
                             <div>

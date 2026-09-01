@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface FamilyMember {
     id: string;
@@ -665,7 +666,7 @@ const VoterProfile = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('voter_profile.gender')}</label>
-                                    <select
+                                    <CustomSelect
                                         className="ns-input mt-1"
                                         value={editForm.gender}
                                         onChange={e => setEditForm({ ...editForm, gender: e.target.value })}
@@ -673,7 +674,7 @@ const VoterProfile = () => {
                                         <option value="M">{t('voter_profile.male')}</option>
                                         <option value="F">{t('voter_profile.female')}</option>
                                         <option value="O">{t('voter_profile.other')}</option>
-                                    </select>
+                                    </CustomSelect>
                                 </div>
                             </div>
 

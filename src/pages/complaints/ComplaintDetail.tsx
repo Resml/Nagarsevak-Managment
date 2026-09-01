@@ -13,6 +13,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { translateText } from '../../services/translationService';
 import { TranslatedText } from '../../components/TranslatedText';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 const ComplaintDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -552,8 +553,7 @@ const ComplaintDetail = () => {
                                     <div className="pt-4 border-t border-slate-200/70">
                                         <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">{t('complaints.form.detail.assign_staff')}</label>
                                         <div className="flex space-x-2">
-                                            <select
-                                                value={assignee}
+                                            <CustomSelect value={assignee}
                                                 onChange={async (e) => {
                                                     const newAssignee = e.target.value;
                                                     setAssignee(newAssignee);
@@ -615,12 +615,11 @@ const ComplaintDetail = () => {
                                                             toast.error(`Failed to assign staff: ${error.message}`);
                                                         }
                                                     }
-                                                }}
-                                                className="ns-input"
+                                                }} className="ns-input"
                                             >
                                                 <option value="">{t('complaints.form.detail.select_staff')}</option>
                                                 {staffList.map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
-                                            </select>
+                                            </CustomSelect>
                                         </div>
                                     </div>
                                 )}
@@ -741,19 +740,17 @@ const ComplaintDetail = () => {
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
                                     {t('complaints.form.detail.edit_category_label')}
                                 </label>
-                                <select
-                                    className="ns-input"
-                                    value={editForm.category}
+                                <CustomSelect value={editForm.category}
                                     onChange={e => setEditForm({ ...editForm, category: e.target.value })}
                                 >
                                     <option value="Complaint">{t('complaints.form.types.complaint')}</option>
                                     <option value="Help">{t('complaints.form.types.help')}</option>
                                     <option value="Suggestion">{t('complaints.form.types.suggestion')}</option>
                                     <option value="Other">{t('complaints.form.types.other')}</option>
-                                </select>
+                                </CustomSelect>
                             </div>
 
-                            <div className="flex gap-3 pt-4">
+                            <div className="ns-input flex gap-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setIsEditModalOpen(false)}

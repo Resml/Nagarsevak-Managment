@@ -8,6 +8,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import SocialTutorial from '../../components/tutorial/SocialTutorial';
 import { HelpCircle } from 'lucide-react';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 // Mock Data for demonstration
 const MOCK_POSTS = [
@@ -193,7 +194,7 @@ const SocialDashboard = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <select
+                            <CustomSelect
                                 className="ns-input py-1.5 text-sm w-32"
                                 value={platformFilter}
                                 onChange={(e) => setPlatformFilter(e.target.value as any)}
@@ -201,7 +202,7 @@ const SocialDashboard = () => {
                                 <option value="All">{t('social.all_platforms')}</option>
                                 <option value="Facebook">Facebook</option>
                                 <option value="Instagram">Instagram</option>
-                            </select>
+                            </CustomSelect>
                         </div>
                     </div>
 

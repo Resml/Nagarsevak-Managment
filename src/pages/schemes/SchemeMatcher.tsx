@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { X, Sparkles, CheckCircle } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
+import { CustomSelect } from '../../components/common/CustomSelect';
 
 interface SchemeMatcherProps {
     schemes: any[];
@@ -63,15 +64,13 @@ const SchemeMatcher: React.FC<SchemeMatcherProps> = ({ schemes, onClose, onMatch
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">{t('schemes.gender')}</label>
-                        <select
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
-                            className="ns-input"
+                        <CustomSelect value={gender}
+                            onChange={(e) => setGender(e.target.value)} className="ns-input"
                         >
                             <option>{t('schemes.gender_male')}</option>
                             <option>{t('schemes.gender_female')}</option>
                             <option>{t('schemes.gender_other')}</option>
-                        </select>
+                        </CustomSelect>
                     </div>
 
                     <div>
