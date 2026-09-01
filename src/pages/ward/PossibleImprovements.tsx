@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -592,12 +593,10 @@ const PossibleImprovements = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('improvements.completion_date_label')}</label>
-                                    <input
-                                        type="date"
+                                    <CustomDatePicker type="date"
                                         className="ns-input"
                                         value={newImprovement.completion_date}
-                                        onChange={e => setNewImprovement({ ...newImprovement, completion_date: e.target.value })}
-                                    />
+                                        onChange={e => setNewImprovement({ ...newImprovement, completion_date: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('improvements.people_benefited')}</label>

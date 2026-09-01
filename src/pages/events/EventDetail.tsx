@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
@@ -569,23 +571,19 @@ const EventDetail = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.date')}</label>
-                                    <input
-                                        type="date"
+                                    <CustomDatePicker type="date"
                                         className="ns-input w-full"
                                         value={editForm.event_date}
                                         onChange={e => setEditForm({ ...editForm, event_date: e.target.value })}
-                                        required
-                                    />
+                                        required />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.time')}</label>
-                                    <input
-                                        type="time"
+                                    <CustomTimePicker type="time"
                                         className="ns-input w-full"
                                         value={editForm.event_time}
                                         onChange={e => setEditForm({ ...editForm, event_time: e.target.value })}
-                                        required
-                                    />
+                                        required />
                                 </div>
                             </div>
                             <div>

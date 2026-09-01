@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
@@ -830,11 +832,11 @@ const EventManagement = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.date')}</label>
-                                    <input type="date" required className="ns-input w-full" value={newEvent.event_date} onChange={e => setNewEvent({ ...newEvent, event_date: e.target.value })} />
+                                    <CustomDatePicker type="date" required className="ns-input w-full" value={newEvent.event_date} onChange={e => setNewEvent({ ...newEvent, event_date: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('events.time')}</label>
-                                    <input type="time" required className="ns-input w-full" value={newEvent.event_time} onChange={e => setNewEvent({ ...newEvent, event_time: e.target.value })} />
+                                    <CustomTimePicker type="time" required className="ns-input w-full" value={newEvent.event_time} onChange={e => setNewEvent({ ...newEvent, event_time: e.target.value })} />
                                 </div>
                             </div>
 

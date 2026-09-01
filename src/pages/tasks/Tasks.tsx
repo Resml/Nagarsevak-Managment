@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
@@ -558,24 +560,20 @@ const Tasks = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.due_date')}</label>
-                                    <input
-                                        type="date"
+                                    <CustomDatePicker type="date"
                                         value={newTask.due_date}
                                         onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
-                                        className="ns-input"
-                                    />
+                                        className="ns-input" />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.due_time')}</label>
-                                    <input
-                                        type="time"
+                                    <CustomTimePicker type="time"
                                         value={newTask.due_time}
                                         onChange={e => setNewTask({ ...newTask, due_time: e.target.value })}
-                                        className="ns-input"
-                                    />
+                                        className="ns-input" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('tasks.address')}</label>

@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect } from 'react';
 import { IndianRupee, Plus, Edit2, Save, X, Calendar, Search, ArrowLeft, FileText, CheckCircle2, Clock, XCircle, Trash2, AlertCircle, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -381,12 +382,10 @@ const WardProvisions = () => {
 
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.col_date')}</label>
-                                    <input
-                                        required type="date"
+                                    <CustomDatePicker required type="date"
                                         className="ns-input"
                                         value={formData.requestedDate}
-                                        onChange={e => setFormData({ ...formData, requestedDate: e.target.value })}
-                                    />
+                                        onChange={e => setFormData({ ...formData, requestedDate: e.target.value })} />
                                 </div>
 
                                 <div>
@@ -501,12 +500,10 @@ const WardProvisions = () => {
 
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">{t('ward_provision.sanctioned_date')}</label>
-                                <input
-                                    required type="date"
+                                <CustomDatePicker required type="date"
                                     className="ns-input"
                                     value={updateData.sanctionedDate}
-                                    onChange={e => setUpdateData({ ...updateData, sanctionedDate: e.target.value })}
-                                />
+                                    onChange={e => setUpdateData({ ...updateData, sanctionedDate: e.target.value })} />
                             </div>
 
                             <div>

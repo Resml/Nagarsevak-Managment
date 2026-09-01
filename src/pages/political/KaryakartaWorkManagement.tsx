@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
@@ -1007,14 +1008,12 @@ const KaryakartaWorkManagement = () => {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">
                                         {tr('Due Date', 'देय तारीख')}
                                     </label>
-                                    <input
-                                        type="date"
+                                    <CustomDatePicker type="date"
                                         value={quickTaskForm.due_date}
                                         onChange={e =>
                                             setQuickTaskForm({ ...quickTaskForm, due_date: e.target.value })
                                         }
-                                        className="ns-input w-full"
-                                    />
+                                        className="ns-input w-full" />
                                 </div>
                             </div>
 

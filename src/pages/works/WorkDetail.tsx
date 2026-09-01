@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
@@ -507,12 +508,10 @@ const WorkDetail = () => {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.completion_date_label')}</label>
-                                        <input
-                                            type="date"
+                                        <CustomDatePicker type="date"
                                             className="ns-input w-full"
                                             value={editForm.completion_date}
-                                            onChange={e => setEditForm({ ...editForm, completion_date: e.target.value })}
-                                        />
+                                            onChange={e => setEditForm({ ...editForm, completion_date: e.target.value })} />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">{t('work_history.people_benefited')}</label>

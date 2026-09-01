@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Plus, Newspaper, Trash2, X, Upload, Search, Edit2, LayoutGrid, FileText, Printer } from 'lucide-react';
@@ -234,12 +235,10 @@ const NewspaperClipping = () => {
                     />
                 </div>
                 <div className="w-full sm:w-48">
-                    <input
-                        type="date"
+                    <CustomDatePicker type="date"
                         className="ns-input text-slate-700"
                         value={filterDate}
-                        onChange={(e) => setFilterDate(e.target.value)}
-                    />
+                        onChange={(e) => setFilterDate(e.target.value)} />
                 </div>
                 {filterDate && (
                     <button
@@ -453,12 +452,10 @@ const NewspaperClipping = () => {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700">{t('gallery.date')}</label>
-                                        <input
-                                            type="date" required
+                                        <CustomDatePicker type="date" required
                                             className="ns-input mt-1"
                                             value={formData.date}
-                                            onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                        />
+                                            onChange={e => setFormData({ ...formData, date: e.target.value })} />
                                     </div>
                                 </div>
 

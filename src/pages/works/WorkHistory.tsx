@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -674,12 +675,10 @@ const WorkHistory = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700">{t('work_history.completion_date')}</label>
-                                            <input
-                                                type="date"
+                                            <CustomDatePicker type="date"
                                                 className="ns-input mt-1"
                                                 value={newWork.completion_date}
-                                                onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })}
-                                            />
+                                                onChange={e => setNewWork({ ...newWork, completion_date: e.target.value })} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700">{t('work_history.people_benefited')}</label>

@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Video, Plus, X, Copy, Check, Send, Users, Calendar, Clock,
@@ -326,11 +328,11 @@ const CreateMeetingModal = ({ onClose, onCreated, tenantId }: CreateMeetingModal
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('communication_page.conf_schedule_date')} *</label>
-                                    <input type="date" value={date} onChange={e => setDate(e.target.value)} className="ns-input w-full" min={new Date().toISOString().split('T')[0]} />
+                                    <CustomDatePicker type="date" value={date} onChange={e => setDate(e.target.value)} className="ns-input w-full" min={new Date().toISOString().split('T')[0]} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">{t('communication_page.conf_schedule_time')} *</label>
-                                    <input type="time" value={time} onChange={e => setTime(e.target.value)} className="ns-input w-full" />
+                                    <CustomTimePicker type="time" value={time} onChange={e => setTime(e.target.value)} className="ns-input w-full" />
                                 </div>
                             </div>
                             <div>

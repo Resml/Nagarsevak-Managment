@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
@@ -1102,23 +1104,19 @@ const StaffList = () => {
                                         </div>
                                         <div>
                                             <label className="ns-input block text-sm font-semibold text-slate-700 mb-1">{tr("Due Date", "मुदत तारीख")}</label>
-                                            <input
-                                                type="date"
+                                            <CustomDatePicker type="date"
                                                 className="ns-input"
                                                 value={quickTaskForm.due_date}
-                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_date: e.target.value })}
-                                            />
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_date: e.target.value })} />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Due Time", "मुदत वेळ")}</label>
-                                            <input
-                                                type="time"
+                                            <CustomTimePicker type="time"
                                                 className="ns-input"
                                                 value={quickTaskForm.due_time}
-                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_time: e.target.value })}
-                                            />
+                                                onChange={e => setQuickTaskForm({ ...quickTaskForm, due_time: e.target.value })} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-semibold text-slate-700 mb-1">{tr("Address / Office", "पत्ता / ठिकाण")}</label>

@@ -1,3 +1,5 @@
+import { CustomTimePicker } from '../../components/common/CustomTimePicker';
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '../../services/supabaseClient';
@@ -465,21 +467,17 @@ const VisitorLog = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700">{t('office.event_date')}</label>
-                                            <input
-                                                type="date"
+                                            <CustomDatePicker type="date"
                                                 className="ns-input mt-1"
                                                 value={formData.eventDate}
-                                                onChange={e => setFormData({ ...formData, eventDate: e.target.value })}
-                                            />
+                                                onChange={e => setFormData({ ...formData, eventDate: e.target.value })} />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700">{t('office.event_time')}</label>
-                                            <input
-                                                type="time"
+                                            <CustomTimePicker type="time"
                                                 className="ns-input mt-1"
                                                 value={formData.eventTime}
-                                                onChange={e => setFormData({ ...formData, eventTime: e.target.value })}
-                                            />
+                                                onChange={e => setFormData({ ...formData, eventTime: e.target.value })} />
                                         </div>
                                     </div>
                                 )}

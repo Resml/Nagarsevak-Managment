@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabaseClient';
 import { useLanguage } from '../../context/LanguageContext';
@@ -1367,12 +1368,10 @@ const OppositionManagement = () => {
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                                     {isMr ? 'उपक्रमाची तारीख' : 'Activity Date'}
                                 </label>
-                                <input
-                                    type="date" required
+                                <CustomDatePicker type="date" required
                                     className="ns-input"
                                     value={activityForm.date}
-                                    onChange={e => setActivityForm({ ...activityForm, date: e.target.value })}
-                                />
+                                    onChange={e => setActivityForm({ ...activityForm, date: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">
@@ -1655,12 +1654,10 @@ const OppositionManagement = () => {
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">
                                     {t('opposition.negative_story_date') || 'Incident Date'}
                                 </label>
-                                <input
-                                    type="date" required
+                                <CustomDatePicker type="date" required
                                     className="ns-input"
                                     value={negativeStoryForm.date}
-                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, date: e.target.value })}
-                                />
+                                    onChange={e => setNegativeStoryForm({ ...negativeStoryForm, date: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">

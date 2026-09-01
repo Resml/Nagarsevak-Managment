@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Plus, Search, Filter, Calendar, BookOpen, Edit2, Trash2, X, Save, ChevronRight, CheckCircle, Wand2, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
@@ -518,12 +519,10 @@ const DiaryList = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('diary.meeting_date')}</label>
-                                    <input
-                                        type="date" required
+                                    <CustomDatePicker type="date" required
                                         className="ns-input mt-1"
                                         value={formData.meetingDate}
-                                        onChange={e => setFormData({ ...formData, meetingDate: e.target.value })}
-                                    />
+                                        onChange={e => setFormData({ ...formData, meetingDate: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700">{t('diary.meeting_type')}</label>

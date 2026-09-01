@@ -1,3 +1,4 @@
+import { CustomDatePicker } from '../../components/common/CustomDatePicker';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { type Voter, type Complaint, type ComplaintStatus } from '../../types';
@@ -636,12 +637,10 @@ const VoterProfile = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('voter_profile.dob')}</label>
-                                    <input
-                                        type="date"
+                                    <CustomDatePicker type="date"
                                         className="ns-input mt-1"
                                         value={editForm.dob}
-                                        onChange={e => setEditForm({ ...editForm, dob: e.target.value })}
-                                    />
+                                        onChange={e => setEditForm({ ...editForm, dob: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">{t('voter_profile.profession')}</label>
