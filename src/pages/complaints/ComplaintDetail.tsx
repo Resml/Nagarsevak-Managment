@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { type Complaint } from '../../types';
 import { type Staff } from '../../types/staff';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save, Download, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save, Download, ChevronRight, Image as ImageIcon, Music, File } from 'lucide-react';
 import { SecureStorageService } from '../../services/secureStorageService';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -84,6 +84,16 @@ const ComplaintDetail = () => {
                 if (error) throw error;
 
                 if (data) {
+                    let resolvedAttachments: { url: string; type: string; name: string; size: number }[] = [];
+                    if (data.attachments && Array.isArray(data.attachments)) {
+                        resolvedAttachments = await Promise.all(
+                            data.attachments.map(async (att: any) => ({
+                                ...att,
+                                url: await SecureStorageService.getUrl('documents', att.url)
+                            }))
+                        );
+                    }
+
                     const mapped: Complaint = {
                         id: `pr-${data.id}`,
                         title: data.request_type || 'Personal Request',
@@ -98,7 +108,8 @@ const ComplaintDetail = () => {
                         },
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
-                        photos: []
+                        photos: [],
+                        attachments: resolvedAttachments
                     };
                     setComplaint(mapped);
                     // Initialize edit form
@@ -118,6 +129,16 @@ const ComplaintDetail = () => {
                 if (error) throw error;
 
                 if (data) {
+                    let resolvedAttachments: { url: string; type: string; name: string; size: number }[] = [];
+                    if (data.attachments && Array.isArray(data.attachments)) {
+                        resolvedAttachments = await Promise.all(
+                            data.attachments.map(async (att: any) => ({
+                                ...att,
+                                url: await SecureStorageService.getUrl('documents', att.url)
+                            }))
+                        );
+                    }
+
                     const mapped: Complaint = {
                         id: `ap-${data.id}`,
                         title: data.title || 'Area Problem',
@@ -132,7 +153,8 @@ const ComplaintDetail = () => {
                         },
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
-                        photos: []
+                        photos: [],
+                        attachments: resolvedAttachments
                     };
                     setComplaint(mapped);
                     setEditForm({
@@ -170,6 +192,17 @@ const ComplaintDetail = () => {
 
                 if (data) {
                     const secureImageUrl = data.image_url ? await SecureStorageService.getUrl('documents', data.image_url) : undefined;
+                    
+                    let resolvedAttachments: { url: string; type: string; name: string; size: number }[] = [];
+                    if (data.attachments && Array.isArray(data.attachments)) {
+                        resolvedAttachments = await Promise.all(
+                            data.attachments.map(async (att: any) => ({
+                                ...att,
+                                url: await SecureStorageService.getUrl('documents', att.url)
+                            }))
+                        );
+                    }
+
                     const mapped: Complaint = {
                         id: data.id.toString(),
                         title: data.problem || 'Request',
@@ -202,6 +235,7 @@ const ComplaintDetail = () => {
                         updatedAt: data.created_at,
                         photos: secureImageUrl ? [secureImageUrl] : [], // Map image_url to photos array as fallback
                         imageUrl: secureImageUrl,
+                        attachments: resolvedAttachments,
                         videoUrl: data.video_url,
                         audioUrl: data.audio_url,
                         voterId: data.voter_id,
@@ -464,11 +498,63 @@ const ComplaintDetail = () => {
 
                         {/* Media Section */}
                         <div className="space-y-4 notranslate">
-                            {/* Image */}
-                            {complaint.imageUrl && (
+                            {/* New Multi-Media Attachments Array */}
+                            {complaint.attachments && complaint.attachments.length > 0 && (
+                                <div>
+                                    <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                                        <FileText className="w-4 h-4" /> Attachments
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {complaint.attachments.map((att, idx) => {
+                                            const isImage = att.type.startsWith('image/');
+                                            const isVideo = att.type.startsWith('video/');
+                                            const isAudio = att.type.startsWith('audio/');
+                                            
+                                            return (
+                                                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                                    {isImage ? (
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="block">
+                                                            <img src={att.url} alt={att.name} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
+                                                        </a>
+                                                    ) : isVideo ? (
+                                                        <video controls className="w-full h-48 bg-black">
+                                                            <source src={att.url} type={att.type} />
+                                                        </video>
+                                                    ) : isAudio ? (
+                                                        <div className="p-4 flex flex-col items-center justify-center h-48 bg-slate-100">
+                                                            <Music className="w-8 h-8 text-slate-400 mb-3" />
+                                                            <audio controls className="w-full">
+                                                                <source src={att.url} type={att.type} />
+                                                            </audio>
+                                                        </div>
+                                                    ) : (
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="p-4 flex items-center justify-between h-full bg-white hover:bg-slate-50 transition-colors cursor-pointer group">
+                                                            <div className="flex items-center space-x-3 overflow-hidden">
+                                                                <div className="p-2 bg-brand-50 text-brand-600 rounded-lg shrink-0 group-hover:bg-brand-100 transition-colors">
+                                                                    <File className="w-6 h-6" />
+                                                                </div>
+                                                                <div className="truncate">
+                                                                    <p className="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" title={att.name}>{att.name}</p>
+                                                                    <p className="text-xs text-slate-500">{(att.size / 1024 / 1024).toFixed(1)} MB</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="shrink-0 ml-2 p-2 text-slate-400 group-hover:text-brand-600 rounded-lg transition-colors">
+                                                                <Download className="w-4 h-4" />
+                                                            </div>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Legacy Single Media Fallbacks */}
+                            {(!complaint.attachments || complaint.attachments.length === 0) && complaint.imageUrl && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <FileText className="w-4 h-4" /> {t('complaints.form.detail.attached_photo')}
+                                        <ImageIcon className="w-4 h-4" /> {t('complaints.form.detail.attached_photo')}
                                     </h3>
                                     <a href={complaint.imageUrl} target="_blank" rel="noreferrer">
                                         <img src={complaint.imageUrl} alt="Evidence" className="rounded-xl border border-slate-200 max-h-96 w-full object-cover hover:opacity-95 transition" />
@@ -476,8 +562,7 @@ const ComplaintDetail = () => {
                                 </div>
                             )}
 
-                            {/* Video */}
-                            {complaint.videoUrl && (
+                            {(!complaint.attachments || complaint.attachments.length === 0) && complaint.videoUrl && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
                                         <Video className="w-4 h-4" /> {t('complaints.form.detail.attached_video')}
@@ -489,8 +574,7 @@ const ComplaintDetail = () => {
                                 </div>
                             )}
 
-                            {/* Audio */}
-                            {complaint.audioUrl && (
+                            {(!complaint.attachments || complaint.attachments.length === 0) && complaint.audioUrl && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
                                         <Mic className="w-4 h-4" /> {t('complaints.form.detail.voice_note')}

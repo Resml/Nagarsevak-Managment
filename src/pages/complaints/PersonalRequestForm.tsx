@@ -7,6 +7,8 @@ import { ArrowLeft, X, Search, User, Phone, Check, Loader2, PlusCircle, HelpCirc
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { CustomSelect } from '../../components/common/CustomSelect';
+import { MultiFileUpload } from '../../components/common/MultiFileUpload';
+import { SecureStorageService } from '../../services/secureStorageService';
 
 const PersonalRequestForm = () => {
     const { t, language } = useLanguage();
@@ -21,6 +23,7 @@ const PersonalRequestForm = () => {
     // Form State
     const [description, setDescription] = useState('');
     const [type, setType] = useState<ComplaintType>('Personal Help');
+    const [files, setFiles] = useState<globalThis.File[]>([]);
 
     // Reporter Details State
     const [firstName, setFirstName] = useState('');
@@ -148,6 +151,18 @@ const PersonalRequestForm = () => {
         try {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
+            const uploadedAttachments = await Promise.all(
+                files.map(async (file) => {
+                    const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                    return {
+                        url: relativePath,
+                        type: file.type,
+                        name: file.name,
+                        size: file.size
+                    };
+                })
+            );
+
             const { error } = await supabase.from('personal_requests').insert([{
                 tenant_id: tenantId,
                 user_id: 'Manual',
@@ -155,6 +170,7 @@ const PersonalRequestForm = () => {
                 reporter_mobile: mobile.trim(),
                 request_type: type,
                 description: description,
+                attachments: uploadedAttachments,
                 status: 'Pending'
             }]);
 
@@ -284,6 +300,17 @@ const PersonalRequestForm = () => {
                                 rows={6}
                                 className="ns-input min-h-[150px]"
                                 placeholder={t('complaints.form.desc_placeholder')}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="ns-input block text-sm font-medium text-slate-700 mb-2">Attachments (Photos, Videos, Audio, Documents)</label>
+                            <MultiFileUpload 
+                                files={files} 
+                                onChange={setFiles} 
+                                maxFiles={10} 
+                                maxSizeMB={100}
+                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
                             />
                         </div>
                     </div>

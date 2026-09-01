@@ -11,6 +11,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useFormDraft } from '../../hooks/useFormDraft';
 import { CustomSelect } from '../../components/common/CustomSelect';
+import { MultiFileUpload } from '../../components/common/MultiFileUpload';
 
 const ComplaintForm = () => {
     const { t, language } = useLanguage();
@@ -35,8 +36,7 @@ const ComplaintForm = () => {
     const [peopleAffected, setPeopleAffected, clearAffectedDraft] = useFormDraft('draft_complaint_affected', '');
 
     // Media State (not drafted because File objects can't be easily JSON serialized)
-    const [photos, setPhotos] = useState<string[]>([]);
-    const [files, setFiles] = useState<File[]>([]);
+    const [files, setFiles] = useState<globalThis.File[]>([]);
     const [uploading, setUploading] = useState(false);
 
     // Voter Details State
@@ -281,13 +281,22 @@ const ComplaintForm = () => {
         try {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
-            // Upload first photo if exists
-            let imageUrl = null;
-            if (files.length > 0) {
-                const file = files[0];
-                const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
-                imageUrl = relativePath;
-            }
+            // Upload all attachments concurrently
+            const uploadedAttachments = await Promise.all(
+                files.map(async (file) => {
+                    const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                    return {
+                        url: relativePath,
+                        type: file.type,
+                        name: file.name,
+                        size: file.size
+                    };
+                })
+            );
+
+            // Backwards compatibility for image_url
+            const firstImage = uploadedAttachments.find(a => a.type.startsWith('image/'));
+            const imageUrl = firstImage ? firstImage.url : null;
 
             // 2. Submit directly to Supabase
             const { error } = await supabase.from('complaints').insert([{
@@ -299,6 +308,7 @@ const ComplaintForm = () => {
                 area: area,
                 source: 'Website',
                 image_url: imageUrl,
+                attachments: uploadedAttachments,
                 voter_id: selectedVoterId,
                 added_by_staff_id: addedByStaffId || null,
                 description_meta: {
@@ -340,14 +350,7 @@ const ComplaintForm = () => {
         }
     };
 
-    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
-            setPhotos([...photos, url]);
-            setFiles([...files, file]);
-        }
-    };
+
 
 
 
@@ -564,26 +567,14 @@ const ComplaintForm = () => {
                         </div>
 
                         <div>
-                            <label className="ns-input block text-sm font-medium text-slate-700 mb-2">{t('complaints.form.photos')}</label>
-                            <div className="flex flex-wrap gap-4">
-                                {photos.map((photo, index) => (
-                                    <div key={index} className="relative w-24 h-24 rounded-xl overflow-hidden border border-slate-200">
-                                        <img src={photo} alt="evidence" className="w-full h-full object-cover" />
-                                        <button
-                                            type="button"
-                                            onClick={() => setPhotos(photos.filter((_, i) => i !== index))}
-                                            className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-0.5 hover:bg-red-600 transition"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                                <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:bg-slate-50 hover:border-brand-300 transition-colors">
-                                    <Camera className="w-6 h-6 text-slate-400 mb-1" />
-                                    <span className="text-xs text-slate-500">{t('complaints.form.add_photo')}</span>
-                                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                                </label>
-                            </div>
+                            <label className="ns-input block text-sm font-medium text-slate-700 mb-2">Attachments (Photos, Videos, Audio, Documents)</label>
+                            <MultiFileUpload 
+                                files={files} 
+                                onChange={setFiles} 
+                                maxFiles={10} 
+                                maxSizeMB={100}
+                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                            />
                         </div>
                     </div>
 

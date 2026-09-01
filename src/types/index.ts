@@ -41,6 +41,7 @@ export interface Complaint {
   imageUrl?: string;
   videoUrl?: string;
   audioUrl?: string;
+  attachments?: { url: string; type: string; name: string; size: number }[];
   user_id?: string;
   user_name?: string;
   createdAt: string; // ISO Date
