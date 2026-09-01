@@ -3,7 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { type Complaint } from '../../types';
 import { type Staff } from '../../types/staff';
 import { useAuth } from '../../context/AuthContext';
-import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save, Download, ChevronRight, Image as ImageIcon, Music, File } from 'lucide-react';
+import { ArrowLeft, Calendar, FileText, MapPin, Mic, Video, Phone, Trash2, X, Clock, CheckCircle, XCircle, Edit, Save, Download, ChevronRight, Image as ImageIcon, Music, File, Maximize2, Eye, Sparkles, Check, ZoomIn, User, Layers, CheckCircle2, Edit3, Plus, Edit2 } from 'lucide-react';
 import { SecureStorageService } from '../../services/secureStorageService';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
@@ -14,6 +14,8 @@ import { useTenant } from '../../context/TenantContext';
 import { translateText } from '../../services/translationService';
 import { TranslatedText } from '../../components/TranslatedText';
 import { CustomSelect } from '../../components/common/CustomSelect';
+import { StatusUpdateModal } from '../../components/complaints/StatusUpdateModal';
+import { EditLogModal } from '../../components/complaints/EditLogModal';
 
 const ComplaintDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -31,6 +33,32 @@ const ComplaintDetail = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
+    // Status Update Modal State
+    const [statusModalState, setStatusModalState] = useState<{
+        isOpen: boolean;
+        mode: 'InProgress' | 'Resolved';
+        showStatusSelector?: boolean;
+    }>({
+        isOpen: false,
+        mode: 'InProgress',
+        showStatusSelector: false
+    });
+
+    // Image Lightbox State
+    const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+
+    // Edit & Delete Progress Log States
+    const [editingLog, setEditingLog] = useState<{
+        isOpen: boolean;
+        index: number;
+        status: 'InProgress' | 'Resolved';
+        note: string;
+        images?: { url: string; name?: string; size?: number }[];
+    } | null>(null);
+
+    const [deletingLogIndex, setDeletingLogIndex] = useState<number | null>(null);
+    const [deletingLog, setDeletingLog] = useState(false);
+
     // Edit State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [updating, setUpdating] = useState(false);
@@ -38,6 +66,56 @@ const ComplaintDetail = () => {
         problem: '',
         category: ''
     });
+
+    const resolveMetaImages = async (imagesList: any[]) => {
+        if (!Array.isArray(imagesList) || imagesList.length === 0) return [];
+        return await Promise.all(
+            imagesList.map(async (img: any) => {
+                const rawUrl = typeof img === 'string' ? img : (img?.url || '');
+                const secureUrl = rawUrl ? await SecureStorageService.getUrl('documents', rawUrl) : '';
+                return {
+                    url: secureUrl,
+                    name: typeof img === 'object' && img?.name ? img.name : 'Photo',
+                    size: typeof img === 'object' && img?.size ? img.size : 0
+                };
+            })
+        );
+    };
+
+    const parseProgressUpdatesFromMeta = async (parsedMeta: any, fallbackWip?: any, fallbackRes?: any) => {
+        let updates: any[] = [];
+        if (parsedMeta?.progress_updates && Array.isArray(parsedMeta.progress_updates) && parsedMeta.progress_updates.length > 0) {
+            updates = await Promise.all(
+                parsedMeta.progress_updates.map(async (u: any) => ({
+                    note: u.note || '',
+                    images: await resolveMetaImages(u.images),
+                    status: u.status || 'InProgress',
+                    timestamp: u.timestamp || u.updated_at || u.resolved_at || new Date().toISOString(),
+                    updatedBy: u.updated_by || u.resolved_by
+                }))
+            );
+        } else {
+            if (fallbackWip) {
+                updates.push({
+                    note: fallbackWip.note,
+                    images: fallbackWip.images || [],
+                    status: 'InProgress',
+                    timestamp: fallbackWip.updatedAt,
+                    updatedBy: fallbackWip.updatedBy
+                });
+            }
+            if (fallbackRes) {
+                updates.push({
+                    note: fallbackRes.note,
+                    images: fallbackRes.images || [],
+                    status: 'Resolved',
+                    timestamp: fallbackRes.resolvedAt,
+                    updatedBy: fallbackRes.resolvedBy
+                });
+            }
+        }
+        return updates;
+    };
 
     // Translate content when language changes to Marathi
     // Translate content when language changes - using Standard API
@@ -94,6 +172,35 @@ const ComplaintDetail = () => {
                         );
                     }
 
+                    let parsedMeta = null;
+                    try {
+                        parsedMeta = typeof data.description_meta === 'string' ? JSON.parse(data.description_meta) : (data.description_meta || null);
+                    } catch (e) {
+                        console.error("Error parsing meta", e);
+                    }
+
+                    let workInProgress = undefined;
+                    if (parsedMeta?.work_in_progress) {
+                        workInProgress = {
+                            note: parsedMeta.work_in_progress.note || '',
+                            images: await resolveMetaImages(parsedMeta.work_in_progress.images),
+                            updatedAt: parsedMeta.work_in_progress.updated_at || data.created_at,
+                            updatedBy: parsedMeta.work_in_progress.updated_by
+                        };
+                    }
+
+                    let resolutionDetails = undefined;
+                    if (parsedMeta?.resolution_details) {
+                        resolutionDetails = {
+                            note: parsedMeta.resolution_details.note || '',
+                            images: await resolveMetaImages(parsedMeta.resolution_details.images),
+                            resolvedAt: parsedMeta.resolution_details.resolved_at || data.created_at,
+                            resolvedBy: parsedMeta.resolution_details.resolved_by
+                        };
+                    }
+
+                    const progressUpdates = await parseProgressUpdatesFromMeta(parsedMeta, workInProgress, resolutionDetails);
+
                     const mapped: Complaint = {
                         id: `pr-${data.id}`,
                         title: data.request_type || 'Personal Request',
@@ -109,7 +216,10 @@ const ComplaintDetail = () => {
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
                         photos: [],
-                        attachments: resolvedAttachments
+                        attachments: resolvedAttachments,
+                        workInProgress,
+                        resolutionDetails,
+                        progressUpdates
                     };
                     setComplaint(mapped);
                     // Initialize edit form
@@ -139,6 +249,35 @@ const ComplaintDetail = () => {
                         );
                     }
 
+                    let parsedMeta = null;
+                    try {
+                        parsedMeta = typeof data.description_meta === 'string' ? JSON.parse(data.description_meta) : (data.description_meta || null);
+                    } catch (e) {
+                        console.error("Error parsing meta", e);
+                    }
+
+                    let workInProgress = undefined;
+                    if (parsedMeta?.work_in_progress) {
+                        workInProgress = {
+                            note: parsedMeta.work_in_progress.note || '',
+                            images: await resolveMetaImages(parsedMeta.work_in_progress.images),
+                            updatedAt: parsedMeta.work_in_progress.updated_at || data.created_at,
+                            updatedBy: parsedMeta.work_in_progress.updated_by
+                        };
+                    }
+
+                    let resolutionDetails = undefined;
+                    if (parsedMeta?.resolution_details) {
+                        resolutionDetails = {
+                            note: parsedMeta.resolution_details.note || '',
+                            images: await resolveMetaImages(parsedMeta.resolution_details.images),
+                            resolvedAt: parsedMeta.resolution_details.resolved_at || data.created_at,
+                            resolvedBy: parsedMeta.resolution_details.resolved_by
+                        };
+                    }
+
+                    const progressUpdates = await parseProgressUpdatesFromMeta(parsedMeta, workInProgress, resolutionDetails);
+
                     const mapped: Complaint = {
                         id: `ap-${data.id}`,
                         title: data.title || 'Area Problem',
@@ -154,7 +293,10 @@ const ComplaintDetail = () => {
                         createdAt: data.created_at,
                         updatedAt: data.created_at,
                         photos: [],
-                        attachments: resolvedAttachments
+                        attachments: resolvedAttachments,
+                        workInProgress,
+                        resolutionDetails,
+                        progressUpdates
                     };
                     setComplaint(mapped);
                     setEditForm({
@@ -227,6 +369,28 @@ const ComplaintDetail = () => {
                         }
                     }
 
+                    let workInProgress = undefined;
+                    if (parsedMeta?.work_in_progress) {
+                        workInProgress = {
+                            note: parsedMeta.work_in_progress.note || '',
+                            images: await resolveMetaImages(parsedMeta.work_in_progress.images),
+                            updatedAt: parsedMeta.work_in_progress.updated_at || data.created_at,
+                            updatedBy: parsedMeta.work_in_progress.updated_by
+                        };
+                    }
+
+                    let resolutionDetails = undefined;
+                    if (parsedMeta?.resolution_details) {
+                        resolutionDetails = {
+                            note: parsedMeta.resolution_details.note || '',
+                            images: await resolveMetaImages(parsedMeta.resolution_details.images),
+                            resolvedAt: parsedMeta.resolution_details.resolved_at || data.created_at,
+                            resolvedBy: parsedMeta.resolution_details.resolved_by
+                        };
+                    }
+
+                    const progressUpdates = await parseProgressUpdatesFromMeta(parsedMeta, workInProgress, resolutionDetails);
+
                     const mapped: Complaint = {
                         id: data.id.toString(),
                         title: extractTitle,
@@ -264,7 +428,10 @@ const ComplaintDetail = () => {
                         audioUrl: data.audio_url,
                         voterId: data.voter_id,
                         assignedTo: data.assigned_to,
-                        added_by_staff_id: data.added_by_staff_id
+                        added_by_staff_id: data.added_by_staff_id,
+                        workInProgress,
+                        resolutionDetails,
+                        progressUpdates
                     };
                     setComplaint(mapped);
                     setAssignee(data.assigned_to || '');
@@ -281,7 +448,164 @@ const ComplaintDetail = () => {
         }
     };
 
-    const handleStatusUpdate = async (newStatus: string) => {
+    const handleOpenStatusModal = (mode: 'InProgress' | 'Resolved', showStatusSelector = false) => {
+        setStatusModalState({
+            isOpen: true,
+            mode,
+            showStatusSelector
+        });
+    };
+
+    const handleStatusModalSubmit = async (note: string, files: File[], customStatus?: 'InProgress' | 'Resolved') => {
+        if (!complaint) return;
+        try {
+            const isPersonal = complaint.id.startsWith('pr-');
+            const isAreaProblem = complaint.id.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
+            const targetStatus = customStatus || statusModalState.mode;
+
+            // 1. Upload files concurrently
+            const uploadedImages = await Promise.all(
+                files.map(async (file) => {
+                    const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                    return {
+                        url: relativePath,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type
+                    };
+                })
+            );
+
+            // 2. Fetch existing description_meta to prevent race condition / overwriting
+            const { data: currentData } = await supabase
+                .from(table)
+                .select('description_meta')
+                .eq('id', actualId)
+                .single();
+
+            let metaObj: any = {};
+            if (currentData?.description_meta) {
+                metaObj = typeof currentData.description_meta === 'string'
+                    ? JSON.parse(currentData.description_meta)
+                    : currentData.description_meta;
+            }
+
+            const timestamp = new Date().toISOString();
+            const updaterName = user?.name || user?.email || 'Staff';
+
+            const newUpdateRecord = {
+                note,
+                images: uploadedImages,
+                status: targetStatus,
+                timestamp,
+                updated_by: updaterName
+            };
+
+            const existingUpdates = Array.isArray(metaObj.progress_updates) ? metaObj.progress_updates : [];
+            metaObj.progress_updates = [...existingUpdates, newUpdateRecord];
+
+            if (targetStatus === 'InProgress') {
+                metaObj.work_in_progress = {
+                    note,
+                    images: uploadedImages,
+                    updated_at: timestamp,
+                    updated_by: updaterName
+                };
+            } else if (targetStatus === 'Resolved') {
+                metaObj.resolution_details = {
+                    note,
+                    images: uploadedImages,
+                    resolved_at: timestamp,
+                    resolved_by: updaterName
+                };
+            }
+
+            // 3. Update database
+            const updatePayload: any = {
+                status: targetStatus,
+                description_meta: metaObj
+            };
+
+            const { error: updateError } = await supabase
+                .from(table)
+                .update(updatePayload)
+                .eq('id', actualId)
+                .eq('tenant_id', tenantId);
+
+            if (updateError) {
+                console.error('Error updating status in DB:', updateError);
+                throw updateError;
+            }
+
+            // 4. Resolve URLs for immediate local preview
+            const resolvedNewImages = await Promise.all(
+                uploadedImages.map(async (img) => ({
+                    url: await SecureStorageService.getUrl('documents', img.url),
+                    name: img.name,
+                    size: img.size
+                }))
+            );
+
+            const newLocalUpdate = {
+                note,
+                images: resolvedNewImages,
+                status: targetStatus as any,
+                timestamp,
+                updatedBy: updaterName
+            };
+
+            setComplaint(prev => {
+                if (!prev) return undefined;
+                const currentUpdates = prev.progressUpdates ? [...prev.progressUpdates, newLocalUpdate] : [newLocalUpdate];
+                return {
+                    ...prev,
+                    status: targetStatus as any,
+                    progressUpdates: currentUpdates,
+                    workInProgress: targetStatus === 'InProgress' ? {
+                        note,
+                        images: resolvedNewImages,
+                        updatedAt: timestamp,
+                        updatedBy: updaterName
+                    } : prev.workInProgress,
+                    resolutionDetails: targetStatus === 'Resolved' ? {
+                        note,
+                        images: resolvedNewImages,
+                        resolvedAt: timestamp,
+                        resolvedBy: updaterName
+                    } : prev.resolutionDetails
+                };
+            });
+
+            toast.success(targetStatus === 'InProgress' 
+                ? (language === 'mr' ? 'कामाची प्रगती यशस्वीरित्या नोंदवली!' : 'Work marked in progress with notes & photos!')
+                : (language === 'mr' ? 'तक्रार यशस्वीरित्या निवारण म्हणून नोंदवली!' : 'Complaint marked as resolved with completion notes & photos!')
+            );
+        } catch (err: any) {
+            console.error('Error updating status with modal:', err);
+            toast.error(err.message || 'Failed to update status');
+            throw err;
+        }
+    };
+
+    const handleOpenEditLogModal = (index: number, update: any) => {
+        setEditingLog({
+            isOpen: true,
+            index,
+            status: update.status || 'InProgress',
+            note: update.note || '',
+            images: update.images || []
+        });
+    };
+
+    const handleSaveEditLog = async (
+        logIndex: number,
+        note: string,
+        targetStatus: 'InProgress' | 'Resolved',
+        remainingExistingImages: { url: string; name?: string; size?: number }[],
+        newFiles: File[]
+    ) => {
         if (!complaint) return;
         try {
             const isPersonal = complaint.id.startsWith('pr-');
@@ -289,18 +613,180 @@ const ComplaintDetail = () => {
             const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
             const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
 
-            const { error } = await supabase
+            // 1. Upload new files if any
+            const uploadedNewImages = await Promise.all(
+                newFiles.map(async (file) => {
+                    const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                    return {
+                        url: relativePath,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type
+                    };
+                })
+            );
+
+            // 2. Fetch current description_meta
+            const { data: currentData } = await supabase
                 .from(table)
-                .update({ status: newStatus })
+                .select('description_meta')
+                .eq('id', actualId)
+                .single();
+
+            let metaObj: any = {};
+            if (currentData?.description_meta) {
+                metaObj = typeof currentData.description_meta === 'string'
+                    ? JSON.parse(currentData.description_meta)
+                    : currentData.description_meta;
+            }
+
+            const existingUpdates = Array.isArray(metaObj.progress_updates) ? [...metaObj.progress_updates] : [];
+            const originalRecord = existingUpdates[logIndex] || {};
+
+            // Retain original stored image objects that were not removed
+            const origImages: any[] = originalRecord.images || [];
+            const keptOrigImages = origImages.filter(orig =>
+                remainingExistingImages.some(rem => rem.name === orig.name || rem.url === orig.url || rem.url.includes(orig.url))
+            );
+
+            const updatedStoredImages = [...keptOrigImages, ...uploadedNewImages];
+
+            const updatedRecord = {
+                ...originalRecord,
+                note,
+                status: targetStatus,
+                images: updatedStoredImages,
+                updated_by: user?.name || user?.email || originalRecord.updated_by || 'Staff'
+            };
+
+            if (logIndex >= 0 && logIndex < existingUpdates.length) {
+                existingUpdates[logIndex] = updatedRecord;
+            } else {
+                existingUpdates.push(updatedRecord);
+            }
+
+            metaObj.progress_updates = existingUpdates;
+
+            // If updating latest log, sync work_in_progress or resolution_details
+            if (logIndex === existingUpdates.length - 1) {
+                if (targetStatus === 'InProgress') {
+                    metaObj.work_in_progress = {
+                        note,
+                        images: updatedStoredImages,
+                        updated_at: originalRecord.timestamp || new Date().toISOString(),
+                        updated_by: updatedRecord.updated_by
+                    };
+                } else if (targetStatus === 'Resolved') {
+                    metaObj.resolution_details = {
+                        note,
+                        images: updatedStoredImages,
+                        resolved_at: originalRecord.timestamp || new Date().toISOString(),
+                        resolved_by: updatedRecord.updated_by
+                    };
+                }
+            }
+
+            const { error: updateError } = await supabase
+                .from(table)
+                .update({ description_meta: metaObj })
                 .eq('id', actualId)
                 .eq('tenant_id', tenantId);
 
-            if (error) throw error;
-            setComplaint({ ...complaint, status: newStatus as any });
-            toast.success(`Status updated to ${newStatus}`);
-        } catch (err) {
-            console.error('Error updating status:', err);
-            toast.error('Failed to update status');
+            if (updateError) throw updateError;
+
+            // Resolve preview URLs for newly uploaded images
+            const resolvedNewUploaded = await Promise.all(
+                uploadedNewImages.map(async (img) => ({
+                    url: await SecureStorageService.getUrl('documents', img.url),
+                    name: img.name,
+                    size: img.size
+                }))
+            );
+
+            const allResolvedLocalImages = [...remainingExistingImages, ...resolvedNewUploaded];
+
+            setComplaint(prev => {
+                if (!prev) return undefined;
+                const current = prev.progressUpdates ? [...prev.progressUpdates] : [];
+                if (logIndex >= 0 && logIndex < current.length) {
+                    current[logIndex] = {
+                        ...current[logIndex],
+                        note,
+                        status: targetStatus as any,
+                        images: allResolvedLocalImages,
+                        updatedBy: updatedRecord.updated_by
+                    };
+                }
+                return {
+                    ...prev,
+                    progressUpdates: current
+                };
+            });
+
+            toast.success(language === 'mr' ? 'प्रगती नोंद यशस्वीरित्या बदलली!' : 'Progress log updated successfully!');
+            setEditingLog(null);
+        } catch (err: any) {
+            console.error('Error saving edited log:', err);
+            toast.error(err.message || 'Failed to update log');
+            throw err;
+        }
+    };
+
+    const handleOpenDeleteLogModal = (index: number) => {
+        setDeletingLogIndex(index);
+    };
+
+    const handleConfirmDeleteLog = async () => {
+        if (deletingLogIndex === null || !complaint) return;
+        setDeletingLog(true);
+        try {
+            const isPersonal = complaint.id.startsWith('pr-');
+            const isAreaProblem = complaint.id.startsWith('ap-');
+            const actualId = (isPersonal || isAreaProblem) ? complaint.id.split('-').slice(1).join('-') : complaint.id;
+            const table = isPersonal ? 'personal_requests' : isAreaProblem ? 'area_problems' : 'complaints';
+
+            const { data: currentData } = await supabase
+                .from(table)
+                .select('description_meta')
+                .eq('id', actualId)
+                .single();
+
+            let metaObj: any = {};
+            if (currentData?.description_meta) {
+                metaObj = typeof currentData.description_meta === 'string'
+                    ? JSON.parse(currentData.description_meta)
+                    : currentData.description_meta;
+            }
+
+            const existingUpdates = Array.isArray(metaObj.progress_updates) ? [...metaObj.progress_updates] : [];
+            existingUpdates.splice(deletingLogIndex, 1);
+            metaObj.progress_updates = existingUpdates;
+
+            const { error: updateError } = await supabase
+                .from(table)
+                .update({ description_meta: metaObj })
+                .eq('id', actualId)
+                .eq('tenant_id', tenantId);
+
+            if (updateError) throw updateError;
+
+            setComplaint(prev => {
+                if (!prev) return undefined;
+                const current = prev.progressUpdates ? [...prev.progressUpdates] : [];
+                current.splice(deletingLogIndex, 1);
+                return {
+                    ...prev,
+                    progressUpdates: current
+                };
+            });
+
+            toast.success(language === 'mr' ? 'प्रगती नोंद यशस्वीरित्या हटवली!' : 'Progress log deleted successfully!');
+            setDeletingLogIndex(null);
+        } catch (err: any) {
+            console.error('Error deleting log:', err);
+            toast.error(err.message || 'Failed to delete log');
+        } finally {
+            setDeletingLog(false);
         }
     };
 
@@ -493,16 +979,23 @@ const ComplaintDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-6">
-                    <div className="ns-card p-6">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="flex flex-col items-start space-y-3">
+                    {/* Top Ticket Overview Card - Original Simple Layout */}
+                    <div className="ns-card p-6 shadow-sm notranslate overflow-hidden">
+                        <div className="flex justify-between items-start mb-4 gap-3">
+                            <div className="min-w-0 flex-1">
                                 <span className={`notranslate ns-badge border-transparent ${complaint.type === 'Help' ? 'bg-purple-100 text-purple-700' : 'bg-brand-50 text-brand-800'}`}>
                                     {t(`complaints.form.types.${complaint.type == 'Personal Help' ? 'personal_help' : complaint.type.toLowerCase().replace(/ /g, '_')}`) || complaint.type}
                                 </span>
+                                <h1 className="text-2xl font-bold text-slate-900 mt-3 break-words leading-snug">
+                                    {translatedData ? translatedData.title : complaint.title}
+                                </h1>
                             </div>
-                            <span className={`ns-badge px-3 py-1 text-sm border ${complaint.status === 'Resolved' ? 'bg-green-100 text-green-800 border-green-200' :
+                            <span className={`ns-badge px-3 py-1 text-sm border font-semibold shrink-0 ${
+                                complaint.status === 'Resolved' ? 'bg-green-100 text-green-800 border-green-200' :
+                                complaint.status === 'InProgress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                complaint.status === 'Assigned' ? 'bg-purple-100 text-purple-800 border-purple-200' :
                                 complaint.status === 'Pending' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-100 text-gray-800'
-                                }`}>
+                            }`}>
                                 {complaint.status === 'Pending' ? t('complaints.status.pending') :
                                     complaint.status === 'Assigned' ? t('complaints.status.assigned') :
                                         complaint.status === 'Resolved' ? t('complaints.status.resolved') :
@@ -511,69 +1004,52 @@ const ComplaintDetail = () => {
                             </span>
                         </div>
 
-                        <div className="mb-8">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Issue Title</h4>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
-                                {translatedData ? translatedData.title : complaint.title}
-                            </h1>
-                        </div>
-
-                        <div className="mb-8">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <FileText className="w-4 h-4" /> Description
-                            </h4>
-                            <div className="text-slate-700 bg-white border-l-4 border-brand-500 pl-4 py-1">
-                                <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-600">
-                                    {translatedData ? translatedData.description : complaint.description}
-                                </p>
-                            </div>
+                        {/* Description Box */}
+                        <div className="text-slate-700 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 overflow-hidden">
+                            <p className="whitespace-pre-wrap font-medium leading-relaxed break-words [overflow-wrap:anywhere]">
+                                {translatedData ? translatedData.description : complaint.description}
+                            </p>
                         </div>
 
                         {/* Media Section */}
                         <div className="space-y-4 notranslate">
-                            {/* New Multi-Media Attachments Array */}
                             {complaint.attachments && complaint.attachments.length > 0 && (
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                                        <FileText className="w-4 h-4" /> Attachments
+                                        <FileText className="w-4 h-4 text-slate-500" /> Attachments ({complaint.attachments.length})
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         {complaint.attachments.map((att, idx) => {
                                             const isImage = att.type.startsWith('image/');
                                             const isVideo = att.type.startsWith('video/');
                                             const isAudio = att.type.startsWith('audio/');
-                                            
+
                                             return (
-                                                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                                                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-xs min-w-0">
                                                     {isImage ? (
-                                                        <a href={att.url} target="_blank" rel="noreferrer" className="block">
-                                                            <img src={att.url} alt={att.name} className="w-full h-48 object-cover hover:opacity-90 transition-opacity" />
-                                                        </a>
+                                                        <div
+                                                            onClick={() => setLightboxImage({ url: att.url, title: att.name || `Attachment ${idx + 1}` })}
+                                                            className="block cursor-pointer relative group aspect-4/3 overflow-hidden bg-slate-100"
+                                                        >
+                                                            <img src={att.url} alt={att.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                                <Eye className="w-5 h-5" />
+                                                            </div>
+                                                        </div>
                                                     ) : isVideo ? (
-                                                        <video controls className="w-full h-48 bg-black">
+                                                        <video controls className="w-full h-40 bg-black">
                                                             <source src={att.url} type={att.type} />
                                                         </video>
                                                     ) : isAudio ? (
-                                                        <div className="p-4 flex flex-col items-center justify-center h-48 bg-slate-100">
-                                                            <Music className="w-8 h-8 text-slate-400 mb-3" />
-                                                            <audio controls className="w-full">
+                                                        <div className="p-3">
+                                                            <audio controls className="w-full h-8">
                                                                 <source src={att.url} type={att.type} />
                                                             </audio>
                                                         </div>
                                                     ) : (
-                                                        <a href={att.url} target="_blank" rel="noreferrer" className="p-4 flex items-center justify-between h-full bg-white hover:bg-slate-50 transition-colors cursor-pointer group">
-                                                            <div className="flex items-center space-x-3 overflow-hidden">
-                                                                <div className="p-2 bg-brand-50 text-brand-600 rounded-lg shrink-0 group-hover:bg-brand-100 transition-colors">
-                                                                    <File className="w-6 h-6" />
-                                                                </div>
-                                                                <div className="truncate">
-                                                                    <p className="text-sm font-medium text-slate-700 truncate group-hover:text-brand-600 transition-colors" title={att.name}>{att.name}</p>
-                                                                    <p className="text-xs text-slate-500">{(att.size / 1024 / 1024).toFixed(1)} MB</p>
-                                                                </div>
-                                                            </div>
-                                                            <div className="shrink-0 ml-2 p-2 text-slate-400 group-hover:text-brand-600 rounded-lg transition-colors">
-                                                                <Download className="w-4 h-4" />
-                                                            </div>
+                                                        <a href={att.url} target="_blank" rel="noreferrer" className="p-3 flex items-center justify-between hover:bg-slate-100 transition-colors">
+                                                            <span className="truncate text-xs font-medium text-slate-800 break-all">{att.name}</span>
+                                                            <Download className="w-4 h-4 text-slate-500 shrink-0 ml-2" />
                                                         </a>
                                                     )}
                                                 </div>
@@ -583,92 +1059,291 @@ const ComplaintDetail = () => {
                                 </div>
                             )}
 
-                            {/* Legacy Single Media Fallbacks */}
+                            {/* Legacy Single Photo fallback */}
                             {(!complaint.attachments || complaint.attachments.length === 0) && complaint.imageUrl && (
-                                <div>
-                                    <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <ImageIcon className="w-4 h-4" /> {t('complaints.form.detail.attached_photo')}
-                                    </h3>
-                                    <a href={complaint.imageUrl} target="_blank" rel="noreferrer">
-                                        <img src={complaint.imageUrl} alt="Evidence" className="rounded-xl border border-slate-200 max-h-96 w-full object-cover hover:opacity-95 transition" />
-                                    </a>
-                                </div>
-                            )}
-
-                            {(!complaint.attachments || complaint.attachments.length === 0) && complaint.videoUrl && (
-                                <div>
-                                    <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <Video className="w-4 h-4" /> {t('complaints.form.detail.attached_video')}
-                                    </h3>
-                                    <video controls className="rounded-xl border border-slate-200 w-full max-h-96 bg-black">
-                                        <source src={complaint.videoUrl} type="video/mp4" />
-                                        Your browser does not support the video tag.
-                                    </video>
-                                </div>
-                            )}
-
-                            {(!complaint.attachments || complaint.attachments.length === 0) && complaint.audioUrl && (
-                                <div>
-                                    <h3 className="text-sm font-semibold text-slate-900 mb-2 flex items-center gap-2">
-                                        <Mic className="w-4 h-4" /> {t('complaints.form.detail.voice_note')}
-                                    </h3>
-                                    <audio controls className="w-full">
-                                        <source src={complaint.audioUrl} type="audio/ogg" />
-                                        <source src={complaint.audioUrl} type="audio/mpeg" />
-                                        Your browser does not support audio element.
-                                    </audio>
+                                <div
+                                    onClick={() => setLightboxImage({ url: complaint.imageUrl!, title: 'Evidence Photo' })}
+                                    className="max-w-sm aspect-4/3 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 cursor-pointer relative group shadow-xs"
+                                >
+                                    <img src={complaint.imageUrl} alt="Evidence" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                        <Eye className="w-5 h-5" />
+                                    </div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-500 pt-6 mt-6 border-t border-slate-200/70">
-                            <div className="flex items-center">
-                                <MapPin className="w-4 h-4 mr-1.5" />
-                                <TranslatedText text={complaint.location || ''} />
+                        {/* Location & Date Footer */}
+                        <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+                                <span className="truncate"><TranslatedText text={complaint.location || ''} /></span>
                             </div>
-                            <div className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-1.5" />
+                            <div className="flex items-center gap-1.5 shrink-0">
+                                <Calendar className="w-4 h-4 text-slate-400" />
                                 {format(new Date(complaint.createdAt), 'PP p')}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Progress History Section - Alternating Left & Right Timeline */}
+                    <div className="ns-card p-6 shadow-sm notranslate overflow-hidden">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Clock className="w-5 h-5 text-brand-600 shrink-0" />
+                                <h3 className="text-lg font-bold text-slate-900 truncate">
+                                    {language === 'mr' ? 'कामाचा प्रगती इतिहास' : 'Progress History'}
+                                </h3>
+                            </div>
+
+                            {isAdminOrStaff && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleOpenStatusModal('InProgress', true)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-medium shadow-xs transition-colors shrink-0"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>{language === 'mr' ? 'नोंद जोडा' : 'Add Log'}</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {complaint.progressUpdates && complaint.progressUpdates.length > 0 ? (
+                            <div className="relative py-2">
+                                {/* Center Vertical Stem Line */}
+                                <div className="absolute top-3 bottom-3 left-4 md:left-1/2 -ml-px w-0.5 bg-slate-200 z-0" />
+
+                                <div className="space-y-6 relative z-10">
+                                    {complaint.progressUpdates.map((update, index) => {
+                                        // Alternate: index 0 -> Left, index 1 -> Right, index 2 -> Left, index 3 -> Right
+                                        const isLeft = index % 2 === 0;
+                                        const isResolved = update.status === 'Resolved';
+
+                                        return (
+                                            <div
+                                                key={index}
+                                                className="relative flex flex-col md:flex-row items-start md:items-center min-w-0"
+                                            >
+                                                {/* Center Node Icon Marker on Line */}
+                                                <div className={`absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-xs z-20 shrink-0 ${
+                                                    isResolved
+                                                        ? 'border-2 border-emerald-400 text-emerald-600'
+                                                        : 'border-2 border-blue-400 text-blue-600'
+                                                }`}>
+                                                    {isResolved ? (
+                                                        <Check className="w-4 h-4" />
+                                                    ) : (
+                                                        <Edit3 className="w-4 h-4" />
+                                                    )}
+                                                </div>
+
+                                                {/* Left Branch (Render on Left when isLeft is true on desktop) */}
+                                                <div className={`w-full pl-11 md:pl-0 md:w-1/2 min-w-0 ${
+                                                    isLeft ? 'md:pr-8' : 'md:hidden'
+                                                }`}>
+                                                    {isLeft && (
+                                                        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 overflow-hidden min-w-0">
+                                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                                                                        isResolved
+                                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                    }`}>
+                                                                        {update.status === 'InProgress' ? (language === 'mr' ? 'प्रगतीपथावर' : 'In Progress') : update.status}
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-400 font-medium">
+                                                                        {format(new Date(update.timestamp), 'MMM d, h:mm a')}
+                                                                    </span>
+                                                                </div>
+
+                                                                {isAdminOrStaff && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenEditLogModal(index, update)}
+                                                                            className="p-1 text-slate-400 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-colors"
+                                                                            title={language === 'mr' ? 'नोंद संपादित करा' : 'Edit Log'}
+                                                                        >
+                                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenDeleteLogModal(index)}
+                                                                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                                            title={language === 'mr' ? 'नोंद हटवा' : 'Delete Log'}
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                {update.note}
+                                                            </p>
+
+                                                            {update.images && update.images.length > 0 && (
+                                                                <div className="flex flex-wrap gap-2 pt-1">
+                                                                    {update.images.map((img, imgIdx) => (
+                                                                        <div
+                                                                            key={imgIdx}
+                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Photo ${imgIdx + 1}` })}
+                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50"
+                                                                        >
+                                                                            <img
+                                                                                src={img.url}
+                                                                                alt={img.name || `Photo ${imgIdx + 1}`}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {update.updatedBy && (
+                                                                <div className="text-right text-xs text-slate-400 pt-1 truncate">
+                                                                    Updated by <span className="text-slate-600 font-medium">{update.updatedBy}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Right Branch (Render on Right when isLeft is false on desktop) */}
+                                                <div className={`w-full pl-11 md:pl-0 md:w-1/2 min-w-0 ${
+                                                    !isLeft ? 'md:pl-8 md:ml-auto' : 'hidden md:block'
+                                                }`}>
+                                                    {!isLeft && (
+                                                        <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-xs space-y-3 overflow-hidden min-w-0">
+                                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
+                                                                        isResolved
+                                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                    }`}>
+                                                                        {update.status === 'InProgress' ? (language === 'mr' ? 'प्रगतीपथावर' : 'In Progress') : update.status}
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-400 font-medium">
+                                                                        {format(new Date(update.timestamp), 'MMM d, h:mm a')}
+                                                                    </span>
+                                                                </div>
+
+                                                                {isAdminOrStaff && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenEditLogModal(index, update)}
+                                                                            className="p-1 text-slate-400 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-colors"
+                                                                            title={language === 'mr' ? 'नोंद संपादित करा' : 'Edit Log'}
+                                                                        >
+                                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenDeleteLogModal(index)}
+                                                                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                                            title={language === 'mr' ? 'नोंद हटवा' : 'Delete Log'}
+                                                                        >
+                                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                                                                {update.note}
+                                                            </p>
+
+                                                            {update.images && update.images.length > 0 && (
+                                                                <div className="flex flex-wrap gap-2 pt-1">
+                                                                    {update.images.map((img, imgIdx) => (
+                                                                        <div
+                                                                            key={imgIdx}
+                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Photo ${imgIdx + 1}` })}
+                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50"
+                                                                        >
+                                                                            <img
+                                                                                src={img.url}
+                                                                                alt={img.name || `Photo ${imgIdx + 1}`}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+
+                                                            {update.updatedBy && (
+                                                                <div className="text-right text-xs text-slate-400 pt-1 truncate">
+                                                                    Updated by <span className="text-slate-600 font-medium">{update.updatedBy}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-slate-400 text-xs">
+                                {language === 'mr' ? 'अद्याप कोणताही प्रगती इतिहास नोंदवला नाही.' : 'No progress updates recorded yet.'}
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Sidebar Actions */}
                 <div className="space-y-6 notranslate">
                     {isAdminOrStaff && (
-                        <div className="ns-card p-6">
-                            <h3 className="font-bold text-slate-900 mb-4">{t('complaints.form.detail.manage_ticket')}</h3>
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                            <h3 className="font-bold text-slate-900 mb-4 tracking-tight">{t('complaints.form.detail.manage_ticket')}</h3>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">{t('complaints.form.detail.update_status')}</label>
-                                    <div className="flex flex-col gap-2">
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">{t('complaints.form.detail.update_status')}</label>
+                                    <div className="flex flex-col gap-2.5">
                                         {!complaint.id.startsWith('pr-') && (
                                             <button
-                                                onClick={() => handleStatusUpdate('InProgress')}
-                                                disabled={complaint.status === 'InProgress'}
-                                                className="ns-btn-ghost justify-start border border-slate-200"
+                                                onClick={() => handleOpenStatusModal('InProgress')}
+                                                className={`w-full flex items-center justify-start gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                                                    complaint.status === 'InProgress'
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-300 font-semibold shadow-xs'
+                                                        : 'border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50/50'
+                                                }`}
                                             >
-                                                <Clock className="w-4 h-4 mr-2" />
-                                                {t('complaints.form.detail.mark_in_progress')}
+                                                <Clock className={`w-4 h-4 shrink-0 ${complaint.status === 'InProgress' ? 'text-blue-600' : 'text-slate-400'}`} />
+                                                <span>
+                                                    {complaint.status === 'InProgress'
+                                                        ? (language === 'mr' ? 'प्रगती तपशील अपडेट करा' : 'Update Work In Progress')
+                                                        : t('complaints.form.detail.mark_in_progress')}
+                                                </span>
                                             </button>
                                         )}
                                         <button
-                                            onClick={() => handleStatusUpdate('Resolved')}
-                                            disabled={complaint.status === 'Resolved'}
-                                            className="ns-btn-ghost justify-start border border-slate-200"
+                                            onClick={() => handleOpenStatusModal('Resolved')}
+                                            className={`w-full flex items-center justify-start gap-2.5 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
+                                                complaint.status === 'Resolved'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 font-semibold shadow-xs'
+                                                    : 'border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50'
+                                            }`}
                                         >
-                                            <CheckCircle className="w-4 h-4 mr-2" />
-                                            {t('complaints.form.detail.mark_resolved')}
+                                            <CheckCircle className={`w-4 h-4 shrink-0 ${complaint.status === 'Resolved' ? 'text-emerald-600' : 'text-slate-400'}`} />
+                                            <span>
+                                                {complaint.status === 'Resolved'
+                                                    ? (language === 'mr' ? 'निवारण तपशील अपडेट करा' : 'Update Resolution Details')
+                                                    : t('complaints.form.detail.mark_resolved')}
+                                            </span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Assignment */}
                                 {(user?.role === 'admin' || user?.can_assign_work === true) && (
-                                    <div className="pt-4 border-t border-slate-200/70">
-                                        <label className="block text-xs font-semibold text-slate-500 mb-2 uppercase">{t('complaints.form.detail.assign_staff')}</label>
+                                    <div className="pt-4 border-t border-slate-200">
+                                        <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">{t('complaints.form.detail.assign_staff')}</label>
                                         <div className="flex space-x-2">
                                             <CustomSelect value={assignee}
                                                 onChange={async (e) => {
@@ -732,7 +1407,7 @@ const ComplaintDetail = () => {
                                                             toast.error(`Failed to assign staff: ${error.message}`);
                                                         }
                                                     }
-                                                }} className="ns-input"
+                                                }} className="ns-input border-slate-300"
                                             >
                                                 <option value="">{t('complaints.form.detail.select_staff')}</option>
                                                 {staffList.map(s => <option key={s.id} value={s.id}>{s.name} ({s.role})</option>)}
@@ -744,17 +1419,17 @@ const ComplaintDetail = () => {
                         </div>
                     )}
 
-                    {/* Meta / Ticket Details */}
-                    <div className="ns-card p-6">
-                        <h3 className="font-bold text-slate-900 mb-4">{t('complaints.form.detail.ticket_details')}</h3>
+                    {/* Meta / Ticket Details Card (Monochrome) */}
+                    <div className="bg-white border border-slate-300 rounded-2xl p-6 shadow-xs">
+                        <h3 className="font-bold text-black mb-4 tracking-tight">{t('complaints.form.detail.ticket_details')}</h3>
                         <ul className="space-y-3 text-sm">
                             <li className="flex justify-between border-b border-slate-100 pb-2">
                                 <span className="text-slate-500">{t('complaints.form.detail.ticket_id')}</span>
-                                <span className="font-mono font-medium text-slate-700">#{complaint.id}</span>
+                                <span className="font-mono font-bold text-black">#{complaint.id}</span>
                             </li>
                             <li className="flex justify-between border-b border-slate-100 pb-2">
                                 <span className="text-slate-500">{t('complaints.form.detail.citizen')}</span>
-                                <span className="font-medium text-blue-600">
+                                <span className="font-semibold text-black">
                                     {(language === 'mr' && complaint.voter?.name_marathi)
                                         ? complaint.voter.name_marathi
                                         : <TranslatedText text={complaint.voter?.name_english || complaint.voter?.name_marathi || t('complaints.form.detail.anonymous')} isName={true} />}
@@ -763,7 +1438,7 @@ const ComplaintDetail = () => {
                             {(complaint.voter?.mobile) && (
                                 <li className="flex justify-between border-b border-slate-100 pb-2">
                                     <span className="text-slate-500">{t('complaints.form.detail.mobile')}</span>
-                                    <span className="font-medium text-slate-700">{complaint.voter.mobile}</span>
+                                    <span className="font-mono font-medium text-black">{complaint.voter.mobile}</span>
                                 </li>
                             )}
                             <li className="flex justify-between border-b border-slate-100 pb-2">
@@ -771,21 +1446,21 @@ const ComplaintDetail = () => {
                                 <div>
                                     {staffList.find(s => s.id === assignee) ? (
                                         <div className="text-right">
-                                            <div className="font-medium text-slate-900"><TranslatedText text={staffList.find(s => s.id === assignee)?.name || ''} isName={true} /></div>
-                                            <div className="text-xs text-brand-600 flex items-center justify-end gap-1">
+                                            <div className="font-bold text-black"><TranslatedText text={staffList.find(s => s.id === assignee)?.name || ''} isName={true} /></div>
+                                            <div className="text-xs text-slate-600 font-mono flex items-center justify-end gap-1">
                                                 <Phone className="w-3 h-3" />
                                                 {staffList.find(s => s.id === assignee)?.mobile}
                                             </div>
                                         </div>
                                     ) : (
-                                        <span className="text-slate-400">{t('complaints.form.detail.unassigned')}</span>
+                                        <span className="text-slate-400 font-medium">{t('complaints.form.detail.unassigned')}</span>
                                     )}
                                 </div>
                             </li>
                             {complaint.added_by_staff_id && (
                                 <li className="flex justify-between border-b border-slate-100 pb-2">
                                     <span className="text-slate-500">Added By</span>
-                                    <div className="text-right font-medium text-slate-900">
+                                    <div className="text-right font-semibold text-black">
                                         <TranslatedText text={staffList.find(s => s.id === complaint.added_by_staff_id)?.name || 'Unknown Staff'} isName={true} />
                                     </div>
                                 </li>
@@ -885,6 +1560,109 @@ const ComplaintDetail = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Status Update Modal */}
+            <StatusUpdateModal
+                isOpen={statusModalState.isOpen}
+                onClose={() => setStatusModalState(prev => ({ ...prev, isOpen: false }))}
+                mode={statusModalState.mode}
+                showStatusSelector={statusModalState.showStatusSelector}
+                complaintTitle={translatedData ? translatedData.title : complaint.title}
+                complaintId={complaint.id}
+                onSubmit={handleStatusModalSubmit}
+            />
+
+            {/* Edit Progress Log Modal */}
+            {editingLog && (
+                <EditLogModal
+                    isOpen={editingLog.isOpen}
+                    onClose={() => setEditingLog(null)}
+                    logIndex={editingLog.index}
+                    initialStatus={editingLog.status}
+                    initialNote={editingLog.note}
+                    initialImages={editingLog.images}
+                    onSubmit={handleSaveEditLog}
+                />
+            )}
+
+            {/* Delete Log Confirmation Modal */}
+            {deletingLogIndex !== null && (
+                <div className="notranslate fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="ns-card w-full max-w-sm overflow-hidden p-6 space-y-4">
+                        <div className="text-center">
+                            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="w-6 h-6 text-red-600" />
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-900">
+                                {language === 'mr' ? 'प्रगती नोंद हटवायची का?' : 'Delete Progress Log?'}
+                            </h3>
+                            <p className="text-slate-500 mt-2 text-sm">
+                                {language === 'mr'
+                                    ? 'तुम्हाला ही प्रगती नोंद कायमची हटवायची आहे का? ही क्रिया पूर्ववत करता येणार नाही.'
+                                    : 'Are you sure you want to delete this progress log? This action cannot be undone.'}
+                            </p>
+                        </div>
+                        <div className="flex gap-3 pt-2">
+                            <button
+                                onClick={() => setDeletingLogIndex(null)}
+                                disabled={deletingLog}
+                                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition"
+                            >
+                                {t('complaints.form.detail.cancel')}
+                            </button>
+                            <button
+                                onClick={handleConfirmDeleteLog}
+                                disabled={deletingLog}
+                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition disabled:opacity-50"
+                            >
+                                {deletingLog ? 'Deleting...' : (language === 'mr' ? 'हटवा' : 'Delete')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Image Lightbox Viewer Modal */}
+            {lightboxImage && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+                    onClick={() => setLightboxImage(null)}
+                >
+                    <div
+                        className="relative max-w-4xl w-full max-h-[90vh] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-slate-700"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between p-3.5 px-5 bg-slate-900 text-white border-b border-slate-800">
+                            <span className="text-sm font-medium truncate">{lightboxImage.title || 'Photo View'}</span>
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={lightboxImage.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    download
+                                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                    title="Open / Download photo"
+                                >
+                                    <Download className="w-4 h-4" />
+                                </a>
+                                <button
+                                    onClick={() => setLightboxImage(null)}
+                                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-3 flex items-center justify-center bg-black/60 overflow-auto max-h-[80vh]">
+                            <img
+                                src={lightboxImage.url}
+                                alt={lightboxImage.title || 'Enlarged photo'}
+                                className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+                            />
+                        </div>
                     </div>
                 </div>
             )}

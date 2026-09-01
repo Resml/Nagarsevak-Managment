@@ -42,6 +42,25 @@ export interface Complaint {
   videoUrl?: string;
   audioUrl?: string;
   attachments?: { url: string; type: string; name: string; size: number }[];
+  progressUpdates?: {
+    note: string;
+    images?: { url: string; name?: string; size?: number }[];
+    timestamp: string;
+    updatedBy?: string;
+    status: ComplaintStatus;
+  }[];
+  workInProgress?: {
+    note: string;
+    images?: { url: string; name?: string; size?: number }[];
+    updatedAt: string;
+    updatedBy?: string;
+  };
+  resolutionDetails?: {
+    note: string;
+    images?: { url: string; name?: string; size?: number }[];
+    resolvedAt: string;
+    resolvedBy?: string;
+  };
   user_id?: string;
   user_name?: string;
   createdAt: string; // ISO Date
