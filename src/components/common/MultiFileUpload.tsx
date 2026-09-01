@@ -268,29 +268,29 @@ export function MultiFileUpload({
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
                 className={clsx(
-                    "border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200",
+                    "relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden",
                     isDragging ? "border-brand-500 bg-brand-50" : "border-slate-300 bg-slate-50 hover:bg-slate-100"
                 )}
             >
-                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-3">
-                    <UploadCloud className={clsx("w-6 h-6", isDragging ? "text-brand-600" : "text-slate-400")} />
-                </div>
-                <p className="text-sm font-medium text-slate-700 text-center">
-                    Click or drag & drop files here
-                </p>
-                <p className="text-xs text-slate-500 mt-1 text-center">
-                    Supports Images, Videos, Audio, and Documents (Max {maxSizeMB}MB)
-                </p>
                 <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleChange}
-                    className="hidden"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     multiple
                     accept={accept}
+                    title="Click or drag files here"
                 />
+                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-3 relative z-0 pointer-events-none">
+                    <UploadCloud className={clsx("w-6 h-6", isDragging ? "text-brand-600" : "text-slate-400")} />
+                </div>
+                <p className="text-sm font-medium text-slate-700 text-center relative z-0 pointer-events-none">
+                    Click or drag & drop files here
+                </p>
+                <p className="text-xs text-slate-500 mt-1 text-center relative z-0 pointer-events-none">
+                    Supports Images, Videos, Audio, and Documents (Max {maxSizeMB}MB)
+                </p>
             </div>
 
             {error && (
