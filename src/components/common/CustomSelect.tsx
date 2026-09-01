@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect, Children, isValidElement, ReactNode } from 'react';
+import React, { useState, useRef, useEffect, Children, isValidElement } from 'react';
+import type { ReactNode } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -11,8 +12,9 @@ interface OptionType {
 }
 
 export interface CustomSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
-    onChange?: any;
+    onChange?: (e: { target: { value: string, name?: string } }) => void;
     children?: ReactNode;
+    placeholder?: string;
 }
 
 export function CustomSelect({
@@ -40,7 +42,7 @@ export function CustomSelect({
     const extractOptions = (nodes: ReactNode): OptionType[] => {
         const options: OptionType[] = [];
         Children.forEach(nodes, (child) => {
-            if (!isValidElement(child)) return;
+            if (!isValidElement<any>(child)) return;
             
             // Check for standard option tag
             if (child.type === 'option') {

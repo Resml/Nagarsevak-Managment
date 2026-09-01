@@ -7,7 +7,7 @@ import { format, parse, isValid } from 'date-fns';
 
 export interface CustomTimePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
     value?: string;
-    onChange?: any;
+    onChange?: (e: { target: { value: string, name?: string } }) => void;
 }
 
 export const CustomTimePicker = forwardRef<HTMLInputElement, CustomTimePickerProps>(

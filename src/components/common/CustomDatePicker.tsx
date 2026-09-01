@@ -7,7 +7,7 @@ import { format, parseISO, isValid } from 'date-fns';
 
 export interface CustomDatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
     value?: string;
-    onChange?: any;
+    onChange?: (e: { target: { value: string, name?: string } }) => void;
 }
 
 export const CustomDatePicker = forwardRef<HTMLInputElement, CustomDatePickerProps>(
