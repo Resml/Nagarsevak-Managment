@@ -7,7 +7,7 @@ import { format, parseISO, isValid } from 'date-fns';
 
 export interface CustomDatePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
     value?: string;
-    onChange?: (e: { target: { value: string, name?: string } }) => void;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export const CustomDatePicker = forwardRef<HTMLInputElement, CustomDatePickerProps>(
@@ -32,7 +32,7 @@ export const CustomDatePicker = forwardRef<HTMLInputElement, CustomDatePickerPro
             setSelectedDate(date);
             if (onChange) {
                 const dateStr = date ? format(date, 'yyyy-MM-dd') : '';
-                onChange({ target: { value: dateStr, name: props.name } });
+                onChange({ target: { value: dateStr, name: props.name } } as unknown as React.ChangeEvent<HTMLInputElement>);
             }
         };
 

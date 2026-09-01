@@ -12,7 +12,7 @@ interface OptionType {
 }
 
 export interface CustomSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
-    onChange?: (e: { target: { value: string, name?: string } }) => void;
+    onChange?: React.ChangeEventHandler<HTMLSelectElement>;
     children?: ReactNode;
     placeholder?: string;
 }
@@ -42,20 +42,21 @@ export function CustomSelect({
     const extractOptions = (nodes: ReactNode): OptionType[] => {
         const options: OptionType[] = [];
         Children.forEach(nodes, (child) => {
-            if (!isValidElement<any>(child)) return;
+            if (!isValidElement(child)) return;
+            const element = child as React.ReactElement<any>;
             
             // Check for standard option tag
-            if (child.type === 'option') {
+            if (element.type === 'option') {
                 options.push({
-                    value: child.props.value as string ?? child.props.children as string ?? '',
-                    label: child.props.children,
-                    disabled: child.props.disabled,
+                    value: element.props.value as string ?? element.props.children as string ?? '',
+                    label: element.props.children,
+                    disabled: element.props.disabled,
                 });
-            } else if (child.type === React.Fragment) {
-                options.push(...extractOptions(child.props.children));
-            } else if (child.props && child.props.children) {
+            } else if (element.type === React.Fragment) {
+                options.push(...extractOptions(element.props.children));
+            } else if (element.props && element.props.children) {
                 // Recurse into groups or custom wrappers if any
-                options.push(...extractOptions(child.props.children));
+                options.push(...extractOptions(element.props.children));
             }
         });
         return options;
@@ -88,7 +89,7 @@ export function CustomSelect({
         
         if (onChange) {
             // Simulate an event object for compatibility with (e) => onChange(e.target.value)
-            onChange({ target: { value: val, name: props.name } });
+            onChange({ target: { value: val, name: props.name } } as unknown as React.ChangeEvent<HTMLSelectElement>);
         }
     };
 

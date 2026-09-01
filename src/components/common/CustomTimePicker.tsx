@@ -7,7 +7,7 @@ import { format, parse, isValid } from 'date-fns';
 
 export interface CustomTimePickerProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value'> {
     value?: string;
-    onChange?: (e: { target: { value: string, name?: string } }) => void;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export const CustomTimePicker = forwardRef<HTMLInputElement, CustomTimePickerProps>(
@@ -39,7 +39,7 @@ export const CustomTimePicker = forwardRef<HTMLInputElement, CustomTimePickerPro
             setSelectedTime(date);
             if (onChange) {
                 const timeStr = date ? format(date, 'HH:mm') : '';
-                onChange({ target: { value: timeStr, name: props.name } });
+                onChange({ target: { value: timeStr, name: props.name } } as unknown as React.ChangeEvent<HTMLInputElement>);
             }
         };
 
