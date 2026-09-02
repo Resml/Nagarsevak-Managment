@@ -8,6 +8,7 @@ import { SecureStorageService } from '../../services/secureStorageService';
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import clsx from 'clsx';
 
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
@@ -980,7 +981,13 @@ const ComplaintDetail = () => {
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-6">
                     {/* Top Ticket Overview Card - Original Simple Layout */}
-                    <div className="ns-card p-6 shadow-sm notranslate overflow-hidden">
+                    <div className={clsx(
+                        "p-6 rounded-xl shadow-sm border notranslate overflow-hidden",
+                        complaint.status === 'Resolved' ? "bg-green-50 border-green-300" :
+                        (complaint.status === 'InProgress' || complaint.status === 'Assigned') ? "bg-yellow-50 border-yellow-300" :
+                        complaint.status === 'Pending' ? "bg-red-50 border-red-300" :
+                        "bg-white border-slate-200"
+                    )}>
                         <div className="flex justify-between items-start mb-4 gap-3">
                             <div className="min-w-0 flex-1">
                                 <span className={`notranslate ns-badge border-transparent ${complaint.type === 'Help' ? 'bg-purple-100 text-purple-700' : 'bg-brand-50 text-brand-800'}`}>
@@ -1005,7 +1012,7 @@ const ComplaintDetail = () => {
                         </div>
 
                         {/* Description Box */}
-                        <div className="text-slate-700 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 overflow-hidden">
+                        <div className="text-slate-700 mb-6 bg-white/70 p-4 rounded-xl border border-white/50 overflow-hidden shadow-sm">
                             <p className="whitespace-pre-wrap font-medium leading-relaxed break-words [overflow-wrap:anywhere]">
                                 {translatedData ? translatedData.description : complaint.description}
                             </p>

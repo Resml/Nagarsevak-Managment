@@ -620,7 +620,13 @@ const ComplaintList = () => {
                             <div
                                 key={complaint.id}
                                 onClick={() => navigate(`/dashboard/complaints/${complaint.id}`)}
-                                className="bg-white p-4 md:p-5 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group"
+                                className={clsx(
+                                    "p-4 md:p-5 rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full overflow-hidden w-full relative group",
+                                    complaint.status === 'Resolved' ? "bg-green-50 border-green-300" :
+                                    (complaint.status === 'InProgress' || complaint.status === 'Assigned') ? "bg-yellow-50 border-yellow-300" :
+                                    complaint.status === 'Pending' ? "bg-red-50 border-red-300" :
+                                    "bg-white border-gray-200"
+                                )}
                             >
                                 <div className="flex justify-between items-start mb-3">
                                     <span className={clsx("px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap", getStatusColor(complaint.status))}>
