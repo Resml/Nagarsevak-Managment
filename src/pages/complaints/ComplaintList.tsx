@@ -384,7 +384,7 @@ const ComplaintList = () => {
     return (
         <div className="space-y-6">
             <ComplaintTutorial />
-            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-4">
+            <div className="sticky top-0 z-30 bg-slate-50 pt-1 pb-2 space-y-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 tutorial-complaint-header">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
@@ -429,13 +429,65 @@ const ComplaintList = () => {
                     </div>
                 </div>
 
-                {/* View Mode Toggle */}
-                <div className="flex justify-end mb-2 tutorial-complaint-view">
-                    <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
+                {/* Tabs & View Toggle */}
+                <div className="border-b border-gray-200 flex justify-between items-end tutorial-complaint-tabs mt-2">
+                    <div className="overflow-x-auto overflow-y-hidden scrollbar-hide">
+                        <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
+                            <button
+                                onClick={() => setActiveTab('Complaints')}
+                                className={clsx(
+                                    activeTab === 'Complaints'
+                                        ? 'border-brand-500 text-brand-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                    'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm'
+                                )}
+                            >
+                                {isTranslated ? <span className="notranslate">परिसरातील तक्रारी</span> : t('complaints.tabs.area')}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('Personal Help')}
+                                className={clsx(
+                                    activeTab === 'Personal Help'
+                                        ? 'border-brand-500 text-brand-600'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                    'whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm'
+                                )}
+                            >
+                                {isTranslated ? <span className="notranslate">वैयक्तिक विनंती</span> : t('complaints.tabs.personal')}
+                            </button>
+                        </nav>
+                    </div>
+
+                    {/* View Mode Toggle */}
+                    <div className="flex justify-end mb-1 tutorial-complaint-view shrink-0 ml-4 hidden sm:flex">
+                        <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={clsx(
+                                    "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                    viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                <LayoutGrid className="w-4 h-4" /> {t('common.grid')}</button>
+                            <button
+                                onClick={() => setViewMode('report')}
+                                className={clsx(
+                                    "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                    viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
+                                )}
+                            >
+                                <FileText className="w-4 h-4" /> {t('common.report')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {/* Mobile View Toggle */}
+                <div className="flex sm:hidden justify-end mt-2">
+                    <div className="bg-white border border-gray-200 rounded-lg p-1 flex shadow-sm w-full">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={clsx(
-                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                "px-3 py-1.5 rounded-md flex items-center justify-center gap-2 text-sm font-medium transition-colors flex-1",
                                 viewMode === 'grid' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
                             )}
                         >
@@ -443,42 +495,13 @@ const ComplaintList = () => {
                         <button
                             onClick={() => setViewMode('report')}
                             className={clsx(
-                                "px-3 py-1.5 rounded-md flex items-center gap-2 text-sm font-medium transition-colors",
+                                "px-3 py-1.5 rounded-md flex items-center justify-center gap-2 text-sm font-medium transition-colors flex-1",
                                 viewMode === 'report' ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:text-gray-700"
                             )}
                         >
                             <FileText className="w-4 h-4" /> {t('common.report')}
                         </button>
                     </div>
-                </div>
-
-                {/* Tabs */}
-                <div className="border-b border-gray-200 overflow-x-auto tutorial-complaint-tabs">
-                    <nav className="-mb-px flex space-x-8 min-w-max" aria-label="Tabs">
-                        <button
-                            onClick={() => setActiveTab('Complaints')}
-                            className={clsx(
-                                activeTab === 'Complaints'
-                                    ? 'border-brand-500 text-brand-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-                            )}
-                        >
-                            {isTranslated ? <span className="notranslate">परिसरातील तक्रारी</span> : t('complaints.tabs.area')}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('Personal Help')}
-                            className={clsx(
-                                activeTab === 'Personal Help'
-                                    ? 'border-brand-500 text-brand-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-                                'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
-                            )}
-                        >
-                            {isTranslated ? <span className="notranslate">वैयक्तिक विनंती</span> : t('complaints.tabs.personal')}
-                        </button>
-
-                    </nav>
                 </div>
 
 
