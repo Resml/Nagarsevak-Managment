@@ -20,16 +20,18 @@ import {
     HelpCircle,
     FileText,
     CheckSquare,
+    MapPin,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import { DashboardTutorial } from '../../components/tutorial/DashboardTutorial';
+import { formatAreaName, stripSerialNumber } from '../../utils/formatters';
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const { t, language } = useLanguage();
-    const { tenantId, hasFeature } = useTenant(); // Added tenantId and hasFeature
+    const { tenant, tenantId, hasFeature } = useTenant(); // Added tenant
     const { user } = useAuth(); // Added user
     const hasComplaints = hasFeature('complaints');
     const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ const Dashboard = () => {
         totalLetters: 0,
         totalVisitors: 0
     });
-    const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null }>>([]);
+    const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null; area?: string | null; location?: string | null; }>>([]);
     const [dailyBriefing, setDailyBriefing] = useState<string>('');
     const { startTutorial } = useTutorial();
 
@@ -144,13 +146,23 @@ const Dashboard = () => {
             setStats(newStats);
 
             const activityList = hasComplaints
-                ? allComplaints.slice(0, 5)
+                ? allComplaints.slice(0, 5).map(c => ({
+                    id: c.id,
+                    status: c.status,
+                    problem: c.problem,
+                    title: c.category === 'SelfIdentified' ? 'Self Identified Issue' : c.category,
+                    created_at: c.created_at,
+                    area: c.area,
+                    location: c.location
+                }))
                 : allTasks.slice(0, 5).map(t => ({
                     id: t.id,
                     status: t.status === 'Completed' ? 'Resolved' : 'Pending',
                     problem: t.title,
                     title: t.title,
-                    created_at: t.created_at
+                    created_at: t.created_at,
+                    area: undefined,
+                    location: undefined
                 }));
             setRecentActivity(activityList);
 
@@ -336,10 +348,20 @@ const Dashboard = () => {
                                     <p className="text-sm font-medium text-slate-800 group-hover:text-brand-700 transition-colors line-clamp-2">
                                         <TranslatedText text={activity.problem || activity.title || ''} />
                                     </p>
-                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                        <Calendar className="w-3 h-3" />
-                                        {activity.created_at ? format(new Date(activity.created_at), 'MMM d, h:mm a') : 'Just now'}
-                                        <span className="ml-2 font-medium">({t(`status.${activity.status}`) || activity.status})</span>
+                                    <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                        <span className="flex items-center gap-1">
+                                            <Calendar className="w-3 h-3 shrink-0" />
+                                            {activity.created_at ? format(new Date(activity.created_at), 'MMM d, h:mm a') : 'Just now'}
+                                        </span>
+                                        {(activity.area || activity.location) && (
+                                            <span className="flex items-center gap-1 truncate max-w-[150px] sm:max-w-[200px]">
+                                                <MapPin className="w-3 h-3 shrink-0" />
+                                                <span className="truncate">
+                                                    {formatAreaName(activity.location || '', tenant?.name) + (activity.area ? `, ${formatAreaName(stripSerialNumber(activity.area), tenant?.name)}` : '')}
+                                                </span>
+                                            </span>
+                                        )}
+                                        <span className="font-medium shrink-0">({t(`status.${activity.status}`) || activity.status})</span>
                                     </p>
                                 </div>
                             </div>

@@ -11,10 +11,11 @@ import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
+import { formatAreaName, stripSerialNumber } from '../../utils/formatters';
 
 const ComplaintList = () => {
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenant, tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -526,7 +527,7 @@ const ComplaintList = () => {
                                                 }}
                                             >
                                                 <span className="text-gray-700">
-                                                    <TranslatedText text={area.name || ''} />
+                                                    <TranslatedText text={formatAreaName(area.name || '', tenant?.name)} />
                                                 </span>
                                                 <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
                                                     {area.count}
@@ -686,7 +687,7 @@ const ComplaintList = () => {
                                         <div className="flex items-center space-x-1 max-w-[50%]">
                                             <MapPin className="w-3 h-3 flex-shrink-0" />
                                             <TranslatedText
-                                                text={(complaint.area ? `${complaint.area}, ` : '') + complaint.location}
+                                                text={formatAreaName(complaint.location || '', tenant?.name) + (complaint.area ? `, ${formatAreaName(stripSerialNumber(complaint.area), tenant?.name)}` : '')}
                                                 className="truncate"
                                             />
                                         </div>
@@ -765,8 +766,8 @@ const ComplaintList = () => {
                                             <div className="text-xs text-gray-500 capitalize">{complaint.type}</div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                                            <div className="font-medium truncate"><TranslatedText text={complaint.area || 'N/A'} /></div>
-                                            <div className="text-xs text-gray-500 truncate" title={typeof complaint.location === 'string' ? complaint.location : ''}><TranslatedText text={complaint.location || 'N/A'} /></div>
+                                            <div className="font-medium truncate"><TranslatedText text={formatAreaName(complaint.location || 'N/A', tenant?.name)} /></div>
+                                            <div className="text-xs text-gray-500 truncate" title={typeof complaint.area === 'string' ? stripSerialNumber(complaint.area) : ''}><TranslatedText text={formatAreaName(stripSerialNumber(complaint.area) || 'N/A', tenant?.name)} /></div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {complaint.staff ? (

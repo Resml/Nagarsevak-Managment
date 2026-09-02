@@ -17,6 +17,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { CustomSelect } from '../../components/common/CustomSelect';
 import { StatusUpdateModal } from '../../components/complaints/StatusUpdateModal';
 import { EditLogModal } from '../../components/complaints/EditLogModal';
+import { formatAreaName, stripSerialNumber } from '../../utils/formatters';
 
 const ComplaintDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -24,7 +25,7 @@ const ComplaintDetail = () => {
     const location = useLocation();
     const { user } = useAuth();
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenant, tenantId } = useTenant();
 
     const [complaint, setComplaint] = useState<Complaint | undefined>(undefined);
     const [translatedData, setTranslatedData] = useState<{ title: string; description: string } | null>(null);
@@ -287,6 +288,7 @@ const ComplaintDetail = () => {
                         status: data.status,
                         ward: data.location || 'N/A',
                         location: data.location,
+                        area: data.area,
                         voter: {
                             name_english: data.reporter_name || 'Anonymous',
                             mobile: data.reporter_mobile || undefined
@@ -400,6 +402,7 @@ const ComplaintDetail = () => {
                         status: data.status,
                         ward: data.location || 'N/A',
                         location: data.location,
+                        area: data.area,
                         voter: data.voter
                             ? {
                                 name_english: data.voter.name_english ?? undefined,
@@ -1084,7 +1087,9 @@ const ComplaintDetail = () => {
                         <div className="mt-6 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
                             <div className="flex items-center gap-1.5 min-w-0">
                                 <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                                <span className="truncate"><TranslatedText text={complaint.location || ''} /></span>
+                                <span className="truncate">
+                                    <TranslatedText text={formatAreaName(complaint.location || '', tenant?.name) + (complaint.area ? `, ${formatAreaName(stripSerialNumber(complaint.area), tenant?.name)}` : '')} />
+                                </span>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                                 <Calendar className="w-4 h-4 text-slate-400" />

@@ -5,17 +5,149 @@ import { supabase } from '../../services/supabaseClient';
 import { SecureStorageService } from '../../services/secureStorageService';
 import { type ComplaintType, type Voter } from '../../types';
 import { type Staff } from '../../types/staff';
-import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Camera, X, Sparkles, AlertTriangle, Search, User, Phone, Check, Loader2, PlusCircle, ChevronDown } from 'lucide-react';
 import { AIAnalysisService } from '../../services/aiService';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { useFormDraft } from '../../hooks/useFormDraft';
 import { CustomSelect } from '../../components/common/CustomSelect';
 import { MultiFileUpload } from '../../components/common/MultiFileUpload';
+import { formatAreaName } from '../../utils/formatters';
+
+const SECTOR_5_SOCIETIES = [
+    'SHANTIDOOT APT', 'OMKAR CHS', 'MAYNAK CHS', 'VANRAI APT', 'PRATHAMESH CHS', 
+    'SHIVKRUPA APT', 'SAHAYOG CHS', 'SUYOG CHS', 'AASHIYANA', 'MORYA', 
+    'PANCHSHEEL ARKED', 'BALAJI SOCIETY', 'PANCHSHEEL PLAZA'
+];
+
+const SECTOR_6_SOCIETIES = [
+    'EXCEL RESIDENCY', 'GHARKUL CHS', 'ROOPMAYA CHS', 'YASH RESIDANCY', 'MANAS CHS', 
+    'MERCURY', 'DYNASTY', 'EXCEL PARK', 'MADHURI', 'SHIV SHANKAR CHS', 
+    'BLACK SMITH TOWER', 'ARIHANT CHS', 'UMAGEETA', 'MANGAL MOORTHY', 
+    'SANSKRUTI NAVAVIDYUT CHS', 'SUKHMANI CHS', 'PARIJAT DHRUV CHS', 'MIHIR TOWER', 
+    'CHINMAY CHS', 'CELEBRATION CHS', 'SWANAND', 'MADHUBAN CHS', 'VENUS CHS', 
+    'RAJSTHAN CHS', 'SHREE SWAMI DARSHAN', 'RUSHI CHS', 'GOODWILL RESIDENCY', 
+    'SWAMI ASHIRWAD', 'AMRIT CHS', 'JUPITER CHS', 'GREEN PARK', 'SHREE SWAMI CHARAN', 
+    'SAI RAJ'
+];
+
+const SECTOR_7_SOCIETIES = [
+    'SHREE DHAM', 'SHIVSHANKAR PLAZA II', 'AJAY CHS', 'RAKESH PARK', 'DEVIPRASAD CHS',
+    'NEW BOMBAY SAPHALY', 'SHIVESH EMERALD', 'PANCHASHIL', 'KARAN CHS', 'GEETSONALI CHS',
+    'SUNDARBAN', 'RUDRAKSHA', 'LOTUS CHS', 'PAMSPRING', 'SHREE DURGA', 
+    'DNYANDEEP DARSHAN', 'VISHAL', 'NAYAN TARA', 'SUPERIOR MICRON', 'OM ARCHADE',
+    'SUPERIOUR (UNDER CONSTRUCTION)'
+];
+
+const SECTOR_10_SOCIETIES = [
+    'SHIVDARSHAN', 'SWARAJYA', 'JAI OMKAR', 'SHRE GANESH KRUPA', 'TAPSYA',
+    'SHIVNERI', 'SAGARDARSHAN', 'SUKHSHANTI', 'MANGAL DARSHAN', 'OMKAR',
+    'BRIDGEVIEW', 'SAGAR', 'PRATIK'
+];
+
+const SECTOR_14_SOCIETIES = [
+    'Ajantha Sea Breeze', 'Sunteck Signia Oceans', 'Bhumikocolosa - 2',
+    'Matoshree Apt', 'Purna CHS', 'Prabhat Kiran CHS', 'Lake View CHS',
+    'Kalptaru CSH', 'MangalDeep CHS'
+];
+
+const SECTOR_15_SOCIETIES = [
+    'Dakshina CHS', 'Akshay CHS', 'Vaitrna CHS', 'Shree Samrth CHS', 'Panchtara CHS',
+    'Aashirvad CHS', 'Suprabhat CHS', 'Triveni CHS', 'Ashtavinayak CHS', 'Saptshrungi CHS',
+    'Navjivan CHS', 'Puja CHS', 'Darshan CHS', 'Shiv Shakti CHS', 'Shri Gajajnan CHS',
+    'Om Sai CHS', 'Himalay CHS', 'Amey CHS'
+];
+
+const SECTOR_8_SAIBABA_SOCIETIES = [
+    'SOMESHWAR TOWER', 'DATTATREY MAHARAJ', 'KALPRATNA', 'SUKH SHANTI', 'MARUTI ENCLAVE',
+    'EDEN PARK', 'NEW EKTA', 'SHREE RAM DARSHAN', 'ALANKAR', 'BINDAL',
+    'AGRAWAL PARK', 'KRISHNA KANIYA', 'SWAMI NAVSHARANAM', 'SHREE DURGA PRASAD',
+    'MAULI KRUPA', 'APURVA', 'SHREE SWAMI SADGURU', 'KASTURI TOWER', 'KASTURI GARDAN',
+    'NEW CONSTRUCTION', 'SAMTA', 'EDEN TOWER', 'SAI BABA TEMPLE'
+];
+
+const SECTOR_8_DEVA_BUNGLOW_SOCIETIES = [
+    'GURUKUL', 'SHASHWAT', 'EKVIRA DARSHAN', 'YASH PARADISE', 'SHUBHARAMBH',
+    'BRAMHRAJ', 'SAI PRERNA', 'SHREE SWAMI SAMARTH', 'SAI SABURI', 'SHREE SIDDHIVINAYAK',
+    'LAXMI SAWALI', 'JYOTI', 'OPEN PLOT', 'BHAJI MARKET', 'YOGESH', 'SILVIYA',
+    'VASTU VRUNDAVAN', 'SAI', 'GANESH', 'MAJJUDDIN SCHOOL', 'RAJGOPAL', 'RAJLAXMI',
+    'KAMTI PLAZA', 'SAI SHRADDHA', 'MORESHWAR', 'VARDVINAYAK', 'SHRIMAN', 'SHRIKRUPA',
+    'KRISHNA HIGHTS', 'SUSHILA', 'BLOSOM', 'SHREEJI DHAM'
+];
+
+const SECTOR_9_SOCIETIES = [
+    'bramharaj annex', 'swami Samarth chs', 'Shanti villa', 'ananta niwas', 'parvati apt',
+    'janabai apt', 'vighnaharta apt', 'mankubai apt', 'shantai niwas', 'manjula apt',
+    'radhe shyam apt', 'Vighnahar chs', 'divyal chs', 'siddhivinayak chs', 'sea side chs',
+    'mangalmurti apt', 'shree sai apt', 'jai kalika apt', 'vitthal niwas', 'balkrishna apt',
+    'Pratham Plaza', 'Kasturi Valley', 'Shri Krishna Vaibhav', 'Krishna chs', 'Matruchaya',
+    'Sai Sharan', 'sea Sai chs', 'Aayush Apt', 'Vinashree', 'Sachidanand',
+    'Sai Satish', 'Balaji', 'Vinit', 'Tulsi', 'Radha Krishna',
+    'Sai Apartment', 'Tukaram niwas', 'narmada apt', 'nike height', 'Gangaram plaza',
+    'nice mension', 'balaji park', 'gajanan villla', 'pandurang apt', 'vitthal keni niwas',
+    'akhadya villa', 'sitaram park', 'posha niwas', 'siddhu keni niwas', 'venubai rama niwas',
+    'ganpat niwas', 'laxmi niwas', 'Ambo niwas', 'bapu niwas', 'mukunda niwas',
+    'vasanti niwas', 'Heena Mension', 'Riddhi', 'Sadguru', 'Shravan',
+    'Matruchaya (2)', 'Shraddha Neha', 'Shree Vighnahar', 'Chintamani Chs', 'Sai Bramhan',
+    'Shakti Krupa', 'Shri Prasad', 'Abhishek', 'Ashirwad', 'Shiv Parvati',
+    'Savitri', 'Sayli', 'mansi chs', 'C K P sadan', 'varad ashish chs',
+    'Ratna Apt', 'kulswamini niwas', 'vasanti vitthal niwas', 'vaishnavi apt', 'Diva gaon 1',
+    'chagan bhagirath patil niwas', 'madhvi house', 'etwar bapu patil niwas', 'hirubai patil niwas', 'maruti bhawan niwas',
+    'Kunal chs', 'Matoshree chs', 'sai Sagar chs', 'Airoli Sai shradha chs', 'Sai deep chs',
+    'Vishwaspatra chs', 'shrawan chs', 'Kajal', 'Sai Prasad', 'Sai Vilas',
+    'Sai Apartment (2)', 'My choice', 'Om Shrushti Villa', 'Chinmay', 'Sai Mauli',
+    'Sai Saily', 'Shri Sakshi', 'Ram Krishna', 'Icchapurti', 'Suman',
+    'Space Plaza', 'My Apartment', 'Vishnu'
+];
+
+const SECTOR_9_BHAVANI_MATA_SOCIETIES = [
+    'GANESH', 'PRANAY', 'SHIVAM', 'PRATHMESH', 'SHREE PRASAD', 'RAM KRISHNA', 'OPEN PLOT',
+    'SAI SATISH', 'SHREE SAKSHI', 'SHAKTI KRUPA', 'SAI SAILY', 'SAI BRAMHAN', 'VEENA CHS',
+    'SAI MAULI', 'BHAVANI MATA MANDIR', 'OPEN MAIDAN (CONTAINER)', 'AAYUSH APARTMENT',
+    'SIDDHIVINAYAK CHS', 'SIDDHI ARCADE', 'BALAJI'
+];
+
+const SECTOR_9_GANPATI_BAPPA_SOCIETIES = [
+    'KAJAL', 'OM SHRUSHTI VILLA', 'SHRADDHA NEHA', 'SAI SHARAN', 'MATRUCHAYA', 
+    'ICCHAPURTI', 'ABHISHEK', 'OPEN PLOT', 'CHINTAMANI', 'CONSTRUCTION', 
+    'SAI APARTMENT', 'MY APARTMENT', 'SAVITRI', 'RADHA KRISHNA', 'TULSI', 
+    'SHIV PARVATI', 'SPACE PLAZA', 'SUMAN', 'ASHIRWAD', 'VINIT', 'KRISHNA', 
+    'KRISHNA CHS', 'SHREE KRISHNA VAIBHAV', 'KASTURI VALLY', 'PRATHAM PLAZA', 
+    'SADGURU', 'HEENA MENSION', 'RIDDHI', 'SHRAVAN', 'SAI PRASAD', 'SAI VILAS', 
+    'MY CHOICE'
+];
+
+const SECTOR_9_SAILY_SOCIETIES = [
+    'SOHAM', 'PRERNA CHAYA', 'RADHA KRISHNA', 'KALPATARU', 'GURUDEV', 'OPEN',
+    'SAI VIRAJ', 'SAPTAGIRI', 'GIRNAR', 'ADITI', 'NAV ARIHANT', 'SAI DRUSHTI',
+    'NEW OMKAR', 'EVERGREEN', 'SACCHIDANAND', 'VISHNU', 'SAILY', 'HOLI MAIDAN',
+    'SAI APARTMENT', 'MANGAL MURTI', 'JAI KALIKA'
+];
+
+const SECTOR_9_SANE_GURUJI_SOCIETIES = [
+    'VIGHNAHAR', 'DIVYAL', 'SIDDHIVINAYAK', 'SHREE SAI', 'BALAJI PARK',
+    'CHINMAY', 'SHANKAR KRUPA', 'VIGHNESHWAR', 'OPEN'
+];
+
+const SOCIETIES_BY_WARD: Record<string, string[]> = {
+    'Sector 5': SECTOR_5_SOCIETIES,
+    'Sector 6': SECTOR_6_SOCIETIES,
+    'Sector 7': SECTOR_7_SOCIETIES,
+    'Sector 8 - Saibaba Temple Area': SECTOR_8_SAIBABA_SOCIETIES,
+    'Sector 8 - Deva Bunglow Back Side Area': SECTOR_8_DEVA_BUNGLOW_SOCIETIES,
+    'Sector 9': SECTOR_9_SOCIETIES,
+    'Sector 9 - Bhavani Mata Temple': SECTOR_9_BHAVANI_MATA_SOCIETIES,
+    'Sector 9 - Ganpati Bappa Chauk To D Mart': SECTOR_9_GANPATI_BAPPA_SOCIETIES,
+    'Sector 9 - Saily Society': SECTOR_9_SAILY_SOCIETIES,
+    'Sector 9 - Sane Guruji Mandal': SECTOR_9_SANE_GURUJI_SOCIETIES,
+    'Sector 10': SECTOR_10_SOCIETIES,
+    'Sector 14': SECTOR_14_SOCIETIES,
+    'Sector 15': SECTOR_15_SOCIETIES
+};
 
 const ComplaintForm = () => {
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenant, tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
     const isWardProblemForm = location.pathname.includes('/ward/problems/new') || location.search.includes('type=SelfIdentified');
@@ -33,6 +165,7 @@ const ComplaintForm = () => {
     const [type, setType, clearTypeDraft] = useFormDraft<ComplaintType>('draft_complaint_type', 'Other');
     const [ward, setWard, clearWardDraft] = useFormDraft('draft_complaint_ward', '5'); // Default to 5
     const [area, setArea, clearAreaDraft] = useFormDraft('draft_complaint_area', '');
+    const [society, setSociety, clearSocietyDraft] = useFormDraft('draft_complaint_society', '');
     const [peopleAffected, setPeopleAffected, clearAffectedDraft] = useFormDraft('draft_complaint_affected', '');
 
     // Media State (not drafted because File objects can't be easily JSON serialized)
@@ -63,6 +196,11 @@ const ComplaintForm = () => {
 
     const [staffList, setStaffList] = useState<Staff[]>([]);
     const [addedByStaffId, setAddedByStaffId] = useState('');
+
+    // Society Combobox State
+    const [isSocietyDropdownOpen, setIsSocietyDropdownOpen] = useState(false);
+    const [societySearchQuery, setSocietySearchQuery] = useState('');
+    const societyDropdownRef = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!tenantId) return;
@@ -123,6 +261,9 @@ const ComplaintForm = () => {
             }
             if (houseNoWrapperRef.current && !houseNoWrapperRef.current.contains(event.target as Node)) {
                 setShowHouseNoSuggestions(false);
+            }
+            if (societyDropdownRef.current && !societyDropdownRef.current.contains(event.target as Node)) {
+                setIsSocietyDropdownOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -305,7 +446,7 @@ const ComplaintForm = () => {
                 category: isWardProblemForm ? 'SelfIdentified' : type,
                 priority: urgency,
                 location: 'Ward ' + ward,
-                area: area,
+                area: SOCIETIES_BY_WARD[ward] && society ? (area ? `${society}, ${area}` : society) : area,
                 source: 'Website',
                 image_url: imageUrl,
                 attachments: uploadedAttachments,
@@ -333,6 +474,7 @@ const ComplaintForm = () => {
             clearTypeDraft();
             clearWardDraft();
             clearAreaDraft();
+            clearSocietyDraft();
             clearAffectedDraft();
             clearFNameDraft();
             clearMNameDraft();
@@ -510,27 +652,87 @@ const ComplaintForm = () => {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.ward')}</label>
                                 <CustomSelect value={ward}
-                                    onChange={(e) => setWard(e.target.value)} className="ns-input"
+                                    onChange={(e) => {
+                                        const newWard = e.target.value;
+                                        setWard(newWard);
+                                        setSociety('');
+                                    }} className="ns-input"
                                 >
-                                    <option value="Sector 5">Sector 5</option>
-                                    <option value="Sector 6">Sector 6</option>
-                                    <option value="Sector 7">Sector 7</option>
-                                    <option value="Sector 8">Sector 8</option>
-                                    <option value="Sector 9">Sector 9</option>
-                                    <option value="Sector 10">Sector 10</option>
-                                    <option value="Sector 14">Sector 14</option>
-                                    <option value="Sector 15">Sector 15</option>
-                                    <option value="Out of Ward">Out of Ward</option>
+                                    {((tenant?.name || '').toLowerCase().includes('mamit')
+                                        ? [
+                                            'Sector 5', 'Sector 6', 'Sector 7', 
+                                            'Sector 8 - Saibaba Temple Area', 'Sector 8 - Deva Bunglow Back Side Area', 
+                                            'Sector 9', 'Sector 9 - Bhavani Mata Temple', 'Sector 9 - Ganpati Bappa Chauk To D Mart', 'Sector 9 - Saily Society', 'Sector 9 - Sane Guruji Mandal', 
+                                            'Sector 10', 'Sector 14', 'Sector 15', 'Out of Ward'
+                                        ]
+                                        : ['Sector 5', 'Sector 6', 'Sector 7', 'Sector 8', 'Sector 9', 'Sector 10', 'Sector 14', 'Sector 15', 'Out of Ward']
+                                    ).map(w => (
+                                        <option key={w} value={w}>{formatAreaName(w, tenant?.name)}</option>
+                                    ))}
                                 </CustomSelect>
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-slate-700 mb-1">{t('complaints.form.area')}</label>
+                            {SOCIETIES_BY_WARD[ward] && (
+                                <div className="relative" ref={societyDropdownRef}>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Society Name</label>
+                                    <div 
+                                        className="ns-input flex items-center justify-between cursor-pointer bg-white"
+                                        onClick={() => setIsSocietyDropdownOpen(!isSocietyDropdownOpen)}
+                                    >
+                                        <span className={`truncate ${!society ? 'text-slate-400' : ''}`}>
+                                            {society || 'Select Society'}
+                                        </span>
+                                        <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
+                                    </div>
+                                    
+                                    {isSocietyDropdownOpen && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                            <div className="sticky top-0 bg-white p-2 border-b border-slate-100">
+                                                <input 
+                                                    type="text" 
+                                                    className="w-full px-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                                    placeholder="Search society..."
+                                                    value={societySearchQuery}
+                                                    onChange={(e) => setSocietySearchQuery(e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                            {SOCIETIES_BY_WARD[ward]
+                                                .map((s, index) => ({ name: `${index + 1} - ${s}`, raw: s }))
+                                                .filter(s => s.name.toLowerCase().includes(societySearchQuery.toLowerCase()))
+                                                .map(s => (
+                                                    <div 
+                                                        key={s.name}
+                                                        className={`px-4 py-2 text-sm cursor-pointer hover:bg-slate-50 ${society === s.name ? 'bg-brand-50 text-brand-700 font-medium' : ''}`}
+                                                        onClick={() => {
+                                                            setSociety(s.name);
+                                                            setIsSocietyDropdownOpen(false);
+                                                            setSocietySearchQuery('');
+                                                        }}
+                                                    >
+                                                        {s.name}
+                                                    </div>
+                                                ))
+                                            }
+                                            {SOCIETIES_BY_WARD[ward]
+                                                .map((s, index) => ({ name: `${index + 1} - ${s}`, raw: s }))
+                                                .filter(s => s.name.toLowerCase().includes(societySearchQuery.toLowerCase()))
+                                                .length === 0 && (
+                                                <div className="px-4 py-2 text-sm text-slate-500 text-center">No societies found</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <div className={SOCIETIES_BY_WARD[ward] ? 'md:col-span-1' : 'md:col-span-2'}>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    {t('complaints.form.area')} {(tenant?.name || '').toLowerCase().includes('mamit') && <span className="text-slate-400 font-normal">(Optional)</span>}
+                                </label>
                                 <input
                                     type="text"
                                     value={area}
                                     onChange={(e) => setArea(e.target.value)}
                                     className="ns-input"
-                                    placeholder={t('complaints.form.area_placeholder')}
+                                    placeholder={(tenant?.name || '').toLowerCase().includes('mamit') ? "Area / Colony (Optional)" : t('complaints.form.area_placeholder')}
                                 />
                             </div>
                             <div className="md:col-span-2">
