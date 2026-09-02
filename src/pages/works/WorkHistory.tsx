@@ -9,6 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useTenant } from '../../context/TenantContext';
 import { CheckCircle, Clock, Hammer, MapPin, Plus, Search, User, FileText, HeartHandshake, Wand2, ChevronRight, Download, Check, LayoutGrid, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import clsx from 'clsx';
 import { TranslatedText } from '../../components/TranslatedText';
 import { AhwalReportGenerator } from './AhwalReportGenerator';
 import { WorkReportGenerator } from './WorkReportGenerator';
@@ -542,10 +543,13 @@ const WorkHistory = () => {
                         {filteredItems.map((item) => (
                             <div
                                 key={item.id}
-                                className={`ns-card overflow-hidden hover:shadow-md transition-all flex flex-col h-full cursor-pointer group relative ${selectionMode && selectedWorkIds.has(item.id)
-                                    ? 'ring-2 ring-brand-500 bg-brand-50/30'
-                                    : ''
-                                    }`}
+                                className={clsx(
+                                    "overflow-hidden hover:shadow-md transition-all flex flex-col h-full cursor-pointer group relative border rounded-xl",
+                                    item.status === 'Completed' ? "bg-green-50/50 border-green-200 hover:border-green-300" :
+                                    item.status === 'InProgress' ? "bg-yellow-50/50 border-yellow-200 hover:border-yellow-300" :
+                                    "bg-white border-slate-200 hover:border-brand-300",
+                                    selectionMode && selectedWorkIds.has(item.id) && 'ring-2 ring-brand-500 bg-brand-50/30'
+                                )}
                                 onClick={() => handleCardClick(item)}
                             >
                                 {selectionMode && (

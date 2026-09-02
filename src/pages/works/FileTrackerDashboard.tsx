@@ -182,7 +182,13 @@ const FileTrackerDashboard = () => {
                         <div
                             key={file.id}
                             onClick={() => navigate(`/dashboard/file-tracking/${file.id}`)}
-                            className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-brand-300 hover:shadow-xl hover:shadow-brand-50/50 transition-all cursor-pointer flex flex-col relative overflow-hidden"
+                            className={clsx(
+                                "group rounded-2xl border p-5 hover:shadow-xl transition-all cursor-pointer flex flex-col relative overflow-hidden",
+                                (file.current_status === 'Approved' || file.current_status === 'Completed') ? "bg-green-50/50 border-green-200 hover:border-green-300 hover:shadow-green-50/50" :
+                                file.current_status === 'Rejected' ? "bg-red-50/50 border-red-200 hover:border-red-300 hover:shadow-red-50/50" :
+                                (file.current_status === 'Pending' || file.current_status === 'In Progress' || file.current_status === 'Delayed') ? "bg-yellow-50/50 border-yellow-200 hover:border-yellow-300 hover:shadow-yellow-50/50" :
+                                "bg-white border-slate-200 hover:border-brand-300 hover:shadow-brand-50/50"
+                            )}
                         >
                             {/* Decorative background element */}
                             <div className="absolute top-0 right-0 -mr-8 -mt-8 w-24 h-24 bg-slate-50 rounded-full group-hover:bg-brand-50 transition-colors duration-300" />

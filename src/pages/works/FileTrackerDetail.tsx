@@ -184,7 +184,13 @@ const FileTrackerDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* File Details Side */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
+                    <div className={clsx(
+                        "rounded-2xl border p-6 shadow-sm space-y-6",
+                        (file.current_status === 'Approved' || file.current_status === 'Completed') ? "bg-green-50/50 border-green-200" :
+                        file.current_status === 'Rejected' ? "bg-red-50/50 border-red-200" :
+                        (file.current_status === 'Pending' || file.current_status === 'In Progress' || file.current_status === 'Delayed') ? "bg-yellow-50/50 border-yellow-200" :
+                        "bg-white border-slate-200"
+                    )}>
                         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest border-b border-slate-100 pb-3">File Information</h3>
                         
                         <div className="space-y-4">

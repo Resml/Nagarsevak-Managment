@@ -5,6 +5,7 @@ import { supabase } from '../../services/supabaseClient';
 import { FeedbackService, type FeedbackStats } from '../../services/feedbackService';
 import { ArrowLeft, MapPin, Calendar, Clock, CheckCircle, Hammer, Edit, Trash2, Wand2, X, Save, User } from 'lucide-react';
 import { format } from 'date-fns';
+import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -300,7 +301,12 @@ const WorkDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-6">
-                    <div className="ns-card p-6 md:p-8">
+                    <div className={clsx(
+                        "p-6 md:p-8 rounded-xl shadow-sm border",
+                        work.status === 'Completed' ? "bg-green-50/50 border-green-200" :
+                        work.status === 'InProgress' ? "bg-yellow-50/50 border-yellow-200" :
+                        "bg-white border-slate-200"
+                    )}>
                         <div className="flex justify-between items-start mb-6">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">

@@ -11,6 +11,7 @@ import { useTenant } from '../../context/TenantContext';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from 'date-fns';
+import clsx from 'clsx';
 import IncomingLetterUpload from './IncomingLetterUpload';
 import { useTutorial } from '../../context/TutorialContext';
 import { LetterTutorial } from '../../components/tutorial/LetterTutorial';
@@ -878,7 +879,14 @@ const LetterDashboard = () => {
                                     <div
                                         key={req.id}
                                         onClick={() => setSelectedRequest(req)}
-                                        className={`p-4 border-b border-slate-200/70 cursor-pointer hover:bg-slate-50 transition group ${selectedRequest?.id === req.id ? 'bg-brand-50/60 border-l-4 border-l-brand-600' : ''}`}
+                                        className={clsx(
+                                            "p-4 border-b cursor-pointer transition group",
+                                            req.status === 'Approved' ? "bg-green-50/50 border-l-4 border-l-green-500 hover:bg-green-50 border-slate-200/70" :
+                                            req.status === 'Rejected' ? "bg-red-50/50 border-l-4 border-l-red-500 hover:bg-red-50 border-slate-200/70" :
+                                            req.status === 'Pending' ? "bg-yellow-50/50 border-l-4 border-l-yellow-500 hover:bg-yellow-50 border-slate-200/70" :
+                                            "hover:bg-slate-50 border-l-4 border-l-transparent border-slate-200/70",
+                                            selectedRequest?.id === req.id && "ring-2 ring-brand-500 bg-white"
+                                        )}
                                     >
                                         <div className="flex justify-between items-start">
                                             <h3 className="font-bold text-slate-800">
@@ -1009,7 +1017,15 @@ const LetterDashboard = () => {
                     </div>
 
                     {/* Preview */}
-                    <div className="ns-card md:col-span-2 p-6 min-h-[500px] flex flex-col tutorial-letter-preview">
+                    <div className={clsx(
+                        "md:col-span-2 p-6 min-h-[500px] flex flex-col tutorial-letter-preview shadow-sm rounded-xl border",
+                        activeTab === 'outgoing' && selectedRequest ? (
+                            selectedRequest.status === 'Approved' ? "bg-green-50 border-green-300" :
+                            selectedRequest.status === 'Rejected' ? "bg-red-50 border-red-300" :
+                            selectedRequest.status === 'Pending' ? "bg-yellow-50 border-yellow-300" :
+                            "bg-white border-slate-200"
+                        ) : "bg-white border-slate-200 ns-card"
+                    )}>
                         {activeTab === 'outgoing' && selectedRequest ? (
                             <>
                                 <div className="flex justify-between items-start pb-4 border-b border-slate-200/70">
