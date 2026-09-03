@@ -11,6 +11,8 @@ import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
+import { stripSerialNumber } from '../../utils/formatters';
+import { AreaSearchFilter } from '../../components/complaints/AreaSearchFilter';
 
 const PersonalRequestList = () => {
     const { t, language } = useLanguage();
@@ -33,6 +35,8 @@ const PersonalRequestList = () => {
     // Search & Filter State
     const [searchTerm, setSearchTerm] = useState('');
     const [areaSearch, setAreaSearch] = useState('');
+    const [selectedSector, setSelectedSector] = useState<string | null>(null);
+    const [selectedSociety, setSelectedSociety] = useState<string | null>(null);
     const [dateSearch, setDateSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [showDateDropdown, setShowDateDropdown] = useState(false);
@@ -277,9 +281,44 @@ const PersonalRequestList = () => {
         const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesArea = !areaSearch || 
-            (c.area && c.area.toLowerCase().includes(areaSearch.toLowerCase())) ||
-            (c.location && c.location.toLowerCase().includes(areaSearch.toLowerCase()));
+        const isMamit = Boolean(tenant?.name?.toLowerCase().includes('mamit'));
+        let matchesArea = true;
+        if (areaSearch) {
+            if (isMamit) {
+                if (selectedSociety) {
+                    const cleanSoc = stripSerialNumber(selectedSociety).toLowerCase();
+                    const rawSoc = selectedSociety.toLowerCase();
+                    const socMatch = (c.area && (c.area.toLowerCase().includes(cleanSoc) || c.area.toLowerCase().includes(rawSoc))) ||
+                                     (c.location && (c.location.toLowerCase().includes(cleanSoc) || c.location.toLowerCase().includes(rawSoc)));
+                    if (selectedSector) {
+                        const secLower = selectedSector.toLowerCase();
+                        const secMatch = (c.location && c.location.toLowerCase().includes(secLower)) ||
+                                         (c.area && c.area.toLowerCase().includes(secLower));
+                        matchesArea = Boolean(socMatch && secMatch);
+                    } else {
+                        matchesArea = Boolean(socMatch);
+                    }
+                } else if (selectedSector) {
+                    const secLower = selectedSector.toLowerCase();
+                    matchesArea = Boolean(
+                        (c.location && c.location.toLowerCase().includes(secLower)) ||
+                        (c.area && c.area.toLowerCase().includes(secLower))
+                    );
+                } else {
+                    const searchLower = areaSearch.toLowerCase().trim();
+                    matchesArea = Boolean(
+                        (c.area && c.area.toLowerCase().includes(searchLower)) ||
+                        (c.location && c.location.toLowerCase().includes(searchLower))
+                    );
+                }
+            } else {
+                const searchLower = areaSearch.toLowerCase().trim();
+                matchesArea = Boolean(
+                    (c.area && c.area.toLowerCase().includes(searchLower)) ||
+                    (c.location && c.location.toLowerCase().includes(searchLower))
+                );
+            }
+        }
 
         const matchesDate = !dateSearch || format(new Date(c.createdAt), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase());
 
@@ -447,44 +486,16 @@ const PersonalRequestList = () => {
                         </div>
 
                         {/* Area Search with Dropdown */}
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder={t('complaints.search_area_placeholder')}
-                                className="ns-input pl-10 notranslate"
-                                value={areaSearch}
-                                onChange={(e) => {
-                                    setAreaSearch(e.target.value);
-                                    setShowAreaDropdown(true);
-                                }}
-                                onFocus={() => setShowAreaDropdown(true)}
-                                onBlur={() => setTimeout(() => setShowAreaDropdown(false), 200)}
-                            />
-                            {showAreaDropdown && uniqueAreas.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto w-full">
-                                    {uniqueAreas
-                                        .filter(a => !areaSearch || (a.name && a.name.toLowerCase().includes(areaSearch.toLowerCase())))
-                                        .map((area, idx) => (
-                                            <button
-                                                key={idx}
-                                                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex justify-between items-center text-sm"
-                                                onClick={() => {
-                                                    setAreaSearch(area.name || '');
-                                                    setShowAreaDropdown(false);
-                                                }}
-                                            >
-                                                <span className="text-gray-700">
-                                                    <TranslatedText text={area.name || ''} />
-                                                </span>
-                                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
-                                                    {area.count}
-                                                </span>
-                                            </button>
-                                        ))}
-                                </div>
-                            )}
-                        </div>
+                        <AreaSearchFilter
+                            areaSearch={areaSearch}
+                            setAreaSearch={setAreaSearch}
+                            selectedSector={selectedSector}
+                            setSelectedSector={setSelectedSector}
+                            selectedSociety={selectedSociety}
+                            setSelectedSociety={setSelectedSociety}
+                            complaints={complaints}
+                            placeholder={t('complaints.search_area_placeholder')}
+                        />
 
                         {/* Date Search with Dropdown */}
                         <div className="relative">
