@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { type Complaint, type ComplaintStatus, type ComplaintType } from '../../types';
-import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer, HelpCircle, Download } from 'lucide-react';
+import { Plus, Calendar, MapPin, User, Search, Filter, X, Languages, LayoutGrid, FileText, Printer, HelpCircle, Download, ChevronDown, ChevronUp } from 'lucide-react';
 import { ComplaintReportGenerator } from '../../components/reports/ComplaintReportGenerator';
 import { format } from 'date-fns';
 import clsx from 'clsx';
@@ -40,6 +40,7 @@ const ComplaintList = () => {
     const [dateSearch, setDateSearch] = useState('');
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [showDateDropdown, setShowDateDropdown] = useState(false);
+    const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
     const fetchComplaints = async () => {
         try {
@@ -521,8 +522,22 @@ const ComplaintList = () => {
 
 
 
+                {/* Search and Filters Toggle (Mobile) */}
+                <div className="md:hidden">
+                    <button
+                        onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+                        className="w-full bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between text-sm font-medium text-slate-700 shadow-sm"
+                    >
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-brand-600" />
+                            <span>{t('common.filters') || 'Search & Filters'}</span>
+                        </div>
+                        {isFiltersExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                    </button>
+                </div>
+
                 {/* Search and Filters */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-4 tutorial-complaint-search">
+                <div className={clsx("bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-4 tutorial-complaint-search", !isFiltersExpanded && "hidden md:block")}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* General Search */}
                         <div className="relative">

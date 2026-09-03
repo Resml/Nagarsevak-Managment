@@ -694,7 +694,7 @@ const AppLayout = () => {
         {/* Main */}
         <div className="flex min-w-0 flex-1 flex-col transition-all duration-300">
           <main className="flex-1">
-            <div className="mx-auto max-w-7xl px-4 md:px-8 py-6 md:py-8">
+            <div className="mx-auto max-w-7xl px-2 sm:px-4 md:px-8 py-3 sm:py-6 md:py-8">
 
 
               <div className="md:hidden flex items-center mb-6 bg-gradient-to-r from-brand-600 to-brand-700 p-4 rounded-2xl shadow-md text-white">
