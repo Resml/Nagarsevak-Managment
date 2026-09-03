@@ -11,6 +11,8 @@ export interface MultiFileUploadProps {
     maxSizeMB?: number;
     accept?: string;
     className?: string;
+    title?: string;
+    subtitle?: string;
 }
 
 const getFileIcon = (type: string) => {
@@ -198,7 +200,9 @@ export function MultiFileUpload({
     maxFiles = 10,
     maxSizeMB = 50,
     accept = "*/*",
-    className
+    className,
+    title,
+    subtitle
 }: MultiFileUploadProps) {
     const { t } = useLanguage();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -286,10 +290,10 @@ export function MultiFileUpload({
                     <UploadCloud className={clsx("w-6 h-6", isDragging ? "text-brand-600" : "text-slate-400")} />
                 </div>
                 <p className="text-sm font-medium text-slate-700 text-center relative z-0 pointer-events-none">
-                    Click or drag & drop files here
+                    {title || 'Click or drag & drop files here'}
                 </p>
                 <p className="text-xs text-slate-500 mt-1 text-center relative z-0 pointer-events-none">
-                    Supports Images, Videos, Audio, and Documents (Max {maxSizeMB}MB)
+                    {subtitle || `Supports Images, Videos, Audio, and Documents (Max ${maxSizeMB}MB)`}
                 </p>
             </div>
 

@@ -169,7 +169,9 @@ const ComplaintForm = () => {
     const [peopleAffected, setPeopleAffected, clearAffectedDraft] = useFormDraft('draft_complaint_affected', '');
 
     // Media State (not drafted because File objects can't be easily JSON serialized)
-    const [files, setFiles] = useState<globalThis.File[]>([]);
+    const [desktopFiles, setDesktopFiles] = useState<globalThis.File[]>([]);
+    const [mediaFiles, setMediaFiles] = useState<globalThis.File[]>([]);
+    const [docFiles, setDocFiles] = useState<globalThis.File[]>([]);
     const [uploading, setUploading] = useState(false);
 
     // Voter Details State
@@ -422,9 +424,10 @@ const ComplaintForm = () => {
         try {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
+            const allFiles = [...desktopFiles, ...mediaFiles, ...docFiles];
             // Upload all attachments concurrently
             const uploadedAttachments = await Promise.all(
-                files.map(async (file) => {
+                allFiles.map(async (file) => {
                     const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
                     return {
                         url: relativePath,
@@ -480,6 +483,9 @@ const ComplaintForm = () => {
             clearMNameDraft();
             clearLNameDraft();
             clearMobileDraft();
+            setDesktopFiles([]);
+            setMediaFiles([]);
+            setDocFiles([]);
 
             if (isWardProblemForm) {
                 navigate('/dashboard/ward/problems');
@@ -772,13 +778,39 @@ const ComplaintForm = () => {
 
                         <div>
                             <label className="ns-input block text-sm font-medium text-slate-700 mb-2">Attachments (Photos, Videos, Audio, Documents)</label>
-                            <MultiFileUpload 
-                                files={files} 
-                                onChange={setFiles} 
-                                maxFiles={10} 
-                                maxSizeMB={100}
-                                accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
-                            />
+                            
+                            {/* Desktop Version: Single unified upload zone */}
+                            <div className="hidden md:block">
+                                <MultiFileUpload 
+                                    files={desktopFiles} 
+                                    onChange={setDesktopFiles} 
+                                    maxFiles={10} 
+                                    maxSizeMB={100}
+                                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                                />
+                            </div>
+
+                            {/* Mobile Version: Split upload zones */}
+                            <div className="md:hidden grid grid-cols-1 gap-4">
+                                <MultiFileUpload 
+                                    files={mediaFiles} 
+                                    onChange={setMediaFiles} 
+                                    maxFiles={5} 
+                                    maxSizeMB={100}
+                                    accept="image/*,video/*,audio/*"
+                                    title="Add Photos & Videos"
+                                    subtitle="Max 100MB per file"
+                                />
+                                <MultiFileUpload 
+                                    files={docFiles} 
+                                    onChange={setDocFiles} 
+                                    maxFiles={5} 
+                                    maxSizeMB={100}
+                                    accept=".pdf,.doc,.docx"
+                                    title="Add Documents"
+                                    subtitle="PDF, DOC, DOCX (Max 100MB)"
+                                />
+                            </div>
                         </div>
                     </div>
 
