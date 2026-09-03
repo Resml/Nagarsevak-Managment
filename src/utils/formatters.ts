@@ -22,3 +22,13 @@ export const stripSerialNumber = (text: string | null | undefined) => {
     }
     return text.trim();
 };
+
+export const getFormattedAddress = (location: string | null | undefined, area: string | null | undefined, tenantName?: string) => {
+    const isMamit = tenantName && tenantName.toLowerCase().includes('mamit');
+    
+    if (isMamit) {
+        return formatAreaName(location || '', tenantName) + (area ? `, ${formatAreaName(stripSerialNumber(area), tenantName)}` : '');
+    }
+    
+    return (area ? `${area}, ` : '') + (location || '');
+};

@@ -17,7 +17,7 @@ import { TranslatedText } from '../../components/TranslatedText';
 import { CustomSelect } from '../../components/common/CustomSelect';
 import { StatusUpdateModal } from '../../components/complaints/StatusUpdateModal';
 import { EditLogModal } from '../../components/complaints/EditLogModal';
-import { formatAreaName, stripSerialNumber } from '../../utils/formatters';
+import { formatAreaName, stripSerialNumber, getFormattedAddress } from '../../utils/formatters';
 
 const ComplaintDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -1088,7 +1088,7 @@ const ComplaintDetail = () => {
                             <div className="flex items-center gap-1.5 min-w-0">
                                 <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                                 <span className="truncate">
-                                    <TranslatedText text={formatAreaName(complaint.location || '', tenant?.name) + (complaint.area ? `, ${formatAreaName(stripSerialNumber(complaint.area), tenant?.name)}` : '')} />
+                                    <TranslatedText text={tenant?.name?.toLowerCase().includes('mamit') ? getFormattedAddress(complaint.location, complaint.area, tenant?.name) : (complaint.location || '')} />
                                 </span>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">

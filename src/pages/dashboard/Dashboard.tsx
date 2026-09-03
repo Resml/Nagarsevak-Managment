@@ -353,7 +353,7 @@ const Dashboard = () => {
                                             <Calendar className="w-3 h-3 shrink-0" />
                                             {activity.created_at ? format(new Date(activity.created_at), 'MMM d, h:mm a') : 'Just now'}
                                         </span>
-                                        {(activity.area || activity.location) && (
+                                        {tenant?.name?.toLowerCase().includes('mamit') && (activity.area || activity.location) && (
                                             <span className="flex items-center gap-1 truncate max-w-[150px] sm:max-w-[200px]">
                                                 <MapPin className="w-3 h-3 shrink-0" />
                                                 <span className="truncate">

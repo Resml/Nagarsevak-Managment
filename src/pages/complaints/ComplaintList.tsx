@@ -11,7 +11,7 @@ import { useTenant } from '../../context/TenantContext';
 import { TranslatedText } from '../../components/TranslatedText';
 import { useTutorial } from '../../context/TutorialContext';
 import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
-import { formatAreaName, stripSerialNumber } from '../../utils/formatters';
+import { formatAreaName, stripSerialNumber, getFormattedAddress } from '../../utils/formatters';
 
 const ComplaintList = () => {
     const { t, language } = useLanguage();
@@ -290,7 +290,20 @@ const ComplaintList = () => {
     }, [tenantId]);
 
     // Unique Areas with Counts
-    const uniqueAreas = Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {
+    const uniqueAreas = tenant?.name?.toLowerCase().includes('mamit')
+        ? [
+            'Sector 5', 'Sector 6', 'Sector 7', 
+            'Sector 8 - Saibaba Temple Area', 'Sector 8 - Deva Bunglow Back Side Area', 
+            'Sector 9', 'Sector 9 - Bhavani Mata Temple', 'Sector 9 - Ganpati Bappa Chauk To D Mart', 'Sector 9 - Saily Society', 'Sector 9 - Sane Guruji Mandal', 
+            'Sector 10', 'Sector 14', 'Sector 15', 'Out of Ward'
+        ].map(wardName => {
+            const locationVal = 'Ward ' + wardName;
+            return {
+                name: locationVal,
+                count: complaints.filter(c => c.location === locationVal).length
+            };
+        })
+        : Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {
         return {
             name: area,
             count: complaints.filter(c => c.area === area).length
@@ -312,7 +325,9 @@ const ComplaintList = () => {
         const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesArea = !areaSearch || (c.area && c.area.toLowerCase().includes(areaSearch.toLowerCase()));
+        const matchesArea = !areaSearch || 
+            (c.area && c.area.toLowerCase().includes(areaSearch.toLowerCase())) ||
+            (c.location && c.location.toLowerCase().includes(areaSearch.toLowerCase()));
 
         const matchesDate = !dateSearch || format(new Date(c.createdAt), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase());
 
@@ -710,7 +725,7 @@ const ComplaintList = () => {
                                         <div className="flex items-center space-x-1 max-w-[50%]">
                                             <MapPin className="w-3 h-3 flex-shrink-0" />
                                             <TranslatedText
-                                                text={formatAreaName(complaint.location || '', tenant?.name) + (complaint.area ? `, ${formatAreaName(stripSerialNumber(complaint.area), tenant?.name)}` : '')}
+                                                text={getFormattedAddress(complaint.location, complaint.area, tenant?.name)}
                                                 className="truncate"
                                             />
                                         </div>
@@ -789,8 +804,17 @@ const ComplaintList = () => {
                                             <div className="text-xs text-gray-500 capitalize">{complaint.type}</div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                                            <div className="font-medium truncate"><TranslatedText text={formatAreaName(complaint.location || 'N/A', tenant?.name)} /></div>
-                                            <div className="text-xs text-gray-500 truncate" title={typeof complaint.area === 'string' ? stripSerialNumber(complaint.area) : ''}><TranslatedText text={formatAreaName(stripSerialNumber(complaint.area) || 'N/A', tenant?.name)} /></div>
+                                            {tenant?.name?.toLowerCase().includes('mamit') ? (
+                                                <>
+                                                    <div className="font-medium truncate"><TranslatedText text={formatAreaName(complaint.location || 'N/A', tenant?.name)} /></div>
+                                                    <div className="text-xs text-gray-500 truncate" title={typeof complaint.area === 'string' ? stripSerialNumber(complaint.area) : ''}><TranslatedText text={formatAreaName(stripSerialNumber(complaint.area) || 'N/A', tenant?.name)} /></div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="font-medium truncate"><TranslatedText text={complaint.area || 'N/A'} /></div>
+                                                    <div className="text-xs text-gray-500 truncate" title={typeof complaint.location === 'string' ? complaint.location : ''}><TranslatedText text={complaint.location || 'N/A'} /></div>
+                                                </>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                             {complaint.staff ? (

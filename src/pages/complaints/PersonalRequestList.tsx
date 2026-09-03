@@ -14,7 +14,7 @@ import { ComplaintTutorial } from '../../components/tutorial/ComplaintTutorial';
 
 const PersonalRequestList = () => {
     const { t, language } = useLanguage();
-    const { tenantId } = useTenant();
+    const { tenant, tenantId } = useTenant();
     const navigate = useNavigate();
     const location = useLocation();
     const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -241,7 +241,20 @@ const PersonalRequestList = () => {
     }, [tenantId]);
 
     // Unique Areas with Counts
-    const uniqueAreas = Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {
+    const uniqueAreas = tenant?.name?.toLowerCase().includes('mamit')
+        ? [
+            'Sector 5', 'Sector 6', 'Sector 7', 
+            'Sector 8 - Saibaba Temple Area', 'Sector 8 - Deva Bunglow Back Side Area', 
+            'Sector 9', 'Sector 9 - Bhavani Mata Temple', 'Sector 9 - Ganpati Bappa Chauk To D Mart', 'Sector 9 - Saily Society', 'Sector 9 - Sane Guruji Mandal', 
+            'Sector 10', 'Sector 14', 'Sector 15', 'Out of Ward'
+        ].map(wardName => {
+            const locationVal = 'Ward ' + wardName;
+            return {
+                name: locationVal,
+                count: complaints.filter(c => c.location === locationVal).length
+            };
+        })
+        : Array.from(new Set(complaints.map(c => c.area).filter(Boolean))).map(area => {
         return {
             name: area,
             count: complaints.filter(c => c.area === area).length
@@ -263,7 +276,9 @@ const PersonalRequestList = () => {
         const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.description.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesArea = !areaSearch || (c.area && c.area.toLowerCase().includes(areaSearch.toLowerCase()));
+        const matchesArea = !areaSearch || 
+            (c.area && c.area.toLowerCase().includes(areaSearch.toLowerCase())) ||
+            (c.location && c.location.toLowerCase().includes(areaSearch.toLowerCase()));
 
         const matchesDate = !dateSearch || format(new Date(c.createdAt), 'MMM d, yyyy').toLowerCase().includes(dateSearch.toLowerCase());
 
