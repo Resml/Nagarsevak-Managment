@@ -46,8 +46,8 @@ const ComplaintDetail = () => {
         showStatusSelector: false
     });
 
-    // Image Lightbox State
-    const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string; type?: string } | null>(null);
+    // Image & Video Lightbox State
+    const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string; type?: string; isVideo?: boolean } | null>(null);
 
     // Edit & Delete Progress Log States
     const [editingLog, setEditingLog] = useState<{
@@ -75,11 +75,16 @@ const ComplaintDetail = () => {
             imagesList.map(async (img: any) => {
                 const rawUrl = typeof img === 'string' ? img : (img?.url || '');
                 const secureUrl = rawUrl ? await SecureStorageService.getUrl('documents', rawUrl) : '';
+                const detectedType = (typeof img === 'object' && img?.type)
+                    ? img.type
+                    : (rawUrl.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) || (typeof img === 'object' && img?.name?.match(/\.(mp4|webm|ogg|mov)$/i)))
+                        ? 'video/mp4'
+                        : undefined;
                 return {
                     url: secureUrl,
-                    name: typeof img === 'object' && img?.name ? img.name : 'Photo',
+                    name: typeof img === 'object' && img?.name ? img.name : 'Media',
                     size: typeof img === 'object' && img?.size ? img.size : 0,
-                    type: typeof img === 'object' && img?.type ? img.type : undefined
+                    type: detectedType
                 };
             })
         );
@@ -549,7 +554,8 @@ const ComplaintDetail = () => {
                 uploadedImages.map(async (img) => ({
                     url: await SecureStorageService.getUrl('documents', img.url),
                     name: img.name,
-                    size: img.size
+                    size: img.size,
+                    type: img.type
                 }))
             );
 
@@ -1200,17 +1206,27 @@ const ComplaintDetail = () => {
                                                             {update.images && update.images.length > 0 && (
                                                                 <div className="flex flex-wrap gap-2 pt-1">
                                                                     {update.images.map((img, imgIdx) => {
-                                                                        const isVideo = img.type?.startsWith('video/') || img.name?.match(/\.(mp4|webm|ogg)$/i) || img.url?.match(/\.(mp4|webm|ogg)$/i);
+                                                                        const isVideo = !!(
+                                                                            img.type?.startsWith('video/') ||
+                                                                            img.name?.match(/\.(mp4|webm|ogg|mov)$/i) ||
+                                                                            img.url?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i)
+                                                                        );
                                                                         return (
                                                                         <div
                                                                             key={imgIdx}
-                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Media ${imgIdx + 1}`, type: img.type })}
+                                                                            onClick={() => setLightboxImage({
+                                                                                url: img.url,
+                                                                                title: `${isVideo ? (language === 'mr' ? 'व्हिडिओ' : 'Video') : (language === 'mr' ? 'छायाचित्र' : 'Photo')} ${imgIdx + 1}`,
+                                                                                type: img.type,
+                                                                                isVideo
+                                                                            })}
                                                                             className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50 relative"
                                                                         >
                                                                             {isVideo ? (
                                                                                 <video
                                                                                     src={img.url}
                                                                                     className="w-full h-full object-cover"
+                                                                                    preload="metadata"
                                                                                 />
                                                                             ) : (
                                                                                 <img
@@ -1221,7 +1237,7 @@ const ComplaintDetail = () => {
                                                                             )}
                                                                             {isVideo && (
                                                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-                                                                                    <Video className="w-5 h-5 text-white" />
+                                                                                    <Video className="w-5 h-5 text-white drop-shadow" />
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -1287,17 +1303,27 @@ const ComplaintDetail = () => {
                                                             {update.images && update.images.length > 0 && (
                                                                 <div className="flex flex-wrap gap-2 pt-1">
                                                                     {update.images.map((img, imgIdx) => {
-                                                                        const isVideo = img.type?.startsWith('video/') || img.name?.match(/\.(mp4|webm|ogg)$/i) || img.url?.match(/\.(mp4|webm|ogg)$/i);
+                                                                        const isVideo = !!(
+                                                                            img.type?.startsWith('video/') ||
+                                                                            img.name?.match(/\.(mp4|webm|ogg|mov)$/i) ||
+                                                                            img.url?.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i)
+                                                                        );
                                                                         return (
                                                                         <div
                                                                             key={imgIdx}
-                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Media ${imgIdx + 1}`, type: img.type })}
+                                                                            onClick={() => setLightboxImage({
+                                                                                url: img.url,
+                                                                                title: `${isVideo ? (language === 'mr' ? 'व्हिडिओ' : 'Video') : (language === 'mr' ? 'छायाचित्र' : 'Photo')} ${imgIdx + 1}`,
+                                                                                type: img.type,
+                                                                                isVideo
+                                                                            })}
                                                                             className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50 relative"
                                                                         >
                                                                             {isVideo ? (
                                                                                 <video
                                                                                     src={img.url}
                                                                                     className="w-full h-full object-cover"
+                                                                                    preload="metadata"
                                                                                 />
                                                                             ) : (
                                                                                 <img
@@ -1308,7 +1334,7 @@ const ComplaintDetail = () => {
                                                                             )}
                                                                             {isVideo && (
                                                                                 <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
-                                                                                    <Video className="w-5 h-5 text-white" />
+                                                                                    <Video className="w-5 h-5 text-white drop-shadow" />
                                                                                 </div>
                                                                             )}
                                                                         </div>
@@ -1678,7 +1704,7 @@ const ComplaintDetail = () => {
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between p-3.5 px-5 bg-slate-900 text-white border-b border-slate-800">
-                            <span className="text-sm font-medium truncate">{lightboxImage.title || 'Photo View'}</span>
+                            <span className="text-sm font-medium truncate">{lightboxImage.title || (lightboxImage.isVideo ? 'Video View' : 'Photo View')}</span>
                             <div className="flex items-center gap-2">
                                 <a
                                     href={lightboxImage.url}
@@ -1686,7 +1712,7 @@ const ComplaintDetail = () => {
                                     rel="noreferrer"
                                     download
                                     className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                                    title="Open / Download photo"
+                                    title={lightboxImage.isVideo ? "Open / Download video" : "Open / Download photo"}
                                 >
                                     <Download className="w-4 h-4" />
                                 </a>
@@ -1699,11 +1725,12 @@ const ComplaintDetail = () => {
                             </div>
                         </div>
                         <div className="p-3 flex items-center justify-center bg-black/60 overflow-auto max-h-[80vh]">
-                            {lightboxImage.type?.startsWith('video/') || lightboxImage.url.match(/\.(mp4|webm|ogg)$/i) ? (
+                            {lightboxImage.isVideo || lightboxImage.type?.startsWith('video/') || lightboxImage.url.match(/\.(mp4|webm|ogg|mov)(\?.*)?$/i) ? (
                                 <video
                                     src={lightboxImage.url}
                                     controls
                                     autoPlay
+                                    playsInline
                                     className="max-w-full max-h-[75vh] rounded-lg shadow-lg"
                                 />
                             ) : (

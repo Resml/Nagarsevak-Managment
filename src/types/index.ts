@@ -44,20 +44,20 @@ export interface Complaint {
   attachments?: { url: string; type: string; name: string; size: number }[];
   progressUpdates?: {
     note: string;
-    images?: { url: string; name?: string; size?: number }[];
+    images?: { url: string; name?: string; size?: number; type?: string }[];
     timestamp: string;
     updatedBy?: string;
     status: ComplaintStatus;
   }[];
   workInProgress?: {
     note: string;
-    images?: { url: string; name?: string; size?: number }[];
+    images?: { url: string; name?: string; size?: number; type?: string }[];
     updatedAt: string;
     updatedBy?: string;
   };
   resolutionDetails?: {
     note: string;
-    images?: { url: string; name?: string; size?: number }[];
+    images?: { url: string; name?: string; size?: number; type?: string }[];
     resolvedAt: string;
     resolvedBy?: string;
   };
