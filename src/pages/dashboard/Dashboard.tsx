@@ -47,6 +47,7 @@ const Dashboard = () => {
         totalVisitors: 0
     });
     const [recentActivity, setRecentActivity] = useState<Array<{ id: string | number; status: string; problem?: string | null; title?: string | null; created_at?: string | null; area?: string | null; location?: string | null; }>>([]);
+    const [activityFilter, setActivityFilter] = useState<'all' | 'pending'>('all');
     const [dailyBriefing, setDailyBriefing] = useState<string>('');
     const { startTutorial } = useTutorial();
 
@@ -102,11 +103,37 @@ const Dashboard = () => {
             let voterCount = 0;
 
             if (hasComplaints) {
-                const [complaintsRes, votersRes] = await Promise.all([
-                    supabase.from('complaints').select('*').eq('tenant_id', tenantId), // Secured
+                const [complaintsRes, personalRes, votersRes] = await Promise.all([
+                    supabase.from('complaints').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }), // Secured
+                    supabase.from('personal_requests').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }),
                     supabase.from('voters').select('id', { count: 'exact', head: true }).eq('tenant_id', tenantId) // Secured
                 ]);
-                allComplaints = complaintsRes.data || [];
+                const complaintsData = complaintsRes.data || [];
+                const personalData = personalRes?.data || [];
+
+                const mappedComplaints = complaintsData.map((c: any) => ({
+                    id: c.id.toString(),
+                    status: c.status,
+                    problem: c.problem,
+                    title: c.category === 'SelfIdentified' ? 'Self Identified Issue' : (c.category || 'Complaint'),
+                    created_at: c.created_at,
+                    area: c.area,
+                    location: c.location
+                }));
+
+                const mappedPersonal = personalData.map((p: any) => ({
+                    id: `pr-${p.id}`,
+                    status: p.status,
+                    problem: p.description || p.request_type,
+                    title: p.request_type || 'Personal Help',
+                    created_at: p.created_at,
+                    area: undefined,
+                    location: 'WhatsApp'
+                }));
+
+                allComplaints = [...mappedComplaints, ...mappedPersonal].sort(
+                    (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+                );
                 voterCount = votersRes.count || 0;
             } else {
                 const [tasksRes, lettersRes, visitorsRes, votersRes] = await Promise.all([
@@ -145,17 +172,16 @@ const Dashboard = () => {
 
             setStats(newStats);
 
+            const pendingComplaints = allComplaints.filter(c => c.status === 'Pending');
+            const otherComplaints = allComplaints.filter(c => c.status !== 'Pending');
+
+            // Ensure pending complaints are always displayed in the live activity feed,
+            // followed by the most recent other complaints (up to 12 total)
             const activityList = hasComplaints
-                ? allComplaints.slice(0, 5).map(c => ({
-                    id: c.id,
-                    status: c.status,
-                    problem: c.problem,
-                    title: c.category === 'SelfIdentified' ? 'Self Identified Issue' : c.category,
-                    created_at: c.created_at,
-                    area: c.area,
-                    location: c.location
-                }))
-                : allTasks.slice(0, 5).map(t => ({
+                ? (pendingComplaints.length > 0
+                    ? [...pendingComplaints, ...otherComplaints.slice(0, Math.max(5, 12 - pendingComplaints.length))]
+                    : allComplaints.slice(0, 10))
+                : allTasks.slice(0, 10).map(t => ({
                     id: t.id,
                     status: t.status === 'Completed' ? 'Resolved' : 'Pending',
                     problem: t.title,
@@ -337,17 +363,81 @@ const Dashboard = () => {
 
                 {/* Recent Activity Feed */}
                 <div className="ns-card p-6 overflow-hidden flex flex-col tutorial-live-activity">
-                    <h2 className="text-lg font-bold text-slate-900 mb-4">{t('dashboard.live_activity')}</h2>
-                    <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[400px]">
-                        {recentActivity.map((activity) => (
-                            <div key={activity.id} className="flex gap-3 group cursor-pointer" onClick={() => navigate(`/dashboard/complaints/${activity.id}`)}>
-                                <div className={`w-2 h-2 rounded-full mt-2 shrink-0 ${activity.status === 'Resolved' ? 'bg-green-500' :
-                                    activity.status === 'Pending' ? 'bg-red-500' : 'bg-yellow-500'
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-slate-900">{t('dashboard.live_activity')}</h2>
+                            {stats.pending > 0 && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+                                    {stats.pending} {language === 'mr' ? 'प्रलंबित' : 'Pending'}
+                                </span>
+                            )}
+                        </div>
+                        {stats.pending > 0 && (
+                            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-xs">
+                                <button
+                                    type="button"
+                                    onClick={() => setActivityFilter('all')}
+                                    className={`px-2 py-0.5 rounded-md font-medium transition-colors ${
+                                        activityFilter === 'all'
+                                            ? 'bg-white text-slate-900 shadow-xs'
+                                            : 'text-slate-500 hover:text-slate-900'
+                                    }`}
+                                >
+                                    {language === 'mr' ? 'सर्व' : 'All'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setActivityFilter('pending')}
+                                    className={`px-2 py-0.5 rounded-md font-semibold transition-colors flex items-center gap-1 ${
+                                        activityFilter === 'pending'
+                                            ? 'bg-red-500 text-white shadow-xs'
+                                            : 'text-red-600 hover:bg-red-50'
+                                    }`}
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                    {language === 'mr' ? 'प्रलंबित' : 'Pending'} ({stats.pending})
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex-1 overflow-y-auto pr-2 space-y-2.5 max-h-[400px]">
+                        {(activityFilter === 'pending' ? recentActivity.filter(a => a.status === 'Pending') : recentActivity).map((activity) => {
+                            const isPending = activity.status === 'Pending';
+                            return (
+                            <div
+                                key={activity.id}
+                                className={`flex gap-3 group cursor-pointer transition-all p-2 rounded-xl border ${
+                                    isPending
+                                        ? 'bg-red-50/60 hover:bg-red-100/70 border-red-100'
+                                        : 'hover:bg-slate-50 border-transparent'
+                                }`}
+                                onClick={() => {
+                                    if (!hasComplaints) {
+                                        navigate('/dashboard/tasks');
+                                    } else if (activity.id.toString().startsWith('pr-')) {
+                                        navigate(`/dashboard/personal-requests/${activity.id.toString().replace('pr-', '')}`);
+                                    } else {
+                                        navigate(`/dashboard/complaints/${activity.id}`);
+                                    }
+                                }}
+                            >
+                                <div className={`w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${
+                                    activity.status === 'Resolved' ? 'bg-green-500' :
+                                    isPending ? 'bg-red-500 ring-2 ring-red-300' : 'bg-yellow-500'
                                     }`}></div>
-                                <div>
-                                    <p className="text-sm font-medium text-slate-800 group-hover:text-brand-700 transition-colors line-clamp-2">
-                                        <TranslatedText text={activity.problem || activity.title || ''} />
-                                    </p>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-1.5">
+                                        <p className={`text-sm font-medium transition-colors line-clamp-2 ${
+                                            isPending ? 'text-red-950 font-semibold group-hover:text-red-700' : 'text-slate-800 group-hover:text-brand-700'
+                                        }`}>
+                                            <TranslatedText text={activity.problem || activity.title || ''} />
+                                        </p>
+                                        {isPending && (
+                                            <span className="shrink-0 px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded border border-red-200">
+                                                {language === 'mr' ? 'प्रलंबित' : 'Pending'}
+                                            </span>
+                                        )}
+                                    </div>
                                     <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                         <span className="flex items-center gap-1">
                                             <Calendar className="w-3 h-3 shrink-0" />
@@ -361,12 +451,14 @@ const Dashboard = () => {
                                                 </span>
                                             </span>
                                         )}
-                                        <span className="font-medium shrink-0">({t(`status.${activity.status}`) || activity.status})</span>
+                                        {!isPending && (
+                                            <span className="font-medium shrink-0">({t(`status.${activity.status}`) || activity.status})</span>
+                                        )}
                                     </p>
                                 </div>
                             </div>
-                        ))}
-                        {recentActivity.length === 0 && (
+                        )})}
+                        {(activityFilter === 'pending' ? recentActivity.filter(a => a.status === 'Pending') : recentActivity).length === 0 && (
                             <p className="text-sm text-slate-500 text-center py-8">{t('dashboard.no_activity')}</p>
                         )}
                     </div>
