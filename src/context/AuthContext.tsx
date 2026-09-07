@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             setUser({
                 id: sessionUser.id,
-                name: sessionUser.user_metadata?.name || sessionUser.email?.split('@')[0] || 'User',
+                name: sessionUser.user_metadata?.name || sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || 'User',
                 email: sessionUser.email || '',
                 role: userRole,
                 permissions,
@@ -112,9 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(JSON.parse(mockSessionStr));
             setIsLoading(false);
         } else {
-            supabase.auth.getSession().then(({ data: { session } }: any) => {
+            supabase.auth.getSession().then(async ({ data: { session } }: any) => {
                 if (session?.user) {
-                    loadUser(session.user);
+                    try {
+                        const { data: freshData } = await supabase.auth.getUser();
+                        loadUser(freshData?.user || session.user);
+                    } catch {
+                        loadUser(session.user);
+                    }
                 } else {
                     setIsLoading(false);
                 }
