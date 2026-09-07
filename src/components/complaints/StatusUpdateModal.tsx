@@ -70,12 +70,12 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
 
         for (let i = 0; i < selectedFiles.length; i++) {
             const file = selectedFiles[i];
-            if (!file.type.startsWith('image/')) {
-                toast.error(`${file.name} is not an image. Only photos are supported.`);
+            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                toast.error(`${file.name} is not an image or video.`);
                 continue;
             }
-            if (file.size > 15 * 1024 * 1024) {
-                toast.error(`${file.name} exceeds 15MB size limit.`);
+            if (file.size > 50 * 1024 * 1024) { // Increased to 50MB for videos
+                toast.error(`${file.name} exceeds 50MB size limit.`);
                 continue;
             }
             validFiles.push(file);
@@ -229,17 +229,17 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                     <div>
                         <div className="flex items-center justify-between mb-1">
                             <label className="block text-xs font-semibold text-slate-700">
-                                {language === 'mr' ? 'छायाचित्रे (ऐच्छिक)' : 'Upload Photos (Optional)'}
+                                {language === 'mr' ? 'छायाचित्रे व व्हिडिओ (ऐच्छिक)' : 'Upload Photos & Videos (Optional)'}
                             </label>
                             <span className="text-[11px] text-slate-400">
-                                Max 15MB each
+                                Max 50MB each
                             </span>
                         </div>
 
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/*,video/*"
                             multiple
                             onChange={(e) => handleFileSelect(e.target.files)}
                             className="hidden"
@@ -262,7 +262,7 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                                     <UploadCloud className="w-4 h-4" />
                                 </div>
                                 <div className="text-xs text-slate-600 text-left">
-                                    <span className="font-semibold text-brand-600 hover:underline">Click to upload</span> or drop photos
+                                    <span className="font-semibold text-brand-600 hover:underline">Click to upload</span> or drop photos/videos
                                 </div>
                             </div>
                         </div>
@@ -272,7 +272,7 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                             <div className="mt-2">
                                 <div className="flex items-center justify-between mb-1.5">
                                     <span className="text-[11px] font-semibold text-slate-700">
-                                        Photos ({previews.length})
+                                        Media ({previews.length})
                                     </span>
                                     <button
                                         type="button"
@@ -284,13 +284,22 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                                    {previews.map((preview, index) => (
+                                    {previews.map((preview, index) => {
+                                        const isVideo = preview.file.type.startsWith('video/');
+                                        return (
                                         <div key={index} className="relative group w-12 h-12 rounded-md overflow-hidden border border-slate-200 bg-white shadow-xs shrink-0">
-                                            <img
-                                                src={preview.url}
-                                                alt={preview.file.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                                            {isVideo ? (
+                                                <video
+                                                    src={preview.url}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={preview.url}
+                                                    alt={preview.file.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
                                             <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <button
                                                     type="button"
@@ -306,7 +315,7 @@ export const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         )}

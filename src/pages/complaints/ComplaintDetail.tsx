@@ -47,7 +47,7 @@ const ComplaintDetail = () => {
     });
 
     // Image Lightbox State
-    const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string } | null>(null);
+    const [lightboxImage, setLightboxImage] = useState<{ url: string; title?: string; type?: string } | null>(null);
 
     // Edit & Delete Progress Log States
     const [editingLog, setEditingLog] = useState<{
@@ -55,7 +55,7 @@ const ComplaintDetail = () => {
         index: number;
         status: 'InProgress' | 'Resolved';
         note: string;
-        images?: { url: string; name?: string; size?: number }[];
+        images?: { url: string; name?: string; size?: number; type?: string }[];
     } | null>(null);
 
     const [deletingLogIndex, setDeletingLogIndex] = useState<number | null>(null);
@@ -78,7 +78,8 @@ const ComplaintDetail = () => {
                 return {
                     url: secureUrl,
                     name: typeof img === 'object' && img?.name ? img.name : 'Photo',
-                    size: typeof img === 'object' && img?.size ? img.size : 0
+                    size: typeof img === 'object' && img?.size ? img.size : 0,
+                    type: typeof img === 'object' && img?.type ? img.type : undefined
                 };
             })
         );
@@ -607,7 +608,7 @@ const ComplaintDetail = () => {
         logIndex: number,
         note: string,
         targetStatus: 'InProgress' | 'Resolved',
-        remainingExistingImages: { url: string; name?: string; size?: number }[],
+        remainingExistingImages: { url: string; name?: string; size?: number; type?: string }[],
         newFiles: File[]
     ) => {
         if (!complaint) return;
@@ -703,7 +704,8 @@ const ComplaintDetail = () => {
                 uploadedNewImages.map(async (img) => ({
                     url: await SecureStorageService.getUrl('documents', img.url),
                     name: img.name,
-                    size: img.size
+                    size: img.size,
+                    type: img.type
                 }))
             );
 
@@ -1197,19 +1199,33 @@ const ComplaintDetail = () => {
 
                                                             {update.images && update.images.length > 0 && (
                                                                 <div className="flex flex-wrap gap-2 pt-1">
-                                                                    {update.images.map((img, imgIdx) => (
+                                                                    {update.images.map((img, imgIdx) => {
+                                                                        const isVideo = img.type?.startsWith('video/') || img.name?.match(/\.(mp4|webm|ogg)$/i) || img.url?.match(/\.(mp4|webm|ogg)$/i);
+                                                                        return (
                                                                         <div
                                                                             key={imgIdx}
-                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Photo ${imgIdx + 1}` })}
-                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50"
+                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Media ${imgIdx + 1}`, type: img.type })}
+                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50 relative"
                                                                         >
-                                                                            <img
-                                                                                src={img.url}
-                                                                                alt={img.name || `Photo ${imgIdx + 1}`}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
+                                                                            {isVideo ? (
+                                                                                <video
+                                                                                    src={img.url}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <img
+                                                                                    src={img.url}
+                                                                                    alt={img.name || `Photo ${imgIdx + 1}`}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            )}
+                                                                            {isVideo && (
+                                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+                                                                                    <Video className="w-5 h-5 text-white" />
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    ))}
+                                                                    )})}
                                                                 </div>
                                                             )}
 
@@ -1270,19 +1286,33 @@ const ComplaintDetail = () => {
 
                                                             {update.images && update.images.length > 0 && (
                                                                 <div className="flex flex-wrap gap-2 pt-1">
-                                                                    {update.images.map((img, imgIdx) => (
+                                                                    {update.images.map((img, imgIdx) => {
+                                                                        const isVideo = img.type?.startsWith('video/') || img.name?.match(/\.(mp4|webm|ogg)$/i) || img.url?.match(/\.(mp4|webm|ogg)$/i);
+                                                                        return (
                                                                         <div
                                                                             key={imgIdx}
-                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Photo ${imgIdx + 1}` })}
-                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50"
+                                                                            onClick={() => setLightboxImage({ url: img.url, title: `Update Media ${imgIdx + 1}`, type: img.type })}
+                                                                            className="w-14 h-14 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-200 cursor-pointer hover:opacity-90 transition-opacity shadow-2xs shrink-0 bg-slate-50 relative"
                                                                         >
-                                                                            <img
-                                                                                src={img.url}
-                                                                                alt={img.name || `Photo ${imgIdx + 1}`}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
+                                                                            {isVideo ? (
+                                                                                <video
+                                                                                    src={img.url}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <img
+                                                                                    src={img.url}
+                                                                                    alt={img.name || `Photo ${imgIdx + 1}`}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            )}
+                                                                            {isVideo && (
+                                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+                                                                                    <Video className="w-5 h-5 text-white" />
+                                                                                </div>
+                                                                            )}
                                                                         </div>
-                                                                    ))}
+                                                                    )})}
                                                                 </div>
                                                             )}
 
@@ -1669,11 +1699,20 @@ const ComplaintDetail = () => {
                             </div>
                         </div>
                         <div className="p-3 flex items-center justify-center bg-black/60 overflow-auto max-h-[80vh]">
-                            <img
-                                src={lightboxImage.url}
-                                alt={lightboxImage.title || 'Enlarged photo'}
-                                className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
-                            />
+                            {lightboxImage.type?.startsWith('video/') || lightboxImage.url.match(/\.(mp4|webm|ogg)$/i) ? (
+                                <video
+                                    src={lightboxImage.url}
+                                    controls
+                                    autoPlay
+                                    className="max-w-full max-h-[75vh] rounded-lg shadow-lg"
+                                />
+                            ) : (
+                                <img
+                                    src={lightboxImage.url}
+                                    alt={lightboxImage.title || 'Enlarged photo'}
+                                    className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+                                />
+                            )}
                         </div>
                     </div>
                 </div>

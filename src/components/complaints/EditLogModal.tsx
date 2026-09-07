@@ -9,12 +9,12 @@ export interface EditLogModalProps {
     logIndex: number;
     initialStatus: 'InProgress' | 'Resolved';
     initialNote: string;
-    initialImages?: { url: string; name?: string; size?: number }[];
+    initialImages?: { url: string; name?: string; size?: number; type?: string }[];
     onSubmit: (
         logIndex: number,
         note: string,
         status: 'InProgress' | 'Resolved',
-        remainingExistingImages: { url: string; name?: string; size?: number }[],
+        remainingExistingImages: { url: string; name?: string; size?: number; type?: string }[],
         newFiles: File[]
     ) => Promise<void>;
 }
@@ -31,7 +31,7 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
     const { t, language } = useLanguage();
     const [status, setStatus] = useState<'InProgress' | 'Resolved'>(initialStatus);
     const [note, setNote] = useState(initialNote);
-    const [existingImages, setExistingImages] = useState<{ url: string; name?: string; size?: number }[]>(initialImages);
+    const [existingImages, setExistingImages] = useState<{ url: string; name?: string; size?: number; type?: string }[]>(initialImages);
     const [newFiles, setNewFiles] = useState<File[]>([]);
     const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [submitting, setSubmitting] = useState(false);
@@ -70,12 +70,12 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
 
         for (let i = 0; i < selectedFiles.length; i++) {
             const file = selectedFiles[i];
-            if (!file.type.startsWith('image/')) {
-                toast.error(`${file.name} is not an image.`);
+            if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                toast.error(`${file.name} is not an image or video.`);
                 continue;
             }
-            if (file.size > 15 * 1024 * 1024) {
-                toast.error(`${file.name} exceeds 15MB limit.`);
+            if (file.size > 50 * 1024 * 1024) {
+                toast.error(`${file.name} exceeds 50MB limit.`);
                 continue;
             }
             validFiles.push(file);
@@ -221,16 +221,25 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                     {existingImages.length > 0 && (
                         <div>
                             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                {language === 'mr' ? 'सध्याची छायाचित्रे' : 'Existing Photos'} ({existingImages.length})
+                                {language === 'mr' ? 'सध्याची छायाचित्रे व व्हिडिओ' : 'Existing Media'} ({existingImages.length})
                             </label>
                             <div className="flex flex-wrap gap-2 p-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                                {existingImages.map((img, idx) => (
+                                {existingImages.map((img, idx) => {
+                                    const isVideo = img.type?.startsWith('video/') || img.name?.match(/\.(mp4|webm|ogg)$/i) || img.url?.match(/\.(mp4|webm|ogg)$/i);
+                                    return (
                                     <div key={idx} className="relative group w-12 h-12 rounded-md overflow-hidden border border-slate-200 bg-white shadow-xs shrink-0">
-                                        <img
-                                            src={img.url}
-                                            alt={img.name || `Photo ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        {isVideo ? (
+                                            <video
+                                                src={img.url}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src={img.url}
+                                                alt={img.name || `Media ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )}
                                         <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <button
                                                 type="button"
@@ -243,7 +252,7 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                                             </button>
                                         </div>
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         </div>
                     )}
@@ -251,13 +260,13 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                     {/* Add More Photos */}
                     <div>
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
-                            {language === 'mr' ? 'नवीन छायाचित्रे जोडा' : 'Add New Photos'}
+                            {language === 'mr' ? 'नवीन छायाचित्रे/व्हिडिओ जोडा' : 'Add New Media'}
                         </label>
 
                         <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/*,video/*"
                             multiple
                             onChange={(e) => handleFileSelect(e.target.files)}
                             className="hidden"
@@ -280,7 +289,7 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                                     <UploadCloud className="w-4 h-4" />
                                 </div>
                                 <div className="text-xs text-slate-600 text-left">
-                                    <span className="font-semibold text-brand-600 hover:underline">Click to upload</span> or drop more photos
+                                    <span className="font-semibold text-brand-600 hover:underline">Click to upload</span> or drop more photos/videos
                                 </div>
                             </div>
                         </div>
@@ -290,7 +299,7 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                             <div className="mt-2">
                                 <div className="flex items-center justify-between mb-1.5">
                                     <span className="text-[11px] font-semibold text-slate-700">
-                                        New Photos ({previews.length})
+                                        New Media ({previews.length})
                                     </span>
                                     <button
                                         type="button"
@@ -302,13 +311,22 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                                     </button>
                                 </div>
                                 <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                                    {previews.map((preview, index) => (
+                                    {previews.map((preview, index) => {
+                                        const isVideo = preview.file.type.startsWith('video/');
+                                        return (
                                         <div key={index} className="relative group w-12 h-12 rounded-md overflow-hidden border border-slate-200 bg-white shadow-xs shrink-0">
-                                            <img
-                                                src={preview.url}
-                                                alt={preview.file.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                                            {isVideo ? (
+                                                <video
+                                                    src={preview.url}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <img
+                                                    src={preview.url}
+                                                    alt={preview.file.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            )}
                                             <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <button
                                                     type="button"
@@ -324,7 +342,7 @@ export const EditLogModal: React.FC<EditLogModalProps> = ({
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
+                                    )})}
                                 </div>
                             </div>
                         )}
