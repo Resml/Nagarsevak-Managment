@@ -66,9 +66,19 @@ export const SecureStorageService = {
         const uniqueId = customFileName || `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const relativePath = `${activeTenantId}/files/${module}/${uniqueId}`;
 
+        // Convert the File object to a stable ArrayBuffer.
+        // This is a critical fix for iOS/Mobile Safari where passing the raw File object (a stream)
+        // to fetch() during a CORS preflight request consumes the stream, leading to empty bodies
+        // or dropped connections during the actual POST request.
+        const fileBuffer = await file.arrayBuffer();
+
         const { error } = await supabase.storage
             .from(bucket)
-            .upload(relativePath, file);
+            .upload(relativePath, fileBuffer, {
+                contentType: file.type || 'application/octet-stream',
+                cacheControl: '3600',
+                upsert: false
+            });
 
         if (error) throw error;
 

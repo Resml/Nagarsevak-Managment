@@ -425,18 +425,18 @@ const ComplaintForm = () => {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
             const allFiles = [...desktopFiles, ...mediaFiles, ...docFiles];
-            // Upload all attachments concurrently
-            const uploadedAttachments = await Promise.all(
-                allFiles.map(async (file) => {
-                    const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
-                    return {
-                        url: relativePath,
-                        type: file.type,
-                        name: file.name,
-                        size: file.size
-                    };
-                })
-            );
+            
+            // Upload attachments sequentially (Fix for Mobile browser concurrency limits)
+            const uploadedAttachments = [];
+            for (const file of allFiles) {
+                const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                uploadedAttachments.push({
+                    url: relativePath,
+                    type: file.type,
+                    name: file.name,
+                    size: file.size
+                });
+            }
 
             // Backwards compatibility for image_url
             const firstImage = uploadedAttachments.find(a => a.type.startsWith('image/'));
