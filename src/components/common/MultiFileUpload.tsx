@@ -1,12 +1,11 @@
-import React, { useRef, useState } from 'react';
-import { UploadCloud, X, File, Image as ImageIcon, Video, Music, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, Trash2, File, FileText, Image as ImageIcon, Video, Music, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../../context/LanguageContext';
+import { toast } from 'sonner';
 
 export interface MultiFileUploadProps {
-    files: globalThis.File[];
-    onChange: (files: globalThis.File[]) => void;
+    files: File[];
+    onChange: (files: File[]) => void;
     maxFiles?: number;
     maxSizeMB?: number;
     accept?: string;
@@ -15,11 +14,40 @@ export interface MultiFileUploadProps {
     subtitle?: string;
 }
 
-const getFileIcon = (type: string) => {
-    if (type.startsWith('image/')) return <ImageIcon className="w-6 h-6 text-blue-500" />;
-    if (type.startsWith('video/')) return <Video className="w-6 h-6 text-purple-500" />;
-    if (type.startsWith('audio/')) return <Music className="w-6 h-6 text-yellow-500" />;
-    return <File className="w-6 h-6 text-slate-500" />;
+export const isImageFile = (file: File) => {
+    if (file.type && file.type.startsWith('image/')) return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic', 'heif', 'svg'].includes(ext || '');
+};
+
+export const isVideoFile = (file: File) => {
+    if (file.type && file.type.startsWith('video/')) return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ['mp4', 'mov', 'avi', 'mkv', 'webm', '3gp'].includes(ext || '');
+};
+
+export const isAudioFile = (file: File) => {
+    if (file.type && file.type.startsWith('audio/')) return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ['mp3', 'wav', 'ogg', 'm4a', 'aac', 'flac', 'opus', 'wma', 'amr'].includes(ext || '');
+};
+
+export const isPdfFile = (file: File) => {
+    if (file.type === 'application/pdf') return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ext === 'pdf';
+};
+
+export const isWordFile = (file: File) => {
+    if (file.type.includes('word') || file.type.includes('officedocument.wordprocessingml')) return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ['doc', 'docx'].includes(ext || '');
+};
+
+export const isExcelFile = (file: File) => {
+    if (file.type.includes('sheet') || file.type.includes('excel') || file.type.includes('spreadsheetml')) return true;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    return ['xls', 'xlsx', 'csv'].includes(ext || '');
 };
 
 const formatSize = (bytes: number) => {
@@ -28,170 +56,6 @@ const formatSize = (bytes: number) => {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-const FileViewerModal = ({ file, onClose, onPrev, onNext, totalFiles }: { file: globalThis.File; onClose: () => void; onPrev?: () => void; onNext?: () => void; totalFiles: number; }) => {
-    const [preview, setPreview] = useState<string | null>(null);
-
-    React.useEffect(() => {
-        const objectUrl = URL.createObjectURL(file);
-        setPreview(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [file]);
-
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-    const isAudio = file.type.startsWith('audio/');
-    const isPdf = file.type === 'application/pdf';
-
-    return (
-        <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-            onClick={(e: React.MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose();
-            }}
-        >
-            <div 
-                className="relative w-full max-w-5xl max-h-[90vh] bg-white rounded-xl overflow-hidden flex flex-col shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
-                    <h3 className="font-semibold text-slate-800 pr-4 flex-1 truncate">{file.name}</h3>
-                    
-                    {totalFiles > 1 && (
-                        <div className="flex items-center space-x-2 mr-4">
-                            <button
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPrev?.(); }}
-                                className="p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors border border-slate-200"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNext?.(); }}
-                                className="p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors border border-slate-200"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-                        </div>
-                    )}
-                    
-                    <button 
-                        type="button"
-                        onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            onClose();
-                        }}
-                        className="p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-                <div className="flex-1 overflow-auto bg-slate-50 flex items-center justify-center p-4 relative group/viewer">
-                    {preview && (
-                        <>
-                            {isImage && <img src={preview} alt={file.name} className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-sm" />}
-                            {isVideo && <video src={preview} controls className="max-w-full max-h-[75vh] rounded-lg shadow-sm" />}
-                            {isAudio && (
-                                <div className="w-full max-w-md p-6 bg-white rounded-xl shadow-sm text-center">
-                                    <Music className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                                    <audio src={preview} controls className="w-full" />
-                                </div>
-                            )}
-                            {isPdf && <iframe src={preview} className="w-full h-[75vh] rounded-lg shadow-sm" title={file.name} />}
-                            {!isImage && !isVideo && !isAudio && !isPdf && (
-                                <div className="text-center p-8 bg-white rounded-xl shadow-sm">
-                                    <File className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                                    <p className="text-slate-600 mb-4 text-sm">Preview not available for this file type.</p>
-                                    <a href={preview} download={file.name} className="ns-btn-primary px-4 py-2 inline-flex items-center">
-                                        Download File
-                                    </a>
-                                </div>
-                            )}
-                        </>
-                    )}
-                    
-                    {totalFiles > 1 && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPrev?.(); }}
-                                className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white text-slate-700 rounded-full shadow-lg opacity-0 group-hover/viewer:opacity-100 transition-opacity backdrop-blur-sm"
-                            >
-                                <ChevronLeft className="w-6 h-6" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onNext?.(); }}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/80 hover:bg-white text-slate-700 rounded-full shadow-lg opacity-0 group-hover/viewer:opacity-100 transition-opacity backdrop-blur-sm"
-                            >
-                                <ChevronRight className="w-6 h-6" />
-                            </button>
-                        </>
-                    )}
-                </div>
-            </div>
-        </motion.div>
-    );
-};
-
-const FilePreview = ({ file, onRemove, onView }: { file: globalThis.File; onRemove: () => void; onView: () => void }) => {
-    const [preview, setPreview] = useState<string | null>(null);
-
-    React.useEffect(() => {
-        const objectUrl = URL.createObjectURL(file);
-        setPreview(objectUrl);
-        return () => URL.revokeObjectURL(objectUrl);
-    }, [file]);
-
-    const isImage = file.type.startsWith('image/');
-    const isVideo = file.type.startsWith('video/');
-
-    return (
-        <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            onClick={(e: React.MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onView();
-            }}
-            className="relative group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shadow-sm hover:border-brand-300 transition-all aspect-square flex flex-col items-center justify-center cursor-pointer"
-        >
-            {(isImage || isVideo) && preview ? (
-                <>
-                    {isImage && <img src={preview} alt={file.name} className="w-full h-full object-cover" />}
-                    {isVideo && <video src={preview} className="w-full h-full object-cover" />}
-                </>
-            ) : (
-                <div className="p-2 flex flex-col items-center justify-center text-center space-y-2 w-full h-full bg-white">
-                    <div className="p-3 bg-slate-50 rounded-full">
-                        {getFileIcon(file.type)}
-                    </div>
-                    <p className="text-xs font-medium text-slate-700 truncate w-full px-3" title={file.name}>
-                        {file.name}
-                    </p>
-                    <p className="text-[10px] text-slate-500">{formatSize(file.size)}</p>
-                </div>
-            )}
-            
-            <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
-                className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm text-slate-600 hover:text-red-500 rounded-lg shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            >
-                <X className="w-4 h-4" />
-            </button>
-        </motion.div>
-    );
 };
 
 export function MultiFileUpload({
@@ -204,137 +68,248 @@ export function MultiFileUpload({
     title,
     subtitle
 }: MultiFileUploadProps) {
-    const { t } = useLanguage();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [previews, setPreviews] = useState<{ file: File; url: string }[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [viewingIndex, setViewingIndex] = useState<number | null>(null);
 
-    const handleFiles = (newFiles: globalThis.File[]) => {
+    // Generate previews when files change - Identical to StatusUpdateModal
+    useEffect(() => {
+        const objectUrls = files.map(file => ({
+            file,
+            url: URL.createObjectURL(file)
+        }));
+        setPreviews(objectUrls);
+
+        return () => {
+            objectUrls.forEach(p => URL.revokeObjectURL(p.url));
+        };
+    }, [files]);
+
+    const handleFileSelect = (selectedFiles: FileList | null) => {
+        if (!selectedFiles) return;
         setError(null);
-        
-        if (files.length + newFiles.length > maxFiles) {
-            setError(`You can only upload a maximum of ${maxFiles} files.`);
+        const validFiles: File[] = [];
+
+        if (files.length + selectedFiles.length > maxFiles) {
+            const msg = `You can only upload a maximum of ${maxFiles} files.`;
+            setError(msg);
+            toast.error(msg);
             return;
         }
 
-        const validFiles = newFiles.filter(file => {
-            const sizeMB = file.size / (1024 * 1024);
-            if (sizeMB > maxSizeMB) {
-                setError(`File ${file.name} exceeds the ${maxSizeMB}MB size limit.`);
-                return false;
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            if (file.size > maxSizeMB * 1024 * 1024) {
+                const msg = `${file.name} exceeds the ${maxSizeMB}MB size limit.`;
+                setError(msg);
+                toast.error(msg);
+                continue;
             }
-            return true;
-        });
+            validFiles.push(file);
+        }
 
-        onChange([...files, ...validFiles]);
+        if (validFiles.length > 0) {
+            onChange([...files, ...validFiles]);
+        }
     };
 
-    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    const handleRemoveFile = (index: number) => {
+        onChange(files.filter((_, i) => i !== index));
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         setIsDragging(false);
-        
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            handleFiles(Array.from(e.dataTransfer.files));
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files) {
+            handleFileSelect(e.dataTransfer.files);
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            handleFiles(Array.from(e.target.files));
-        }
+    const handleClickUpload = () => {
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
+        fileInputRef.current?.click();
     };
 
-    const removeFile = (indexToRemove: number) => {
-        onChange(files.filter((_, index) => index !== indexToRemove));
-        if (viewingIndex === indexToRemove) {
-            setViewingIndex(null);
-        } else if (viewingIndex !== null && viewingIndex > indexToRemove) {
-            setViewingIndex(viewingIndex - 1);
-        }
-    };
+    // Separate visual media (images/videos) from audio and documents for optimal UI
+    const mediaPreviews = previews
+        .map((preview, index) => ({ preview, originalIndex: index }))
+        .filter(({ preview }) => isImageFile(preview.file) || isVideoFile(preview.file));
 
-    const navigateViewer = (direction: 'prev' | 'next') => {
-        if (viewingIndex === null) return;
-        if (direction === 'prev') {
-            setViewingIndex(viewingIndex > 0 ? viewingIndex - 1 : files.length - 1);
-        } else {
-            setViewingIndex(viewingIndex < files.length - 1 ? viewingIndex + 1 : 0);
-        }
-    };
+    const otherPreviews = previews
+        .map((preview, index) => ({ preview, originalIndex: index }))
+        .filter(({ preview }) => !isImageFile(preview.file) && !isVideoFile(preview.file));
 
     return (
         <div className={clsx("w-full", className)}>
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept={accept}
+                multiple
+                onChange={(e) => handleFileSelect(e.target.files)}
+                className="hidden"
+            />
+
             <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={clsx(
-                    "relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 overflow-hidden",
-                    isDragging ? "border-brand-500 bg-brand-50" : "border-slate-300 bg-slate-50 hover:bg-slate-100"
-                )}
+                onClick={handleClickUpload}
+                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                    isDragging
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-slate-300 hover:border-brand-500 hover:bg-slate-50 bg-slate-50/50'
+                }`}
             >
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleChange}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    multiple
-                    accept={accept}
-                    title="Click or drag files here"
-                />
-                <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-3 relative z-0 pointer-events-none">
-                    <UploadCloud className={clsx("w-6 h-6", isDragging ? "text-brand-600" : "text-slate-400")} />
+                <div className="flex flex-col items-center justify-center">
+                    <div className="p-3 bg-white text-brand-600 border border-slate-200 rounded-full shadow-xs shrink-0 mb-2">
+                        <UploadCloud className="w-6 h-6" />
+                    </div>
+                    <div className="text-sm font-medium text-slate-700">
+                        {title || 'Click to upload or drop photos/files'}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                        {subtitle || `Max ${maxSizeMB}MB each`}
+                    </div>
                 </div>
-                <p className="text-sm font-medium text-slate-700 text-center relative z-0 pointer-events-none">
-                    {title || 'Click or drag & drop files here'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1 text-center relative z-0 pointer-events-none">
-                    {subtitle || `Supports Images, Videos, Audio, and Documents (Max ${maxSizeMB}MB)`}
-                </p>
             </div>
 
             {error && (
-                <div className="mt-3 flex items-center text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-100">
-                    <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                <div className="mt-2 flex items-center text-red-600 text-xs bg-red-50 p-2.5 rounded-lg border border-red-100">
+                    <AlertCircle className="w-4 h-4 mr-1.5 shrink-0" />
                     <span>{error}</span>
                 </div>
             )}
 
-            <AnimatePresence>
-                {files.length > 0 && (
-                    <motion.div 
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-                    >
-                        {files.map((file, idx) => (
-                            <FilePreview 
-                                key={`${file.name}-${idx}`} 
-                                file={file} 
-                                onRemove={() => removeFile(idx)}
-                                onView={() => setViewingIndex(idx)}
-                            />
-                        ))}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Previews */}
+            {previews.length > 0 && (
+                <div className="mt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-700">
+                            Attached Files ({previews.length})
+                        </span>
+                        <button
+                            type="button"
+                            onClick={() => onChange([])}
+                            className="text-xs text-red-600 hover:text-red-700 font-semibold cursor-pointer"
+                        >
+                            Clear all
+                        </button>
+                    </div>
 
-            <AnimatePresence>
-                {viewingIndex !== null && files[viewingIndex] && (
-                    <FileViewerModal
-                        file={files[viewingIndex]}
-                        totalFiles={files.length}
-                        onClose={() => setViewingIndex(null)}
-                        onPrev={() => navigateViewer('prev')}
-                        onNext={() => navigateViewer('next')}
-                    />
-                )}
-            </AnimatePresence>
+                    {/* Visual Media Grid (Images & Videos) */}
+                    {mediaPreviews.length > 0 && (
+                        <div className="flex flex-wrap gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            {mediaPreviews.map(({ preview, originalIndex }) => (
+                                <div 
+                                    key={originalIndex} 
+                                    className="relative group w-20 h-20 sm:w-24 sm:h-24 rounded-lg overflow-hidden border border-slate-200 bg-white shadow-xs shrink-0 flex items-center justify-center"
+                                >
+                                    {isImageFile(preview.file) ? (
+                                        <img
+                                            src={preview.url}
+                                            alt={preview.file.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <video
+                                            src={preview.url}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    )}
+
+                                    {/* Delete Button */}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleRemoveFile(originalIndex);
+                                        }}
+                                        className="absolute top-1 right-1 p-1 bg-white/95 text-red-600 rounded-full hover:bg-red-50 shadow-sm transition-all cursor-pointer"
+                                        title="Remove photo"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Audio & Documents List */}
+                    {otherPreviews.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                            {otherPreviews.map(({ preview, originalIndex }) => {
+                                const isAud = isAudioFile(preview.file);
+                                const isPdf = isPdfFile(preview.file);
+                                const isWord = isWordFile(preview.file);
+                                const isExcel = isExcelFile(preview.file);
+
+                                return (
+                                    <div 
+                                        key={originalIndex} 
+                                        className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg shadow-xs min-w-0 gap-2"
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                            <div className="p-2 rounded-md shrink-0 flex items-center justify-center bg-slate-50 border border-slate-100">
+                                                {isAud ? (
+                                                    <Music className="w-4 h-4 text-purple-600" />
+                                                ) : isPdf ? (
+                                                    <FileText className="w-4 h-4 text-red-600" />
+                                                ) : isWord ? (
+                                                    <FileText className="w-4 h-4 text-blue-600" />
+                                                ) : isExcel ? (
+                                                    <FileText className="w-4 h-4 text-emerald-600" />
+                                                ) : (
+                                                    <File className="w-4 h-4 text-slate-500" />
+                                                )}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs font-medium text-slate-800 truncate" title={preview.file.name}>
+                                                    {preview.file.name}
+                                                </p>
+                                                <p className="text-[10px] text-slate-400">
+                                                    {formatSize(preview.file.size)}
+                                                </p>
+                                                {isAud && (
+                                                    <audio controls src={preview.url} className="mt-1.5 h-6 w-full max-w-[200px]" />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveFile(originalIndex);
+                                            }}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 rounded-md hover:bg-red-50 transition-colors shrink-0 cursor-pointer"
+                                            title="Remove file"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

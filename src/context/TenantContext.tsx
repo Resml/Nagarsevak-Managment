@@ -101,9 +101,11 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
                     querySubdomain = 'amdar';
                 }
 
+                const isLocalIp = /^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.|127\.)/.test(hostname);
                 if (
                     hostname.includes('localhost') || 
                     hostname.includes('127.0.0.1') || 
+                    isLocalIp ||
                     hostname.endsWith('.vercel.app') ||
                     subdomain === 'www' || 
                     subdomain === 'krishnaniti' || 

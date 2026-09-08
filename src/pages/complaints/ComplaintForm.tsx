@@ -171,6 +171,7 @@ const ComplaintForm = () => {
     // Media State (not drafted because File objects can't be easily JSON serialized)
     const [desktopFiles, setDesktopFiles] = useState<globalThis.File[]>([]);
     const [mediaFiles, setMediaFiles] = useState<globalThis.File[]>([]);
+    const [audioFiles, setAudioFiles] = useState<globalThis.File[]>([]);
     const [docFiles, setDocFiles] = useState<globalThis.File[]>([]);
     const [uploading, setUploading] = useState(false);
 
@@ -424,15 +425,17 @@ const ComplaintForm = () => {
         try {
             const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
-            const allFiles = [...desktopFiles, ...mediaFiles, ...docFiles];
+            const allFiles = [...desktopFiles, ...mediaFiles, ...audioFiles, ...docFiles];
             
             // Upload attachments sequentially (Fix for Mobile browser concurrency limits)
             const uploadedAttachments = [];
             for (const file of allFiles) {
                 const relativePath = await SecureStorageService.uploadFile('documents', 'complaints', file);
+                const ext = file.name.split('.').pop()?.toLowerCase();
+                const inferredType = file.type || (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'heic'].includes(ext || '') ? 'image/jpeg' : (['mp4', 'mov', 'webm', '3gp'].includes(ext || '') ? 'video/mp4' : 'application/octet-stream'));
                 uploadedAttachments.push({
                     url: relativePath,
-                    type: file.type,
+                    type: inferredType,
                     name: file.name,
                     size: file.size
                 });
@@ -485,6 +488,7 @@ const ComplaintForm = () => {
             clearMobileDraft();
             setDesktopFiles([]);
             setMediaFiles([]);
+            setAudioFiles([]);
             setDocFiles([]);
 
             if (isWardProblemForm) {
@@ -492,9 +496,9 @@ const ComplaintForm = () => {
             } else {
                 navigate('/dashboard/complaints');
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error submitting complaint:', err);
-            toast.error('Failed to submit complaint');
+            toast.error(err?.message ? `Failed: ${err.message}` : 'Failed to submit complaint');
         } finally {
             setUploading(false);
         }
@@ -777,7 +781,7 @@ const ComplaintForm = () => {
                         </div>
 
                         <div>
-                            <label className="ns-input block text-sm font-medium text-slate-700 mb-2">Attachments (Photos, Videos, Audio, Documents)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Attachments (Photos, Videos, Audio, Documents)</label>
                             
                             {/* Desktop Version: Single unified upload zone */}
                             <div className="hidden md:block">
@@ -786,29 +790,22 @@ const ComplaintForm = () => {
                                     onChange={setDesktopFiles} 
                                     maxFiles={10} 
                                     maxSizeMB={100}
-                                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain"
+                                    title="Upload Attachments"
+                                    subtitle="Supports Photos, Videos, Audio & Documents (Max 100MB)"
                                 />
                             </div>
 
-                            {/* Mobile Version: Split upload zones */}
-                            <div className="md:hidden grid grid-cols-1 gap-4">
+                            {/* Mobile Version: Photos & Videos only */}
+                            <div className="md:hidden">
                                 <MultiFileUpload 
                                     files={mediaFiles} 
                                     onChange={setMediaFiles} 
                                     maxFiles={5} 
                                     maxSizeMB={100}
-                                    accept="image/*,video/*,audio/*"
+                                    accept="image/*,video/*"
                                     title="Add Photos & Videos"
-                                    subtitle="Max 100MB per file"
-                                />
-                                <MultiFileUpload 
-                                    files={docFiles} 
-                                    onChange={setDocFiles} 
-                                    maxFiles={5} 
-                                    maxSizeMB={100}
-                                    accept=".pdf,.doc,.docx"
-                                    title="Add Documents"
-                                    subtitle="PDF, DOC, DOCX (Max 100MB)"
+                                    subtitle="Camera & Gallery (Max 100MB)"
                                 />
                             </div>
                         </div>
